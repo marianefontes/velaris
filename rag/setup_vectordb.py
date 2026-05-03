@@ -4,6 +4,11 @@ setup_vectordb.py
 Lê aetheris-docs-dump.json, gera embeddings com BAAI/bge-m3
 e popula uma coleção ChromaDB persistente em rag/chroma_db/.
 
+MODO DE RETRIEVAL: Dense (cosine similarity) — única opção ativa na v1.
+O BAAI/bge-m3 suporta também Sparse (BM25 neural) e ColBERT (multi-vector),
+mas esta implementação usa apenas dense. Hybrid retrieval (dense + sparse)
+é um upgrade direto sem trocar de modelo — ver embedding-model-justification.md.
+
 Uso:
   pip install FlagEmbedding chromadb
   python3 rag/setup_vectordb.py

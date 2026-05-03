@@ -24,8 +24,11 @@ interface ComponentItem {
   title: string;
   status: "Stable" | "Beta";
   description: string;
+  logic?: string;
+  structure?: string;
   whenToUse: string;
   whenNotToUse: string;
+  tradeOffs?: string;
   insight: string;
   icon: LucideIcon;
   accent: "primary" | "secondary" | "error";
@@ -85,8 +88,11 @@ function getComponentsContent(locale: Locale) {
               title: "Primary Action",
               status: "Stable",
               description: "Main system trigger for the most important objective in a view.",
+              logic: "One primary action per view centers decision-making and prevents competing calls to attention.",
+              structure: "High-contrast button with brand gradient, elevated shadow and concise single label. Optional leading icon.",
               whenToUse: "Primary task completion and high-value progress steps.",
               whenNotToUse: "Secondary choices or low-impact options.",
+              tradeOffs: "Multiple primary actions on the same surface compete and cancel each other out. Demote secondary actions to a button group or overflow menu.",
               insight:
                 "Limit to one primary action per focal region to keep neural clarity in dense interfaces.",
               icon: MousePointerClick,
@@ -96,8 +102,11 @@ function getComponentsContent(locale: Locale) {
               title: "Switch Control",
               status: "Beta",
               description: "Compact segmented switch for moving between related modes or views.",
+              logic: "Segmented controls signal that options are mutually exclusive and equally weighted — not sequential steps.",
+              structure: "Pill-shaped container with 2–4 equal-width segments; active segment has filled background and brand color.",
               whenToUse: "List, grid, graph and other tightly related perspectives.",
               whenNotToUse: "Cross-domain navigation or destination changes.",
+              tradeOffs: "For more than 4 options a dropdown or tab bar scales better. Long labels break the visual balance of equal-weight segments.",
               insight:
                 "Keep label lengths balanced to prevent perceptual jitter during transitions.",
               icon: LayoutTemplate,
@@ -107,8 +116,11 @@ function getComponentsContent(locale: Locale) {
               title: "Global FAB",
               status: "Stable",
               description: "Persistent create affordance with strong symbolic weight in the canvas.",
+              logic: "The FAB occupies screen real estate at all times, so the action it triggers must justify that persistent cost.",
+              structure: "Circular or squircle button, 56px minimum touch target, floating above content at bottom-right with drop shadow.",
               whenToUse: "Creation flows that are always relevant in the current surface.",
               whenNotToUse: "Nested details or contextual subtasks.",
+              tradeOffs: "FABs on desktop feel incongruous without a mobile companion. On desktop, prefer a toolbar button or inline primary action.",
               insight:
                 "The FAB should feel like the source of creation in the system, not just another button.",
               icon: Sparkles,
@@ -118,8 +130,11 @@ function getComponentsContent(locale: Locale) {
               title: "Contextual Menu",
               status: "Stable",
               description: "Scoped menu for secondary and destructive actions around a single entity.",
+              logic: "Contextual menus preserve visual cleanliness by hiding low-frequency actions behind a trigger only those who need them will discover.",
+              structure: "Three-dot or chevron trigger revealing a dropdown list. Destructive action sits last with color separation.",
               whenToUse: "Rows, cards, assets and records with optional actions.",
               whenNotToUse: "Primary flows that deserve direct visibility.",
+              tradeOffs: "Hiding all actions makes the surface feel inert. Expose the most-used action as a direct affordance and reserve the menu for the rest.",
               insight:
                 "Destructive actions should always sit last and visually separated from safe actions.",
               icon: MenuSquare,
@@ -137,8 +152,11 @@ function getComponentsContent(locale: Locale) {
               status: "Stable",
               description:
                 "High-interruption feedback designed to reclaim user attention immediately.",
+              logic: "Alerts interrupt the user's flow — use only when ignoring the state costs more than the interruption itself.",
+              structure: "Full-width or modal banner with semantic icon, severity color, headline and optional CTA button.",
               whenToUse: "Critical system states, outages and blocked synchronization.",
               whenNotToUse: "Informational or dismissible status changes.",
+              tradeOffs: "Alert overuse causes alert blindness. Reserve for truly critical states — use toasts for everything else.",
               insight:
                 "Alerts should break focus only when the cost of ignoring them exceeds the interruption.",
               icon: ShieldAlert,
@@ -148,8 +166,11 @@ function getComponentsContent(locale: Locale) {
               title: "Toast Notification",
               status: "Stable",
               description: "Low-friction, self-dismissing confirmation surface for recent actions.",
+              logic: "Toasts confirm system behavior without requiring user action — they close themselves to preserve flow.",
+              structure: "Compact floating card, bottom-center or top-right, auto-dismissing in 3–5s with optional manual dismiss.",
               whenToUse: "Saved, copied, synced or completed actions.",
               whenNotToUse: "Anything requiring a user decision or persistent context.",
+              tradeOffs: "If the message requires action or persists beyond 5s, it is not a toast — use an alert or modal instead.",
               insight:
                 "If the user needs to act, it is not a toast. It is an interruption and should be treated as one.",
               icon: Layers3,
@@ -160,8 +181,11 @@ function getComponentsContent(locale: Locale) {
               status: "Stable",
               description:
                 "Spatial placeholder preserving rhythm while asynchronous content arrives.",
+              logic: "Skeletons set spatial expectations before content arrives, reducing perceived latency by anchoring the layout.",
+              structure: "Animated gray blocks matching the geometry of the incoming content — not a generic spinner.",
               whenToUse: "Async panels, lazy content, pagination and API-backed cards.",
               whenNotToUse: "Operations so fast that the placeholder flickers.",
+              tradeOffs: "If content loads in under 300ms, the skeleton flickers and creates more disruption than it prevents. Use a simple opacity fade instead.",
               insight:
                 "A skeleton must mimic the final geometry; otherwise reveal feels like layout instability.",
               icon: LoaderCircle,
@@ -179,8 +203,11 @@ function getComponentsContent(locale: Locale) {
               status: "Stable",
               description:
                 "Dense trend visualization for temporal analysis and predictive modeling.",
+              logic: "Temporal data is about direction and rate of change, not just the current value — a chart answers both simultaneously.",
+              structure: "Line or area chart with labeled axes, hover tooltips and optional reference lines for goals or targets.",
               whenToUse: "Velocity, KPI evolution and forecasted movement.",
               whenNotToUse: "Single bounded values that need no trend context.",
+              tradeOffs: "For a single current value without trend relevance, a metric card is clearer and less visually heavy than a chart.",
               insight: "Direction of change is often more actionable than the raw number itself.",
               icon: BarChart3,
               accent: "primary",
@@ -189,8 +216,11 @@ function getComponentsContent(locale: Locale) {
               title: "Bioluminescent Heatmap",
               status: "Beta",
               description: "Intensity-based overview of hotspots in a complex system canvas.",
+              logic: "Color intensity maps frequency or density to spatial position, making clusters visible at a glance without counting.",
+              structure: "Grid or canvas with luminance-based color scale from muted to vivid. Legend is mandatory.",
               whenToUse: "Activity clusters, dependency hotspots and risk density.",
               whenNotToUse: "Sparse datasets with few meaningful concentrations.",
+              tradeOffs: "With sparse data, few cells have meaningful intensity — the visual becomes noise. Minimum viable density is roughly 10% cell coverage.",
               insight: "Map intensity with luminance and opacity before relying on hue shifts.",
               icon: Activity,
               accent: "secondary",
@@ -200,8 +230,11 @@ function getComponentsContent(locale: Locale) {
               status: "Stable",
               description:
                 "Circular bounded score for health, threshold and progress-at-a-glance.",
+              logic: "A radial form implies a maximum and minimum, making it semantically appropriate only for bounded values.",
+              structure: "Arc from 0 to maximum value with indicator fill; current value shown numerically in center.",
               whenToUse: "Health metrics, readiness scores and bounded KPIs.",
               whenNotToUse: "Unbounded values or raw totals.",
+              tradeOffs: "For multiple bounded values, a bar chart is denser and more comparable. Gauges are best used in isolation or pairs.",
               insight:
                 "A radial gauge implies a maximum; never use it for values without clear bounds.",
               icon: Gauge,
@@ -212,8 +245,11 @@ function getComponentsContent(locale: Locale) {
               status: "Stable",
               description:
                 "Compact inline trend cue embedded alongside metrics or table rows.",
+              logic: "Sparklines convey directionality — up, down or flat — in minimal space alongside a metric label.",
+              structure: "Micro line chart, 60–120px wide, no axes or labels, optionally color-coded by direction.",
               whenToUse: "Dense dashboards that still need directional context.",
               whenNotToUse: "Situations where precise reading beats glanceability.",
+              tradeOffs: "Sparklines sacrifice precision for compactness. If the user needs exact values at each point, use a full chart.",
               insight:
                 "A sparkline answers one critical question fast: is this getting better or worse?",
               icon: Activity,
@@ -223,8 +259,11 @@ function getComponentsContent(locale: Locale) {
               title: "Entity Graph",
               status: "Beta",
               description: "Relationship map for dependencies, systems and knowledge graphs.",
+              logic: "Node-link diagrams reveal structural relationships that tabular data cannot express — adjacency is data.",
+              structure: "Nodes as entities, edges as relationships, with optional labels, direction arrows and weight encoding.",
               whenToUse: "Connected entities where adjacency itself is meaningful.",
               whenNotToUse: "Linear flows better expressed as steps or trees.",
+              tradeOffs: "Graphs with more than ~50 nodes become visually cluttered. Use filtering, clustering or a matrix view instead.",
               insight:
                 "Relationships are also data, and surfacing them often reveals the true bottleneck.",
               icon: Command,
@@ -241,8 +280,11 @@ function getComponentsContent(locale: Locale) {
               title: "Neural Input",
               status: "Stable",
               description: "Signature text input built for conversational or semantic prompting.",
+              logic: "A semantically rich input field signals that the system accepts open-ended, natural-language queries — not just form values.",
+              structure: "Full-width text field with subtle glow animation on focus, placeholder as contextual prompt, optional trailing action button.",
               whenToUse: "Search, prompts, generative commands and AI-assisted actions.",
               whenNotToUse: "Rigid structured forms with heavy validation.",
+              tradeOffs: "Neural inputs imply AI processing behind them. If the backend is a simple search, this styling creates a trust mismatch.",
               insight:
                 "Subtle glow and focused contrast make the field feel alive without reducing legibility.",
               icon: Search,
@@ -252,8 +294,11 @@ function getComponentsContent(locale: Locale) {
               title: "Selection Chips",
               status: "Stable",
               description: "Compact multi-select controls for faceted refinement and tagging.",
+              logic: "Chips make multi-select options tangible and show selected state inline, reducing the overhead of hidden dropdowns.",
+              structure: "Pill-shaped labels, horizontally scrollable or wrapping, with filled and outlined states for selected and unselected.",
               whenToUse: "Status, labels, dataset refinement and filtering.",
               whenNotToUse: "Long option lists that demand search or hierarchy.",
+              tradeOffs: "Beyond 10–12 options, chips become unwieldy. Use a searchable multi-select dropdown instead.",
               insight:
                 "Chips work best when options are few, semantically clear and visually balanced.",
               icon: Layers3,
@@ -263,8 +308,11 @@ function getComponentsContent(locale: Locale) {
               title: "Gradient Slider",
               status: "Stable",
               description: "Continuous control for threshold, opacity and numerical tuning.",
+              logic: "A continuous slider is appropriate when the user needs to feel a range, not just select a discrete value.",
+              structure: "Horizontal track with draggable thumb, gradient fill from left to thumb, current value label above or beside.",
               whenToUse: "Precision values with immediate visual response.",
               whenNotToUse: "Discrete, categorical choices.",
+              tradeOffs: "Sliders are hard to target precisely on touch. For exact numeric input, pair with a text field or step buttons.",
               insight: "A slider should communicate range, not ambiguity. Show the current value clearly.",
               icon: SlidersHorizontal,
               accent: "primary",
@@ -273,8 +321,11 @@ function getComponentsContent(locale: Locale) {
               title: "Toggle Switch",
               status: "Stable",
               description: "Binary state control for immediate system preference changes.",
+              logic: "Toggles communicate binary state with an immediate effect — the UI changes the moment the switch moves.",
+              structure: "Pill track with circular thumb. Off state muted, on state in brand color. Label always visible.",
               whenToUse: "Instant, reversible preferences.",
               whenNotToUse: "Dangerous actions or changes that require confirmation.",
+              tradeOffs: "For settings that require a save action before taking effect, use a checkbox with a Save button instead.",
               insight:
                 "A toggle promises immediate reversibility; never use it for high-risk consequences.",
               icon: ToggleLeft,
@@ -284,8 +335,11 @@ function getComponentsContent(locale: Locale) {
               title: "Date Picker",
               status: "Stable",
               description: "Calendar anchor for deadlines, ranges and scheduled work.",
+              logic: "Calendars anchor temporal choices in the user's mental model of weeks and months — more reliable than raw text input.",
+              structure: "Trigger input showing formatted date, popover calendar with month navigation and day selection grid.",
               whenToUse: "Scheduling, planning and time filtering.",
               whenNotToUse: "Simple year or text inputs where a calendar is excessive.",
+              tradeOffs: "For entering a well-known date, a text field is faster. Calendars add overhead when the user already knows the exact date.",
               insight: "Today should always be a visible anchor so the user can orient instantly.",
               icon: CalendarDays,
               accent: "secondary",
@@ -294,8 +348,11 @@ function getComponentsContent(locale: Locale) {
               title: "Search Command Bar",
               status: "Stable",
               description: "Global command surface for navigation and power-user acceleration.",
+              logic: "Command bars give power users a keyboard-driven shortcut to any action without mouse navigation through menus.",
+              structure: "Modal overlay triggered by keyboard shortcut (⌘K), fuzzy search input, grouped results list with icons.",
               whenToUse: "Apps with broad IA, many actions or expert workflows.",
               whenNotToUse: "Tiny products where every action is already visible.",
+              tradeOffs: "Command bars require discovery — users must know they exist. Pair with an onboarding nudge or visible keyboard shortcut label.",
               insight:
                 "A great command bar is not an accessory; it becomes the operational backbone.",
               icon: Search,
@@ -324,8 +381,11 @@ function getComponentsContent(locale: Locale) {
             status: "Stable",
             description:
               "Natural-language explanation layer for opaque predictions and recommendations.",
+            logic: "When AI drives a recommendation, the reasoning must accompany the output — otherwise trust cannot be calibrated by the user.",
+            structure: "Expandable card attached to a prediction or recommendation, showing rationale in 2–3 plain-language sentences.",
             whenToUse: "Any AI-driven score or recommendation shown to non-technical users.",
             whenNotToUse: "Expert surfaces where raw coefficients matter more than summary language.",
+            tradeOffs: "Explanation text that is too long defeats its purpose. Aim for 2–3 sentences covering what, why and confidence level.",
             insight:
               "Explanation depth should adapt to role: managers need actionability, engineers need detail.",
             icon: Sparkles,
@@ -335,8 +395,11 @@ function getComponentsContent(locale: Locale) {
             title: "Confidence Meter",
             status: "Stable",
             description: "Trust calibration surface that exposes uncertainty and signal quality.",
+            logic: "Displaying confidence calibrates user reliance — high confidence invites action, low confidence invites verification.",
+            structure: "Progress bar, arc or numeric percentage with semantic color coding (green, amber, red tiers).",
             whenToUse: "Predictions, forecasts and probabilistic suggestions.",
             whenNotToUse: "Deterministic rules where confidence is misleading theater.",
+            tradeOffs: "A miscalibrated confidence score is worse than no score — it creates false certainty. Validate calibration before shipping.",
             insight:
               "Trust in AI is earned through uncertainty disclosure, not through tone of certainty.",
             icon: CircleGauge,
@@ -346,8 +409,11 @@ function getComponentsContent(locale: Locale) {
             title: "Predictive Progress Card",
             status: "Beta",
             description: "Current progress plus projected trajectory in a single artifact.",
+            logic: "Combining current state with projected trajectory gives managers the information they need to intervene before problems materialize.",
+            structure: "Card split between solid (actual) and dashed (projected) sections, with delta label showing days ahead or behind.",
             whenToUse: "Sprints, milestones and delivery tracking with historical signal.",
             whenNotToUse: "Tasks with insufficient historical evidence.",
+            tradeOffs: "Projections without sufficient historical data are unreliable. Require at least 2–3 completed sprints before activating.",
             insight:
               "The projection shadow must read as hypothesis, not promise, through muted styling.",
             icon: BarChart3,
@@ -357,8 +423,11 @@ function getComponentsContent(locale: Locale) {
             title: "Source Attribution Link",
             status: "Stable",
             description: "Evidence layer showing which documents, logs or datasets powered the insight.",
+            logic: "Provenance turns an assertion into evidence — it allows users to verify claims and builds durable trust in the system.",
+            structure: "Inline chip or footnote linking to the source document, log or dataset that powered the AI output.",
             whenToUse: "Every AI-generated summary, prediction or recommendation.",
             whenNotToUse: "Pure UI feedback that is not data-derived.",
+            tradeOffs: "If the source is a black-box third-party model output, attribution cannot be honest. Surface this limitation explicitly.",
             insight:
               "Explainability without provenance is storytelling. Evidence makes it auditable.",
             icon: Command,

@@ -166,15 +166,19 @@ def extract_components(chunks: list):
             fields = {
                 "status":           extract_string_field(item_obj, "status"),
                 "description":      extract_string_field(item_obj, "description"),
+                "logic":            extract_string_field(item_obj, "logic"),
+                "structure":        extract_string_field(item_obj, "structure"),
                 "when_to_use":      extract_string_field(item_obj, "whenToUse"),
                 "when_not_to_use":  extract_string_field(item_obj, "whenNotToUse"),
+                "trade_offs":       extract_string_field(item_obj, "tradeOffs"),
                 "aetheris_insight": extract_string_field(item_obj, "insight"),
                 "context_of_use":   f"Section: {section_title}",
             }
             chunks.append(build_chunk("ComponentsPage.tsx", "component", title, fields))
 
-    # xaiItems[] — Intelligence/XAI section
-    xai_objects = extract_objects_from_array(src, "xaiItems")
+    # xai.items[] — Intelligence/XAI section (nested under xai: { items: [...] })
+    xai_src_match = src[src.find("xai:"):] if "xai:" in src else ""
+    xai_objects = extract_objects_from_array(xai_src_match, "items") if xai_src_match else []
     for item_obj in xai_objects:
         title = extract_string_field(item_obj, "title")
         if not title:
@@ -182,8 +186,11 @@ def extract_components(chunks: list):
         fields = {
             "status":           extract_string_field(item_obj, "status"),
             "description":      extract_string_field(item_obj, "description"),
+            "logic":            extract_string_field(item_obj, "logic"),
+            "structure":        extract_string_field(item_obj, "structure"),
             "when_to_use":      extract_string_field(item_obj, "whenToUse"),
             "when_not_to_use":  extract_string_field(item_obj, "whenNotToUse"),
+            "trade_offs":       extract_string_field(item_obj, "tradeOffs"),
             "aetheris_insight": extract_string_field(item_obj, "insight"),
             "context_of_use":   "Section: Intelligence / XAI",
         }

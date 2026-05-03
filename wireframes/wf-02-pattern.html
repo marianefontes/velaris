@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>WF-02 — Padrão Complexo</title>
+<style>
+  :root {
+    --bg:#0d0d14;--surface:#13131f;--surface-hi:#1a1a2e;--border:rgba(255,255,255,0.07);
+    --primary:#a78bfa;--primary-dim:rgba(167,139,250,0.12);--secondary:#67e8f9;
+    --success:#34d399;--text:#e2e8f0;--text-dim:#94a3b8;--text-xs:#64748b;
+    --radius:16px;--radius-sm:8px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;font-size:14px;line-height:1.6;}
+  .chat-container{max-width:680px;margin:0 auto;padding:32px 16px;}
+  .header{text-align:center;margin-bottom:40px;}
+  .header .logo{font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--primary);margin-bottom:8px;}
+  .header h1{font-size:18px;font-weight:700;}
+  .header .wf-tag{display:inline-block;margin-top:8px;padding:3px 10px;border-radius:999px;background:var(--primary-dim);border:1px solid rgba(167,139,250,0.3);font-size:11px;color:var(--primary);}
+  .msg-user{display:flex;justify-content:flex-end;margin-bottom:20px;}
+  .msg-user .bubble{background:var(--primary-dim);border:1px solid rgba(167,139,250,0.2);border-radius:18px 18px 4px 18px;padding:12px 16px;max-width:75%;font-size:14px;}
+  .msg-beatrice{margin-bottom:24px;}
+  .beatrice-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+  .beatrice-avatar{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+  .beatrice-name{font-size:12px;font-weight:700;letter-spacing:0.08em;color:var(--primary);text-transform:uppercase;}
+  .response-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  .rec-row{padding:20px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:14px;}
+  .rec-icon{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--secondary),var(--primary));display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+  .rec-label{font-size:10px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-xs);margin-bottom:2px;}
+  .rec-title{font-size:18px;font-weight:800;letter-spacing:-0.02em;}
+  .rec-source{font-size:11px;color:var(--text-dim);margin-top:2px;}
+  .rec-source span{color:var(--secondary);cursor:pointer;}
+  .response-body{padding:20px;}
+  .section-label{font-size:10px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-xs);margin-bottom:6px;}
+  .section-text{font-size:13px;color:var(--text-dim);line-height:1.65;margin-bottom:16px;}
+  .anatomy-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;}
+  .anatomy-item{padding:10px 12px;background:var(--surface-hi);border-radius:var(--radius-sm);border-top:2px solid var(--secondary);}
+  .anatomy-num{font-size:9px;font-weight:700;letter-spacing:0.12em;color:var(--secondary);margin-bottom:3px;}
+  .anatomy-name{font-size:12px;font-weight:600;color:var(--text);}
+  .anatomy-desc{font-size:11px;color:var(--text-dim);margin-top:2px;}
+  .logic-block{padding:14px;background:rgba(103,232,249,0.06);border:1px solid rgba(103,232,249,0.15);border-radius:var(--radius-sm);margin-bottom:16px;}
+  .logic-block .section-label{color:var(--secondary);}
+  .xai-footer{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:var(--surface-hi);border-top:1px solid var(--border);}
+  .confidence{display:flex;align-items:center;gap:10px;}
+  .confidence-label{font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-xs);}
+  .confidence-bar{width:80px;height:4px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;}
+  .confidence-fill{height:100%;background:var(--secondary);border-radius:2px;}
+  .confidence-val{font-size:12px;font-weight:700;color:var(--secondary);}
+  .source-chip{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(103,232,249,0.1);border:1px solid rgba(103,232,249,0.2);font-size:11px;color:var(--secondary);cursor:pointer;}
+  .input-area{margin-top:24px;display:flex;gap:10px;}
+  .input-field{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 16px;color:var(--text);font-size:14px;outline:none;}
+  .send-btn{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--primary),var(--secondary));border:none;cursor:pointer;font-size:16px;}
+  .annotation{margin-top:32px;padding:16px;background:rgba(103,232,249,0.05);border:1px solid rgba(103,232,249,0.2);border-radius:var(--radius-sm);}
+  .annotation h3{font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--secondary);margin-bottom:10px;}
+  .annotation ul{list-style:none;}
+  .annotation li{font-size:12px;color:var(--text-dim);margin-bottom:6px;padding-left:16px;position:relative;}
+  .annotation li::before{content:'→';position:absolute;left:0;color:var(--secondary);}
+</style>
+</head>
+<body>
+<div class="chat-container">
+  <div class="header">
+    <div class="logo">Aetheris Design System</div>
+    <h1>Beatrice — Oráculo Inteligente</h1>
+    <div class="wf-tag">WF-02 · Pattern Guidance</div>
+  </div>
+
+  <div class="msg-user">
+    <div class="bubble">Como estruturo uma tela de onboarding para um novo usuário do produto?</div>
+  </div>
+
+  <div class="msg-beatrice">
+    <div class="beatrice-header">
+      <div class="beatrice-avatar">✦</div>
+      <span class="beatrice-name">Beatrice</span>
+    </div>
+
+    <div class="response-card">
+      <div class="rec-row">
+        <div class="rec-icon">◈</div>
+        <div>
+          <div class="rec-label">Padrão recomendado</div>
+          <div class="rec-title">Onboarding Pattern</div>
+          <div class="rec-source">Fonte: <span>PatternsPage → Supporting Patterns</span></div>
+        </div>
+      </div>
+
+      <div class="response-body">
+        <div class="logic-block">
+          <div class="section-label">Lógica do padrão</div>
+          <div class="section-text" style="margin-bottom:0">Progressive disclosure que introduz funcionalidades-chave via educação contextual sem interromper o fluxo principal. Reduz sobrecarga cognitiva ao sequenciar descobertas em vez de apresentar tudo de uma vez.</div>
+        </div>
+
+        <div class="section-label">Anatomia do padrão</div>
+        <div class="anatomy-grid">
+          <div class="anatomy-item">
+            <div class="anatomy-num">01</div>
+            <div class="anatomy-name">Welcome Step</div>
+            <div class="anatomy-desc">Contexto de valor, sem formulário</div>
+          </div>
+          <div class="anatomy-item">
+            <div class="anatomy-num">02</div>
+            <div class="anatomy-name">Role Setup</div>
+            <div class="anatomy-desc">Personalização mínima (1–2 perguntas)</div>
+          </div>
+          <div class="anatomy-item">
+            <div class="anatomy-num">03</div>
+            <div class="anatomy-name">First Action</div>
+            <div class="anatomy-desc">Quick win imediato no produto</div>
+          </div>
+        </div>
+
+        <div class="section-label">Contexto de uso</div>
+        <div class="section-text">First-run experiences, ativação pós-signup, descoberta de features após grandes atualizações e reveals de capacidades baseadas em papel.</div>
+
+        <div class="section-label" style="color:#f87171">Quando não usar</div>
+        <div class="section-text">Re-engajamento de usuários experientes — onboarding para quem já conhece o produto cria atrito desnecessário.</div>
+      </div>
+
+      <div class="xai-footer">
+        <div class="confidence">
+          <span class="confidence-label">Confiança RAG</span>
+          <div class="confidence-bar"><div class="confidence-fill" style="width:76%"></div></div>
+          <span class="confidence-val">76%</span>
+        </div>
+        <div class="source-chip">↗ PatternsPage</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="input-area">
+    <input class="input-field" placeholder="Pergunte ao oráculo Aetheris..." readonly/>
+    <button class="send-btn">↑</button>
+  </div>
+
+  <div class="annotation">
+    <h3>Anotações do wireframe (WF-02)</h3>
+    <ul>
+      <li>Padrão complexo expõe anatomia em grid 3 colunas com numeração</li>
+      <li>Lógica do padrão destacada em bloco separado (cor secondary)</li>
+      <li>Contexto de uso e quando não usar sem grid — texto corrido mais adequado</li>
+      <li>Confidence mais baixa (76%) reflete padrão com match moderado</li>
+      <li>Intent detectado: pattern_guidance</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>

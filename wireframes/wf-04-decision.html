@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>WF-04 — Decision Log</title>
+<style>
+  :root{--bg:#0d0d14;--surface:#13131f;--surface-hi:#1a1a2e;--border:rgba(255,255,255,0.07);--primary:#a78bfa;--primary-dim:rgba(167,139,250,0.12);--secondary:#67e8f9;--amber:#fbbf24;--amber-dim:rgba(251,191,36,0.1);--success:#34d399;--text:#e2e8f0;--text-dim:#94a3b8;--text-xs:#64748b;--radius:16px;--radius-sm:8px;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;font-size:14px;line-height:1.6;}
+  .chat-container{max-width:680px;margin:0 auto;padding:32px 16px;}
+  .header{text-align:center;margin-bottom:40px;}
+  .header .logo{font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--primary);margin-bottom:8px;}
+  .header h1{font-size:18px;font-weight:700;}
+  .header .wf-tag{display:inline-block;margin-top:8px;padding:3px 10px;border-radius:999px;background:var(--amber-dim);border:1px solid rgba(251,191,36,0.3);font-size:11px;color:var(--amber);}
+  .msg-user{display:flex;justify-content:flex-end;margin-bottom:20px;}
+  .msg-user .bubble{background:var(--primary-dim);border:1px solid rgba(167,139,250,0.2);border-radius:18px 18px 4px 18px;padding:12px 16px;max-width:75%;}
+  .msg-beatrice{margin-bottom:24px;}
+  .beatrice-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+  .beatrice-avatar{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+  .beatrice-name{font-size:12px;font-weight:700;letter-spacing:0.08em;color:var(--primary);text-transform:uppercase;}
+  .response-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  .decision-header{padding:20px;border-bottom:1px solid var(--border);}
+  .rule-tag{display:inline-block;padding:2px 8px;border-radius:4px;background:var(--amber-dim);border:1px solid rgba(251,191,36,0.3);font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--amber);margin-bottom:8px;}
+  .decision-title{font-size:18px;font-weight:800;letter-spacing:-0.02em;margin-bottom:4px;}
+  .decision-source{font-size:11px;color:var(--text-dim);}
+  .decision-source span{color:var(--amber);cursor:pointer;}
+  .response-body{padding:20px;}
+  .section-label{font-size:10px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-xs);margin-bottom:6px;}
+  .section-text{font-size:13px;color:var(--text-dim);line-height:1.65;margin-bottom:16px;}
+  .signals-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+  .signal-group{padding:12px;background:var(--surface-hi);border-radius:var(--radius-sm);}
+  .signal-group-label{font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:8px;}
+  .signal-group.use .signal-group-label{color:var(--success);}
+  .signal-group.avoid .signal-group-label{color:#f87171;}
+  .chip-list{display:flex;flex-wrap:wrap;gap:6px;}
+  .chip{padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600;}
+  .chip.use{background:rgba(52,211,153,0.1);color:var(--success);border:1px solid rgba(52,211,153,0.2);}
+  .chip.avoid{background:rgba(248,113,113,0.1);color:#f87171;border:1px solid rgba(248,113,113,0.2);}
+  .tradeoff-block{padding:12px 14px;background:var(--amber-dim);border:1px solid rgba(251,191,36,0.2);border-radius:var(--radius-sm);margin-bottom:16px;}
+  .tradeoff-block .section-label{color:var(--amber);}
+  .xai-footer{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:var(--surface-hi);border-top:1px solid var(--border);}
+  .confidence{display:flex;align-items:center;gap:10px;}
+  .confidence-label{font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-xs);}
+  .confidence-bar{width:80px;height:4px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;}
+  .confidence-fill{height:100%;background:var(--amber);border-radius:2px;}
+  .confidence-val{font-size:12px;font-weight:700;color:var(--amber);}
+  .source-chip{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:var(--amber-dim);border:1px solid rgba(251,191,36,0.2);font-size:11px;color:var(--amber);cursor:pointer;}
+  .input-area{margin-top:24px;display:flex;gap:10px;}
+  .input-field{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 16px;color:var(--text);font-size:14px;outline:none;}
+  .send-btn{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--primary),var(--secondary));border:none;cursor:pointer;font-size:16px;}
+  .annotation{margin-top:32px;padding:16px;background:var(--amber-dim);border:1px solid rgba(251,191,36,0.2);border-radius:var(--radius-sm);}
+  .annotation h3{font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--amber);margin-bottom:10px;}
+  .annotation ul{list-style:none;}
+  .annotation li{font-size:12px;color:var(--text-dim);margin-bottom:6px;padding-left:16px;position:relative;}
+  .annotation li::before{content:'→';position:absolute;left:0;color:var(--amber);}
+</style>
+</head>
+<body>
+<div class="chat-container">
+  <div class="header">
+    <div class="logo">Aetheris Design System</div>
+    <h1>Beatrice — Oráculo Inteligente</h1>
+    <div class="wf-tag">WF-04 · Design Decision</div>
+  </div>
+
+  <div class="msg-user">
+    <div class="bubble">Por que o Aetheris usa Side Drawer em vez de Modal para formulários complexos?</div>
+  </div>
+
+  <div class="msg-beatrice">
+    <div class="beatrice-header">
+      <div class="beatrice-avatar">✦</div>
+      <span class="beatrice-name">Beatrice</span>
+    </div>
+
+    <div class="response-card">
+      <div class="decision-header">
+        <div class="rule-tag">Rule 04 — Architectural Truth</div>
+        <div class="decision-title">Modal Overlay vs. Side Drawer</div>
+        <div class="decision-source">Fonte: <span>DesignDecisionsPage → Decisão Principal</span></div>
+      </div>
+
+      <div class="response-body">
+        <div class="section-label">Raciocínio da decisão</div>
+        <div class="section-text">Side Drawer preserva continuidade espacial — o usuário mantém contexto da página enquanto age. Modal Overlay exige atenção total — adequado para confirmações e ações bloqueantes. A decisão se resume a: o usuário precisa ver a página enquanto age?</div>
+
+        <div class="signals-row">
+          <div class="signal-group use">
+            <div class="signal-group-label">Use Drawer quando</div>
+            <div class="chip-list">
+              <span class="chip use">Conteúdo denso</span>
+              <span class="chip use">Contexto persistente</span>
+              <span class="chip use">Form multi-step</span>
+            </div>
+          </div>
+          <div class="signal-group avoid">
+            <div class="signal-group-label">Use Modal quando</div>
+            <div class="chip-list">
+              <span class="chip avoid">Confirmação crítica</span>
+              <span class="chip avoid">Decisão bloqueante</span>
+              <span class="chip avoid">Criação simples</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="tradeoff-block">
+          <div class="section-label">Trade-offs documentados</div>
+          <div class="section-text" style="margin-bottom:0">Drawer: oclusão visual parcial da página — pode esconder conteúdo relevante. Modal: modal blindness e perda de contexto — usuário esquece onde estava.</div>
+        </div>
+      </div>
+
+      <div class="xai-footer">
+        <div class="confidence">
+          <span class="confidence-label">Confiança RAG</span>
+          <div class="confidence-bar"><div class="confidence-fill" style="width:88%"></div></div>
+          <span class="confidence-val">88%</span>
+        </div>
+        <div class="source-chip">↗ DesignDecisionsPage</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="input-area">
+    <input class="input-field" placeholder="Pergunte ao oráculo Aetheris..." readonly/>
+    <button class="send-btn">↑</button>
+  </div>
+
+  <div class="annotation">
+    <h3>Anotações do wireframe (WF-04)</h3>
+    <ul>
+      <li>Rule tag no topo identifica a decisão arquitetural pelo número</li>
+      <li>Signals em grid 2 colunas: "use quando" vs "use modal quando" com chips coloridos</li>
+      <li>Trade-offs em bloco amber — cor que não é sucesso nem erro, reflete nuance</li>
+      <li>Intent detectado: design_decision</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>
