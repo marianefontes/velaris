@@ -1,15 +1,15 @@
 /**
  * Beatrice Chat Server
- * API-only proxy for Anthropic streaming responses
- * Usage: ANTHROPIC_API_KEY=sk-ant-... node server.cjs
+ * API proxy for Groq streaming responses (OpenAI-compatible format)
+ * Usage: GROQ_API_KEY=gsk_... node server.cjs
  */
 
 const http = require('http');
 const https = require('https');
 
 const PORT = process.env.PORT || 3333;
-const API_KEY = process.env.ANTHROPIC_API_KEY || '';
-const MODEL = 'claude-haiku-4-5';
+const API_KEY = process.env.GROQ_API_KEY || '';
+const MODEL = 'llama-3.3-70b-versatile';
 
 // ─── Aetheris System Prompt ────────────────────────────────────────────────
 const AETHERIS_SYSTEM_PROMPT = `
@@ -50,11 +50,11 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // ── POST /api/chat — proxy Anthropic with streaming ──────────────────────
+  // ── POST /api/chat — proxy Groq with streaming ───────────────────────────
   if (req.method === 'POST' && parsedUrl.pathname === '/api/chat') {
     if (!API_KEY) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'ANTHROPIC_API_KEY não definida. Inicie o servidor com: ANTHROPIC_API_KEY=sk-ant-... node server.cjs' }));
+      res.end(JSON.stringify({ error: 'GROQ_API_KEY não definida. Inicie o servidor com: GROQ_API_KEY=gsk_... node server.cjs' }));
       return;
     }
 
@@ -70,25 +70,29 @@ const server = http.createServer((req, res) => {
         return;
       }
 
-      const messages = payload.messages || [];
+      const userMessages = payload.messages || [];
 
-      const anthropicBody = JSON.stringify({
+      // Groq uses OpenAI format: system message as first item in messages array
+      const messages = [
+        { role: 'system', content: AETHERIS_SYSTEM_PROMPT },
+        ...userMessages,
+      ];
+
+      const groqBody = JSON.stringify({
         model: MODEL,
         max_tokens: 1500,
         stream: true,
-        system: AETHERIS_SYSTEM_PROMPT,
-        messages: messages,
+        messages,
       });
 
       const options = {
-        hostname: 'api.anthropic.com',
-        path: '/v1/messages',
+        hostname: 'api.groq.com',
+        path: '/openai/v1/chat/completions',
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': API_KEY,
-          'anthropic-version': '2023-06-01',
-          'Content-Length': Buffer.byteLength(anthropicBody),
+          'Authorization': `Bearer ${API_KEY}`,
+          'Content-Length': Buffer.byteLength(groqBody),
         },
       };
 
@@ -103,18 +107,16 @@ const server = http.createServer((req, res) => {
           const lines = chunk.toString().split('\n');
           for (const line of lines) {
             if (line.startsWith('data: ')) {
-              const data = line.slice(6);
+              const data = line.slice(6).trim();
               if (data === '[DONE]') {
                 res.write('data: [DONE]\n\n');
                 continue;
               }
               try {
                 const parsed = JSON.parse(data);
-                if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
-                  res.write(`data: ${JSON.stringify({ delta: parsed.delta.text })}\n\n`);
-                }
-                if (parsed.type === 'message_stop') {
-                  res.write('data: [DONE]\n\n');
+                const text = parsed.choices?.[0]?.delta?.content;
+                if (text) {
+                  res.write(`data: ${JSON.stringify({ delta: text })}\n\n`);
                 }
               } catch (_) { /* skip non-JSON lines */ }
             }
@@ -135,7 +137,7 @@ const server = http.createServer((req, res) => {
         res.end();
       });
 
-      apiReq.write(anthropicBody);
+      apiReq.write(groqBody);
       apiReq.end();
     });
     return;
@@ -143,7 +145,7 @@ const server = http.createServer((req, res) => {
 
   if (req.method === 'GET' && parsedUrl.pathname === '/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ status: 'ok', service: 'beatrice-chat-server' }));
+    res.end(JSON.stringify({ status: 'ok', service: 'beatrice-chat-server', model: MODEL }));
     return;
   }
 
@@ -155,8 +157,10 @@ server.listen(PORT, () => {
   console.log('\n🌟 Beatrice Chat Server rodando em http://localhost:' + PORT);
   console.log('🩺 Health check: http://localhost:' + PORT + '/health');
   if (!API_KEY) {
-    console.log('\n⚠️  ANTHROPIC_API_KEY não definida!');
-    console.log('   Reinicie com: ANTHROPIC_API_KEY=sk-ant-... node server.cjs\n');
+    console.log('\n⚠️  GROQ_API_KEY não definida!');
+    console.log('   1. Crie uma conta gratuita em https://console.groq.com');
+    console.log('   2. Gere uma API key em API Keys');
+    console.log('   3. Reinicie com: GROQ_API_KEY=gsk_... node server.cjs\n');
   } else {
     console.log('✅ API Key carregada | Modelo: ' + MODEL + '\n');
   }
