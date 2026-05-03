@@ -161,6 +161,62 @@ Criação deste documento e do `decisoes-tomadas.md` como prática de rastreabil
 
 ---
 
+## Fase 6 — Sprint de Implementação RAG + XAI em Runtime (Maio 2026)
+
+### O problema central: RAG documentado mas não executado
+
+Ao revisar o estado do projeto criticamente, o gap mais grave ficou claro: todo o pipeline RAG havia sido projetado, documentado e os dados estavam indexados — mas o servidor da Beatrice *não usava nada disso em runtime*. As respostas vinham do LLM com um system prompt estático. Os 37 chunks, os embeddings BGE-M3, o ChromaDB — tudo existia mas ficava ocioso enquanto a Beatrice respondia.
+
+Este sprint foi dedicado a fechar essa lacuna de ponta a ponta.
+
+### Migração para Python/FastAPI
+
+A primeira decisão do sprint foi migrar o servidor. O `server.cjs` (Node.js) havia implementado um retrieval TF-IDF interim como prova de conceito, mas ChromaDB é Python-only — integrar o banco de vetores real exigia trocar de runtime.
+
+O `server.py` foi implementado com FastAPI + uvicorn. Na inicialização, o servidor carrega dois recursos pesados uma única vez: o `PersistentClient` do ChromaDB apontando para `rag/chroma_db/`, e o `FlagModel("BAAI/bge-m3")` para geração de embeddings. Esses objetos ficam em memória durante todo o ciclo de vida do servidor — o custo de carregamento (~30s na primeira vez, cache local depois) é pago uma vez, não por query.
+
+O pipeline por query ficou assim:
+1. Receber `POST /api/chat` com array `messages`
+2. Extrair última mensagem do usuário como query
+3. Classificar intent via keywords bilíngues
+4. Embed da query com BGE-M3 (dense mode, fp16)
+5. `collection.query()` no ChromaDB — top 3 chunks por similaridade coseno
+6. Construir contexto RAG com chunks + metadados + scores
+7. Emitir SSE: `{ sources, intent }` (primeiro evento, antes do texto)
+8. Stream da resposta Groq via httpx AsyncClient
+
+### Classificador de intent
+
+O classificador foi implementado como um dicionário Python de keywords bilíngues por categoria. A lógica é simples mas eficaz: conta quantas keywords de cada intent aparecem na query, retorna o de maior score. Para queries fora do domínio, retorna `general`.
+
+A simplicidade é intencional. O classificador não precisa ser ML para este caso de uso — o vocabulário de gestores perguntando sobre design system é previsível e limitado. Keywords bilíngues (PT + EN) cobrem a maioria dos cenários sem custo de inferência adicional.
+
+### Auto-reindexação com watchdog
+
+Um problema de DX identificado: toda vez que um arquivo `.tsx` é editado (enriquecendo o corpus), é necessário rodar dois comandos para reatualizar o ChromaDB. Em desenvolvimento intenso, isso cria drift entre o código e o banco de vetores.
+
+`rag/watch.py` resolve isso com a biblioteca `watchdog`: observa `src/components/*.tsx` em background, e ao detectar modificação, aguarda 3 segundos (debounce para múltiplos saves do editor) e dispara o pipeline completo de reindexação. O desenvolvedor salva o arquivo, e em ~15s o corpus está atualizado.
+
+### Frontend: source attribution chips
+
+A última peça do puzzle XAI foi no frontend. O `server.py` já emitia `{ sources, intent }` como primeiro evento SSE antes do texto — mas o `BeatriceChatPage.tsx` ignorava esse evento (o parser só tratava `{ delta }`).
+
+Três mudanças foram feitas:
+1. Interface `SourceChip` e campos `sources?` + `intent?` em `ChatMessage`
+2. Parser SSE expandido: detecta `{ sources }` e atualiza a mensagem com os metadados de atribuição
+3. Renderização de chips abaixo da resposta concluída — cada chip mostra o título do chunk fonte e o percentual de similaridade
+
+O resultado fecha o ciclo XAI: o gestor vê não apenas a resposta da Beatrice, mas de onde ela veio e com que confiança.
+
+### Scripts adicionados ao package.json
+
+Para facilitar operação do sistema completo:
+- `npm run start:py` → `uvicorn server:app --port 3333 --reload`
+- `npm run index` → pipeline completo de reindexação manual
+- `npm run watch-rag` → auto-reindexador em background
+
+---
+
 ## Estado atual do projeto (Maio 2026)
 
 ### O que está completo
@@ -176,14 +232,17 @@ Criação deste documento e do `decisoes-tomadas.md` como prática de rastreabil
 | Técnica XAI documentada (RAG-native attribution) | ✅ Completo |
 | Backend Beatrice com streaming (Groq) | ✅ Completo |
 
-### O que está em andamento
+### O que está em andamento / concluído neste sprint
 
-| Componente | Status | Próximo passo |
-|-----------|--------|--------------|
-| RAG em runtime (ChromaDB → server) | ❌ Não implementado | Integrar ChromaDB ao server.cjs ou criar microserviço Python |
-| XAI em runtime (confidence, source attribution) | ❌ Não implementado | Depende do RAG em runtime |
-| Wireframes de resposta (Figma, 3–5 mockups) | ❌ Não iniciado | Criar wireframes para 5 padrões de resposta da Beatrice |
-| Chunks com `trade_offs` completos | ⚠️ 27% de cobertura | Enriquecer os 27 chunks sem trade_offs nos arquivos `.tsx` |
+| Componente | Status |
+|-----------|--------|
+| RAG em runtime (ChromaDB + BGE-M3 → server.py) | ✅ Implementado |
+| Intent classifier (keywords bilíngues, 6 categorias) | ✅ Implementado |
+| XAI source attribution (SSE `{ sources, intent }`) | ✅ Implementado |
+| Source chips no frontend (BeatriceChatPage.tsx) | ✅ Implementado |
+| Auto-reindexação com watchdog (rag/watch.py) | ✅ Implementado |
+| Wireframes de resposta (5 padrões HTML) | ✅ Completo (wf-01 a wf-05) |
+| Chunks com `trade_offs` completos | ⚠️ Enriquecimento parcial — prosseguir |
 
 ---
 

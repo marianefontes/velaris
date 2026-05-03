@@ -199,4 +199,76 @@ Cada decisão segue o padrão:
 
 ---
 
-*Próximas decisões a documentar: integração RAG em runtime no server.cjs, estrutura de wireframes de resposta, modelo de precificação.*
+## D-12 — Migração do servidor para Python/FastAPI com RAG vetorial real
+
+**Data:** Maio 2026  
+**Categoria:** Arquitetura / Backend
+
+**O que:** O servidor da Beatrice foi migrado de `server.cjs` (Node.js puro, RAG via TF-IDF) para `server.py` (Python/FastAPI), com retrieval vetorial real usando ChromaDB + BGE-M3.
+
+**Por que:** ChromaDB é uma biblioteca Python — não existe binding estável para Node.js. O TF-IDF implementado em `server.cjs` era uma solução interim que não usava os embeddings já gerados. A migração para Python elimina a fricção de linguagem e viabiliza o pipeline RAG completo: query → embed (BGE-M3) → retrieve (ChromaDB cosine) → augment (system prompt) → generate (Groq streaming).
+
+**Alternativas consideradas:**
+- Manter Node.js com microserviço Python separado para retrieval: descartado — adiciona latência de rede e complexidade operacional desnecessária para um projeto acadêmico.
+- Usar Pinecone ou outro vector store cloud: descartado — dependência de serviço externo pago; ChromaDB persiste localmente e é reproduzível.
+
+**Consequências:** O servidor Python requer `pip install -r requirements.txt` e é iniciado com `uvicorn server:app --port 3333`. A API é idêntica (`POST /api/chat`, SSE) — o frontend não precisa de mudanças no protocolo, apenas na mensagem de erro (de `node server.cjs` para `uvicorn server:app --port 3333`).
+
+---
+
+## D-13 — Source Attribution no Frontend: chips de fonte com confidence score
+
+**Data:** Maio 2026  
+**Categoria:** Frontend / XAI
+
+**O que:** `BeatriceChatPage.tsx` foi modificado para capturar o evento SSE `{ sources, intent }` emitido pelo servidor antes do streaming de texto, e renderizar chips de fonte logo abaixo da resposta concluída.
+
+**Por que:** RAG-native attribution é a técnica XAI escolhida para o projeto — o servidor já gera os dados (chunks recuperados, similaridade coseno), mas sem o frontend capturar e exibir essas informações o XAI não chega ao usuário. Os chips fecham esse ciclo: o gestor vê de onde a Beatrice buscou a informação e com qual confiança.
+
+**Design dos chips:** cada chip exibe o título do chunk (ex: "Confidence Meter") e o percentual de similaridade (ex: "87%"), com estilo `primary/10` background e borda `primary/20` — discreet mas legível.
+
+**Alternativas consideradas:**
+- Exibir as fontes em painel lateral separado: descartado — aumenta a complexidade de layout; os chips inline são mais rápidos de escanear.
+- Exibir apenas durante o streaming: descartado — fontes aparecem apenas depois que a resposta completa, que é o momento correto para auditoria.
+
+**Consequências:** `ChatMessage` agora tem campos opcionais `sources?: SourceChip[]` e `intent?: string`. O SSE parser trata dois tipos de evento: `{ sources }` (primeiro) e `{ delta }` (restante do streaming).
+
+---
+
+## D-14 — Auto-reindexação do Corpus com watchdog
+
+**Data:** Maio 2026  
+**Categoria:** DX (Developer Experience) / Pipeline
+
+**O que:** `rag/watch.py` implementa um watcher de arquivos TSX usando a biblioteca `watchdog`. Qualquer modificação em `src/components/*.tsx` aciona automaticamente o pipeline completo: `extract_docs.py` → `setup_vectordb.py --reset`.
+
+**Por que:** Sem auto-reindexação, cada mudança nos arquivos `.tsx` (que são a fonte primária do corpus) exige rodar dois comandos manualmente para que a Beatrice reflita o conteúdo atualizado. Isso cria atrito no fluxo de desenvolvimento e risco de corpus desatualizado.
+
+**Debounce:** 3 segundos entre triggers — evita múltiplas execuções em sequência rápida (common em editores que salvam em estágios).
+
+**Uso:** `npm run watch-rag` (ou `python3 rag/watch.py`) — roda em paralelo com `npm run dev` e `npm run start:py`.
+
+**Consequências:** O processo watch é stateless e restartável. O ChromaDB é recriado do zero a cada reindexação (`--reset`), garantindo consistência. Reindexação completa leva ~10–30s (dominada pelo tempo de embedding do BGE-M3).
+
+---
+
+## D-15 — Classificador de Intent por Keywords no Servidor
+
+**Data:** Maio 2026  
+**Categoria:** Backend / XAI
+
+**O que:** `server.py` implementa um classificador de intent baseado em matching de keywords, que categoriza cada query da Beatrice em um dos 6 intents (+ fallback `general`) antes do retrieval: `component_guidance`, `pattern_guidance`, `token_lookup`, `design_decision`, `when_not_to_use`, `xai_explanation`.
+
+**Por que:** O intent é emitido como metadado na resposta SSE (`{ sources, intent }`) — serve como dado de audit trail para XAI (o gestor vê qual categoria de pergunta a Beatrice detectou) e como base para retrieval especializado em versões futuras do pipeline (ex: priorizar chunks de DesignDecisionsPage para queries `design_decision`).
+
+**Implementação:** Dicionário `_INTENT_KEYWORDS` com listas de keywords bilíngues (PT-BR + EN) por intent. `classify_intent()` conta matches por categoria e retorna o intent com maior score; empate ou score zero → `general`.
+
+**Alternativas consideradas:**
+- Classificador ML (ex: fine-tuned BERT): descartado — custo de fine-tuning desproporcional para 6 categorias com vocabulário previsível; keywords bilíngues cobrem 90%+ dos casos de uso.
+- Classificação pelo próprio LLM (Groq): descartado — adiciona uma chamada de API por query, dobrando latência e custo.
+
+**Consequências:** O classificador é síncrono e de custo zero (matching de strings). A acurácia depende da cobertura de keywords — queries em outros idiomas (ex: espanhol) seriam classificadas como `general`. Extensível: adicionar keywords ao dicionário não requer restart do servidor.
+
+---
+
+*Documento atualizado em Maio 2026. Última decisão: D-15.*
