@@ -9,6 +9,7 @@ Usage:
 
 import json
 import os
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import AsyncGenerator
 
@@ -25,25 +26,22 @@ RAG_DIR  = Path(__file__).parent / "rag"
 DB_PATH  = RAG_DIR / "chroma_db"
 COLLECTION_NAME = "aetheris_design_system"
 
-# ── Load ChromaDB ────────────────────────────────────────────────────────────
-print("🗄️  Carregando ChromaDB...")
-_chroma     = chromadb.PersistentClient(path=str(DB_PATH))
-_collection = _chroma.get_or_create_collection(
-    COLLECTION_NAME, metadata={"hnsw:space": "cosine"}
-)
-print(f"✅ ChromaDB: {_collection.count()} chunks indexados")
+# ── Global state (populated at startup) ──────────────────────────────────────
+_chroma:     chromadb.ClientAPI | None = None
+_collection: chromadb.Collection | None = None
+_embedder                              = None
+_rag_ready   = False
 
-# ── Load BGE-M3 ───────────────────────────────────────────────────────────────
-print("🧠 Carregando BAAI/bge-m3 (pode levar ~30s na primeira vez)...")
-try:
-    from FlagEmbedding import FlagModel
-    _embedder = FlagModel("BAAI/bge-m3", use_fp16=True)
-    _rag_ready = True
-    print("✅ BGE-M3 carregado — retrieval vetorial ativo")
-except ImportError:
-    _embedder  = None
-    _rag_ready = False
-    print("⚠️  FlagEmbedding não instalado — RAG desativado (pip install FlagEmbedding)")
+# ── Intent → page_type filter map ────────────────────────────────────────────
+_INTENT_FILTER: dict[str, list[str]] = {
+    "component_guidance": ["component", "xai_component"],
+    "pattern_guidance":   ["pattern"],
+    "token_lookup":       ["token"],
+    "design_decision":    ["design_decision"],
+    "when_not_to_use":    ["component", "guideline", "xai_component"],
+    "xai_explanation":    ["xai_component", "foundation", "reasoning"],
+    "general":            [],  # empty = no filter
+}
 
 # ── Intent Classifier ─────────────────────────────────────────────────────────
 _INTENT_KEYWORDS: dict[str, list[str]] = {
@@ -83,15 +81,39 @@ def classify_intent(query: str) -> str:
     return best if scores[best] > 0 else "general"
 
 # ── RAG Retrieval ─────────────────────────────────────────────────────────────
-def retrieve_chunks(query: str, top_k: int = 3) -> list[dict]:
-    if not _rag_ready or _collection.count() == 0:
+def retrieve_chunks(query: str, intent: str, top_k: int = 3) -> list[dict]:
+    if not _rag_ready or _collection is None or _collection.count() == 0:
         return []
-    vec = _embedder.encode([query], batch_size=1)["dense_vecs"][0].tolist()
-    results = _collection.query(
-        query_embeddings=[vec],
-        n_results=top_k,
-        include=["documents", "metadatas", "distances"],
-    )
+
+    vec = _embedder.encode(
+        [query],
+        return_dense=True,
+        return_sparse=False,
+        return_colbert_vecs=False,
+    )["dense_vecs"][0].tolist()
+
+    # Intent-based page_type filtering — improves retrieval precision
+    page_types = _INTENT_FILTER.get(intent, [])
+    where = {"page_type": {"$in": page_types}} if page_types else None
+
+    query_kwargs: dict = {
+        "query_embeddings": [vec],
+        "n_results": top_k,
+        "include": ["documents", "metadatas", "distances"],
+    }
+    if where:
+        query_kwargs["where"] = where
+
+    try:
+        results = _collection.query(**query_kwargs)
+    except Exception:
+        # fallback: retry without filter if filtered query returns 0 results
+        results = _collection.query(
+            query_embeddings=[vec],
+            n_results=top_k,
+            include=["documents", "metadatas", "distances"],
+        )
+
     chunks = []
     for i, doc in enumerate(results["documents"][0]):
         meta = results["metadatas"][0][i]
@@ -146,8 +168,35 @@ Princípios de resposta:
 - mencione trade-offs quando relevante.
 """.strip()
 
+# ── Lifespan (startup / shutdown) ─────────────────────────────────────────────
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global _chroma, _collection, _embedder, _rag_ready
+
+    print("🗄️  Carregando ChromaDB...")
+    _chroma     = chromadb.PersistentClient(path=str(DB_PATH))
+    _collection = _chroma.get_or_create_collection(
+        COLLECTION_NAME, metadata={"hnsw:space": "cosine"}
+    )
+    print(f"✅ ChromaDB: {_collection.count()} chunks indexados")
+
+    print("🧠 Carregando BAAI/bge-m3 (pode levar ~30s na primeira vez)...")
+    try:
+        from FlagEmbedding import BGEM3FlagModel
+        _embedder  = BGEM3FlagModel("BAAI/bge-m3", use_fp16=True)
+        _rag_ready = True
+        print("✅ BGE-M3 carregado — retrieval vetorial ativo")
+    except ImportError:
+        _embedder  = None
+        _rag_ready = False
+        print("⚠️  FlagEmbedding não instalado — RAG desativado (pip install FlagEmbedding)")
+
+    yield  # server runs here
+
+    print("🛑 Shutting down Beatrice server")
+
 # ── FastAPI App ───────────────────────────────────────────────────────────────
-app = FastAPI(title="Beatrice Chat Server", version="2.0.0")
+app = FastAPI(title="Beatrice Chat Server", version="2.1.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -157,12 +206,13 @@ app.add_middleware(
 
 @app.get("/health")
 def health():
+    count = _collection.count() if _collection else 0
     return {
         "status":        "ok",
         "service":       "beatrice-chat-server",
         "model":         MODEL,
-        "corpus_chunks": _collection.count(),
-        "rag_active":    _rag_ready and _collection.count() > 0,
+        "corpus_chunks": count,
+        "rag_active":    _rag_ready and count > 0,
         "embedder":      "BAAI/bge-m3" if _rag_ready else "none",
     }
 
@@ -170,7 +220,7 @@ def health():
 async def chat(payload: dict) -> StreamingResponse:
     if not API_KEY:
         async def _err():
-            yield f"data: {json.dumps({'error': 'GROQ_API_KEY não definida.'})}\n\n"
+            yield f"data: {json.dumps({'error': 'GROQ_API_KEY não definida. Inicie o servidor com GROQ_API_KEY=gsk_...'})}\n\n"
         return StreamingResponse(_err(), media_type="text/event-stream")
 
     messages  = payload.get("messages", [])
@@ -178,7 +228,7 @@ async def chat(payload: dict) -> StreamingResponse:
     query     = last_user["content"] if last_user else ""
 
     intent      = classify_intent(query)
-    chunks      = retrieve_chunks(query)
+    chunks      = retrieve_chunks(query, intent)
     rag_context = build_rag_context(chunks)
     system_content = _SYSTEM_PROMPT + rag_context
 
@@ -194,34 +244,49 @@ async def chat(payload: dict) -> StreamingResponse:
             yield f"data: {json.dumps({'sources': sources, 'intent': intent})}\n\n"
 
         async with httpx.AsyncClient(timeout=60.0) as client:
-            async with client.stream(
-                "POST",
-                "https://api.groq.com/openai/v1/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {API_KEY}",
-                    "Content-Type":  "application/json",
-                },
-                json={
-                    "model":      MODEL,
-                    "max_tokens": 1500,
-                    "stream":     True,
-                    "messages":   groq_messages,
-                },
-            ) as resp:
-                async for line in resp.aiter_lines():
-                    if not line.startswith("data: "):
-                        continue
-                    data = line[6:].strip()
-                    if data == "[DONE]":
-                        yield "data: [DONE]\n\n"
-                        break
-                    try:
-                        parsed = json.loads(data)
-                        text   = parsed["choices"][0]["delta"].get("content")
-                        if text:
-                            yield f"data: {json.dumps({'delta': text})}\n\n"
-                    except Exception:
-                        pass
+            try:
+                async with client.stream(
+                    "POST",
+                    "https://api.groq.com/openai/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {API_KEY}",
+                        "Content-Type":  "application/json",
+                    },
+                    json={
+                        "model":      MODEL,
+                        "max_tokens": 1500,
+                        "stream":     True,
+                        "messages":   groq_messages,
+                    },
+                ) as resp:
+                    if resp.status_code == 401:
+                        yield f"data: {json.dumps({'error': 'GROQ_API_KEY inválida (401). Verifique a chave.'})}\n\n"
+                        return
+                    if resp.status_code == 429:
+                        yield f"data: {json.dumps({'error': 'Limite de requisições Groq atingido (429). Aguarde alguns segundos e tente novamente.'})}\n\n"
+                        return
+                    if resp.status_code >= 400:
+                        yield f"data: {json.dumps({'error': f'Erro Groq HTTP {resp.status_code}. Tente novamente.'})}\n\n"
+                        return
+
+                    async for line in resp.aiter_lines():
+                        if not line.startswith("data: "):
+                            continue
+                        data = line[6:].strip()
+                        if data == "[DONE]":
+                            yield "data: [DONE]\n\n"
+                            break
+                        try:
+                            parsed = json.loads(data)
+                            text   = parsed["choices"][0]["delta"].get("content")
+                            if text:
+                                yield f"data: {json.dumps({'delta': text})}\n\n"
+                        except Exception:
+                            pass
+            except httpx.TimeoutException:
+                yield f"data: {json.dumps({'error': 'Timeout na requisição ao Groq (60s). Tente novamente.'})}\n\n"
+            except httpx.ConnectError:
+                yield f"data: {json.dumps({'error': 'Sem conexão com a API Groq. Verifique sua internet.'})}\n\n"
 
     return StreamingResponse(
         stream(),
