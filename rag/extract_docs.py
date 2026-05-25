@@ -482,6 +482,284 @@ def extract_foundations(chunks: list):
             })
 
 
+def extract_reasoning(chunks: list):
+    """ReasoningPage.tsx → reasoning steps, confidence metrics, alternatives"""
+    src = read_tsx("ReasoningPage.tsx")
+    if not src:
+        return
+
+    # Only process the en-US section (first occurrence of each array)
+    en_src = src[:src.find("isPtPt")] if "isPtPt" in src else src
+
+    # Reasoning steps — how Beatrice processes a query
+    step_objects = extract_objects_from_array(en_src, "steps")
+    for obj in step_objects:
+        title = extract_string_field(obj, "title")
+        desc  = extract_string_field(obj, "description")
+        if not title or not desc:
+            continue
+        text = (
+            f"{PRODUCT_NAME.upper()} REASONING STEP: {title} | "
+            f"Description: {desc} | "
+            "Context Of Use: Beatrice cognitive pipeline — how evidence and UX "
+            "principles are combined before a recommendation is generated"
+        )
+        chunks.append({
+            "id":               make_id("ReasoningPage.tsx", title),
+            "source":           "ReasoningPage.tsx",
+            "page_type":        "reasoning",
+            "title":            title,
+            "status":           "Stable",
+            "structure":        "",
+            "logic":            desc,
+            "context_of_use":   "Beatrice XAI reasoning pipeline",
+            "when_to_use":      "",
+            "when_not_to_use":  "",
+            "trade_offs":       "",
+            "aetheris_insight": "",
+            "text":             text,
+            "char_count":       len(text),
+        })
+
+    # Confidence metrics — scores that describe recommendation quality
+    metric_objects = extract_objects_from_array(en_src, "metrics")
+    metric_parts = []
+    for obj in metric_objects:
+        label = extract_string_field(obj, "label")
+        if label:
+            metric_parts.append(label)
+    if metric_parts:
+        text = (
+            f"{PRODUCT_NAME.upper()} REASONING: Confidence Metrics | "
+            "Logic: Beatrice scores each recommendation on three dimensions: "
+            + ", ".join(metric_parts) + " | "
+            "Context Of Use: Displayed after each oracle response to calibrate user trust | "
+            "Aetheris Insight: Scores are derived from vector similarity and UX principle alignment"
+        )
+        chunks.append({
+            "id":               "ReasoningPage.tsx :: confidence_metrics",
+            "source":           "ReasoningPage.tsx",
+            "page_type":        "reasoning",
+            "title":            "Confidence Metrics",
+            "status":           "Stable",
+            "structure":        "Three-axis scoring: " + ", ".join(metric_parts),
+            "logic":            "Scores surface how well a recommendation aligns with design system rules and UX principles.",
+            "context_of_use":   "Shown after oracle responses to help users calibrate trust",
+            "when_to_use":      "Reference when evaluating competing recommendations",
+            "when_not_to_use":  "",
+            "trade_offs":       "Scores are proxies — high similarity does not guarantee the correct recommendation for every context.",
+            "aetheris_insight": "Confidence calibration is what distinguishes an oracle from a search engine.",
+            "text":             text,
+            "char_count":       len(text),
+        })
+
+    # Decision alternatives — paths considered and rejected
+    alt_objects = extract_objects_from_array(en_src, "alternatives")
+    alt_parts = []
+    for obj in alt_objects:
+        title  = extract_string_field(obj, "title")
+        result = extract_string_field(obj, "result")
+        if title and result:
+            alt_parts.append(f"{title}: {result}")
+    if alt_parts:
+        text = (
+            f"{PRODUCT_NAME.upper()} REASONING: Decision Alternatives | "
+            "Logic: Beatrice evaluates multiple response strategies before selecting one | "
+            + " | ".join(alt_parts)
+        )
+        chunks.append({
+            "id":               "ReasoningPage.tsx :: decision_alternatives",
+            "source":           "ReasoningPage.tsx",
+            "page_type":        "reasoning",
+            "title":            "Decision Alternatives",
+            "status":           "Stable",
+            "structure":        "Multiple paths evaluated; only the best-fit strategy is returned",
+            "logic":            "Alternative paths are weighted against clarity, rationale depth and trust calibration.",
+            "context_of_use":   "Internal oracle evaluation — surfaces in XAI explanation when requested",
+            "when_to_use":      "Reference when the user asks why a specific response style was chosen",
+            "when_not_to_use":  "",
+            "trade_offs":       "Showing rejected paths increases transparency but adds cognitive load.",
+            "aetheris_insight": "The best oracle response is the one the user can audit, trust, and reuse.",
+            "text":             text,
+            "char_count":       len(text),
+        })
+
+
+def extract_persona(chunks: list):
+    """PersonaPage.tsx → goals, frustrations, journey steps, oracle capabilities"""
+    src = read_tsx("PersonaPage.tsx")
+    if not src:
+        return
+
+    # Only process the en-US section (first locale block)
+    en_src = src[:src.find("isPtPt")] if "isPtPt" in src else src
+
+    # Persona goals
+    goal_objects = extract_objects_from_array(en_src, "goals")
+    goal_parts = []
+    for obj in goal_objects:
+        title = extract_string_field(obj, "title")
+        text  = extract_string_field(obj, "text")
+        if title:
+            goal_parts.append(f"{title}: {text}" if text else title)
+    if goal_parts:
+        text = (
+            f"{PRODUCT_NAME.upper()} PERSONA: Francisco Soares — Goals | "
+            "Context Of Use: Primary consumer persona — Product Manager using the design system | "
+            + " | ".join(goal_parts)
+        )
+        chunks.append({
+            "id":               "PersonaPage.tsx :: francisco_goals",
+            "source":           "PersonaPage.tsx",
+            "page_type":        "persona",
+            "title":            "Persona Goals — Francisco Soares",
+            "status":           "Stable",
+            "structure":        "",
+            "logic":            "Goals define what the primary consumer persona needs from Beatrice.",
+            "context_of_use":   "Primary persona: Product Manager, mid-level DS consumer, sprint-pressure context",
+            "when_to_use":      "Reference when designing oracle responses for time-constrained users",
+            "when_not_to_use":  "",
+            "trade_offs":       "",
+            "aetheris_insight": "Francisco wants the right answer in 30 seconds — depth on demand, not by default.",
+            "text":             text,
+            "char_count":       len(text),
+        })
+
+    # Persona frustrations
+    frust_objects = extract_objects_from_array(en_src, "frustrations")
+    frust_parts = []
+    for obj in frust_objects:
+        title = extract_string_field(obj, "title")
+        text  = extract_string_field(obj, "text")
+        if title:
+            frust_parts.append(f"{title}: {text}" if text else title)
+    if frust_parts:
+        text = (
+            f"{PRODUCT_NAME.upper()} PERSONA: Francisco Soares — Frustrations | "
+            "Context Of Use: Pain points that Beatrice is designed to resolve | "
+            + " | ".join(frust_parts)
+        )
+        chunks.append({
+            "id":               "PersonaPage.tsx :: francisco_frustrations",
+            "source":           "PersonaPage.tsx",
+            "page_type":        "persona",
+            "title":            "Persona Frustrations — Francisco Soares",
+            "status":           "Stable",
+            "structure":        "",
+            "logic":            "Documented friction points that the oracle must address.",
+            "context_of_use":   "Guides oracle response design: answers must be fast, scannable and source-backed",
+            "when_to_use":      "Reference when evaluating whether an oracle response resolves the user's real barrier",
+            "when_not_to_use":  "",
+            "trade_offs":       "",
+            "aetheris_insight": "The oracle exists to eliminate the gap between documentation and decision.",
+            "text":             text,
+            "char_count":       len(text),
+        })
+
+    # Oracle capabilities — how Aetheris addresses each pain point
+    cap_objects = extract_objects_from_array(en_src, "oracleCapabilities")
+    for obj in cap_objects:
+        title = extract_string_field(obj, "title")
+        tag   = extract_string_field(obj, "tag")
+        desc  = extract_string_field(obj, "text")
+        if not title:
+            continue
+        text = (
+            f"{PRODUCT_NAME.upper()} PERSONA: Oracle Capability — {title} | "
+            f"Tag: {tag} | Description: {desc}"
+        )
+        chunks.append({
+            "id":               make_id("PersonaPage.tsx", f"capability_{title}"),
+            "source":           "PersonaPage.tsx",
+            "page_type":        "persona",
+            "title":            f"Oracle Capability: {title}",
+            "status":           "Stable",
+            "structure":        tag,
+            "logic":            desc,
+            "context_of_use":   "Maps persona pain point to specific Aetheris component or feature",
+            "when_to_use":      "",
+            "when_not_to_use":  "",
+            "trade_offs":       "",
+            "aetheris_insight": "",
+            "text":             text,
+            "char_count":       len(text),
+        })
+
+
+def extract_dev_integration(chunks: list):
+    """DevIntegrationPage.tsx → API endpoints, framework support"""
+    src = read_tsx("DevIntegrationPage.tsx")
+    if not src:
+        return
+
+    # Only process the en-US section (first locale block)
+    en_src = src[:src.find("isPtPt")] if "isPtPt" in src else src
+
+    # API endpoints
+    endpoint_objects = extract_objects_from_array(en_src, "endpoints")
+    ep_parts = []
+    for obj in endpoint_objects:
+        method = extract_string_field(obj, "method")
+        path   = extract_string_field(obj, "path")
+        desc   = extract_string_field(obj, "description")
+        if path:
+            ep_parts.append(f"{method} {path}: {desc}" if desc else f"{method} {path}")
+    if ep_parts:
+        text = (
+            f"{PRODUCT_NAME.upper()} DEV INTEGRATION: API Endpoints | "
+            "Context Of Use: Connecting frontend or external tools to the Beatrice oracle backend | "
+            + " | ".join(ep_parts)
+        )
+        chunks.append({
+            "id":               "DevIntegrationPage.tsx :: api_endpoints",
+            "source":           "DevIntegrationPage.tsx",
+            "page_type":        "dev_integration",
+            "title":            "API Endpoints",
+            "status":           "Stable",
+            "structure":        "REST + streaming endpoints served by the FastAPI server on port 3333",
+            "logic":            "Beatrice exposes /api/chat (SSE streaming) and /health (status check).",
+            "context_of_use":   "Integrating Beatrice into external tools, dashboards or developer workflows",
+            "when_to_use":      "Use /api/chat for all oracle queries. Use /health to verify server status.",
+            "when_not_to_use":  "Do not poll /api/chat for non-query operations.",
+            "trade_offs":       "SSE streaming requires EventSource-compatible clients.",
+            "aetheris_insight": "The API contract mirrors OpenAI streaming format — compatible with most AI SDK clients.",
+            "text":             text,
+            "char_count":       len(text),
+        })
+
+    # Framework support — top-level const, not locale-dependent
+    fw_objects = extract_objects_from_array(src, "frameworks")
+    fw_parts = []
+    for obj in fw_objects:
+        name   = extract_string_field(obj, "name")
+        meta   = extract_string_field(obj, "meta")
+        status = extract_string_field(obj, "status")
+        if name:
+            fw_parts.append(f"{name} ({meta}) — {status}" if meta else name)
+    if fw_parts:
+        text = (
+            f"{PRODUCT_NAME.upper()} DEV INTEGRATION: Framework Support | "
+            "Context Of Use: Installing the Aetheris design system into a project | "
+            + " | ".join(fw_parts)
+        )
+        chunks.append({
+            "id":               "DevIntegrationPage.tsx :: framework_support",
+            "source":           "DevIntegrationPage.tsx",
+            "page_type":        "dev_integration",
+            "title":            "Framework Support",
+            "status":           "Stable",
+            "structure":        "npm packages: @aetheris/core, @aetheris/tokens, @aetheris/react",
+            "logic":            "Aetheris ships framework-specific adapters alongside a framework-agnostic core.",
+            "context_of_use":   "Setting up Aetheris in a new or existing project",
+            "when_to_use":      "Install @aetheris/react for React projects, @aetheris/vue for Vue projects.",
+            "when_not_to_use":  "Do not import @aetheris/react in a Vue project or vice versa.",
+            "trade_offs":       "Framework packages add a thin adapter layer — minimal overhead, maximum type safety.",
+            "aetheris_insight": "The core + tokens separation means theme changes never require framework updates.",
+            "text":             text,
+            "char_count":       len(text),
+        })
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # MAIN
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -507,6 +785,15 @@ def main():
     print("Extraindo foundations (FoundationsPage.tsx)…")
     extract_foundations(chunks)
 
+    print("Extraindo raciocínio XAI (ReasoningPage.tsx)…")
+    extract_reasoning(chunks)
+
+    print("Extraindo persona (PersonaPage.tsx)…")
+    extract_persona(chunks)
+
+    print("Extraindo integração dev (DevIntegrationPage.tsx)…")
+    extract_dev_integration(chunks)
+
     if not chunks:
         print("[ERRO] Nenhum chunk extraído. Verifique os caminhos TSX.", file=sys.stderr)
         sys.exit(1)
@@ -531,7 +818,7 @@ def main():
             "total_chunks": len(chunks),
             "sources": sources,
             "embedding_model": "BAAI/bge-m3",
-            "extractor_version": "2.0.0-tsx",
+            "extractor_version": "2.1.0-tsx",
             "note": "Extracted from React/TypeScript source — TSX is the source of truth",
         },
         "chunks": chunks,
@@ -547,7 +834,7 @@ def main():
         "# Aetheris Design System — Corpus Dump (TSX Source)",
         "",
         f"> **Total chunks:** {len(chunks)}  ",
-        f"> **Extractor:** v2.0.0-tsx (React/TypeScript source)  ",
+        f"> **Extractor:** v2.1.0-tsx (React/TypeScript source)  ",
         f"> **Embedding model:** BAAI/bge-m3  ",
         "",
         "---",
