@@ -472,7 +472,14 @@ function getChatContent(locale: Locale) {
   };
 }
 
-const ORACLE_API = import.meta.env.VITE_ORACLE_API_URL ?? "/api/chat";
+const ORACLE_API    = import.meta.env.VITE_ORACLE_API_URL ?? "/api/chat";
+const HEALTH_API    = "/api/health";
+
+interface HealthData {
+  corpus_chunks: number;
+  rag_active:    boolean;
+  embedder:      string;
+}
 
 function getPromptStats(messageCount: number) {
   return {
@@ -489,7 +496,16 @@ export function BeatriceChatPage() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [healthData, setHealthData] = useState<HealthData | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  // G-6: fetch real corpus stats from /api/health on mount
+  useEffect(() => {
+    fetch(HEALTH_API)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data: HealthData | null) => { if (data) setHealthData(data); })
+      .catch(() => { /* server offline — sidebar shows static fallback */ });
+  }, []);
 
   useEffect(() => {
     setMessages(content.initialMessages);
@@ -558,7 +574,19 @@ export function BeatriceChatPage() {
               delta?: string;
               sources?: SourceChip[];
               intent?: string;
+              error?: string;
             };
+            if (parsed.error) {
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === streamId
+                    ? { ...m, content: `⚠️ ${parsed.error}`, isStreaming: false, isError: true }
+                    : m,
+                ),
+              );
+              setIsLoading(false);
+              return;
+            }
             if (parsed.sources !== undefined || parsed.intent !== undefined) {
               setMessages((prev) =>
                 prev.map((m) =>
@@ -805,7 +833,7 @@ export function BeatriceChatPage() {
                       void submitPrompt();
                     }
                   }}
-                  placeholder={isLoading ? "Beatrice está respondendo..." : t("chat.promptPlaceholder")}
+                  placeholder={isLoading ? t("chat.responding") : t("chat.promptPlaceholder")}
                   className="max-h-[120px] flex-1 resize-none bg-transparent text-sm leading-6 text-white outline-none placeholder:text-slate-500 disabled:opacity-50"
                 />
                 <div className="flex items-center gap-2">
@@ -847,16 +875,26 @@ export function BeatriceChatPage() {
               {t("chat.activeContext")}
             </p>
             <div className="flex flex-col gap-2">
-              {content.activeContext.map((item, index) => (
-                <div key={item} className="flex items-center gap-2">
-                  <span
-                    className={`h-1.5 w-1.5 rounded-full ${
-                      index === content.activeContext.length - 1 ? "animate-pulse bg-primary" : "bg-green-400"
-                    }`}
-                  />
-                  <p className="text-xs text-slate-300">{item}</p>
-                </div>
-              ))}
+              {content.activeContext.map((item, index) => {
+                // G-6: replace hardcoded chunk count with real /health data
+                const isChunkLine = item.includes("22") || item.includes("indexed") || item.includes("indexados");
+                const displayItem =
+                  isChunkLine && healthData
+                    ? item.replace(/\d+/, String(healthData.corpus_chunks))
+                    : item;
+                const isLast = index === content.activeContext.length - 1;
+                const isOffline = isChunkLine && healthData && !healthData.rag_active;
+                return (
+                  <div key={item} className="flex items-center gap-2">
+                    <span
+                      className={`h-1.5 w-1.5 rounded-full ${
+                        isOffline ? "bg-red-400" : isLast ? "animate-pulse bg-primary" : "bg-green-400"
+                      }`}
+                    />
+                    <p className="text-xs text-slate-300">{displayItem}</p>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
