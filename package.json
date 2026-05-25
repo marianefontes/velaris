@@ -10,7 +10,8 @@
     "start": "uvicorn server:app --port 3333 --reload",
     "start:legacy": "node server.cjs",
     "index": "python3 rag/extract_docs.py && python3 rag/setup_vectordb.py --reset",
-    "watch-rag": "python3 rag/watch.py"
+    "watch-rag": "python3 rag/watch.py",
+    "test:rag": "python3 rag/test_e2e.py"
   },
   "dependencies": {
     "lucide-react": "^0.511.0",

@@ -135,6 +135,7 @@ export const translations = {
       messages: "Mensagens",
       decisionsCited: "Decisões citadas",
       avgConfidence: "Confiança média",
+      responding: "Beatrice está respondendo...",
     },
   },
   "pt-PT": {
@@ -255,6 +256,7 @@ export const translations = {
       messages: "Mensagens",
       decisionsCited: "Decisões citadas",
       avgConfidence: "Confiança média",
+      responding: "Beatrice está a responder...",
     },
   },
   "en-US": {
@@ -375,6 +377,7 @@ export const translations = {
       messages: "Messages",
       decisionsCited: "Decisions cited",
       avgConfidence: "Avg confidence",
+      responding: "Beatrice is responding...",
     },
   },
 } as const;
