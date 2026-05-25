@@ -26,6 +26,10 @@ RAG_DIR  = Path(__file__).parent / "rag"
 DB_PATH  = RAG_DIR / "chroma_db"
 COLLECTION_NAME = "aetheris_design_system"
 
+# Dialogue management — cap history to avoid token overflow
+# Each turn = 1 user + 1 assistant message, so 8 turns = 16 messages max
+MAX_HISTORY_MESSAGES = 16
+
 # ── Global state (populated at startup) ──────────────────────────────────────
 _chroma:     chromadb.ClientAPI | None = None
 _collection: chromadb.Collection | None = None
@@ -204,8 +208,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/health")
-def health():
+def _health_payload() -> dict:
     count = _collection.count() if _collection else 0
     return {
         "status":        "ok",
@@ -216,6 +219,15 @@ def health():
         "embedder":      "BAAI/bge-m3" if _rag_ready else "none",
     }
 
+@app.get("/health")
+def health():
+    return _health_payload()
+
+# Alias under /api so the Vite dev proxy can reach it via /api/health
+@app.get("/api/health")
+def health_api():
+    return _health_payload()
+
 @app.post("/api/chat")
 async def chat(payload: dict) -> StreamingResponse:
     if not API_KEY:
@@ -224,13 +236,30 @@ async def chat(payload: dict) -> StreamingResponse:
         return StreamingResponse(_err(), media_type="text/event-stream")
 
     messages  = payload.get("messages", [])
+
+    # Dialogue management: cap history to avoid token overflow
+    if len(messages) > MAX_HISTORY_MESSAGES:
+        messages = messages[-MAX_HISTORY_MESSAGES:]
+
     last_user = next((m for m in reversed(messages) if m["role"] == "user"), None)
     query     = last_user["content"] if last_user else ""
 
     intent      = classify_intent(query)
     chunks      = retrieve_chunks(query, intent)
     rag_context = build_rag_context(chunks)
-    system_content = _SYSTEM_PROMPT + rag_context
+
+    # Inject dialogue context when conversation has multiple turns
+    dialogue_context = ""
+    prior_user_msgs = [m for m in messages if m["role"] == "user"]
+    if len(prior_user_msgs) > 1:
+        dialogue_context = (
+            f"\n\n---\nContexto da conversa: esta é a mensagem {len(prior_user_msgs)} "
+            f"do usuário nesta sessão. As mensagens anteriores estão no histórico — "
+            f"mantenha coerência com o que já foi recomendado, a menos que o usuário "
+            f"peça explicitamente para reconsiderar."
+        )
+
+    system_content = _SYSTEM_PROMPT + dialogue_context + rag_context
 
     groq_messages = [{"role": "system", "content": system_content}] + messages
 
