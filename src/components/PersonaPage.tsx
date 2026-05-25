@@ -67,6 +67,23 @@ interface LiteratureQuote {
   tone: string;
 }
 
+interface AdditionalPersona {
+  id: string;
+  name: string;
+  role: string;
+  chips: [string, string, string];
+  trustLabel: string;
+  trustValue: string;
+  trustWidth: string;
+  trustColor: string;
+  quote: string;
+  goals: { title: string; text: string }[];
+  frustrations: { title: string; severity: string; width: string; tone: string }[];
+  capabilities: { title: string; tag: string; text: string; tone: string }[];
+  tools: string[];
+  accentColor: string;
+}
+
 function getPersonaContent(locale: Locale) {
   if (locale === "en-US") {
     return {
@@ -356,6 +373,134 @@ function getPersonaContent(locale: Locale) {
         ["Trust", "Would Francisco use the recommendation without validating with someone else?"],
         ["Adoption effectiveness", "Was the chosen option consistent with DS patterns?"],
       ] as const,
+      additionalPersonasTitle: "Additional Consumer Profiles",
+      additionalPersonasEyebrow: "Each profile has a distinct relationship with the design system — and a distinct need from Beatrice.",
+      additionalPersonas: [
+        {
+          id: "dev-fullstack",
+          name: "Lucas Menezes",
+          role: "Full Stack Developer · DS Consumer",
+          chips: ["Frontend", "Backend", "Tokens"] as [string, string, string],
+          trustLabel: "Trust in DS",
+          trustValue: "High (conditional)",
+          trustWidth: "82%",
+          trustColor: "from-secondary to-blue-400",
+          quote:
+            "Don't tell me what it is — tell me the exact token, the correct prop and the expected behavior. The rest I figure out in the code.",
+          goals: [
+            { title: "Token names, copy-pasteable", text: "Needs the exact CSS variable or design token value instantly, without inferring from visual descriptions." },
+            { title: "Prop behavior without reading source", text: "Understand what each prop does and when to pass it, without diving into the component implementation." },
+            { title: "When-not-to-use as PR criteria", text: "Use DS constraints directly as acceptance criteria when reviewing pull requests or approving implementations." },
+            { title: "Traceable answer to cite in code review", text: "Every recommendation must have a source he can link in a PR comment to justify the decision to the team." },
+          ] satisfies GoalItem[],
+          frustrations: [
+            { title: "No code examples in docs", severity: "Critical", width: "w-[94%]", tone: "from-error to-red-400" },
+            { title: "Token names unclear or inconsistent", severity: "Critical", width: "w-[88%]", tone: "from-error to-red-400" },
+            { title: "Component props not documented", severity: "High", width: "w-[78%]", tone: "from-amber-500 to-amber-400" },
+            { title: "Can't verify if implementation matches DS intent", severity: "High", width: "w-[72%]", tone: "from-amber-500 to-yellow-400" },
+          ] satisfies FrustrationItem[],
+          capabilities: [
+            { title: "Token Lookup", tag: "Precision", text: "Returns exact CSS variable names and their semantic role — no interpretation needed.", tone: "border-secondary/12 bg-secondary/5" },
+            { title: "When-Not-To-Use", tag: "PR Criteria", text: "Converts DS constraints into testable, linkable acceptance criteria for code review.", tone: "border-error/12 bg-error/5" },
+            { title: "Source Attribution", tag: "Traceability", text: "Every answer includes a citable source Lucas can paste into a PR comment to close discussions.", tone: "border-amber-500/12 bg-amber-500/5" },
+          ] satisfies OracleCapability[],
+          tools: ["VS Code", "GitHub", "Storybook", "Chrome DevTools", "Beatrice"],
+          accentColor: "text-secondary",
+        },
+        {
+          id: "designer",
+          name: "Isabela Torres",
+          role: "UX/UI Designer · DS Consumer",
+          chips: ["Figma", "UX", "Patterns"] as [string, string, string],
+          trustLabel: "Trust in DS",
+          trustValue: "Medium–High",
+          trustWidth: "68%",
+          trustColor: "from-violet-500 to-primary",
+          quote:
+            "I know what it should look like. What I need is why Aetheris made this choice and not another — so I can defend it to the client with substance.",
+          goals: [
+            { title: "Understand component anatomy and visual rationale", text: "Know not just what a component looks like, but why it was designed that way and what UX principle it encodes." },
+            { title: "Know when patterns break", text: "Identify edge cases and failure modes before they reach production or client presentation." },
+            { title: "Find trade-offs to justify to stakeholders", text: "Use documented trade-offs as argumentation material in design reviews, not just personal opinion." },
+            { title: "Map tokens to design decisions", text: "Connect the color, spacing and type tokens directly to the reasoning behind the system's visual identity." },
+          ] satisfies GoalItem[],
+          frustrations: [
+            { title: "No visual context for token descriptions", severity: "Critical", width: "w-[90%]", tone: "from-error to-red-400" },
+            { title: "Pattern rationale not documented", severity: "Critical", width: "w-[85%]", tone: "from-error to-red-400" },
+            { title: "Trade-offs missing for most components", severity: "High", width: "w-[80%]", tone: "from-amber-500 to-amber-400" },
+            { title: "Can't map Figma vocabulary to DS vocabulary", severity: "Medium", width: "w-[60%]", tone: "from-primary/60 to-secondary/60" },
+          ] satisfies FrustrationItem[],
+          capabilities: [
+            { title: "Pattern Guidance", tag: "Visual Rationale", text: "Explains the UX principle behind each pattern, not just its structure — directly usable in design presentations.", tone: "border-primary/12 bg-primary/5" },
+            { title: "Design Decisions", tag: "Stakeholder Defense", text: "Surfaces the documented reason for each system choice, giving Isabela argumentation grounded in the DS.", tone: "border-violet-500/12 bg-violet-500/5" },
+            { title: "XAI Explanation", tag: "Why This, Not That", text: "Answers comparison questions (drawer vs modal, this pattern vs that one) with structured trade-off reasoning.", tone: "border-amber-500/12 bg-amber-500/5" },
+          ] satisfies OracleCapability[],
+          tools: ["Figma", "FigJam", "Storybook", "Beatrice", "Lottie"],
+          accentColor: "text-violet-400",
+        },
+        {
+          id: "tech-writer",
+          name: "Camila Reis",
+          role: "Technical Writer · DS Consumer",
+          chips: ["Docs", "UX Writing", "Content"] as [string, string, string],
+          trustLabel: "Trust in DS",
+          trustValue: "Low–Medium",
+          trustWidth: "34%",
+          trustColor: "from-slate-500 to-slate-400",
+          quote:
+            "If I don't understand why a component exists, I can't explain it to others. I need the reasoning, not just the description.",
+          goals: [
+            { title: "Canonical definitions for each component", text: "A single authoritative source for what a component is, does and intends — so documentation stays consistent across all channels." },
+            { title: "Understand intent to document it correctly", text: "Grasp the purpose behind each design decision so written documentation reflects design thinking, not just behavior." },
+            { title: "Trade-offs available to document", text: "When-to-use and when-not-to-use must be explicit so she can surface them to developers and designers reading her docs." },
+            { title: "Consistent naming across code, design and docs", text: "A Button in code, a Button in Figma and a Button in documentation must be the same concept with the same vocabulary." },
+          ] satisfies GoalItem[],
+          frustrations: [
+            { title: "Naming inconsistency across tools", severity: "Critical", width: "w-[92%]", tone: "from-error to-red-400" },
+            { title: "No canonical definition for components", severity: "Critical", width: "w-[88%]", tone: "from-error to-red-400" },
+            { title: "Reasoning and intent not captured anywhere", severity: "Critical", width: "w-[86%]", tone: "from-error to-red-400" },
+            { title: "Can't verify accuracy of documentation", severity: "High", width: "w-[78%]", tone: "from-amber-500 to-amber-400" },
+          ] satisfies FrustrationItem[],
+          capabilities: [
+            { title: "Source Attribution", tag: "Canonical Citation", text: "Beatrice points to the exact DS page and section — Camila cites that source in documentation instead of paraphrasing.", tone: "border-amber-500/12 bg-amber-500/5" },
+            { title: "Reasoning Engine", tag: "Intent Capture", text: "The XAI layer exposes design intent and UX principles that are otherwise invisible — directly documentable.", tone: "border-primary/12 bg-primary/5" },
+            { title: "Component Guidance", tag: "Canonical Def", text: "Returns a structured answer with description, context, when-to-use and when-not-to-use — documentation-ready.", tone: "border-green-500/12 bg-green-500/5" },
+          ] satisfies OracleCapability[],
+          tools: ["Notion", "Confluence", "Storybook", "Beatrice", "Vale"],
+          accentColor: "text-slate-300",
+        },
+        {
+          id: "qa",
+          name: "Rafael Nunes",
+          role: "QA Engineer · DS Consumer",
+          chips: ["Testing", "Quality", "Compliance"] as [string, string, string],
+          trustLabel: "Trust in DS",
+          trustValue: "High (operational)",
+          trustWidth: "80%",
+          trustColor: "from-green-600 to-green-400",
+          quote:
+            "I need to know what 'correct' looks like. If the DS says when not to use a component, that becomes an acceptance criterion in my test case.",
+          goals: [
+            { title: "Clear acceptance criteria from the DS", text: "When-to-use and when-not-to-use must be explicit enough to become pass/fail conditions in a test plan." },
+            { title: "Identify deviations from DS intent", text: "Detect when an implementation diverges from what the design system specifies — even in subtle behavior." },
+            { title: "Understand expected behavior per component", text: "Know the interaction states, edge cases and error behaviors that a correctly implemented component must exhibit." },
+            { title: "Test Beatrice consistency across sessions", text: "Validate that the oracle gives consistent, traceable answers for the same question across different users and times." },
+          ] satisfies GoalItem[],
+          frustrations: [
+            { title: "No testable acceptance criteria in docs", severity: "Critical", width: "w-[93%]", tone: "from-error to-red-400" },
+            { title: "Hard to test intent vs implementation", severity: "Critical", width: "w-[88%]", tone: "from-error to-red-400" },
+            { title: "Inconsistencies between documented and actual behavior", severity: "High", width: "w-[82%]", tone: "from-amber-500 to-amber-400" },
+            { title: "No clear diff between similar components", severity: "Medium", width: "w-[65%]", tone: "from-primary/60 to-secondary/60" },
+          ] satisfies FrustrationItem[],
+          capabilities: [
+            { title: "When-Not-To-Use", tag: "Test Criteria", text: "Converts DS constraints into operationalizable conditions Rafael can paste directly into TestRail as acceptance criteria.", tone: "border-error/12 bg-error/5" },
+            { title: "Confidence Meter", tag: "Risk Signal", text: "Low confidence scores flag components that need extra testing coverage — a risk signal for the QA plan.", tone: "border-green-500/12 bg-green-500/5" },
+            { title: "Component Comparison", tag: "Diff Tool", text: "Explains the behavioral difference between similar components (Drawer vs Modal, Input vs Search) — maps to test distinctions.", tone: "border-amber-500/12 bg-amber-500/5" },
+          ] satisfies OracleCapability[],
+          tools: ["Jira", "TestRail", "Chrome DevTools", "Storybook", "Beatrice"],
+          accentColor: "text-green-400",
+        },
+      ] satisfies AdditionalPersona[],
     };
   }
 
@@ -736,6 +881,220 @@ function getPersonaContent(locale: Locale) {
       ["Confiança", isPtPt ? "Francisco usaria a recomendação sem validar com outra pessoa?" : "Francisco usaria a recomendação sem validar com outra pessoa?"],
       ["Eficácia na Adoção", isPtPt ? "A escolha feita foi consistente com os padrões do DS?" : "A escolha feita foi consistente com os padrões do DS?"],
     ] as const,
+    additionalPersonasTitle: isPtPt ? "Perfis Adicionais de Consumidores" : "Perfis Adicionais de Consumidores",
+    additionalPersonasEyebrow: isPtPt
+      ? "Cada perfil tem uma relação distinta com o design system — e uma necessidade distinta da Beatrice."
+      : "Cada perfil tem uma relação distinta com o design system — e uma necessidade distinta da Beatrice.",
+    additionalPersonas: [
+      {
+        id: "dev-fullstack",
+        name: "Lucas Menezes",
+        role: "Dev Full Stack · Consumidor do DS",
+        chips: ["Frontend", "Backend", "Tokens"] as [string, string, string],
+        trustLabel: isPtPt ? "Confiança no DS" : "Confiança no DS",
+        trustValue: isPtPt ? "Alta (condicional)" : "Alta (condicional)",
+        trustWidth: "82%",
+        trustColor: "from-secondary to-blue-400",
+        quote: isPtPt
+          ? "Não me digas o que é — diz-me o token exato, a prop correta e o comportamento esperado. O resto descubro no código."
+          : "Não me diz o que é — me diz o token exato, a prop correta e o comportamento esperado. O resto eu descubro no código.",
+        goals: [
+          {
+            title: isPtPt ? "Nomes de token prontos para colar" : "Nomes de token prontos para colar",
+            text: isPtPt
+              ? "Precisa do nome exato da variável CSS ou do token de design instantaneamente, sem interpretar descrições visuais."
+              : "Precisa do nome exato da variável CSS ou do token de design instantaneamente, sem inferir de descrições visuais.",
+          },
+          {
+            title: isPtPt ? "Comportamento de props sem ler o fonte" : "Comportamento de props sem ler o fonte",
+            text: isPtPt
+              ? "Entender o que cada prop faz e quando passá-la, sem mergulhar na implementação do componente."
+              : "Entender o que cada prop faz e quando passá-la, sem mergulhar na implementação do componente.",
+          },
+          {
+            title: isPtPt ? "Quando-não-usar como critério de PR" : "Quando-não-usar como critério de PR",
+            text: isPtPt
+              ? "Usar restrições do DS diretamente como critérios de aceite ao revisar pull requests ou aprovar implementações."
+              : "Usar restrições do DS diretamente como critérios de aceite ao revisar pull requests ou aprovar implementações.",
+          },
+          {
+            title: isPtPt ? "Resposta rastreável para citar em code review" : "Resposta rastreável para citar em code review",
+            text: isPtPt
+              ? "Toda recomendação precisa ter uma fonte que ele possa linkar num comentário de PR para justificar a decisão."
+              : "Toda recomendação precisa ter uma fonte que ele possa linkar num comentário de PR para justificar a decisão.",
+          },
+        ] satisfies GoalItem[],
+        frustrations: [
+          { title: isPtPt ? "Sem exemplos de código na documentação" : "Sem exemplos de código na documentação", severity: isPtPt ? "Crítico" : "Crítico", width: "w-[94%]", tone: "from-error to-red-400" },
+          { title: isPtPt ? "Nomes de token inconsistentes" : "Nomes de token inconsistentes", severity: isPtPt ? "Crítico" : "Crítico", width: "w-[88%]", tone: "from-error to-red-400" },
+          { title: isPtPt ? "Props dos componentes não documentadas" : "Props dos componentes não documentadas", severity: isPtPt ? "Alto" : "Alto", width: "w-[78%]", tone: "from-amber-500 to-amber-400" },
+          { title: isPtPt ? "Não consegue verificar se a implementação bate com o DS" : "Não consegue verificar se implementação bate com o DS", severity: isPtPt ? "Alto" : "Alto", width: "w-[72%]", tone: "from-amber-500 to-yellow-400" },
+        ] satisfies FrustrationItem[],
+        capabilities: [
+          { title: "Token Lookup", tag: "Precisão", text: isPtPt ? "Retorna nomes exatos de variáveis CSS e o papel semântico de cada uma — sem interpretação." : "Retorna nomes exatos de variáveis CSS e o papel semântico de cada uma — sem interpretação.", tone: "border-secondary/12 bg-secondary/5" },
+          { title: "When-Not-To-Use", tag: "Critério de PR", text: isPtPt ? "Converte restrições do DS em critérios de aceite rastreáveis para code review." : "Converte restrições do DS em critérios de aceite rastreáveis para code review.", tone: "border-error/12 bg-error/5" },
+          { title: "Source Attribution", tag: "Rastreabilidade", text: isPtPt ? "Toda resposta inclui uma fonte citável que Lucas pode colar no PR para encerrar discussões." : "Toda resposta inclui uma fonte citável que Lucas pode colar no PR para encerrar discussões.", tone: "border-amber-500/12 bg-amber-500/5" },
+        ] satisfies OracleCapability[],
+        tools: ["VS Code", "GitHub", "Storybook", "Chrome DevTools", "Beatrice"],
+        accentColor: "text-secondary",
+      },
+      {
+        id: "designer",
+        name: "Isabela Torres",
+        role: isPtPt ? "Designer UX/UI · Consumidora do DS" : "Designer UX/UI · Consumidora do DS",
+        chips: ["Figma", "UX", "Patterns"] as [string, string, string],
+        trustLabel: isPtPt ? "Confiança no DS" : "Confiança no DS",
+        trustValue: isPtPt ? "Média–Alta" : "Média–Alta",
+        trustWidth: "68%",
+        trustColor: "from-violet-500 to-primary",
+        quote: isPtPt
+          ? "Eu sei como deve parecer. O que preciso é saber por que o Aetheris fez essa escolha e não outra — para defender ao cliente com embasamento."
+          : "Eu sei como deve parecer. O que preciso é saber por que o Aetheris fez essa escolha e não outra — para defender ao cliente com embasamento.",
+        goals: [
+          {
+            title: isPtPt ? "Anatomia e racional visual do componente" : "Anatomia e racional visual do componente",
+            text: isPtPt
+              ? "Saber não só como um componente parece, mas por que foi desenhado assim e que princípio de UX ele codifica."
+              : "Saber não só como um componente parece, mas por que foi desenhado assim e qual princípio de UX ele codifica.",
+          },
+          {
+            title: isPtPt ? "Quando os padrões quebram" : "Quando os padrões quebram",
+            text: isPtPt
+              ? "Identificar edge cases e modos de falha antes que cheguem à produção ou a uma apresentação ao cliente."
+              : "Identificar edge cases e modos de falha antes que cheguem à produção ou à apresentação ao cliente.",
+          },
+          {
+            title: isPtPt ? "Trade-offs para justificar a stakeholders" : "Trade-offs para justificar a stakeholders",
+            text: isPtPt
+              ? "Usar trade-offs documentados como material de argumentação em design reviews, não só opinião pessoal."
+              : "Usar trade-offs documentados como material de argumentação em design reviews, não só opinião pessoal.",
+          },
+          {
+            title: isPtPt ? "Ligar tokens às decisões de design" : "Ligar tokens às decisões de design",
+            text: isPtPt
+              ? "Conectar tokens de cor, espaçamento e tipografia ao raciocínio por trás da identidade visual do sistema."
+              : "Conectar tokens de cor, espaçamento e tipografia ao raciocínio por trás da identidade visual do sistema.",
+          },
+        ] satisfies GoalItem[],
+        frustrations: [
+          { title: isPtPt ? "Sem contexto visual na descrição dos tokens" : "Sem contexto visual na descrição dos tokens", severity: isPtPt ? "Crítico" : "Crítico", width: "w-[90%]", tone: "from-error to-red-400" },
+          { title: isPtPt ? "Racional dos padrões não documentado" : "Racional dos padrões não documentado", severity: isPtPt ? "Crítico" : "Crítico", width: "w-[85%]", tone: "from-error to-red-400" },
+          { title: isPtPt ? "Trade-offs ausentes na maioria dos componentes" : "Trade-offs ausentes na maioria dos componentes", severity: isPtPt ? "Alto" : "Alto", width: "w-[80%]", tone: "from-amber-500 to-amber-400" },
+          { title: isPtPt ? "Vocabulário Figma ≠ vocabulário do DS" : "Vocabulário Figma ≠ vocabulário do DS", severity: isPtPt ? "Médio" : "Médio", width: "w-[60%]", tone: "from-primary/60 to-secondary/60" },
+        ] satisfies FrustrationItem[],
+        capabilities: [
+          { title: "Pattern Guidance", tag: "Racional Visual", text: isPtPt ? "Explica o princípio de UX por trás de cada padrão — diretamente usável em apresentações de design." : "Explica o princípio de UX por trás de cada padrão — diretamente usável em apresentações de design.", tone: "border-primary/12 bg-primary/5" },
+          { title: "Design Decisions", tag: "Defesa a Stakeholders", text: isPtPt ? "Expõe o motivo documentado de cada escolha do sistema, dando a Isabela argumentação fundamentada no DS." : "Expõe o motivo documentado de cada escolha do sistema, dando a Isabela argumentação fundamentada no DS.", tone: "border-violet-500/12 bg-violet-500/5" },
+          { title: "XAI Explanation", tag: "Por que Este e Não Aquele", text: isPtPt ? "Responde perguntas de comparação com raciocínio estruturado de trade-off." : "Responde perguntas de comparação com raciocínio estruturado de trade-off.", tone: "border-amber-500/12 bg-amber-500/5" },
+        ] satisfies OracleCapability[],
+        tools: ["Figma", "FigJam", "Storybook", "Beatrice", "Lottie"],
+        accentColor: "text-violet-400",
+      },
+      {
+        id: "tech-writer",
+        name: "Camila Reis",
+        role: "Technical Writer · Consumidora do DS",
+        chips: ["Docs", "UX Writing", "Content"] as [string, string, string],
+        trustLabel: isPtPt ? "Confiança no DS" : "Confiança no DS",
+        trustValue: isPtPt ? "Baixa–Média" : "Baixa–Média",
+        trustWidth: "34%",
+        trustColor: "from-slate-500 to-slate-400",
+        quote: isPtPt
+          ? "Se não entendo por que um componente existe, não consigo explicá-lo a outros. Preciso do raciocínio, não só da descrição."
+          : "Se eu não entendo por que um componente existe, não consigo explicá-lo para outros. Preciso do raciocínio, não só da descrição.",
+        goals: [
+          {
+            title: isPtPt ? "Definições canônicas por componente" : "Definições canônicas por componente",
+            text: isPtPt
+              ? "Uma fonte autoritativa única sobre o que um componente é, faz e pretende — para a documentação ser consistente em todos os canais."
+              : "Uma fonte autoritativa única sobre o que um componente é, faz e intenciona — para a documentação ser consistente em todos os canais.",
+          },
+          {
+            title: isPtPt ? "Entender a intenção para documentar corretamente" : "Entender a intenção para documentar corretamente",
+            text: isPtPt
+              ? "Compreender o propósito por trás de cada decisão de design para que a documentação reflita o pensamento de design, não só o comportamento."
+              : "Compreender o propósito por trás de cada decisão de design para que a documentação reflita o pensamento de design, não só o comportamento.",
+          },
+          {
+            title: isPtPt ? "Trade-offs disponíveis para documentar" : "Trade-offs disponíveis para documentar",
+            text: isPtPt
+              ? "Quando-usar e quando-não-usar têm de ser explícitos para que ela os possa surfaçar a devs e designers que leem os docs."
+              : "Quando-usar e quando-não-usar precisam ser explícitos para que ela possa surfacear para devs e designers que leem os docs.",
+          },
+          {
+            title: isPtPt ? "Nomenclatura consistente entre código, design e docs" : "Nomenclatura consistente entre código, design e docs",
+            text: isPtPt
+              ? "Um Button no código, um Button no Figma e um Button na documentação têm de ser o mesmo conceito com o mesmo vocabulário."
+              : "Um Button no código, um Button no Figma e um Button na documentação precisam ser o mesmo conceito com o mesmo vocabulário.",
+          },
+        ] satisfies GoalItem[],
+        frustrations: [
+          { title: isPtPt ? "Inconsistência de nomenclatura entre ferramentas" : "Inconsistência de nomenclatura entre ferramentas", severity: isPtPt ? "Crítico" : "Crítico", width: "w-[92%]", tone: "from-error to-red-400" },
+          { title: isPtPt ? "Sem definição canônica dos componentes" : "Sem definição canônica dos componentes", severity: isPtPt ? "Crítico" : "Crítico", width: "w-[88%]", tone: "from-error to-red-400" },
+          { title: isPtPt ? "Raciocínio e intenção não capturados em lugar nenhum" : "Raciocínio e intenção não capturados em lugar nenhum", severity: isPtPt ? "Crítico" : "Crítico", width: "w-[86%]", tone: "from-error to-red-400" },
+          { title: isPtPt ? "Não consegue verificar a exatidão da documentação" : "Não consegue verificar a exatidão da documentação", severity: isPtPt ? "Alto" : "Alto", width: "w-[78%]", tone: "from-amber-500 to-amber-400" },
+        ] satisfies FrustrationItem[],
+        capabilities: [
+          { title: "Source Attribution", tag: isPtPt ? "Citação Canônica" : "Citação Canônica", text: isPtPt ? "Beatrice aponta para a página exata do DS — Camila cita essa fonte nos docs em vez de parafrasear." : "Beatrice aponta para a página exata do DS — Camila cita essa fonte nos docs em vez de parafrasear.", tone: "border-amber-500/12 bg-amber-500/5" },
+          { title: "Reasoning Engine", tag: isPtPt ? "Captura de Intenção" : "Captura de Intenção", text: isPtPt ? "A camada XAI expõe intenção de design e princípios de UX que de outra forma são invisíveis — prontos para documentar." : "A camada XAI expõe intenção de design e princípios de UX que de outra forma são invisíveis — prontos para documentar.", tone: "border-primary/12 bg-primary/5" },
+          { title: "Component Guidance", tag: isPtPt ? "Definição Canônica" : "Definição Canônica", text: isPtPt ? "Retorna resposta estruturada com descrição, contexto, quando-usar e quando-não-usar — pronta para documentação." : "Retorna resposta estruturada com descrição, contexto, quando-usar e quando-não-usar — pronta para documentação.", tone: "border-green-500/12 bg-green-500/5" },
+        ] satisfies OracleCapability[],
+        tools: ["Notion", "Confluence", "Storybook", "Beatrice", "Vale"],
+        accentColor: "text-slate-300",
+      },
+      {
+        id: "qa",
+        name: "Rafael Nunes",
+        role: isPtPt ? "Engenheiro de QA · Consumidor do DS" : "Engenheiro de QA · Consumidor do DS",
+        chips: ["Testing", "Quality", "Compliance"] as [string, string, string],
+        trustLabel: isPtPt ? "Confiança no DS" : "Confiança no DS",
+        trustValue: isPtPt ? "Alta (operacional)" : "Alta (operacional)",
+        trustWidth: "80%",
+        trustColor: "from-green-600 to-green-400",
+        quote: isPtPt
+          ? "Preciso de saber como é o 'correto'. Se o DS diz quando não usar um componente, isso vira critério de aceite no meu test case."
+          : "Preciso saber como é o 'correto'. Se o DS diz quando não usar um componente, isso vira critério de aceite no meu test case.",
+        goals: [
+          {
+            title: isPtPt ? "Critérios de aceite claros a partir do DS" : "Critérios de aceite claros a partir do DS",
+            text: isPtPt
+              ? "Quando-usar e quando-não-usar têm de ser explícitos o suficiente para se tornarem condições de pass/fail num plano de testes."
+              : "Quando-usar e quando-não-usar precisam ser explícitos o suficiente para se tornarem condições de pass/fail num plano de testes.",
+          },
+          {
+            title: isPtPt ? "Identificar desvios da intenção do DS" : "Identificar desvios da intenção do DS",
+            text: isPtPt
+              ? "Detetar quando uma implementação diverge do que o design system especifica — mesmo em comportamento sutil."
+              : "Detectar quando uma implementação diverge do que o design system especifica — mesmo em comportamento sutil.",
+          },
+          {
+            title: isPtPt ? "Comportamento esperado por componente" : "Comportamento esperado por componente",
+            text: isPtPt
+              ? "Conhecer os estados de interação, edge cases e comportamentos de erro que um componente corretamente implementado deve exibir."
+              : "Conhecer os estados de interação, edge cases e comportamentos de erro que um componente corretamente implementado deve exibir.",
+          },
+          {
+            title: isPtPt ? "Testar consistência da Beatrice entre sessões" : "Testar consistência da Beatrice entre sessões",
+            text: isPtPt
+              ? "Validar que o oráculo dá respostas consistentes e rastreáveis para a mesma pergunta em diferentes utilizadores e momentos."
+              : "Validar que o oráculo dá respostas consistentes e rastreáveis para a mesma pergunta em diferentes usuários e momentos.",
+          },
+        ] satisfies GoalItem[],
+        frustrations: [
+          { title: isPtPt ? "Sem critérios de aceite testáveis nos docs" : "Sem critérios de aceite testáveis nos docs", severity: isPtPt ? "Crítico" : "Crítico", width: "w-[93%]", tone: "from-error to-red-400" },
+          { title: isPtPt ? "Difícil testar intenção vs implementação" : "Difícil testar intenção vs implementação", severity: isPtPt ? "Crítico" : "Crítico", width: "w-[88%]", tone: "from-error to-red-400" },
+          { title: isPtPt ? "Inconsistências entre comportamento documentado e real" : "Inconsistências entre comportamento documentado e real", severity: isPtPt ? "Alto" : "Alto", width: "w-[82%]", tone: "from-amber-500 to-amber-400" },
+          { title: isPtPt ? "Sem distinção clara entre componentes similares" : "Sem distinção clara entre componentes similares", severity: isPtPt ? "Médio" : "Médio", width: "w-[65%]", tone: "from-primary/60 to-secondary/60" },
+        ] satisfies FrustrationItem[],
+        capabilities: [
+          { title: "When-Not-To-Use", tag: isPtPt ? "Critério de Teste" : "Critério de Teste", text: isPtPt ? "Converte restrições do DS em condições operacionalizáveis que Rafael cola diretamente no TestRail." : "Converte restrições do DS em condições operacionalizáveis que Rafael cola diretamente no TestRail.", tone: "border-error/12 bg-error/5" },
+          { title: "Confidence Meter", tag: isPtPt ? "Sinal de Risco" : "Sinal de Risco", text: isPtPt ? "Scores de confiança baixos sinalizam componentes que precisam de cobertura extra de testes." : "Scores de confiança baixos sinalizam componentes que precisam de cobertura extra de testes.", tone: "border-green-500/12 bg-green-500/5" },
+          { title: isPtPt ? "Comparação de Componentes" : "Comparação de Componentes", tag: "Diff", text: isPtPt ? "Explica a diferença comportamental entre componentes similares — mapeia para distinções nos testes." : "Explica a diferença comportamental entre componentes similares — mapeia para distinções nos testes.", tone: "border-amber-500/12 bg-amber-500/5" },
+        ] satisfies OracleCapability[],
+        tools: ["Jira", "TestRail", "Chrome DevTools", "Storybook", "Beatrice"],
+        accentColor: "text-green-400",
+      },
+    ] satisfies AdditionalPersona[],
   };
 }
 
@@ -1163,6 +1522,19 @@ export function PersonaPage() {
         </div>
       </section>
 
+      {/* Additional personas — 2×2 grid */}
+      <section className="space-y-6">
+        <div>
+          <p className="mb-1 text-xs uppercase tracking-[0.2em] text-primary">{content.additionalPersonasTitle}</p>
+          <p className="text-sm text-slate-500">{content.additionalPersonasEyebrow}</p>
+        </div>
+        <div className="grid gap-6 md:grid-cols-2">
+          {content.additionalPersonas.map((persona) => (
+            <AdditionalPersonaCard key={persona.id} persona={persona} />
+          ))}
+        </div>
+      </section>
+
       <section className="relative mt-24 text-center">
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-5">
           <span className="text-9xl font-black tracking-tighter text-white">FRANCISCO</span>
@@ -1190,6 +1562,120 @@ export function PersonaPage() {
           </Link>
         </div>
       </section>
+    </div>
+  );
+}
+
+function AdditionalPersonaCard({ persona }: { persona: AdditionalPersona }) {
+  return (
+    <div className="glass-card overflow-hidden rounded-[24px] border border-white/5">
+      {/* Header */}
+      <div className="flex items-start gap-4 border-b border-white/5 bg-surface-container-high/30 p-6">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[16px] border border-white/10 bg-surface-container">
+          <UserRound className={`h-7 w-7 ${persona.accentColor}`} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="text-base font-black tracking-tight text-white">{persona.name}</h3>
+          <p className={`text-xs font-semibold ${persona.accentColor}`}>{persona.role}</p>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {persona.chips.map((chip, i) => (
+              <span
+                key={chip}
+                className={`rounded-full border px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] ${
+                  i === 0
+                    ? "border-primary/20 bg-primary/10 text-primary"
+                    : i === 1
+                      ? "border-secondary/20 bg-secondary/10 text-secondary"
+                      : "border-white/10 bg-white/5 text-slate-400"
+                }`}
+              >
+                {chip}
+              </span>
+            ))}
+          </div>
+        </div>
+        {/* Trust bar */}
+        <div className="hidden w-28 shrink-0 sm:block">
+          <div className="mb-1 flex justify-between">
+            <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500">{persona.trustLabel}</span>
+          </div>
+          <div className="h-1.5 overflow-hidden rounded-full bg-surface-container-high">
+            <div className={`h-full rounded-full bg-gradient-to-r ${persona.trustColor}`} style={{ width: persona.trustWidth }} />
+          </div>
+          <p className={`mt-0.5 text-[9px] font-bold ${persona.accentColor}`}>{persona.trustValue}</p>
+        </div>
+      </div>
+
+      <div className="p-6 space-y-5">
+        {/* Quote */}
+        <blockquote className="rounded-xl border-l-2 border-primary/30 bg-primary/5 px-4 py-3 text-xs italic leading-relaxed text-slate-300">
+          {persona.quote}
+        </blockquote>
+
+        {/* Goals + Frustrations side by side */}
+        <div className="grid gap-4 md:grid-cols-2">
+          <div>
+            <p className="mb-2.5 flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-widest text-slate-500">
+              <Target className="h-3 w-3 text-green-400" /> Objetivos
+            </p>
+            <div className="space-y-2">
+              {persona.goals.map((g) => (
+                <div key={g.title} className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-3 w-3 shrink-0 text-green-400" />
+                  <p className="text-[10px] leading-relaxed text-slate-300">{g.title}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="mb-2.5 flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-widest text-slate-500">
+              <Timer className="h-3 w-3 text-error" /> Frustrações
+            </p>
+            <div className="space-y-2.5">
+              {persona.frustrations.map((f) => (
+                <div key={f.title}>
+                  <div className="mb-0.5 flex items-center justify-between">
+                    <p className="text-[10px] text-slate-300">{f.title}</p>
+                    <span className={`text-[9px] font-bold ${f.severity === "Crítico" || f.severity === "Critical" ? "text-error" : f.severity === "Alto" || f.severity === "High" ? "text-amber-400" : "text-primary"}`}>{f.severity}</span>
+                  </div>
+                  <div className="h-1 overflow-hidden rounded-full bg-surface-container-high">
+                    <div className={`h-full rounded-full bg-gradient-to-r ${f.tone} ${f.width}`} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Oracle capabilities */}
+        <div>
+          <p className="mb-2.5 flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-widest text-slate-500">
+            <Bot className="h-3 w-3 text-primary" /> Beatrice resolve
+          </p>
+          <div className="space-y-2">
+            {persona.capabilities.map((cap) => (
+              <div key={cap.title} className={`flex items-start gap-3 rounded-xl border p-3 ${cap.tone}`}>
+                <div>
+                  <div className="mb-0.5 flex flex-wrap items-center gap-1.5">
+                    <span className="text-[10px] font-bold text-white">{cap.title}</span>
+                    <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[9px] font-bold text-slate-400">{cap.tag}</span>
+                  </div>
+                  <p className="text-[10px] leading-relaxed text-slate-400">{cap.text}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Tools */}
+        <div className="flex flex-wrap gap-1.5 border-t border-white/5 pt-4">
+          {persona.tools.map((tool) => (
+            <span key={tool} className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[9px] font-bold text-slate-500">
+              {tool}
+            </span>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
