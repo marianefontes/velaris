@@ -24,7 +24,7 @@ flowchart TD
     subgraph INGESTÃO["📥 INGESTÃO (Offline)"]
         A[/"14 × TSX\nAetheris Design System\n(React + TypeScript)"/]
         B["extract_docs.py v2.0.0-tsx\nRegex sobre arrays TS tipados"]
-        C[/"aetheris-docs-dump.json\n45 chunks estruturados"/]
+        C[/"aetheris-docs-dump.json\n37 chunks estruturados"/]
         A -->|"parse arrays\nTS tipados"| B
         B -->|"metadados:\ntitle, page_type,\nwhen_to_use, insight…"| C
     end
@@ -32,7 +32,7 @@ flowchart TD
     subgraph INDEXAÇÃO["🧠 INDEXAÇÃO (Offline)"]
         D["setup_vectordb.py"]
         E["BAAI/bge-m3\nuse_fp16=True\nmax_length=512"]
-        F[("ChromaDB\nchroma_db/\ncoleção: aetheris_design_system\nhnsw:cosine\n45 chunks")]
+        F[("ChromaDB\nchroma_db/\ncoleção: aetheris_design_system\nhnsw:cosine\n37 chunks")]
         C -->|"lê chunks"| D
         D -->|"encode\ndense_vecs 1024-d"| E
         E -->|"embeddings +\ndocuments +\nmetadatas"| F
@@ -76,7 +76,7 @@ flowchart TD
 | Fallback | Busca por field pattern (`arrayName: [...]` inline em objetos) |
 | Campos extraídos | `title`, `structure`, `logic`, `context_of_use`, `when_to_use`, `when_not_to_use`, `trade_offs`, `aetheris_insight` |
 | Output | `aetheris-docs-dump.json` + `aetheris-docs-dump.md` |
-| Total de chunks | 45 |
+| Total de chunks | 37 |
 | Média de chars/chunk | ~680 |
 | Cobertura de campos | 91% (campos preenchidos / possíveis) |
 
@@ -103,11 +103,11 @@ flowchart TD
 | Caminho | `rag/chroma_db/` |
 | Coleção | `aetheris_design_system` |
 | Métrica de distância | Cosine (`hnsw:space = cosine`) |
-| Documentos indexados | 45 |
+| Documentos indexados | 37 |
 | Tamanho estimado do índice | ~175 KB |
 | Latência de query (CPU) | ~80–200 ms |
 
-**Por que ChromaDB:** Execução totalmente local sem servidor externo, API Python simples, suporte nativo a metadados filtráveis, e persistência automática em disco. Para o escopo deste projeto (45 chunks), não há necessidade de soluções distribuídas como Pinecone ou Weaviate.
+**Por que ChromaDB:** Execução totalmente local sem servidor externo, API Python simples, suporte nativo a metadados filtráveis, e persistência automática em disco. Para o escopo deste projeto (37 chunks), não há necessidade de soluções distribuídas como Pinecone ou Weaviate.
 
 ### 3.4 Retriever (`query_test.py`)
 
@@ -180,7 +180,7 @@ Opções de LLM compatíveis:
 |---------|-------|
 | Versão do extrator | `v2.0.0-tsx` |
 | Fonte | Arquivos `.tsx` (React/TypeScript) |
-| Total de chunks | 45 |
+| Total de chunks | 37 |
 | Chunks ricos (≥ 2 campos semânticos) | 39 |
 | Chunks thin (⚠️) | 6 |
 | Health score do corpus | **87%** |
@@ -232,7 +232,7 @@ AETHERIS/rag/
 ├── generate_map.py              ← Gera component-map.md
 ├── setup_vectordb.py            ← Indexação ChromaDB
 ├── query_test.py                ← Interface de consulta CLI
-├── aetheris-docs-dump.json      ← Corpus estruturado (45 chunks)
+├── aetheris-docs-dump.json      ← Corpus estruturado (37 chunks)
 ├── aetheris-docs-dump.md        ← Corpus legível (revisão humana)
 ├── component-map.md             ← Cobertura + gap analysis (87% health)
 ├── embedding-model-justification.md  ← Justificativa BGE-M3
@@ -258,5 +258,5 @@ AETHERIS/
 | Intent classifier não implementado | Chat não filtra por tipo de pergunta | Pendente | Ver `intent-map.md` — abordagem zero-shot LLM definida |
 | Sem avaliação quantitativa de retrieval | Qualidade não mensurável objetivamente | Futuro | Criar conjunto de pares (query, ground truth) para MRR/NDCG |
 | ChromaDB sem reranking | Top-k pode incluir resultados borderline | Futuro | Adicionar cross-encoder BGE-reranker-v2-m3 como segundo estágio |
-| Corpus de 45 chunks | Cobertura limitada a itens documentados | Aceitável para TCC | Expandir à medida que novos componentes forem adicionados |
+| Corpus de 37 chunks | Cobertura limitada a itens documentados | Aceitável para TCC | Expandir à medida que novos componentes forem adicionados |
 | LLM via proxy HTTP (server.cjs) | Requer servidor Node.js local rodando | Aceitável para demo | Para produção: edge function ou Next.js API route |

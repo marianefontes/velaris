@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>WF-03 — Token Lookup</title>
+<style>
+  :root{--bg:#0d0d14;--surface:#13131f;--surface-hi:#1a1a2e;--border:rgba(255,255,255,0.07);--primary:#a78bfa;--primary-dim:rgba(167,139,250,0.12);--secondary:#67e8f9;--success:#34d399;--text:#e2e8f0;--text-dim:#94a3b8;--text-xs:#64748b;--radius:16px;--radius-sm:8px;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;font-size:14px;line-height:1.6;}
+  .chat-container{max-width:680px;margin:0 auto;padding:32px 16px;}
+  .header{text-align:center;margin-bottom:40px;}
+  .header .logo{font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--primary);margin-bottom:8px;}
+  .header h1{font-size:18px;font-weight:700;}
+  .header .wf-tag{display:inline-block;margin-top:8px;padding:3px 10px;border-radius:999px;background:var(--primary-dim);border:1px solid rgba(167,139,250,0.3);font-size:11px;color:var(--primary);}
+  .msg-user{display:flex;justify-content:flex-end;margin-bottom:20px;}
+  .msg-user .bubble{background:var(--primary-dim);border:1px solid rgba(167,139,250,0.2);border-radius:18px 18px 4px 18px;padding:12px 16px;max-width:75%;}
+  .msg-beatrice{margin-bottom:24px;}
+  .beatrice-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+  .beatrice-avatar{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+  .beatrice-name{font-size:12px;font-weight:700;letter-spacing:0.08em;color:var(--primary);text-transform:uppercase;}
+  .response-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  .rec-row{padding:20px;border-bottom:1px solid var(--border);}
+  .rec-label{font-size:10px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-xs);margin-bottom:6px;}
+  .rec-source{font-size:11px;color:var(--text-dim);margin-top:8px;}
+  .rec-source span{color:var(--success);cursor:pointer;}
+  .token-list{padding:16px 20px;display:flex;flex-direction:column;gap:10px;}
+  .token-row{display:flex;align-items:center;gap:14px;padding:12px 14px;background:var(--surface-hi);border-radius:var(--radius-sm);}
+  .token-swatch{width:36px;height:36px;border-radius:8px;flex-shrink:0;border:1px solid rgba(255,255,255,0.1);}
+  .token-info{flex:1;}
+  .token-name{font-size:13px;font-weight:700;color:var(--text);}
+  .token-var{font-size:11px;font-family:monospace;color:var(--text-dim);margin-top:1px;}
+  .token-use{font-size:11px;color:var(--text-xs);margin-top:2px;}
+  .token-value{font-size:12px;font-family:monospace;color:var(--success);}
+  .insight{margin:0 20px 20px;padding:12px 14px;border-radius:var(--radius-sm);background:var(--primary-dim);border-left:2px solid var(--primary);}
+  .insight-label{font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--primary);margin-bottom:4px;}
+  .insight-text{font-size:12px;color:var(--text-dim);font-style:italic;}
+  .xai-footer{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:var(--surface-hi);border-top:1px solid var(--border);}
+  .confidence{display:flex;align-items:center;gap:10px;}
+  .confidence-label{font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-xs);}
+  .confidence-bar{width:80px;height:4px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;}
+  .confidence-fill{height:100%;background:var(--success);border-radius:2px;}
+  .confidence-val{font-size:12px;font-weight:700;color:var(--success);}
+  .source-chip{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.2);font-size:11px;color:var(--success);cursor:pointer;}
+  .input-area{margin-top:24px;display:flex;gap:10px;}
+  .input-field{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 16px;color:var(--text);font-size:14px;outline:none;}
+  .send-btn{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--primary),var(--secondary));border:none;cursor:pointer;font-size:16px;}
+  .annotation{margin-top:32px;padding:16px;background:rgba(52,211,153,0.05);border:1px solid rgba(52,211,153,0.2);border-radius:var(--radius-sm);}
+  .annotation h3{font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--success);margin-bottom:10px;}
+  .annotation ul{list-style:none;}
+  .annotation li{font-size:12px;color:var(--text-dim);margin-bottom:6px;padding-left:16px;position:relative;}
+  .annotation li::before{content:'→';position:absolute;left:0;color:var(--success);}
+</style>
+</head>
+<body>
+<div class="chat-container">
+  <div class="header">
+    <div class="logo">Aetheris Design System</div>
+    <h1>Beatrice — Oráculo Inteligente</h1>
+    <div class="wf-tag">WF-03 · Token Lookup</div>
+  </div>
+
+  <div class="msg-user">
+    <div class="bubble">Qual token de cor devo usar para o texto de um heading primário?</div>
+  </div>
+
+  <div class="msg-beatrice">
+    <div class="beatrice-header">
+      <div class="beatrice-avatar">✦</div>
+      <span class="beatrice-name">Beatrice</span>
+    </div>
+
+    <div class="response-card">
+      <div class="rec-row">
+        <div class="rec-label">Tokens de cor recomendados para headings</div>
+        <div class="rec-source">Fonte: <span>TokensPage → Color Tokens + Semantic Colors</span></div>
+      </div>
+
+      <div class="token-list">
+        <div class="token-row">
+          <div class="token-swatch" style="background:#e2e8f0"></div>
+          <div class="token-info">
+            <div class="token-name">on-surface</div>
+            <div class="token-var">--color-on-surface</div>
+            <div class="token-use">Heading primário em superfície padrão</div>
+          </div>
+          <div class="token-value">#e2e8f0</div>
+        </div>
+        <div class="token-row" style="border:1px solid rgba(167,139,250,0.3)">
+          <div class="token-swatch" style="background:linear-gradient(135deg,#a78bfa,#67e8f9)"></div>
+          <div class="token-info">
+            <div class="token-name">primary-gradient</div>
+            <div class="token-var">from-primary to-secondary</div>
+            <div class="token-use">Heading destaque / hero accent</div>
+          </div>
+          <div class="token-value">gradient</div>
+        </div>
+        <div class="token-row">
+          <div class="token-swatch" style="background:#94a3b8"></div>
+          <div class="token-info">
+            <div class="token-name">on-surface-variant</div>
+            <div class="token-var">--color-on-surface-variant</div>
+            <div class="token-use">Subheadings e labels secundários</div>
+          </div>
+          <div class="token-value">#94a3b8</div>
+        </div>
+      </div>
+
+      <div class="insight">
+        <div class="insight-label">✦ Aetheris Insight</div>
+        <div class="insight-text">primary-200 e primary-300 formam o signature gradient. Tokens semânticos desacoplam significado de estética — mudar um tema exige apenas atualizar os valores dos tokens.</div>
+      </div>
+
+      <div class="xai-footer">
+        <div class="confidence">
+          <span class="confidence-label">Confiança RAG</span>
+          <div class="confidence-bar"><div class="confidence-fill" style="width:91%"></div></div>
+          <span class="confidence-val">91%</span>
+        </div>
+        <div class="source-chip">↗ TokensPage</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="input-area">
+    <input class="input-field" placeholder="Pergunte ao oráculo Aetheris..." readonly/>
+    <button class="send-btn">↑</button>
+  </div>
+
+  <div class="annotation">
+    <h3>Anotações do wireframe (WF-03)</h3>
+    <ul>
+      <li>Token lookup retorna lista de tokens com swatch visual, nome, variável CSS e valor</li>
+      <li>Token recomendado tem borda de destaque (primary border)</li>
+      <li>Aetheris Insight ao final — cita princípio semântico dos tokens</li>
+      <li>Confidence alta (91%) — tokens têm correspondência exata no corpus</li>
+      <li>Intent detectado: token_lookup</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>

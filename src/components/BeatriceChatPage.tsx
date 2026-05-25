@@ -24,6 +24,12 @@ interface SuggestedPrompt {
   icon: typeof Layers3;
 }
 
+interface SourceChip {
+  title: string;
+  source: string;
+  similarity: number;
+}
+
 interface ChatMessage {
   id: string;
   role: "user" | "assistant";
@@ -37,6 +43,8 @@ interface ChatMessage {
   conclusion?: string;
   isStreaming?: boolean;
   isError?: boolean;
+  sources?: SourceChip[];
+  intent?: string;
 }
 
 interface HistoryEntry {
@@ -546,7 +554,20 @@ export function BeatriceChatPage() {
           const payload = line.slice(6).trim();
           if (payload === "[DONE]") break;
           try {
-            const parsed = JSON.parse(payload) as { delta?: string };
+            const parsed = JSON.parse(payload) as {
+              delta?: string;
+              sources?: SourceChip[];
+              intent?: string;
+            };
+            if (parsed.sources !== undefined || parsed.intent !== undefined) {
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === streamId
+                    ? { ...m, sources: parsed.sources, intent: parsed.intent }
+                    : m,
+                ),
+              );
+            }
             if (parsed.delta) {
               full += parsed.delta;
               setMessages((prev) =>
@@ -566,8 +587,8 @@ export function BeatriceChatPage() {
     } catch {
       const errorMsg =
         locale === "en-US"
-          ? "⚠️ Beatrice is offline. Start the API server:\n\nANTHROPIC_API_KEY=sk-ant-... node server.cjs"
-          : "⚠️ Beatrice está offline. Inicie o servidor da API:\n\nANTHROPIC_API_KEY=sk-ant-... node server.cjs";
+          ? "⚠️ Beatrice is offline. Start the API server:\n\nGROQ_API_KEY=gsk_... uvicorn server:app --port 3333"
+          : "⚠️ Beatrice está offline. Inicie o servidor da API:\n\nGROQ_API_KEY=gsk_... uvicorn server:app --port 3333";
       setMessages((prev) =>
         prev.map((m) =>
           m.id === streamId ? { ...m, content: errorMsg, isStreaming: false, isError: true } : m,
@@ -715,6 +736,23 @@ export function BeatriceChatPage() {
                               {renderMarkdown(message.content)}
                               {message.isStreaming ? (
                                 <span className="ml-0.5 inline-block h-4 w-0.5 animate-pulse bg-primary" />
+                              ) : null}
+                              {!message.isStreaming && message.sources && message.sources.length > 0 ? (
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                  {message.sources.map((src, i) => (
+                                    <div
+                                      key={i}
+                                      className="flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-[10px] font-semibold text-primary"
+                                      title={`${src.source} — ${Math.round(src.similarity * 100)}% similarity`}
+                                    >
+                                      <span className="h-1.5 w-1.5 rounded-full bg-primary opacity-70" />
+                                      {src.title}
+                                      <span className="ml-0.5 font-normal opacity-60">
+                                        {Math.round(src.similarity * 100)}%
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
                               ) : null}
                             </>
                           )}

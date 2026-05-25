@@ -1,188 +1,294 @@
 # Aetheris Design System — Corpus Dump (TSX Source)
 
-> **Total chunks:** 37  
-> **Extractor:** v2.0.0-tsx (React/TypeScript source)  
+> **Total chunks:** 54  
+> **Extractor:** v2.1.0-tsx (React/TypeScript source)  
 > **Embedding model:** BAAI/bge-m3  
 
 ---
 
 ## [COMPONENT] Primary Action
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 387
+**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 766
 
+**Structure:** High-contrast button with brand gradient, elevated shadow and concise single label. Optional leading icon.
+**Logic:** One primary action per view centers decision-making and prevents competing calls to attention.
 **Context Of Use:** Section: Actions
 **When To Use:** Primary task completion and high-value progress steps.
 **When Not To Use:** Secondary choices or low-impact options.
+**Trade Offs:** Multiple primary actions on the same surface compete and cancel each other out. Demote secondary actions to a button group or overflow menu.
 **Aetheris Insight:** Limit to one primary action per focal region to keep neural clarity in dense interfaces.
 
 ---
 
 ## [COMPONENT] Switch Control
-**Source:** `ComponentsPage.tsx`  **Status:** Beta  **Chars:** 389
+**Source:** `ComponentsPage.tsx`  **Status:** Beta  **Chars:** 763
 
+**Structure:** Pill-shaped container with 2–4 equal-width segments; active segment has filled background and brand color.
+**Logic:** Segmented controls signal that options are mutually exclusive and equally weighted — not sequential steps.
 **Context Of Use:** Section: Actions
 **When To Use:** List, grid, graph and other tightly related perspectives.
 **When Not To Use:** Cross-domain navigation or destination changes.
+**Trade Offs:** For more than 4 options a dropdown or tab bar scales better. Long labels break the visual balance of equal-weight segments.
 **Aetheris Insight:** Keep label lengths balanced to prevent perceptual jitter during transitions.
 
 ---
 
 ## [COMPONENT] Global FAB
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 397
+**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 780
 
+**Structure:** Circular or squircle button, 56px minimum touch target, floating above content at bottom-right with drop shadow.
+**Logic:** The FAB occupies screen real estate at all times, so the action it triggers must justify that persistent cost.
 **Context Of Use:** Section: Actions
 **When To Use:** Creation flows that are always relevant in the current surface.
 **When Not To Use:** Nested details or contextual subtasks.
+**Trade Offs:** FABs on desktop feel incongruous without a mobile companion. On desktop, prefer a toolbar button or inline primary action.
 **Aetheris Insight:** The FAB should feel like the source of creation in the system, not just another button.
 
 ---
 
 ## [COMPONENT] Contextual Menu
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 399
+**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 812
 
+**Structure:** Three-dot or chevron trigger revealing a dropdown list. Destructive action sits last with color separation.
+**Logic:** Contextual menus preserve visual cleanliness by hiding low-frequency actions behind a trigger only those who need them will discover.
 **Context Of Use:** Section: Actions
 **When To Use:** Rows, cards, assets and records with optional actions.
 **When Not To Use:** Primary flows that deserve direct visibility.
+**Trade Offs:** Hiding all actions makes the surface feel inert. Expose the most-used action as a direct affordance and reserve the menu for the rest.
 **Aetheris Insight:** Destructive actions should always sit last and visually separated from safe actions.
 
 ---
 
 ## [COMPONENT] System Alerts
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 407
+**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 755
 
+**Structure:** Full-width or modal banner with semantic icon, severity color, headline and optional CTA button.
+**Logic:** Alerts interrupt the user's flow — use only when ignoring the state costs more than the interruption itself.
 **Context Of Use:** Section: Feedback
 **When To Use:** Critical system states, outages and blocked synchronization.
 **When Not To Use:** Informational or dismissible status changes.
+**Trade Offs:** Alert overuse causes alert blindness. Reserve for truly critical states — use toasts for everything else.
 **Aetheris Insight:** Alerts should break focus only when the cost of ignoring them exceeds the interruption.
 
 ---
 
 ## [COMPONENT] Toast Notification
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 413
+**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 762
 
+**Structure:** Compact floating card, bottom-center or top-right, auto-dismissing in 3–5s with optional manual dismiss.
+**Logic:** Toasts confirm system behavior without requiring user action — they close themselves to preserve flow.
 **Context Of Use:** Section: Feedback
 **When To Use:** Saved, copied, synced or completed actions.
 **When Not To Use:** Anything requiring a user decision or persistent context.
+**Trade Offs:** If the message requires action or persists beyond 5s, it is not a toast — use an alert or modal instead.
 **Aetheris Insight:** If the user needs to act, it is not a toast. It is an interruption and should be treated as one.
 
 ---
 
 ## [COMPONENT] Skeleton Loader
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 415
+**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 790
 
+**Structure:** Animated gray blocks matching the geometry of the incoming content — not a generic spinner.
+**Logic:** Skeletons set spatial expectations before content arrives, reducing perceived latency by anchoring the layout.
 **Context Of Use:** Section: Feedback
 **When To Use:** Async panels, lazy content, pagination and API-backed cards.
 **When Not To Use:** Operations so fast that the placeholder flickers.
+**Trade Offs:** If content loads in under 300ms, the skeleton flickers and creates more disruption than it prevents. Use a simple opacity fade instead.
 **Aetheris Insight:** A skeleton must mimic the final geometry; otherwise reveal feels like layout instability.
 
 ---
 
 ## [COMPONENT] Metrics Plot
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 392
+**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 766
 
+**Structure:** Line or area chart with labeled axes, hover tooltips and optional reference lines for goals or targets.
+**Logic:** Temporal data is about direction and rate of change, not just the current value — a chart answers both simultaneously.
 **Context Of Use:** Section: Data Visualization
 **When To Use:** Velocity, KPI evolution and forecasted movement.
 **When Not To Use:** Single bounded values that need no trend context.
+**Trade Offs:** For a single current value without trend relevance, a metric card is clearer and less visually heavy than a chart.
 **Aetheris Insight:** Direction of change is often more actionable than the raw number itself.
 
 ---
 
 ## [COMPONENT] Bioluminescent Heatmap
-**Source:** `ComponentsPage.tsx`  **Status:** Beta  **Chars:** 402
+**Source:** `ComponentsPage.tsx`  **Status:** Beta  **Chars:** 780
 
+**Structure:** Grid or canvas with luminance-based color scale from muted to vivid. Legend is mandatory.
+**Logic:** Color intensity maps frequency or density to spatial position, making clusters visible at a glance without counting.
 **Context Of Use:** Section: Data Visualization
 **When To Use:** Activity clusters, dependency hotspots and risk density.
 **When Not To Use:** Sparse datasets with few meaningful concentrations.
+**Trade Offs:** With sparse data, few cells have meaningful intensity — the visual becomes noise. Minimum viable density is roughly 10% cell coverage.
 **Aetheris Insight:** Map intensity with luminance and opacity before relying on hue shifts.
 
 ---
 
 ## [COMPONENT] Radial Gauge
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 381
+**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 730
 
+**Structure:** Arc from 0 to maximum value with indicator fill; current value shown numerically in center.
+**Logic:** A radial form implies a maximum and minimum, making it semantically appropriate only for bounded values.
 **Context Of Use:** Section: Data Visualization
 **When To Use:** Health metrics, readiness scores and bounded KPIs.
 **When Not To Use:** Unbounded values or raw totals.
+**Trade Offs:** For multiple bounded values, a bar chart is denser and more comparable. Gauges are best used in isolation or pairs.
 **Aetheris Insight:** A radial gauge implies a maximum; never use it for values without clear bounds.
 
 ---
 
 ## [COMPONENT] Sparkline Strip
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 406
+**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 740
 
+**Structure:** Micro line chart, 60–120px wide, no axes or labels, optionally color-coded by direction.
+**Logic:** Sparklines convey directionality — up, down or flat — in minimal space alongside a metric label.
 **Context Of Use:** Section: Data Visualization
 **When To Use:** Dense dashboards that still need directional context.
 **When Not To Use:** Situations where precise reading beats glanceability.
+**Trade Offs:** Sparklines sacrifice precision for compactness. If the user needs exact values at each point, use a full chart.
 **Aetheris Insight:** A sparkline answers one critical question fast: is this getting better or worse?
 
 ---
 
 ## [COMPONENT] Entity Graph
-**Source:** `ComponentsPage.tsx`  **Status:** Beta  **Chars:** 401
+**Source:** `ComponentsPage.tsx`  **Status:** Beta  **Chars:** 756
 
+**Structure:** Nodes as entities, edges as relationships, with optional labels, direction arrows and weight encoding.
+**Logic:** Node-link diagrams reveal structural relationships that tabular data cannot express — adjacency is data.
 **Context Of Use:** Section: Data Visualization
 **When To Use:** Connected entities where adjacency itself is meaningful.
 **When Not To Use:** Linear flows better expressed as steps or trees.
+**Trade Offs:** Graphs with more than ~50 nodes become visually cluttered. Use filtering, clustering or a matrix view instead.
 **Aetheris Insight:** Relationships are also data, and surfacing them often reveals the true bottleneck.
 
 ---
 
 ## [COMPONENT] Neural Input
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 400
+**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 808
 
+**Structure:** Full-width text field with subtle glow animation on focus, placeholder as contextual prompt, optional trailing action button.
+**Logic:** A semantically rich input field signals that the system accepts open-ended, natural-language queries — not just form values.
 **Context Of Use:** Section: Inputs
 **When To Use:** Search, prompts, generative commands and AI-assisted actions.
 **When Not To Use:** Rigid structured forms with heavy validation.
+**Trade Offs:** Neural inputs imply AI processing behind them. If the backend is a simple search, this styling creates a trust mismatch.
 **Aetheris Insight:** Subtle glow and focused contrast make the field feel alive without reducing legibility.
 
 ---
 
 ## [COMPONENT] Selection Chips
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 385
+**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 748
 
+**Structure:** Pill-shaped labels, horizontally scrollable or wrapping, with filled and outlined states for selected and unselected.
+**Logic:** Chips make multi-select options tangible and show selected state inline, reducing the overhead of hidden dropdowns.
 **Context Of Use:** Section: Inputs
 **When To Use:** Status, labels, dataset refinement and filtering.
 **When Not To Use:** Long option lists that demand search or hierarchy.
+**Trade Offs:** Beyond 10–12 options, chips become unwieldy. Use a searchable multi-select dropdown instead.
 **Aetheris Insight:** Chips work best when options are few, semantically clear and visually balanced.
 
 ---
 
 ## [COMPONENT] Gradient Slider
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 364
+**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 728
 
+**Structure:** Horizontal track with draggable thumb, gradient fill from left to thumb, current value label above or beside.
+**Logic:** A continuous slider is appropriate when the user needs to feel a range, not just select a discrete value.
 **Context Of Use:** Section: Inputs
 **When To Use:** Precision values with immediate visual response.
 **When Not To Use:** Discrete, categorical choices.
+**Trade Offs:** Sliders are hard to target precisely on touch. For exact numeric input, pair with a text field or step buttons.
 **Aetheris Insight:** A slider should communicate range, not ambiguity. Show the current value clearly.
 
 ---
 
 ## [COMPONENT] Toggle Switch
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 371
+**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 712
 
+**Structure:** Pill track with circular thumb. Off state muted, on state in brand color. Label always visible.
+**Logic:** Toggles communicate binary state with an immediate effect — the UI changes the moment the switch moves.
 **Context Of Use:** Section: Inputs
 **When To Use:** Instant, reversible preferences.
 **When Not To Use:** Dangerous actions or changes that require confirmation.
+**Trade Offs:** For settings that require a save action before taking effect, use a checkbox with a Save button instead.
 **Aetheris Insight:** A toggle promises immediate reversibility; never use it for high-risk consequences.
 
 ---
 
 ## [COMPONENT] Date Picker
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 365
+**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 743
 
+**Structure:** Trigger input showing formatted date, popover calendar with month navigation and day selection grid.
+**Logic:** Calendars anchor temporal choices in the user's mental model of weeks and months — more reliable than raw text input.
 **Context Of Use:** Section: Inputs
 **When To Use:** Scheduling, planning and time filtering.
 **When Not To Use:** Simple year or text inputs where a calendar is excessive.
+**Trade Offs:** For entering a well-known date, a text field is faster. Calendars add overhead when the user already knows the exact date.
 **Aetheris Insight:** Today should always be a visible anchor so the user can orient instantly.
 
 ---
 
 ## [COMPONENT] Search Command Bar
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 393
+**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 771
 
+**Structure:** Modal overlay triggered by keyboard shortcut (⌘K), fuzzy search input, grouped results list with icons.
+**Logic:** Command bars give power users a keyboard-driven shortcut to any action without mouse navigation through menus.
 **Context Of Use:** Section: Inputs
 **When To Use:** Apps with broad IA, many actions or expert workflows.
 **When Not To Use:** Tiny products where every action is already visible.
+**Trade Offs:** Command bars require discovery — users must know they exist. Pair with an onboarding nudge or visible keyboard shortcut label.
 **Aetheris Insight:** A great command bar is not an accessory; it becomes the operational backbone.
+
+---
+
+## [XAI_COMPONENT] Explanation Bubble
+**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 860
+
+**Structure:** Expandable card attached to a prediction or recommendation, showing rationale in 2–3 plain-language sentences.
+**Logic:** When AI drives a recommendation, the reasoning must accompany the output — otherwise trust cannot be calibrated by the user.
+**Context Of Use:** Section: Intelligence / XAI
+**When To Use:** Any AI-driven score or recommendation shown to non-technical users.
+**When Not To Use:** Expert surfaces where raw coefficients matter more than summary language.
+**Trade Offs:** Explanation text that is too long defeats its purpose. Aim for 2–3 sentences covering what, why and confidence level.
+**Aetheris Insight:** Explanation depth should adapt to role: managers need actionability, engineers need detail.
+
+---
+
+## [XAI_COMPONENT] Confidence Meter
+**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 797
+
+**Structure:** Progress bar, arc or numeric percentage with semantic color coding (green, amber, red tiers).
+**Logic:** Displaying confidence calibrates user reliance — high confidence invites action, low confidence invites verification.
+**Context Of Use:** Section: Intelligence / XAI
+**When To Use:** Predictions, forecasts and probabilistic suggestions.
+**When Not To Use:** Deterministic rules where confidence is misleading theater.
+**Trade Offs:** A miscalibrated confidence score is worse than no score — it creates false certainty. Validate calibration before shipping.
+**Aetheris Insight:** Trust in AI is earned through uncertainty disclosure, not through tone of certainty.
+
+---
+
+## [XAI_COMPONENT] Predictive Progress Card
+**Source:** `ComponentsPage.tsx`  **Status:** Beta  **Chars:** 826
+
+**Structure:** Card split between solid (actual) and dashed (projected) sections, with delta label showing days ahead or behind.
+**Logic:** Combining current state with projected trajectory gives managers the information they need to intervene before problems materialize.
+**Context Of Use:** Section: Intelligence / XAI
+**When To Use:** Sprints, milestones and delivery tracking with historical signal.
+**When Not To Use:** Tasks with insufficient historical evidence.
+**Trade Offs:** Projections without sufficient historical data are unreliable. Require at least 2–3 completed sprints before activating.
+**Aetheris Insight:** The projection shadow must read as hypothesis, not promise, through muted styling.
+
+---
+
+## [XAI_COMPONENT] Source Attribution Link
+**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 796
+
+**Structure:** Inline chip or footnote linking to the source document, log or dataset that powered the AI output.
+**Logic:** Provenance turns an assertion into evidence — it allows users to verify claims and builds durable trust in the system.
+**Context Of Use:** Section: Intelligence / XAI
+**When To Use:** Every AI-generated summary, prediction or recommendation.
+**When Not To Use:** Pure UI feedback that is not data-derived.
+**Trade Offs:** If the source is a black-box third-party model output, attribution cannot be honest. Surface this limitation explicitly.
+**Aetheris Insight:** Explainability without provenance is storytelling. Evidence makes it auditable.
 
 ---
 
@@ -379,17 +485,147 @@
 ---
 
 ## [DESIGN_DECISION] List vs. Bento
-**Source:** `DesignDecisionsPage.tsx`  **Status:** Stable  **Chars:** 151
+**Source:** `DesignDecisionsPage.tsx`  **Status:** Stable  **Chars:** 500
 
-**Logic:** Data visualization density strategies and when chunking improves comprehension.
+**Logic:** List layout excels for scannable, sequential data with consistent row density. Bento grid excels for heterogeneous content where size encodes priority — larger cells signal higher importance. Use List when users compare items row by row. Use Bento when visual hierarchy and content variety matter more than strict alignment. Trade-off: Bento requires more design effort per item; List is faster to implement but less expressive.
 **Context Of Use:** Rule 12
 
 ---
 
 ## [DESIGN_DECISION] Haptic Feedback
-**Source:** `DesignDecisionsPage.tsx`  **Status:** Stable  **Chars:** 148
+**Source:** `DesignDecisionsPage.tsx`  **Status:** Stable  **Chars:** 542
 
-**Logic:** Sensory triggers for mobile-first paradigms and confirmation-heavy actions.
+**Logic:** Haptic feedback confirms high-stakes or irreversible actions on mobile — deletes, confirmations and state toggles. Reserve for moments where tactile confirmation reduces user anxiety about permanence. When to use: destructive actions, form submissions, binary state changes. When not to use: passive events, informational toasts, decorative interactions. Trade-off: overuse degrades trust and drains battery; underuse leaves users uncertain after consequential actions.
 **Context Of Use:** Rule 15
+
+---
+
+## [REASONING] Context Ingestion
+**Source:** `ReasoningPage.tsx`  **Status:** Stable  **Chars:** 298
+
+**Logic:** Scanning tokens, components, patterns, documentation fragments and live user intent before generating guidance.
+**Context Of Use:** Beatrice XAI reasoning pipeline
+
+---
+
+## [REASONING] Constraint Application
+**Source:** `ReasoningPage.tsx`  **Status:** Stable  **Chars:** 307
+
+**Logic:** Applying design-system rules, UX principles, accessibility constraints and brand language to narrow valid outcomes.
+**Context Of Use:** Beatrice XAI reasoning pipeline
+
+---
+
+## [REASONING] Synthesis Engine
+**Source:** `ReasoningPage.tsx`  **Status:** Stable  **Chars:** 306
+
+**Logic:** Resolving tensions between consistency, context, usability and explanatory depth to generate a justified recommendation.
+**Context Of Use:** Beatrice XAI reasoning pipeline
+
+---
+
+## [REASONING] Confidence Metrics
+**Source:** `ReasoningPage.tsx`  **Status:** Stable  **Chars:** 332
+
+**Structure:** Three-axis scoring: Recommendation clarity, Token consistency, UX principle fit
+**Logic:** Scores surface how well a recommendation aligns with design system rules and UX principles.
+**Context Of Use:** Shown after oracle responses to help users calibrate trust
+**When To Use:** Reference when evaluating competing recommendations
+**Trade Offs:** Scores are proxies — high similarity does not guarantee the correct recommendation for every context.
+**Aetheris Insight:** Confidence calibration is what distinguishes an oracle from a search engine.
+
+---
+
+## [REASONING] Decision Alternatives
+**Source:** `ReasoningPage.tsx`  **Status:** Stable  **Chars:** 349
+
+**Structure:** Multiple paths evaluated; only the best-fit strategy is returned
+**Logic:** Alternative paths are weighted against clarity, rationale depth and trust calibration.
+**Context Of Use:** Internal oracle evaluation — surfaces in XAI explanation when requested
+**When To Use:** Reference when the user asks why a specific response style was chosen
+**Trade Offs:** Showing rejected paths increases transparency but adds cognitive load.
+**Aetheris Insight:** The best oracle response is the one the user can audit, trust, and reuse.
+
+---
+
+## [PERSONA] Persona Goals — Francisco Soares
+**Source:** `PersonaPage.tsx`  **Status:** Stable  **Chars:** 743
+
+**Logic:** Goals define what the primary consumer persona needs from Beatrice.
+**Context Of Use:** Primary persona: Product Manager, mid-level DS consumer, sprint-pressure context
+**When To Use:** Reference when designing oracle responses for time-constrained users
+**Aetheris Insight:** Francisco wants the right answer in 30 seconds — depth on demand, not by default.
+
+---
+
+## [PERSONA] Persona Frustrations — Francisco Soares
+**Source:** `PersonaPage.tsx`  **Status:** Stable  **Chars:** 862
+
+**Logic:** Documented friction points that the oracle must address.
+**Context Of Use:** Guides oracle response design: answers must be fast, scannable and source-backed
+**When To Use:** Reference when evaluating whether an oracle response resolves the user's real barrier
+**Aetheris Insight:** The oracle exists to eliminate the gap between documentation and decision.
+
+---
+
+## [PERSONA] Oracle Capability: Explanation Bubble
+**Source:** `PersonaPage.tsx`  **Status:** Stable  **Chars:** 219
+
+**Structure:** XAI Widget
+**Logic:** Fills the gap between rule and reasoning by explaining why a component is recommended and which UX principle supports the choice.
+**Context Of Use:** Maps persona pain point to specific Aetheris component or feature
+
+---
+
+## [PERSONA] Oracle Capability: Source Attribution Link
+**Source:** `PersonaPage.tsx`  **Status:** Stable  **Chars:** 203
+
+**Structure:** Provenance
+**Logic:** Shows the exact origin of the answer so Francisco can validate, share and end discussions with traceability.
+**Context Of Use:** Maps persona pain point to specific Aetheris component or feature
+
+---
+
+## [PERSONA] Oracle Capability: Confidence Meter
+**Source:** `PersonaPage.tsx`  **Status:** Stable  **Chars:** 180
+
+**Structure:** Trust Signal
+**Logic:** Communicates certainty level so he can calibrate risk and decide without extra validation.
+**Context Of Use:** Maps persona pain point to specific Aetheris component or feature
+
+---
+
+## [PERSONA] Oracle Capability: Beatrice Chat (RAG + NLP)
+**Source:** `PersonaPage.tsx`  **Status:** Stable  **Chars:** 211
+
+**Structure:** Oracle
+**Logic:** Transforms natural language into a layered answer with recommendation, context, explanation and source within seconds.
+**Context Of Use:** Maps persona pain point to specific Aetheris component or feature
+
+---
+
+## [DEV_INTEGRATION] API Endpoints
+**Source:** `DevIntegrationPage.tsx`  **Status:** Stable  **Chars:** 358
+
+**Structure:** REST + streaming endpoints served by the FastAPI server on port 3333
+**Logic:** Beatrice exposes /api/chat (SSE streaming) and /health (status check).
+**Context Of Use:** Integrating Beatrice into external tools, dashboards or developer workflows
+**When To Use:** Use /api/chat for all oracle queries. Use /health to verify server status.
+**When Not To Use:** Do not poll /api/chat for non-query operations.
+**Trade Offs:** SSE streaming requires EventSource-compatible clients.
+**Aetheris Insight:** The API contract mirrors OpenAI streaming format — compatible with most AI SDK clients.
+
+---
+
+## [DEV_INTEGRATION] Framework Support
+**Source:** `DevIntegrationPage.tsx`  **Status:** Stable  **Chars:** 263
+
+**Structure:** npm packages: @aetheris/core, @aetheris/tokens, @aetheris/react
+**Logic:** Aetheris ships framework-specific adapters alongside a framework-agnostic core.
+**Context Of Use:** Setting up Aetheris in a new or existing project
+**When To Use:** Install @aetheris/react for React projects, @aetheris/vue for Vue projects.
+**When Not To Use:** Do not import @aetheris/react in a Vue project or vice versa.
+**Trade Offs:** Framework packages add a thin adapter layer — minimal overhead, maximum type safety.
+**Aetheris Insight:** The core + tokens separation means theme changes never require framework updates.
 
 ---

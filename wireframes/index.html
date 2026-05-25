@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Beatrice — Wireframes de Resposta</title>
+<style>
+  :root {
+    --bg: #0d0d14;
+    --surface: #13131f;
+    --surface-hi: #1a1a2e;
+    --border: rgba(255,255,255,0.07);
+    --primary: #a78bfa;
+    --primary-dim: rgba(167,139,250,0.12);
+    --secondary: #67e8f9;
+    --error: #f87171;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --text-xs: #64748b;
+    --radius: 16px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    padding: 40px 24px;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 6px; }
+  .subtitle { color: var(--text-dim); margin-bottom: 48px; font-size: 15px; }
+  .nav { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 48px; }
+  .nav a {
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    transition: all 0.2s;
+  }
+  .nav a:hover { border-color: var(--primary); color: var(--primary); }
+  .wireframe { margin-bottom: 64px; }
+  .wireframe-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--primary);
+    margin-bottom: 12px;
+  }
+  .wireframe h2 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+  .wireframe .desc { color: var(--text-dim); margin-bottom: 24px; font-size: 13px; }
+  iframe {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+  }
+  .note {
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: var(--primary-dim);
+    border-left: 3px solid var(--primary);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .note strong { color: var(--primary); }
+</style>
+</head>
+<body>
+
+<h1>Beatrice — Wireframes de Resposta</h1>
+<p class="subtitle">5 padrões de resposta do Oráculo Inteligente do Aetheris Design System</p>
+
+<nav class="nav">
+  <a href="wf-01-component.html">WF-01 Componente</a>
+  <a href="wf-02-pattern.html">WF-02 Padrão Complexo</a>
+  <a href="wf-03-token.html">WF-03 Token Lookup</a>
+  <a href="wf-04-decision.html">WF-04 Decision Log</a>
+  <a href="wf-05-outofscope.html">WF-05 Out of Scope</a>
+</nav>
+
+<div class="wireframe">
+  <div class="wireframe-label">WF-01 — Intent: component_guidance</div>
+  <h2>Resposta de Componente</h2>
+  <p class="desc">Usuário pergunta qual componente usar. Beatrice retorna recomendação + reasoning + fonte + confidence.</p>
+  <div class="note"><strong>Arquivo:</strong> wf-01-component.html</div>
+</div>
+
+<div class="wireframe">
+  <div class="wireframe-label">WF-02 — Intent: pattern_guidance</div>
+  <h2>Resposta de Padrão Complexo</h2>
+  <p class="desc">Usuário pergunta como estruturar um fluxo ou tela. Beatrice retorna estrutura, lógica e contexto de uso.</p>
+  <div class="note"><strong>Arquivo:</strong> wf-02-pattern.html</div>
+</div>
+
+<div class="wireframe">
+  <div class="wireframe-label">WF-03 — Intent: token_lookup</div>
+  <h2>Token Lookup</h2>
+  <p class="desc">Usuário pergunta qual token de cor, tipografia ou espaçamento usar. Beatrice retorna o token exato com amostra visual.</p>
+  <div class="note"><strong>Arquivo:</strong> wf-03-token.html</div>
+</div>
+
+<div class="wireframe">
+  <div class="wireframe-label">WF-04 — Intent: design_decision</div>
+  <h2>Decision Log</h2>
+  <p class="desc">Usuário pergunta sobre uma decisão de design registrada. Beatrice explica a decisão, trade-offs e raciocínio.</p>
+  <div class="note"><strong>Arquivo:</strong> wf-04-decision.html</div>
+</div>
+
+<div class="wireframe">
+  <div class="wireframe-label">WF-05 — Intent: out_of_scope</div>
+  <h2>Out of Scope</h2>
+  <p class="desc">Usuário faz pergunta fora do domínio do design system. Beatrice declina com clareza e sugere alternativa.</p>
+  <div class="note"><strong>Arquivo:</strong> wf-05-outofscope.html</div>
+</div>
+
+</body>
+</html>

@@ -85,15 +85,15 @@ function getDesignDecisionsContent(locale: Locale) {
           rule: "Rule 12",
           title: "List vs. Bento",
           description:
-            "Data visualization density strategies and when chunking improves comprehension.",
-          tags: [],
+            "List layout excels for scannable, sequential data with consistent row density. Bento grid excels for heterogeneous content where size encodes priority — larger cells signal higher importance. Use List when users compare items row by row. Use Bento when visual hierarchy and content variety matter more than strict alignment. Trade-off: Bento requires more design effort per item; List is faster to implement but less expressive.",
+          tags: ["Context: Data-heavy", "Context: Editorial"],
         },
         {
           rule: "Rule 15",
           title: "Haptic Feedback",
           description:
-            "Sensory triggers for mobile-first paradigms and confirmation-heavy actions.",
-          tags: [],
+            "Haptic feedback confirms high-stakes or irreversible actions on mobile — deletes, confirmations and state toggles. Reserve for moments where tactile confirmation reduces user anxiety about permanence. When to use: destructive actions, form submissions, binary state changes. When not to use: passive events, informational toasts, decorative interactions. Trade-off: overuse degrades trust and drains battery; underuse leaves users uncertain after consequential actions.",
+          tags: ["Context: Mobile", "Context: Confirmation"],
         },
       ] satisfies SupportingDecision[],
       inferenceNotes: [
