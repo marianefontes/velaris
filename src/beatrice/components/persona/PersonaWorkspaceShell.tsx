@@ -14,14 +14,16 @@ export function PersonaWorkspaceShell({
   workspace: ReactNode;
 }) {
   return (
-    <main className="relative overflow-hidden rounded-[28px] border border-white/8 bg-surface-container-high/25 p-6 lg:p-8">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_25%_0%,rgba(222,204,253,0.10),transparent_30%),radial-gradient(circle_at_90%_20%,rgba(99,179,237,0.08),transparent_28%)]" />
-      <div className="relative z-10 space-y-6">
-        {header}
-        {switcher}
-        {banner}
-        {status}
-        {workspace}
+    <main className="relative overflow-hidden rounded-[28px] border border-white/10 bg-surface-container-high/45 p-4 shadow-panel backdrop-blur-3xl lg:p-6">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-haze opacity-60" />
+      <div className="relative z-10 grid gap-5 xl:grid-cols-[15rem_1fr]">
+        <div className="xl:sticky xl:top-6 xl:self-start">{switcher}</div>
+        <div className="space-y-5">
+          {header}
+          {banner}
+          {status}
+          {workspace}
+        </div>
       </div>
     </main>
   );

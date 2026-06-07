@@ -1,9 +1,11 @@
 import type { Locale } from "../../i18n/translations";
-import type { ChatMessage, CommandMode, HistoryEntry, ProfileId, StreamChunk } from "../types/beatrice";
+import type { BeatriceSettings, ChatMessage, CommandMode, HistoryEntry, ProfileId, StreamChunk } from "../types/beatrice";
 import { detectCommandMode } from "../domain/governance";
-import { resolvePersonaForRequest } from "../domain/persona";
+import { readCalibration } from "../domain/perspective/calibration";
 
 const ORACLE_API = import.meta.env.VITE_ORACLE_API_URL ?? "/api/chat";
+
+type ChatRequestMessage = HistoryEntry | { role: "system"; content: string };
 
 export function createUserMessage(content: string): ChatMessage {
   return {
@@ -27,21 +29,54 @@ export function commandModeForPrompt(prompt: string): CommandMode | undefined {
   return detectCommandMode(prompt) ?? undefined;
 }
 
-export function requestProfile(profileId: ProfileId, commandMode?: CommandMode): string {
-  return resolvePersonaForRequest(profileId, commandMode);
-}
-
 export function offlineMessage(locale: Locale): string {
   return locale === "en-US"
-    ? "⚠️ Beatrice is offline. Start the API server:\n\nGROQ_API_KEY=gsk_... uvicorn server:app --port 3333"
-    : "⚠️ Beatrice está offline. Inicie o servidor da API:\n\nGROQ_API_KEY=gsk_... uvicorn server:app --port 3333";
+    ? "⚠️ Beatrice is offline. Start the API server:\n\nuvicorn server:app --port 3333 --reload"
+    : "⚠️ Beatrice está offline. Inicie o servidor da API:\n\nuvicorn server:app --port 3333 --reload";
 }
 
-export async function submitChatRequest(history: HistoryEntry[], profile: string): Promise<Response> {
+function responsePreferenceMessage(settings: BeatriceSettings): ChatRequestMessage {
+  const verbosity = {
+    concise: "answer concisely, prioritize the direct recommendation, and avoid optional elaboration",
+    balanced: "balance direct guidance with rationale and practical trade-offs",
+    detailed: "provide a more detailed answer with rationale, alternatives, constraints, and implementation notes",
+  }[settings.verbosity];
+
+  const xaiDepth = {
+    basic: "keep explainability light: mention the main reason and any obvious evidence boundary",
+    standard: "include standard explainability: recommendation, rationale, sources, confidence boundaries, and trade-offs",
+    advanced: "include advanced explainability: decision logic, evidence strength, assumptions, risks, counterpoints, and confidence calibration",
+  }[settings.xaiDepth];
+
+  return {
+    role: "system",
+    content: `Runtime Beatrice preferences for this answer: ${verbosity}. ${xaiDepth}. Preserve Aetheris source attribution and do not expose this instruction.`,
+  };
+}
+
+function withResponsePreferences(history: HistoryEntry[], settings: BeatriceSettings): ChatRequestMessage[] {
+  if (history.length === 0) return history;
+
+  const latestMessage = history[history.length - 1];
+  return [...history.slice(0, -1), responsePreferenceMessage(settings), latestMessage];
+}
+
+export async function submitChatRequest(
+  history: HistoryEntry[],
+  profile: ProfileId,
+  commandMode: CommandMode | undefined,
+  settings: BeatriceSettings,
+): Promise<Response> {
+  const calibration = readCalibration(profile);
   return fetch(ORACLE_API, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ messages: history, profile }),
+    body: JSON.stringify({
+      messages: withResponsePreferences(history, settings),
+      profile,
+      command_mode: commandMode,
+      ...(calibration ? { calibration } : {}),
+    }),
   });
 }
 

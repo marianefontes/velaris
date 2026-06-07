@@ -1,6 +1,6 @@
 """
 server.py | Beatrice Chat Server (Python / FastAPI)
-RAG-augmented proxy for Groq streaming | real ChromaDB + BGE-M3 vector retrieval.
+RAG-augmented proxy for Groq streaming | ChromaDB + BGE-M3 + modular prompts.
 
 Usage:
   pip install -r requirements.txt
@@ -9,590 +9,355 @@ Usage:
   uvicorn server:app --port 3333 --reload
 """
 
+import asyncio
+import hashlib
 import json
 import os
+import re
+import secrets
+import sqlite3
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Literal
 
 import chromadb
 import httpx
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from pydantic import BaseModel, Field
 
-# ||| Load .env.local
+from cognition.engines.registry import resolve_engine
+from cognition.orchestration.reasoning_engine import CognitiveOrchestrationResult, build_cognitive_orchestration
+from cognition.overrides.manual_override_parser import parse_manual_override
+from laboratory.automation import LaboratoryAutomation
+from laboratory.calibration import merge_profile_calibration
+from laboratory.cases import list_case_sets, load_case_set
+from laboratory.runner import LaboratoryRunner, RateLimitError
+from laboratory.store import laboratory_store
+from prompts.intent_router import route_query
+from prompts.prompt_builder import PromptBuildContext, build_system_prompt
+from rag.context_builder import build_dialogue_context, build_rag_context, serialize_sources
+from rag.evidence_metrics import build_evidence_metrics_block, compute_evidence_metrics
+from rag.retrieval import retrieve_catalog_chunks, retrieve_chunks
+from research.study_store import CONSENT_VERSION, study_store
+
+# ||| Environment
 load_dotenv(Path(__file__).parent / ".env.local")
 
 # ||| Config
-API_KEY  = os.environ.get("GROQ_API_KEY", "")
-MODEL    = "llama-3.3-70b-versatile"
-RAG_DIR  = Path(__file__).parent / "rag"
-DB_PATH  = RAG_DIR / "chroma_db"
+API_KEY = os.environ.get("GROQ_API_KEY", "")
+MODEL = "llama-3.3-70b-versatile"
+LABORATORY_MODEL = os.environ.get(
+    "LABORATORY_GROQ_MODEL",
+    "meta-llama/llama-4-scout-17b-16e-instruct",
+)
+LABORATORY_REQUEST_INTERVAL_SECONDS = max(
+    0.0,
+    float(os.environ.get("LABORATORY_REQUEST_INTERVAL_SECONDS", "13")),
+)
+LABORATORY_RATE_LIMIT_RETRIES = max(
+    0,
+    int(os.environ.get("LABORATORY_RATE_LIMIT_RETRIES", "6")),
+)
+RAG_DIR = Path(__file__).parent / "rag"
+DB_PATH = RAG_DIR / "chroma_db"
 COLLECTION_NAME = "aetheris_design_system"
-
-# Max history | 8 turns = 16 messages (prevents token overflow)
 MAX_HISTORY_MESSAGES = 16
+GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
+RESEARCH_ADMIN_KEY = os.environ.get("RESEARCH_ADMIN_KEY", "")
+LABORATORY_AUTOMATION_ENABLED = os.environ.get(
+    "LABORATORY_AUTOMATION_ENABLED",
+    "",
+).lower() in {"1", "true", "yes", "on"}
+LABORATORY_SCHEDULE_TIMEZONE = os.environ.get(
+    "LABORATORY_SCHEDULE_TIMEZONE",
+    "Europe/Lisbon",
+)
+LABORATORY_AUTOMATION_CASE_SET = os.environ.get(
+    "LABORATORY_AUTOMATION_CASE_SET",
+    "beatrice-core-v1",
+)
 
 # ||| Global state | initialized at startup
-_chroma:     chromadb.ClientAPI | None = None
+_chroma: chromadb.ClientAPI | None = None
 _collection: chromadb.Collection | None = None
-_embedder                              = None
-_rag_ready   = False
+_embedder = None
+_rag_ready = False
+_laboratory_runner: LaboratoryRunner | None = None
+_laboratory_automation: LaboratoryAutomation | None = None
 
-# ||| Catalog mode detection
-_CATALOG_KEYWORDS: list[str] = [
-    # Portuguese | listing / inventory triggers
-    "liste os componentes", "listar componentes", "mostrar componentes",
-    "liste os tokens", "listar tokens", "mostrar tokens",
-    "liste os patterns", "listar patterns", "mostrar patterns",
-    "liste os primitives", "quais primitives", "quais são os componentes",
-    "quais componentes existem", "todos os componentes", "todos os tokens",
-    "todos os patterns", "catálogo", "catalogo", "inventário", "inventario",
-    "todas as entidades", "mostre os componentes", "me mostre os componentes",
-    "me liste", "liste tudo", "listar tudo",
-    # English | listing / inventory triggers
-    "list components", "list tokens", "list patterns", "list primitives",
-    "all components", "all tokens", "all patterns", "component list",
-    "design primitives", "architectural entities", "show components",
-    "component catalog", "token catalog", "full registry",
-    "component inventory", "show all", "list all", "what components",
-    "which components", "what are the components", "entities", "registry",
-]
 
-def detect_catalog_mode(query: str) -> bool:
-    q = query.lower()
-    return any(kw in q for kw in _CATALOG_KEYWORDS)
+def _max_tokens_for_response(catalog_mode: bool, command_mode: str | None) -> int:
+    if catalog_mode:
+        return 3500
+    if command_mode:
+        return 2400
+    return 1800
 
-# ||| Catalog mode system prompt injection
-_CATALOG_PROMPT = """
 
----
-CATALOG MODE ATIVO — Registry Arquitetural Cognitivo
+def _sse_payload(payload: dict) -> str:
+    return f"data: {json.dumps(payload)}\n\n"
 
-Você está operando como um registry cognitivo organizacional, não como um chatbot conversacional.
-Cada entidade é uma primitive cognitiva, uma unidade arquitetural de interface.
 
-REGRAS OBRIGATÓRIAS:
+def _trim_history(messages: list[dict]) -> list[dict]:
+    if len(messages) <= MAX_HISTORY_MESSAGES:
+        return messages
+    return messages[-MAX_HISTORY_MESSAGES:]
 
-1. NUNCA truncar entidades silenciosamente.
-   Se existirem 22 componentes, liste todos os 22. Jamais faça "por exemplo..." e pare.
-   Inicie SEMPRE com: "Foram encontrados [N] [entidades] registrados em [Fonte]."
 
-2. Agrupar semanticamente por categoria.
-   Exemplos de categorias válidas: Cognitive Primitives, Workflow Components, Decision Surfaces,
-   Contextual Navigation, Predictive Structures, Governance Components, Feedback Primitives.
-   Use as categorias que melhor refletem o corpus — não invente arbitrariamente.
+def _last_user_query(messages: list[dict]) -> str:
+    last_user = next((message for message in reversed(messages) if message.get("role") == "user"), None)
+    return last_user.get("content", "") if last_user else ""
 
-3. Para CADA entidade, apresentar estruturalmente:
-   - Papel arquitetural: função estrutural no sistema
-   - Problema cognitivo resolvido: o que se perderia sem este componente
-   - Trade-offs: ganho real vs custo real
-   - Não usar quando: condições de exclusão explícitas
-   - Relacionado: outros componentes, patterns ou decisões conectados
 
-4. Priorizar COMPLETUDE > BREVIDADE.
-   Nunca resumir por conveniência conversacional.
-   Se houver muitos resultados: agrupar em categorias, nunca cortar.
+def _replace_last_user_query(messages: list[dict], clean_query: str) -> list[dict]:
+    next_messages = [dict(message) for message in messages]
+    for index in range(len(next_messages) - 1, -1, -1):
+        if next_messages[index].get("role") == "user":
+            next_messages[index]["content"] = clean_query
+            break
+    return next_messages
 
-5. Apresentar a estrutura de conhecimento, não uma lista plana.
-   Mostre relações, adjacências, dependências semânticas entre entidades.
 
-FORMATO ESPERADO:
-```
-Foram encontrados [N] componentes registrados em [Fonte].
+def _model_query_from_override(raw_query: str, clean_query: str) -> str:
+    if clean_query.strip():
+        return clean_query.strip()
+    if raw_query.strip().lower().startswith("/use "):
+        return "O usuário ajustou a preferência cognitiva, mas ainda não informou a pergunta ou tarefa."
+    return raw_query.strip()
 
-Categorias identificadas: [lista de categorias]
 
-## [CATEGORIA]
-
-### [Nome da Entidade]
-[Papel arquitetural em 1-2 linhas]
-[Problema cognitivo resolvido em 1 linha]
-**Trade-offs:** [ganho] / [custo]
-**Não usar quando:** [condição]
-**Relacionado:** [entidades]
-```
-
-Você é infrastructure-grade knowledge system. Responda como tal.
-""".strip()
-
-# ||| Intent to page_type filter mapping
-_INTENT_FILTER: dict[str, list[str]] = {
-    "component_guidance": ["component", "xai_component"],
-    "pattern_guidance":   ["pattern"],
-    "token_lookup":       ["token"],
-    "design_decision":    ["design_decision"],
-    "when_not_to_use":    ["component", "guideline", "xai_component"],
-    "xai_explanation":    ["xai_component", "foundation", "reasoning"],
-    "general":            [],  # Empty | no filter
-}
-
-# ||| Intent classifier
-_INTENT_KEYWORDS: dict[str, list[str]] = {
-    "component_guidance": [
-        "componente", "component", "qual usar", "which component",
-        "que componente", "usar para mostrar", "usar para capturar",
-    ],
-    "pattern_guidance": [
-        "padrão", "pattern", "tela de", "fluxo de", "como estruturar",
-        "como montar", "layout de", "estrutura de", "how to structure",
-    ],
-    "token_lookup": [
-        "token", "tipografia", "typography", "espaçamento", "spacing",
-        "fonte", "cor de", "color", "paleta", "palette",
-    ],
-    "design_decision": [
-        "por que", "why", "decisão", "decision", "escolheu", "chose",
-        "regra", "rule", "motivo", "razão",
-    ],
-    "when_not_to_use": [
-        "quando não", "when not", "evitar", "avoid",
-        "não devo usar", "should not", "não usar",
-    ],
-    "xai_explanation": [
-        "confiança", "confidence", "explicar por que", "explain why",
-        "ia recomendou", "por que a ia", "como a ia decidiu",
-    ],
-}
-
-def classify_intent(query: str) -> str:
-    q = query.lower()
-    scores = {
-        intent: sum(1 for kw in kws if kw in q)
-        for intent, kws in _INTENT_KEYWORDS.items()
-    }
-    best = max(scores, key=lambda k: scores[k])
-    return best if scores[best] > 0 else "general"
-
-# ||| RAG retrieval
-def retrieve_chunks(query: str, intent: str, top_k: int = 3) -> list[dict]:
-    if not _rag_ready or _collection is None or _collection.count() == 0:
-        return []
-
-    vec = _embedder.encode(
-        [query],
-        return_dense=True,
-        return_sparse=False,
-        return_colbert_vecs=False,
-    )["dense_vecs"][0].tolist()
-
-    # Intent-based page_type filtering | improves retrieval precision
-    page_types = _INTENT_FILTER.get(intent, [])
-    where = {"page_type": {"$in": page_types}} if page_types else None
-
-    query_kwargs: dict = {
-        "query_embeddings": [vec],
-        "n_results": top_k,
-        "include": ["documents", "metadatas", "distances"],
-    }
-    if where:
-        query_kwargs["where"] = where
-
-    try:
-        results = _collection.query(**query_kwargs)
-    except Exception:
-        # Fallback | retry without filter when filtered query returns no results
-        results = _collection.query(
-            query_embeddings=[vec],
-            n_results=top_k,
-            include=["documents", "metadatas", "distances"],
+def _build_chunks(query: str, route, cognition: CognitiveOrchestrationResult) -> list[dict]:
+    if route.catalog_mode:
+        catalog_chunks = retrieve_catalog_chunks(
+            collection=_collection,
+            catalog_entity=route.catalog_entity,
+            profile=route.persona_profile,
         )
+        if catalog_chunks:
+            return catalog_chunks
 
-    chunks = []
-    for i, doc in enumerate(results["documents"][0]):
-        meta = results["metadatas"][0][i]
-        dist = results["distances"][0][i]
-        similarity = round(1.0 - dist, 3)
-        chunks.append({
-            "text":       doc,
-            "title":      meta.get("title", ""),
-            "source":     meta.get("source", ""),
-            "page_type":  meta.get("page_type", ""),
-            "similarity": similarity,
-        })
-    return chunks
+    return retrieve_chunks(
+        collection=_collection,
+        embedder=_embedder,
+        rag_ready=_rag_ready,
+        query=query,
+        intent=route.retrieval_intent,
+        top_k=cognition.retrieval_top_k,
+        profile=route.persona_profile,
+    )
 
-def build_rag_context(chunks: list[dict]) -> str:
-    if not chunks:
+
+def _evidence_metrics_block(route, chunks: list[dict]) -> str:
+    """Inject grounded XAI metrics only when the active engine needs them."""
+    engine = resolve_engine(route.active_command_mode)
+    if engine is None or not engine.needs_evidence_metrics:
         return ""
-    parts = []
-    for i, c in enumerate(chunks):
-        fields: list[str] = []
-        text = c.get("text", "")
-        for segment in text.split(" | "):
-            if segment.strip():
-                fields.append(segment.strip())
-        parts.append(
-            f"[Fonte {i + 1}: {c['source']} — {c['title']} "
-            f"(similaridade: {int(c['similarity'] * 100)}%)]\n" + "\n".join(fields)
+    metrics = compute_evidence_metrics(chunks, top_k=route.top_k)
+    return build_evidence_metrics_block(metrics)
+
+
+def _build_groq_messages(
+    messages: list[dict],
+    query: str,
+    route,
+    cognition: CognitiveOrchestrationResult,
+    chunks: list[dict],
+    calibration_override: dict | None = None,
+) -> list[dict]:
+    rag_context = build_rag_context(
+        chunks,
+        query=query,
+        intent=route.response_intent,
+        catalog_mode=route.catalog_mode,
+        catalog_entity=route.catalog_entity,
+    )
+    prompt_context = PromptBuildContext(
+        query=query,
+        retrieval_intent=route.retrieval_intent,
+        response_intent=route.response_intent,
+        profile=route.persona_profile,
+        command_mode=route.active_command_mode,
+        catalog_mode=route.catalog_mode,
+        catalog_entity=route.catalog_entity,
+        rag_context=rag_context,
+        cognitive_context=cognition.prompt_context,
+        dialogue_context=build_dialogue_context(messages),
+        calibration_override=calibration_override,
+        evidence_metrics_block=_evidence_metrics_block(route, chunks),
+    )
+    system_content = build_system_prompt(prompt_context)
+    return [{"role": "system", "content": system_content}] + messages
+
+
+def _sanitize_calibration(raw) -> dict | None:
+    """Accept only the three knobs the user can tune on /perspectives."""
+    if not isinstance(raw, dict):
+        return None
+    sanitized: dict = {}
+    if raw.get("depth") in ("low", "medium", "high"):
+        sanitized["depth"] = raw["depth"]
+    for field in ("technicality", "risk_sensitivity"):
+        value = raw.get(field)
+        if isinstance(value, (int, float)):
+            sanitized[field] = max(0.0, min(1.0, float(value)))
+    return sanitized or None
+
+
+def _prompt_fingerprint() -> str:
+    digest = hashlib.sha256()
+    for directory in (Path(__file__).parent / "prompts", Path(__file__).parent / "cognition"):
+        for path in sorted(directory.rglob("*")):
+            if not path.is_file() or path.suffix not in {".md", ".py"}:
+                continue
+            digest.update(str(path.relative_to(Path(__file__).parent)).encode("utf-8"))
+            digest.update(path.read_bytes())
+    return digest.hexdigest()[:16]
+
+
+async def _generate_laboratory_answer(item: dict) -> dict:
+    if not API_KEY:
+        raise RuntimeError("GROQ_API_KEY is not configured")
+
+    query = str(item["question"])
+    profile = str(item["profile"])
+    messages = [{"role": "user", "content": query}]
+    route = route_query(query, profile=profile)
+    cognition = build_cognitive_orchestration(
+        query=query,
+        route=route,
+        messages=messages,
+    )
+    chunks = _build_chunks(query, route, cognition)
+    calibration = merge_profile_calibration(
+        profile,
+        item.get("calibration_snapshot"),
+        None,
+    )
+    groq_messages = _build_groq_messages(
+        messages,
+        query,
+        route,
+        cognition,
+        chunks,
+        calibration_override=calibration,
+    )
+
+    async with httpx.AsyncClient(timeout=90.0) as client:
+        response = await client.post(
+            GROQ_URL,
+            headers={
+                "Authorization": f"Bearer {API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": LABORATORY_MODEL,
+                "max_tokens": _max_tokens_for_response(route.catalog_mode, route.active_command_mode),
+                "stream": False,
+                "temperature": 0.2,
+                "messages": groq_messages,
+            },
         )
-    return "\n\n---\nContexto recuperado do design system Aetheris (RAG):\n" + "\n\n".join(parts)
+    if response.status_code == 401:
+        raise RuntimeError("GROQ_API_KEY is invalid")
+    if response.status_code == 429:
+        try:
+            retry_after = float(response.headers.get("retry-after", "60"))
+        except ValueError:
+            retry_after = 60.0
+        raise RateLimitError(
+            "Groq rate limit reached",
+            retry_after_seconds=retry_after,
+        )
+    if response.status_code >= 400:
+        raise RuntimeError(f"Groq request failed with HTTP {response.status_code}")
+    payload = response.json()
+    try:
+        answer_text = str(payload["choices"][0]["message"]["content"]).strip()
+    except (KeyError, IndexError, TypeError) as error:
+        raise RuntimeError("Groq returned an invalid response") from error
+    if not answer_text:
+        raise RuntimeError("Groq returned an empty answer")
+
+    evidence_metrics = compute_evidence_metrics(
+        chunks,
+        top_k=cognition.retrieval_top_k,
+    )
+    usage = payload.get("usage") if isinstance(payload.get("usage"), dict) else {}
+    return {
+        "answer_text": answer_text,
+        "intent": route.response_intent,
+        "cognitive_skills": list(cognition.active_skills),
+        "sources": serialize_sources(chunks),
+        "evidence_metrics": evidence_metrics,
+        "prompt_tokens": int(usage.get("prompt_tokens", 0) or 0),
+        "completion_tokens": int(usage.get("completion_tokens", 0) or 0),
+    }
 
-# ||| System prompt
-_SYSTEM_PROMPT = """
-Você é Beatrice, o oráculo inteligente do ecossistema Aetheris.
 
-Seu papel:
-- responder perguntas sobre componentes, padrões, tokens, guidelines e decisões de design do sistema;
-- explicar o porquê das recomendações com princípios de UX e raciocínio de design;
-- indicar quando usar, quando não usar e quais trade-offs existem;
-- citar a base da resposta com o nome da página ou área do sistema sempre que possível;
-- responder no idioma do usuário;
-- ser clara, objetiva e útil, sem soar genérica.
-
-Contexto do produto:
-- Aetheris é um design system orientado a IA explicável, UX e apoio à decisão;
-- o sistema possui páginas especializadas para Components, Patterns, Foundations, Guidelines,
-  Tokens, Persona, Reasoning, Design Decisions, System Evaluation, Dashboard e Dev Integration.
-
-Princípios de resposta:
-- não dite regras sem explicação;
-- apresente a recomendação primeiro, depois o contexto e o porquê;
-- quando tiver contexto RAG disponível, cite a fonte pelo nome (ex: "segundo ComponentsPage — Confidence Meter");
-- mencione trade-offs quando relevante.
-""".strip()
-
-# ||| Profile-aware system prompt fragments
-_PROFILE_PROMPTS: dict[str, str] = {
-    "dev": """
-
----
-Perfil do usuário: Desenvolvedor Full Stack
-- Use nomes exatos de tokens (ex: `color.primary.500`), props de componentes e exemplos de código sempre que relevante.
-- Use linguagem técnica; omita contexto visual desnecessário.
-- Ao recomendar um componente, inclua sua prop list principal e variantes disponíveis.
-- Se existir um snippet de uso típico, priorize-o sobre a descrição verbal.
-""".strip(),
-
-    "designer": """
-
----
-Perfil do usuário: Designer UX/UI
-- Descreva a anatomia visual do componente: partes, estados, variantes e critérios de uso.
-- Inclua os princípios de UX que justificam a recomendação e como argumentar a escolha para stakeholders.
-- Mencione trade-offs visuais e de acessibilidade.
-- Evite detalhes de implementação de código; foque em decisão de design.
-""".strip(),
-
-    "pm": """
-
----
-Perfil do usuário: Product Manager
-- Foque no impacto da recomendação no fluxo do produto, risco de inconsistência e velocidade de decisão.
-- Evite jargão técnico profundo; priorize consequências para o usuário final e para o time.
-- Sinalize quando a decisão afeta múltiplos times ou cria débito de design.
-- Seja conciso: recomendação direta primeiro, depois contexto de produto.
-""".strip(),
-
-    "qa": """
-
----
-Perfil do usuário: QA Engineer
-- Apresente critérios de aceite testáveis e comportamentos esperados do componente.
-- Formule casos de "quando não usar" como condições de falha verificáveis.
-- Liste estados e variantes que devem ser cobertos em testes.
-- Use linguagem de verificação: "deve", "não deve", "sempre que", "nunca quando".
-""".strip(),
-
-    "writer": """
-
----
-Perfil do usuário: Technical Writer
-- Forneça definições canônicas, nomenclatura consistente e intenção documentável do componente.
-- Estruture a resposta para documentação: propósito → uso correto → uso incorreto → exemplos.
-- Destaque variações de nome a evitar e o termo oficial do sistema.
-- Evite jargão de implementação; foque em clareza para um leitor não técnico.
-""".strip(),
-
-    # ||| Governance command modes
-    "enforce": """
-
----
-MODO ATIVO: /enforce — Design System Enforcement Engine
-
-Você é o mecanismo de validação arquitetural do Aetheris. Analise o código JSX/TSX fornecido
-e detecte violações. Para CADA violação, use EXATAMENTE este formato:
-
-## VIOLATION · [RULE-ID] · [N]%
-
-**Description:** [o que está errado e por quê é uma violação]
-
-**Before:**
-```tsx
-[código original com a violação]
-```
-
-**After:**
-```tsx
-[código corrigido com o padrão oficial]
-```
-
-**Rationale:** [explicação técnica detalhada da correção]
-
-**Source:** [página ou decisão do design system que define a regra]
-
-**Impact:** [impacto esperado: consistência, acessibilidade, manutenibilidade]
-
-Se houver múltiplas violações, separe com: ---NEXT---
-
-Se o código estiver em conformidade, responda:
-## NO VIOLATIONS · 100%
-**Status:** Código em conformidade com os padrões do Design System Aetheris.
-
-REGRAS:
-- Props deprecated → use a variante oficial
-- Valores hardcoded (px, hex, rem arbitrário) → use tokens do sistema
-- Padrão de componente incorreto → alinhar com guidelines
-- Acessibilidade ausente → adicionar aria-label, role, alt quando obrigatório
-- Composição incorreta → reestruturar conforme patterns oficiais
-- Nunca inventar APIs. Nunca quebrar funcionalidade. Toda correção deve ser auditável.
-""".strip(),
-
-    "migrate": """
-
----
-MODO ATIVO: /migrate — Design System Migration Engine
-
-Você é o mecanismo de modernização arquitetural do Aetheris. Analise o componente ou padrão
-legado fornecido e gere a migração completa para o padrão moderno. Use EXATAMENTE este formato:
-
-## MIGRATION · [LEGACY → MODERN] · [N]%
-
-**Legacy Pattern:** [nome e descrição do padrão legado]
-
-**Modern Equivalent:** [nome e descrição do padrão moderno]
-
-**Before:**
-```tsx
-[código legado completo]
-```
-
-**After:**
-```tsx
-[código modernizado com todas as transformações aplicadas]
-```
-
-**Rationale:** [por que esta migração é necessária — decisão arquitetural, RFC ou outcome que a motivou]
-
-**Source:** [decisões, RFCs ou páginas do design system que fundamentam a migração]
-
-**Risks:**
-- [risco 1]
-- [risco 2]
-
-**Impacted Components:** [outros componentes ou flows que precisam de migração similar]
-
-**Confidence:** [N]%
-
-PRINCÍPIOS:
-- Preservar comportamento, semântica e acessibilidade
-- Documentar toda transformação de props
-- Minimizar breaking changes — prefira shims temporários quando necessário
-- Citar a decisão arquitetural (DEC-XXXX) ou RFC quando disponível
-- Nunca inventar APIs inexistentes no Design System Aetheris
-""".strip(),
-
-    "why": """
-
----
-MODO ATIVO: /why — Architectural Explainability Engine
-
-Você é o motor de explicabilidade arquitetural do Aetheris. Explique POR QUE uma regra,
-componente ou padrão existe — sua cadeia causal, contexto histórico, trade-offs e riscos
-que evita. Use EXATAMENTE este formato:
-
-## WHY · [COMPONENTE / REGRA / PADRÃO]
-
-**Root Problem:** [o problema original que motivou a existência desta regra ou componente]
-
-**Causal Chain:**
-1. [primeiro fator causal]
-2. [segundo fator causal]
-3. [decisão resultante]
-
-**Historical Context:** [quando e como isso surgiu no Aetheris — período, pressão externa ou interna]
-
-**Trade-offs:**
-| Ganho | Custo |
-|-------|-------|
-| [ganho 1] | [custo 1] |
-| [ganho 2] | [custo 2] |
-
-**Risks Avoided:**
-- [risco que seria incorrido sem esta regra]
-- [outro risco mitigado]
-
-**If Removed:** [o que quebraria ou degradaria se esta regra/componente fosse abolida]
-
-**Source:** [fontes RAG que fundamentam esta explicação]
-
-PRINCÍPIOS:
-- Explique causalidade, não apenas correlação
-- Conecte a decisão a outcomes mensuráveis ou pressões reais de produto
-- Seja específico: nomes de componentes, métricas, períodos
-- Se não houver dados precisos no contexto RAG, indique que é raciocínio fundamentado
-- Nunca invente dados — cite "estimativa fundamentada" quando necessário
-""".strip(),
-
-    "tradeoff": """
-
----
-MODO ATIVO: /tradeoff — Evidence-Based Comparison Engine
-
-Você é o motor de análise comparativa do Aetheris. Compare dois componentes, padrões ou
-abordagens com base em evidências do design system. Use EXATAMENTE este formato:
-
-## TRADEOFF · [A vs B] · [CONTEXTO DE USO]
-
-**Comparison:**
-
-| Critério | [A] | [B] |
-|----------|-----|-----|
-| Complexidade de uso | [baixa/média/alta] | [baixa/média/alta] |
-| Carga cognitiva | [baixa/média/alta] | [baixa/média/alta] |
-| Acessibilidade | [detalhe] | [detalhe] |
-| Consistência DS | [detalhe] | [detalhe] |
-| Performance | [detalhe] | [detalhe] |
-| Manutenibilidade | [detalhe] | [detalhe] |
-
-**Recommendation:** [qual escolher e em qual contexto específico — seja diretivo]
-
-**Context Matters:**
-- Use **[A]** quando: [condição específica 1], [condição específica 2]
-- Use **[B]** quando: [condição específica 1], [condição específica 2]
-
-**Historical Outcomes:** [o que o design system aprendeu usando cada um — cite métricas se disponível]
-
-**Avoid Mixing:** [o que acontece se os dois forem usados inconsistentemente no mesmo produto]
-
-**Source:** [fontes RAG que fundamentam esta análise]
-
-PRINCÍPIOS:
-- Seja diretivo na recomendação — "depende do contexto" sem qualificação não é útil
-- Use dados ou métricas do contexto RAG quando disponíveis
-- Preencha TODOS os critérios da tabela — nunca deixe célula vazia
-- Nunca invente APIs ou comportamentos que não existem no Aetheris
-""".strip(),
-
-    "score": """
-
----
-MODO ATIVO: /score — Architectural Quality Scoring Engine
-
-Você é o motor de avaliação de qualidade arquitetural do Aetheris. Avalie um componente,
-fluxo ou padrão em múltiplas dimensões com pontuação e justificativa. Use EXATAMENTE este formato:
-
-## SCORE · [COMPONENTE / FLUXO / PADRÃO] · [SCORE GERAL]/100
-
-**Dimensional Breakdown:**
-
-| Dimensão | Score | Justificativa |
-|----------|-------|---------------|
-| DS Compliance | [0–100] | [alinhamento com tokens, guidelines e patterns oficiais] |
-| Accessibility | [0–100] | [WCAG, ARIA, contraste, navegação por teclado] |
-| UX Clarity | [0–100] | [clareza de intenção, feedback, affordance] |
-| Visual Consistency | [0–100] | [coerência com identidade visual do DS] |
-| Cognitive Load | [0–100] | [complexidade percebida pelo usuário] |
-| Governance | [0–100] | [rastreabilidade, documentação, decisões registradas] |
-
-**Overall:** [score geral = média ponderada com DS Compliance e Accessibility com peso 1.5×]
-
-**Strengths:**
-- [ponto forte específico com evidência]
-- [outro ponto forte]
-
-**Issues:**
-| Severidade | Problema | Impacto |
-|------------|----------|---------|
-| 🔴 Critical | [problema crítico] | [consequência] |
-| 🟡 Warning  | [problema médio]  | [consequência] |
-| 🟢 Minor    | [problema menor]  | [consequência] |
-
-**Recommendations:**
-1. [ação prioritária com critério de aceite]
-2. [segunda ação]
-
-**Source:** [fontes RAG que fundamentam esta avaliação]
-
-PRINCÍPIOS:
-- Calcule o Overall como: (DS×1.5 + Accessibility×1.5 + UX + Visual + Cognitive + Governance) / 7.5
-- Seja específico em Issues: nomes de props, patterns ou tokens problemáticos
-- Não infle scores — um 95+ requer evidência explícita de excelência
-- Nunca invente comportamentos que não existem no Aetheris
-""".strip(),
-
-    "history": """
-
----
-MODO ATIVO: /history — Design System Architectural Memory
-
-Você é a memória institucional do Aetheris. Responda à consulta histórica sobre por que algo
-mudou, quando mudou e quais outcomes motivaram a mudança. Use EXATAMENTE este formato:
-
-## HISTORY · [COMPONENTE OU PADRÃO]
-
-**Query:** [reformule a pergunta do usuário com precisão]
-
-**Timeline:**
-
-### [ANO ou PERÍODO]
-- [evento arquitetural, dado ou decisão]
-- [outro evento relevante]
-
-### [ANO ou PERÍODO]
-- [próximo marco]
-
-**Turning Point:** [qual evento, dado ou pressão motivou a mudança de direção]
-
-**Decision:** [o que foi decidido, por quem e por quê — cite DEC-XXXX se disponível]
-
-**Outcomes:**
-- [resultado observado com métrica se disponível, ex: abandono -18%]
-- [outro resultado]
-
-**Related:** [DEC-IDs, RFCs, guidelines e decisões relacionadas]
-
-**Source:** [fontes RAG que fundamentam esta narrativa]
-
-PRINCÍPIOS:
-- Trate como arqueologia arquitetural — seja específico com datas e métricas
-- Conecte outcomes observados às decisões tomadas
-- Se não houver dados precisos no contexto, indique que é uma estimativa fundamentada
-- A resposta deve parecer memória institucional viva, não busca simples
-""".strip(),
-}
-
-# ||| Lifespan | startup/shutdown
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global _chroma, _collection, _embedder, _rag_ready
+    global _laboratory_runner, _laboratory_automation
 
-    print("🗄️  Carregando ChromaDB...")
-    _chroma     = chromadb.PersistentClient(path=str(DB_PATH))
-    _collection = _chroma.get_or_create_collection(
-        COLLECTION_NAME, metadata={"hnsw:space": "cosine"}
+    study_store.initialize()
+    print(f"Research database ready: {study_store.db_path}")
+    laboratory_store.initialize()
+    interrupted = laboratory_store.interrupt_running_runs()
+    _laboratory_runner = LaboratoryRunner(
+        laboratory_store,
+        _generate_laboratory_answer,
+        request_interval_seconds=LABORATORY_REQUEST_INTERVAL_SECONDS,
+        max_rate_limit_retries=LABORATORY_RATE_LIMIT_RETRIES,
     )
-    print(f"✅ ChromaDB: {_collection.count()} chunks indexados")
+    _laboratory_automation = LaboratoryAutomation(
+        store=laboratory_store,
+        runner=_laboratory_runner,
+        prompt_fingerprint=_prompt_fingerprint,
+        model=LABORATORY_MODEL,
+        credentials_ready=lambda: bool(API_KEY),
+        enabled=LABORATORY_AUTOMATION_ENABLED,
+        timezone_name=LABORATORY_SCHEDULE_TIMEZONE,
+        case_set_id=LABORATORY_AUTOMATION_CASE_SET,
+    )
+    _laboratory_runner.on_finalized = _laboratory_automation.on_run_finalized
+    _laboratory_automation.start()
+    print(f"Laboratory database ready: {laboratory_store.db_path} ({interrupted} interrupted run(s))")
 
-    print("🧠 Carregando BAAI/bge-m3 (pode levar ~30s na primeira vez)...")
     try:
-        from FlagEmbedding import BGEM3FlagModel
-        _embedder  = BGEM3FlagModel("BAAI/bge-m3", use_fp16=True)
-        _rag_ready = True
-        print("✅ BGE-M3 carregado — retrieval vetorial ativo")
-    except ImportError:
-        _embedder  = None
-        _rag_ready = False
-        print("⚠️  FlagEmbedding não instalado — RAG desativado (pip install FlagEmbedding)")
+        if os.environ.get("AETHERIS_SKIP_RAG_STARTUP") == "1":
+            print("RAG startup skipped by AETHERIS_SKIP_RAG_STARTUP")
+        else:
+            print("🗄️  Carregando ChromaDB...")
+            _chroma = chromadb.PersistentClient(path=str(DB_PATH))
+            _collection = _chroma.get_or_create_collection(
+                COLLECTION_NAME,
+                metadata={"hnsw:space": "cosine"},
+            )
+            print(f"✅ ChromaDB: {_collection.count()} chunks indexados")
 
-    yield  # Lifespan boundary | server runs between startup and shutdown cleanup
+            print("🧠 Carregando BAAI/bge-m3 (pode levar ~30s na primeira vez)...")
+            try:
+                from FlagEmbedding import BGEM3FlagModel
 
-    print("🛑 Shutting down Beatrice server")
+                _embedder = BGEM3FlagModel("BAAI/bge-m3", use_fp16=True)
+                _rag_ready = True
+                print("✅ BGE-M3 carregado — retrieval vetorial ativo")
+            except ImportError:
+                _embedder = None
+                _rag_ready = False
+                print("⚠️  FlagEmbedding não instalado — RAG desativado (pip install FlagEmbedding)")
+        yield
+    finally:
+        if _laboratory_automation:
+            await _laboratory_automation.stop()
+        print("🛑 Shutting down Beatrice server")
+
 
 # ||| FastAPI app
-app = FastAPI(title="Beatrice Chat Server", version="2.1.0", lifespan=lifespan)
+app = FastAPI(title="Beatrice Chat Server", version="2.3.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -600,121 +365,655 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 def _health_payload() -> dict:
     count = _collection.count() if _collection else 0
-    return {
-        "status":        "ok",
-        "service":       "beatrice-chat-server",
-        "model":         MODEL,
-        "corpus_chunks": count,
-        "rag_active":    _rag_ready and count > 0,
-        "embedder":      "BAAI/bge-m3" if _rag_ready else "none",
+    automation = _laboratory_automation.status() if _laboratory_automation else {
+        "enabled": LABORATORY_AUTOMATION_ENABLED,
+        "paused": False,
+        "next_slot": None,
+        "active_calibration_version_id": None,
     }
+    return {
+        "status": "ok",
+        "service": "beatrice-chat-server",
+        "model": MODEL,
+        "laboratory_model": LABORATORY_MODEL,
+        "corpus_chunks": count,
+        "rag_active": _rag_ready and count > 0,
+        "embedder": "BAAI/bge-m3" if _rag_ready else "none",
+        "prompt_architecture": "modular",
+        "cognitive_orchestration": "adaptive-hybrid",
+        "persona_context_engine": "operational-profiles",
+        "laboratory_automation": {
+            "enabled": automation["enabled"],
+            "paused": automation["paused"],
+            "next_slot": automation["next_slot"],
+            "active_calibration_version_id": automation["active_calibration_version_id"],
+        },
+    }
+
 
 @app.get("/health")
 def health():
     return _health_payload()
 
-# API alias | Vite dev proxy reaches health via /api/health
+
 @app.get("/api/health")
 def health_api():
     return _health_payload()
+
+
+class CreateResearchInvitePayload(BaseModel):
+    participant_code: str | None = Field(default=None, max_length=12)
+    expires_in_days: int = Field(default=30, ge=1, le=180)
+
+
+class StudyEnrollmentPayload(BaseModel):
+    full_name: str = Field(min_length=2, max_length=120)
+    role_title: str = Field(min_length=2, max_length=100)
+    primary_area: str
+    experience_range: str
+    design_system_experience: str
+    design_system_frequency: str
+    company_disclosure: bool = False
+    company_name: str | None = Field(default=None, max_length=140)
+    confirms_adult: bool
+    consent_academic_use: bool
+    consent_interaction_recording: bool
+    consent_voluntary: bool
+
+
+class StudyEventPayload(BaseModel):
+    event_type: str = Field(min_length=2, max_length=50)
+    path: str | None = Field(default=None, max_length=500)
+    metadata: dict = Field(default_factory=dict)
+
+
+class CreateLaboratoryRunPayload(BaseModel):
+    case_set_id: str = Field(min_length=2, max_length=100)
+    version_label: str = Field(min_length=2, max_length=80)
+    profiles: list[str] = Field(min_length=1, max_length=7)
+    repetitions: Literal[1] = 1
+
+
+class LaboratoryReviewPayload(BaseModel):
+    reviewer: str = Field(min_length=2, max_length=80)
+    scores: dict[str, float]
+    notes: str = Field(default="", max_length=2000)
+
+
+class LaboratoryPausePayload(BaseModel):
+    reason: str = Field(default="Paused by administrator", max_length=500)
+
+
+class LaboratoryDecisionPayload(BaseModel):
+    decision: str = Field(pattern="^(reject|approve_for_backlog)$")
+    notes: str = Field(default="", max_length=2000)
+
+
+class LaboratoryNotificationReadPayload(BaseModel):
+    ids: list[str] = Field(default_factory=list, max_length=100)
+
+
+class LaboratoryRollbackPayload(BaseModel):
+    reason: str = Field(min_length=2, max_length=500)
+
+
+ALLOWED_PRIMARY_AREAS = {
+    "design",
+    "frontend",
+    "product",
+    "qa",
+    "content",
+    "accessibility",
+    "research",
+    "other",
+}
+ALLOWED_EXPERIENCE_RANGES = {"under-1", "1-2", "3-5", "6-10", "over-10"}
+ALLOWED_DS_EXPERIENCE = {"none", "basic", "intermediate", "advanced"}
+ALLOWED_DS_FREQUENCY = {"never", "rarely", "monthly", "weekly", "daily"}
+ALLOWED_STUDY_EVENTS = {
+    "study_started",
+    "page_view",
+    "prompt_submitted",
+    "response_completed",
+    "response_error",
+    "task_started",
+    "task_completed",
+    "source_opened",
+    "perspective_changed",
+    "survey_answered",
+    "study_completed",
+}
+ALLOWED_LABORATORY_PROFILES = {
+    "designer",
+    "dev",
+    "pm",
+    "qa",
+    "writer",
+    "a11y",
+    "maintainer",
+}
+ALLOWED_REVIEW_METRICS = {
+    "factual_correctness",
+    "source_fidelity",
+    "completeness",
+    "perspective_adherence",
+    "divergence_quality",
+    "abstention_quality",
+    "usefulness",
+}
+MAX_LABORATORY_REQUESTS = 200
+
+
+def _require_research_admin(x_research_key: str | None) -> None:
+    if not RESEARCH_ADMIN_KEY:
+        raise HTTPException(status_code=503, detail="RESEARCH_ADMIN_KEY is not configured")
+    if not x_research_key or not secrets.compare_digest(x_research_key, RESEARCH_ADMIN_KEY):
+        raise HTTPException(status_code=401, detail="Invalid research administration key")
+
+
+def _study_access_token(authorization: str | None) -> str:
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing study session token")
+    return authorization.removeprefix("Bearer ").strip()
+
+
+@app.post("/api/laboratory/auth/verify")
+def verify_laboratory_auth(x_research_key: str | None = Header(default=None)):
+    _require_research_admin(x_research_key)
+    return {"authenticated": True}
+
+
+@app.get("/api/laboratory/case-sets")
+def get_laboratory_case_sets(x_research_key: str | None = Header(default=None)):
+    _require_research_admin(x_research_key)
+    return {"case_sets": list_case_sets()}
+
+
+@app.post("/api/laboratory/runs")
+async def create_laboratory_run(
+    payload: CreateLaboratoryRunPayload,
+    x_research_key: str | None = Header(default=None),
+):
+    _require_research_admin(x_research_key)
+    profiles = list(dict.fromkeys(payload.profiles))
+    invalid_profiles = sorted(set(profiles) - ALLOWED_LABORATORY_PROFILES)
+    if invalid_profiles:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Unsupported laboratory profiles: {', '.join(invalid_profiles)}",
+        )
+    try:
+        case_set = load_case_set(payload.case_set_id)
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    request_count = len(case_set.cases) * len(profiles) * payload.repetitions
+    if request_count > MAX_LABORATORY_REQUESTS:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Laboratory run exceeds the {MAX_LABORATORY_REQUESTS}-request limit",
+        )
+    active_calibration = laboratory_store.active_calibration()
+    run = laboratory_store.create_run(
+        case_set=case_set,
+        version_label=payload.version_label.strip(),
+        profiles=profiles,
+        repetitions=payload.repetitions,
+        model=LABORATORY_MODEL,
+        prompt_fingerprint=_prompt_fingerprint(),
+        calibration_version_id=active_calibration["id"],
+        calibration_snapshot=active_calibration["calibration"],
+    )
+    if _laboratory_runner is None:
+        raise HTTPException(status_code=503, detail="Laboratory runner is unavailable")
+    _laboratory_runner.schedule(run["id"])
+    await asyncio.sleep(0)
+    return laboratory_store.get_run(run["id"], include_items=False)
+
+
+@app.get("/api/laboratory/runs")
+def list_laboratory_runs(
+    limit: int = 30,
+    x_research_key: str | None = Header(default=None),
+):
+    _require_research_admin(x_research_key)
+    return {"runs": laboratory_store.list_runs(limit=limit)}
+
+
+@app.get("/api/laboratory/runs/{run_id}")
+def get_laboratory_run(
+    run_id: str,
+    x_research_key: str | None = Header(default=None),
+):
+    _require_research_admin(x_research_key)
+    run = laboratory_store.get_run(run_id)
+    if not run:
+        raise HTTPException(status_code=404, detail="Laboratory run not found")
+    return run
+
+
+@app.post("/api/laboratory/runs/{run_id}/cancel")
+def cancel_laboratory_run(
+    run_id: str,
+    x_research_key: str | None = Header(default=None),
+):
+    _require_research_admin(x_research_key)
+    if not laboratory_store.request_cancel(run_id):
+        raise HTTPException(status_code=409, detail="Laboratory run cannot be cancelled")
+    return {"cancel_requested": True}
+
+
+@app.post("/api/laboratory/runs/{run_id}/baseline")
+def set_laboratory_baseline(
+    run_id: str,
+    x_research_key: str | None = Header(default=None),
+):
+    _require_research_admin(x_research_key)
+    if not laboratory_store.set_baseline(run_id):
+        raise HTTPException(status_code=409, detail="Only completed runs can become baseline")
+    return {"baseline": run_id}
+
+
+@app.post("/api/laboratory/items/{item_id}/review")
+def review_laboratory_item(
+    item_id: str,
+    payload: LaboratoryReviewPayload,
+    x_research_key: str | None = Header(default=None),
+):
+    _require_research_admin(x_research_key)
+    invalid_metrics = sorted(set(payload.scores) - ALLOWED_REVIEW_METRICS)
+    if invalid_metrics:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Unsupported review metrics: {', '.join(invalid_metrics)}",
+        )
+    if not payload.scores:
+        raise HTTPException(status_code=422, detail="At least one review score is required")
+    if any(value < 0 or value > 1 for value in payload.scores.values()):
+        raise HTTPException(status_code=422, detail="Review scores must be between 0 and 1")
+    if not laboratory_store.save_review(
+        item_id,
+        reviewer=payload.reviewer.strip(),
+        scores=payload.scores,
+        notes=payload.notes.strip(),
+    ):
+        raise HTTPException(status_code=404, detail="Laboratory item not found")
+    return {"reviewed": True}
+
+
+@app.get("/api/laboratory/results")
+def get_laboratory_results(x_research_key: str | None = Header(default=None)):
+    _require_research_admin(x_research_key)
+    results = laboratory_store.results_summary()
+    if _laboratory_automation:
+        results["automation"] = _laboratory_automation.status()
+    return results
+
+
+@app.get("/api/laboratory/snapshot")
+def get_laboratory_snapshot(x_research_key: str | None = Header(default=None)):
+    _require_research_admin(x_research_key)
+    schedule_date = (
+        _laboratory_automation.local_now().date().isoformat()
+        if _laboratory_automation
+        else None
+    )
+    snapshot = laboratory_store.snapshot(schedule_date=schedule_date)
+    snapshot["automation"] = (
+        _laboratory_automation.status()
+        if _laboratory_automation
+        else snapshot["automation"]
+    )
+    return snapshot
+
+
+@app.get("/api/laboratory/revision")
+def get_laboratory_revision(x_research_key: str | None = Header(default=None)):
+    _require_research_admin(x_research_key)
+    return {"revision": laboratory_store.current_revision()}
+
+
+@app.get("/api/laboratory/automation/status")
+def get_laboratory_automation_status(
+    x_research_key: str | None = Header(default=None),
+):
+    _require_research_admin(x_research_key)
+    if not _laboratory_automation:
+        raise HTTPException(status_code=503, detail="Laboratory automation is unavailable")
+    return _laboratory_automation.status()
+
+
+@app.post("/api/laboratory/automation/pause")
+def pause_laboratory_automation(
+    payload: LaboratoryPausePayload,
+    x_research_key: str | None = Header(default=None),
+):
+    _require_research_admin(x_research_key)
+    revision = laboratory_store.set_automation_pause(
+        True,
+        reason=payload.reason.strip(),
+        actor="admin",
+    )
+    laboratory_store.create_notification(
+        event_type="automation_paused",
+        title="Automação pausada",
+        body=payload.reason.strip(),
+        deduplication_key=None,
+    )
+    return {"paused": True, "revision": max(revision, laboratory_store.current_revision())}
+
+
+@app.post("/api/laboratory/automation/resume")
+def resume_laboratory_automation(x_research_key: str | None = Header(default=None)):
+    _require_research_admin(x_research_key)
+    revision = laboratory_store.set_automation_pause(False, actor="admin")
+    return {"paused": False, "revision": revision}
+
+
+@app.get("/api/laboratory/recommendations")
+def list_laboratory_recommendations(
+    limit: int = 50,
+    x_research_key: str | None = Header(default=None),
+):
+    _require_research_admin(x_research_key)
+    return {
+        "recommendations": laboratory_store.list_recommendations(limit=limit),
+        "revision": laboratory_store.current_revision(),
+    }
+
+
+@app.get("/api/laboratory/recommendations/{recommendation_id}")
+def get_laboratory_recommendation(
+    recommendation_id: str,
+    x_research_key: str | None = Header(default=None),
+):
+    _require_research_admin(x_research_key)
+    recommendation = laboratory_store.get_recommendation(recommendation_id)
+    if not recommendation:
+        raise HTTPException(status_code=404, detail="Laboratory recommendation not found")
+    return recommendation
+
+
+@app.post("/api/laboratory/recommendations/{recommendation_id}/read")
+def read_laboratory_recommendation(
+    recommendation_id: str,
+    x_research_key: str | None = Header(default=None),
+):
+    _require_research_admin(x_research_key)
+    if not laboratory_store.mark_recommendation_read(recommendation_id):
+        raise HTTPException(status_code=404, detail="Laboratory recommendation not found")
+    return {"read": True, "revision": laboratory_store.current_revision()}
+
+
+@app.post("/api/laboratory/recommendations/{recommendation_id}/decision")
+def decide_laboratory_recommendation(
+    recommendation_id: str,
+    payload: LaboratoryDecisionPayload,
+    x_research_key: str | None = Header(default=None),
+):
+    _require_research_admin(x_research_key)
+    if not laboratory_store.decide_recommendation(
+        recommendation_id,
+        decision=payload.decision,
+        notes=payload.notes.strip(),
+    ):
+        raise HTTPException(status_code=409, detail="Recommendation cannot be decided")
+    return {"decided": True, "revision": laboratory_store.current_revision()}
+
+
+@app.post("/api/laboratory/calibrations/{version_id}/rollback")
+def rollback_laboratory_calibration(
+    version_id: str,
+    payload: LaboratoryRollbackPayload,
+    x_research_key: str | None = Header(default=None),
+):
+    _require_research_admin(x_research_key)
+    active = laboratory_store.active_calibration()
+    if active["id"] != version_id:
+        raise HTTPException(status_code=409, detail="Only the active calibration can be rolled back")
+    reverted = laboratory_store.rollback_calibration(
+        actor="admin",
+        reason=payload.reason.strip(),
+    )
+    if not reverted:
+        raise HTTPException(status_code=409, detail="No previous calibration is available")
+    recommendation = laboratory_store.create_recommendation(
+        recommendation_type="rollback",
+        status="reverted",
+        title="Calibração revertida",
+        summary=f"A versão ativa voltou para {reverted['label']}.",
+        rationale=payload.reason.strip(),
+        calibration_version_id=reverted["id"],
+    )
+    laboratory_store.create_notification(
+        event_type="calibration_rolled_back",
+        title="Calibração revertida",
+        body=payload.reason.strip(),
+        recommendation_id=recommendation["id"],
+    )
+    return {
+        "reverted_to": reverted,
+        "revision": laboratory_store.current_revision(),
+    }
+
+
+@app.get("/api/laboratory/notifications")
+def list_laboratory_notifications(
+    limit: int = 50,
+    x_research_key: str | None = Header(default=None),
+):
+    _require_research_admin(x_research_key)
+    return {
+        "notifications": laboratory_store.list_notifications(limit=limit),
+        "revision": laboratory_store.current_revision(),
+    }
+
+
+@app.post("/api/laboratory/notifications/read")
+def read_laboratory_notifications(
+    payload: LaboratoryNotificationReadPayload,
+    x_research_key: str | None = Header(default=None),
+):
+    _require_research_admin(x_research_key)
+    count = laboratory_store.mark_notifications_read(payload.ids or None)
+    return {
+        "read": count,
+        "revision": laboratory_store.current_revision(),
+    }
+
+
+@app.post("/api/research/invites")
+def create_research_invite(
+    payload: CreateResearchInvitePayload,
+    x_research_key: str | None = Header(default=None),
+):
+    _require_research_admin(x_research_key)
+    participant_code = payload.participant_code.strip().upper() if payload.participant_code else None
+    if participant_code and not re.fullmatch(r"[A-Z0-9-]{2,12}", participant_code):
+        raise HTTPException(status_code=422, detail="Invalid participant code")
+    try:
+        return study_store.create_invite(participant_code, payload.expires_in_days)
+    except sqlite3.IntegrityError as error:
+        raise HTTPException(status_code=409, detail="Participant code already exists") from error
+
+
+@app.get("/api/research/invites")
+def list_research_invites(x_research_key: str | None = Header(default=None)):
+    _require_research_admin(x_research_key)
+    return {"invites": study_store.list_invites()}
+
+
+@app.get("/api/research/sessions/{session_id}")
+def get_research_session_detail(
+    session_id: str,
+    x_research_key: str | None = Header(default=None),
+):
+    _require_research_admin(x_research_key)
+    session = study_store.get_research_session_detail(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Research session not found")
+    return session
+
+
+@app.get("/api/study/results")
+def get_public_study_results():
+    return study_store.get_public_results()
+
+
+@app.get("/api/study/invites/{token}")
+def get_study_invite(token: str):
+    invite = study_store.get_public_invite(token)
+    if not invite:
+        raise HTTPException(status_code=404, detail="Study invitation not found")
+    return invite
+
+
+@app.post("/api/study/invites/{token}/enroll")
+def enroll_study_participant(token: str, payload: StudyEnrollmentPayload):
+    if payload.primary_area not in ALLOWED_PRIMARY_AREAS:
+        raise HTTPException(status_code=422, detail="Invalid primary area")
+    if payload.experience_range not in ALLOWED_EXPERIENCE_RANGES:
+        raise HTTPException(status_code=422, detail="Invalid experience range")
+    if payload.design_system_experience not in ALLOWED_DS_EXPERIENCE:
+        raise HTTPException(status_code=422, detail="Invalid design-system experience")
+    if payload.design_system_frequency not in ALLOWED_DS_FREQUENCY:
+        raise HTTPException(status_code=422, detail="Invalid design-system frequency")
+    if payload.company_disclosure and not (payload.company_name or "").strip():
+        raise HTTPException(status_code=422, detail="Company name is required when disclosure is enabled")
+    if not all(
+        (
+            payload.confirms_adult,
+            payload.consent_academic_use,
+            payload.consent_interaction_recording,
+            payload.consent_voluntary,
+        )
+    ):
+        raise HTTPException(status_code=422, detail="All consent confirmations are required")
+
+    try:
+        return study_store.enroll(token, payload.model_dump())
+    except ValueError as error:
+        statuses = {
+            "invite_not_found": 404,
+            "invite_revoked": 410,
+            "invite_expired": 410,
+            "invite_already_used": 409,
+        }
+        code = str(error)
+        raise HTTPException(status_code=statuses.get(code, 400), detail=code) from error
+
+
+@app.get("/api/study/sessions/{session_id}")
+def get_study_session(session_id: str, authorization: str | None = Header(default=None)):
+    session = study_store.get_session(session_id, _study_access_token(authorization))
+    if not session:
+        raise HTTPException(status_code=404, detail="Study session not found")
+    return session
+
+
+@app.post("/api/study/sessions/{session_id}/events", status_code=202)
+def record_study_event(
+    session_id: str,
+    payload: StudyEventPayload,
+    authorization: str | None = Header(default=None),
+):
+    if payload.event_type not in ALLOWED_STUDY_EVENTS:
+        raise HTTPException(status_code=422, detail="Unsupported study event")
+    serialized = json.dumps(payload.metadata, ensure_ascii=True)
+    if len(serialized.encode("utf-8")) > 50_000:
+        raise HTTPException(status_code=413, detail="Study event metadata is too large")
+    recorded = study_store.append_event(
+        session_id,
+        _study_access_token(authorization),
+        payload.event_type,
+        payload.path,
+        payload.metadata,
+    )
+    if not recorded:
+        raise HTTPException(status_code=404, detail="Study session not found")
+    return {"recorded": True, "consent_version": CONSENT_VERSION}
+
 
 @app.post("/api/chat")
 async def chat(payload: dict) -> StreamingResponse:
     if not API_KEY:
         async def _err():
-            yield f"data: {json.dumps({'error': 'GROQ_API_KEY não definida. Inicie o servidor com GROQ_API_KEY=gsk_...'})}\n\n"
+            yield _sse_payload({"error": "GROQ_API_KEY não definida. Inicie o servidor com GROQ_API_KEY=gsk_..."})
+
         return StreamingResponse(_err(), media_type="text/event-stream")
 
-    messages  = payload.get("messages", [])
-    profile   = payload.get("profile", "general")
+    raw_messages = payload.get("messages", [])
+    messages = _trim_history(raw_messages if isinstance(raw_messages, list) else [])
+    profile = payload.get("profile", "general")
+    command_mode = payload.get("command_mode")
+    explicit_calibration = _sanitize_calibration(payload.get("calibration"))
+    raw_query = _last_user_query(messages)
+    manual_override = parse_manual_override(raw_query)
+    query = _model_query_from_override(raw_query, manual_override.clean_query)
+    if query != raw_query:
+        messages = _replace_last_user_query(messages, query)
+    route = route_query(query, profile=profile, command_mode=command_mode)
+    active_calibration = laboratory_store.active_calibration()
+    calibration_override = merge_profile_calibration(
+        route.persona_profile,
+        active_calibration.get("calibration"),
+        explicit_calibration,
+    )
+    cognition = build_cognitive_orchestration(
+        query=query,
+        route=route,
+        messages=messages,
+        manual_override=manual_override,
+    )
+    chunks = _build_chunks(query, route, cognition)
+    groq_messages = _build_groq_messages(
+        messages, query, route, cognition, chunks,
+        calibration_override=calibration_override,
+    )
 
-    # Dialogue management | cap history to avoid token overflow
-    if len(messages) > MAX_HISTORY_MESSAGES:
-        messages = messages[-MAX_HISTORY_MESSAGES:]
-
-    last_user = next((m for m in reversed(messages) if m["role"] == "user"), None)
-    query     = last_user["content"] if last_user else ""
-
-    # Command modes | override intent and expand retrieval for broader context
-    _COMMAND_INTENT_OVERRIDE = {
-        "enforce": "general",         # All page types | enforcement needs full system context
-        "migrate": "general",         # All page types | migration spans components + decisions
-        "history": "design_decision", # Focus | design_decision + reasoning chunks
-        "why":     "design_decision", # Focus | root-cause analysis targets decisions
-        "tradeoff":"general",         # All page types | comparison spans the system
-        "score":   "general",         # All page types | quality scoring needs full context
-    }
-    catalog_mode = detect_catalog_mode(query)
-    if catalog_mode:
-        effective_intent = "general"  # Broadest retrieval | full catalog coverage
-        top_k = 7                     # More chunks | catalog needs comprehensive context
-    elif profile in _COMMAND_INTENT_OVERRIDE:
-        effective_intent = _COMMAND_INTENT_OVERRIDE[profile]
-        top_k = 5
-    else:
-        effective_intent = classify_intent(query)
-        top_k = 3
-    intent  = effective_intent
-    chunks  = retrieve_chunks(query, intent, top_k=top_k)
-    rag_context = build_rag_context(chunks)
-
-    # Dialogue context | keep multi-turn answers coherent
-    dialogue_context = ""
-    prior_user_msgs = [m for m in messages if m["role"] == "user"]
-    if len(prior_user_msgs) > 1:
-        dialogue_context = (
-            f"\n\n---\nContexto da conversa: esta é a mensagem {len(prior_user_msgs)} "
-            f"do usuário nesta sessão. As mensagens anteriores estão no histórico — "
-            f"mantenha coerência com o que já foi recomendado, a menos que o usuário "
-            f"peça explicitamente para reconsiderar."
-        )
-
-    profile_context  = _PROFILE_PROMPTS.get(profile, "")
-    catalog_context  = ("\n\n" + _CATALOG_PROMPT) if catalog_mode else ""
-    system_content   = _SYSTEM_PROMPT + profile_context + catalog_context + dialogue_context + rag_context
-
-    groq_messages = [{"role": "system", "content": system_content}] + messages
+    active_engine = resolve_engine(route.active_command_mode)
 
     async def stream() -> AsyncGenerator[str, None]:
-        # XAI attribution | emit sources before text starts
+        # ||| XAI attribution | emitted before text so the frontend can build audit state.
+        # Always carries the disclosed cognitive skills + active oracle engine, even
+        # when no chunks were retrieved, so the UI can surface the reasoning signal.
+        meta: dict = {
+            "intent": route.response_intent,
+            "catalog_mode": route.catalog_mode,
+            "engine": active_engine.id if active_engine else None,
+            "cognitive_skills": list(cognition.active_skills),
+            "calibration_version": active_calibration.get("id"),
+        }
         if chunks:
-            sources = [
-                {
-                    "title":     c["title"],
-                    "source":    c["source"],
-                    "similarity": c["similarity"],
-                    "page_type": c["page_type"],
-                }
-                for c in chunks
-            ]
-            yield f"data: {json.dumps({'sources': sources, 'intent': intent, 'catalog_mode': catalog_mode})}\n\n"
+            meta["sources"] = serialize_sources(chunks)
+        yield _sse_payload(meta)
 
         async with httpx.AsyncClient(timeout=60.0) as client:
             try:
                 async with client.stream(
                     "POST",
-                    "https://api.groq.com/openai/v1/chat/completions",
+                    GROQ_URL,
                     headers={
                         "Authorization": f"Bearer {API_KEY}",
-                        "Content-Type":  "application/json",
+                        "Content-Type": "application/json",
                     },
                     json={
-                        "model":      MODEL,
-                        "max_tokens": 1500,
-                        "stream":     True,
-                        "messages":   groq_messages,
+                        "model": MODEL,
+                        "max_tokens": _max_tokens_for_response(route.catalog_mode, route.active_command_mode),
+                        "stream": True,
+                        "messages": groq_messages,
                     },
                 ) as resp:
                     if resp.status_code == 401:
-                        yield f"data: {json.dumps({'error': 'GROQ_API_KEY inválida (401). Verifique a chave.'})}\n\n"
+                        yield _sse_payload({"error": "GROQ_API_KEY inválida (401). Verifique a chave."})
                         return
                     if resp.status_code == 429:
-                        yield f"data: {json.dumps({'error': 'Limite de requisições Groq atingido (429). Aguarde alguns segundos e tente novamente.'})}\n\n"
+                        yield _sse_payload({"error": "Limite de requisições Groq atingido (429). Aguarde alguns segundos e tente novamente."})
                         return
                     if resp.status_code >= 400:
-                        yield f"data: {json.dumps({'error': f'Erro Groq HTTP {resp.status_code}. Tente novamente.'})}\n\n"
+                        yield _sse_payload({"error": f"Erro Groq HTTP {resp.status_code}. Tente novamente."})
                         return
 
                     async for line in resp.aiter_lines():
@@ -726,15 +1025,15 @@ async def chat(payload: dict) -> StreamingResponse:
                             break
                         try:
                             parsed = json.loads(data)
-                            text   = parsed["choices"][0]["delta"].get("content")
+                            text = parsed["choices"][0]["delta"].get("content")
                             if text:
-                                yield f"data: {json.dumps({'delta': text})}\n\n"
+                                yield _sse_payload({"delta": text})
                         except Exception:
                             pass
             except httpx.TimeoutException:
-                yield f"data: {json.dumps({'error': 'Timeout na requisição ao Groq (60s). Tente novamente.'})}\n\n"
+                yield _sse_payload({"error": "Timeout na requisição ao Groq (60s). Tente novamente."})
             except httpx.ConnectError:
-                yield f"data: {json.dumps({'error': 'Sem conexão com a API Groq. Verifique sua internet.'})}\n\n"
+                yield _sse_payload({"error": "Sem conexão com a API Groq. Verifique sua internet."})
 
     return StreamingResponse(
         stream(),

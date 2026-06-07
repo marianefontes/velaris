@@ -19,10 +19,9 @@ export function PersonaMetrics() {
         </div>
         <div className="flex justify-between">
           <span className="text-slate-500">{t("chat.avgConfidence")}</span>
-          <span className="font-bold text-green-400">{stats.confidence}</span>
+          <span className="font-bold text-primary">{stats.confidence}</span>
         </div>
       </div>
     </div>
   );
 }
-

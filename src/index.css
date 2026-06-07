@@ -2,10 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  .laboratory-input {
+    @apply h-11 w-full rounded-xl border border-white/10 bg-[#17171a] px-3 text-xs text-white outline-none transition focus:border-primary/35;
+  }
+}
+
 :root {
   color: #f9f5f8;
   background: #0e0e10;
   font-family: Inter, system-ui, sans-serif;
+  --aetheris-color-primary: #deccfd;
+  --aetheris-color-secondary: #c2a0fc;
+  --aetheris-color-success: #7ee787;
+  --aetheris-color-warning: #ffa657;
+  --aetheris-color-error: #ff6e84;
 }
 
 html {
@@ -16,9 +27,11 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  /* Architectural base + subtle cognitive atmosphere at viewport edges */
   background:
-    radial-gradient(circle at top right, rgba(194, 160, 252, 0.1), transparent 32%),
-    radial-gradient(circle at top left, rgba(222, 204, 253, 0.08), transparent 28%),
+    radial-gradient(ellipse at 78% 0%, rgba(194, 160, 252, 0.13), transparent 34%),
+    radial-gradient(ellipse at 18% 0%, rgba(222, 204, 253, 0.09), transparent 30%),
+    radial-gradient(ellipse at 50% 100%, rgba(179, 157, 219, 0.04), transparent 50%),
     #0e0e10;
   color: #f9f5f8;
 }
@@ -43,6 +56,258 @@ body {
   .signature-pill {
     @apply rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.22em] text-primary;
   }
+
+  /* ── Cognitive identity layer ─────────────────────────────────────────────
+     Use these sparingly — only on identity moments and XAI focal points.
+     They are the 30% expressive layer sitting atop the 70% architectural base.
+  ───────────────────────────────────────────────────────────────────────── */
+
+  /* Oracle active nav chip — architectural clarity + subtle cognitive signal */
+  .nav-chip-active {
+    @apply bg-primary text-on-primary;
+    /* Raw box-shadow: @apply can't reference custom shadow tokens inside @layer */
+    box-shadow: 0 0 14px rgba(222, 204, 253, 0.28);
+  }
+
+  /* Oracle CTA — differentiated from plain nav, references the system identity */
+  .oracle-cta {
+    @apply border-primary/20 bg-primary/[0.06] text-primary/75 transition-all duration-200;
+  }
+  .oracle-cta:hover {
+    @apply border-primary/35 bg-primary/[0.10] text-primary;
+    box-shadow: 0 0 20px rgba(222, 204, 253, 0.12);
+  }
+
+  /* Ambient atmospheric backdrop for oracle identity moments */
+  .oracle-ambient-bg {
+    background: radial-gradient(ellipse at 50% 0%, rgba(222, 204, 253, 0.09) 0%, transparent 62%);
+  }
+
+  /* Cognitive icon container — the symbolic presence focal point */
+  .oracle-icon-shell {
+    box-shadow:
+      0 0 0 1px rgba(222, 204, 253, 0.12),
+      0 0 32px rgba(179, 157, 219, 0.20),
+      0 0 64px rgba(179, 157, 219, 0.08);
+  }
+
+  /* Subtle outer ring for symbolic emphasis */
+  .oracle-icon-ring {
+    @apply absolute -inset-[7px] rounded-[28px] border border-primary/10 opacity-60;
+    background: transparent;
+  }
+
+  /* Accent divider — cognitive rhythm marker */
+  .cognitive-divider {
+    @apply mx-auto h-px w-8 rounded-full bg-primary/25;
+  }
+
+  /* Suggestion card with cognitive depth on hover */
+  .suggestion-card {
+    @apply rounded-2xl border transition-all duration-200;
+  }
+  .suggestion-card:hover {
+    box-shadow: 0 0 24px rgba(222, 204, 253, 0.08), 0 0 0 1px rgba(222, 204, 253, 0.08);
+  }
+
+  /* Top bar nav accent line — hairline cognitive atmosphere separator */
+  .topbar-accent {
+    @apply absolute bottom-0 left-0 right-0 h-px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(222, 204, 253, 0.12) 20%,
+      rgba(222, 204, 253, 0.18) 50%,
+      rgba(222, 204, 253, 0.12) 80%,
+      transparent 100%
+    );
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     SHARED PAGE DESIGN SYSTEM
+     Applied globally across /system, /principles, /reasoning,
+     /architecture, /evaluation and /dashboard.
+     70% architectural clarity · 30% cognitive atmosphere.
+  ════════════════════════════════════════════════════════════════════════ */
+
+  /* ── Page hero ────────────────────────────────────────────────────────
+     Common hero container for all content routes. Architectural
+     structure (border, spacing) + subtle cognitive atmosphere (::before).
+  ─────────────────────────────────────────────────────────────────────── */
+  .page-hero {
+    @apply relative mb-10 overflow-hidden pb-10;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  }
+  .page-hero::before {
+    content: "";
+    position: absolute;
+    inset-x: -10%;
+    top: -80px;
+    height: 260px;
+    background:
+      radial-gradient(ellipse at 30% 80%, rgba(222, 204, 253, 0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 40%, rgba(179, 157, 219, 0.04) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  .page-eyebrow {
+    @apply mb-5 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.28em] text-slate-500;
+  }
+
+  /* Two-word variant: big bold headline with a coloured accent word on its own
+     visual beat — brings Style-B energy while keeping Style-A structure.       */
+  .page-h1 {
+    @apply mb-5 text-4xl font-bold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-[3.5rem];
+  }
+
+  /* The accent portion inside .page-h1 — use as <span className="page-h1-accent"> */
+  .page-h1-accent {
+    @apply text-primary;
+  }
+
+  .page-lead {
+    @apply max-w-3xl text-sm leading-relaxed text-slate-400 sm:text-base;
+  }
+
+  /* ── Section navigation ───────────────────────────────────────────────
+     Unified tab row across all routes. Cleaner than the AppTopBar chips
+     (no icons in visible label area by default), still cognitively alive.
+  ─────────────────────────────────────────────────────────────────────── */
+  .section-tab {
+    @apply inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.02] px-4 py-2 text-xs text-slate-300 transition-all duration-200 hover:border-white/[0.16] hover:bg-white/[0.04] hover:text-white;
+  }
+
+  .section-tab-active {
+    @apply inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/[0.10] px-4 py-2 text-xs text-primary transition-all duration-200;
+    box-shadow: 0 0 12px rgba(222, 204, 253, 0.16);
+  }
+
+  /* ── Content sections ─────────────────────────────────────────────────
+     Standard spacing and heading hierarchy for all section blocks.
+  ─────────────────────────────────────────────────────────────────────── */
+  .content-section {
+    @apply mb-14;
+  }
+
+  .section-eyebrow {
+    @apply mb-3 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.28em] text-slate-500;
+  }
+
+  .section-h2 {
+    @apply mb-3 font-serif text-xl tracking-tight text-white sm:text-2xl;
+  }
+
+  .section-lead {
+    @apply mb-6 max-w-3xl text-sm leading-relaxed text-slate-400;
+  }
+
+  /* ── Cards ────────────────────────────────────────────────────────────
+     Two tiers: content-card (architectural base) and xai-card
+     (cognitive identity — for reasoning/inference/retrieval areas).
+  ─────────────────────────────────────────────────────────────────────── */
+  .content-card {
+    @apply rounded-2xl border border-white/[0.07] bg-white/[0.025] p-5;
+  }
+
+  .xai-card {
+    @apply rounded-2xl border border-primary/[0.12] bg-primary/[0.03] p-5;
+    box-shadow: 0 0 32px rgba(179, 157, 219, 0.055);
+  }
+
+  /* ── XAI immersive block ──────────────────────────────────────────────
+     Full-width atmospheric container for pipeline, retrieval, confidence
+     and alternatives sections. The strongest 30% expressive expression.
+     Still clean — NOT a glowing card, a grounded atmospheric layer.
+  ─────────────────────────────────────────────────────────────────────── */
+  .xai-block {
+    @apply relative overflow-hidden rounded-[24px] border border-primary/[0.09] p-6 sm:p-8;
+    background: linear-gradient(
+      145deg,
+      rgba(222, 204, 253, 0.025) 0%,
+      rgba(14, 14, 16, 0.0) 55%
+    );
+    box-shadow: 0 0 48px rgba(179, 157, 219, 0.048);
+  }
+  .xai-block::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(222, 204, 253, 0.22) 35%,
+      rgba(222, 204, 253, 0.22) 65%,
+      transparent 100%
+    );
+    pointer-events: none;
+  }
+
+  /* ── Data tables ──────────────────────────────────────────────────────
+     Unified table styling across system, reasoning, evaluation routes.
+  ─────────────────────────────────────────────────────────────────────── */
+  .data-table {
+    @apply w-full;
+    border-collapse: collapse;
+  }
+  .data-table thead th {
+    @apply pb-3 pr-4 text-left text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500;
+  }
+  .data-table tbody tr {
+    border-top: 1px solid rgba(255, 255, 255, 0.055);
+  }
+  .data-table tbody td {
+    @apply py-3 pr-4 align-top text-sm text-slate-300;
+  }
+  .data-table tbody tr:hover td {
+    @apply text-slate-200;
+    background: rgba(255, 255, 255, 0.012);
+  }
+
+  /* ── Inline code tag ──────────────────────────────────────────────────
+     Used across all pages for artifact + path references.
+  ─────────────────────────────────────────────────────────────────────── */
+  .code-tag {
+    @apply rounded-md bg-white/[0.06] px-1.5 py-0.5 font-mono text-[11px] text-slate-300;
+  }
+
+  /* ── Dashboard filter tab ─────────────────────────────────────────────
+     Active/inactive filter buttons on /dashboard. Matches section-tab
+     system but optimized for the dashboard context (no icon).
+  ─────────────────────────────────────────────────────────────────────── */
+  .filter-tab {
+    @apply rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] transition-all duration-200 border border-transparent text-on-surface-variant hover:text-white hover:border-white/[0.08];
+  }
+  .filter-tab-active {
+    @apply bg-primary text-on-primary border-transparent;
+    box-shadow: 0 0 14px rgba(222, 204, 253, 0.22);
+  }
+
+  /* ── Metric card ──────────────────────────────────────────────────────
+     Dashboard operational signal cards. Architectural structure +
+     subtle cognitive depth (no heavy glow, just spatial layering).
+  ─────────────────────────────────────────────────────────────────────── */
+  .metric-card {
+    @apply rounded-[28px] p-6;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.03) 0%,
+      rgba(255, 255, 255, 0.015) 100%
+    );
+  }
+
+  /* ── Section skeleton ─────────────────────────────────────────────────
+     Unified loading state across all lazy-loaded sub-pages.
+  ─────────────────────────────────────────────────────────────────────── */
+  .section-skeleton {
+    @apply flex min-h-[40vh] items-center justify-center;
+  }
+  .section-skeleton-inner {
+    @apply rounded-2xl border border-white/[0.07] bg-white/[0.02] px-6 py-4 text-center;
+  }
 }
 
 .recharts-cartesian-grid line {
@@ -52,4 +317,27 @@ body {
 .recharts-text {
   fill: #adaaad;
   font-size: 12px;
+}
+
+.beatrice-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(222, 204, 253, 0.28) rgba(255, 255, 255, 0.04);
+}
+
+.beatrice-scrollbar::-webkit-scrollbar {
+  width: 10px;
+}
+
+.beatrice-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.beatrice-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(222, 204, 253, 0.42), rgba(194, 160, 252, 0.22));
+  border: 3px solid rgba(14, 14, 16, 0.9);
+  border-radius: 999px;
+}
+
+.beatrice-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(222, 204, 253, 0.62), rgba(194, 160, 252, 0.34));
 }

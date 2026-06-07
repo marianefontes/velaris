@@ -1,12 +1,14 @@
+import { useI18n } from "../../../i18n/I18nProvider";
 import { usePersonaContext } from "../../hooks/usePersonaContext";
 
 export function PersonaRecentActivity() {
+  const { t } = useI18n();
   const { activePersonaContext: strategy } = usePersonaContext();
 
   return (
-    <section className="rounded-2xl border border-white/8 bg-background/45 p-5">
-      <p className="mb-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">recent activity</p>
-      <div className="space-y-4">
+    <section className="rounded-2xl border border-white/10 bg-white/[0.025] p-4 backdrop-blur-2xl">
+      <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-primary">{t("beatricePersona.recentActivity")}</p>
+      <div className="space-y-3">
         {strategy.recentActivity.map((activity) => (
           <div key={`${activity.timestamp}-${activity.title}`} className="flex gap-3">
             <span className="w-10 shrink-0 font-mono text-[10px] text-slate-600">{activity.timestamp}</span>

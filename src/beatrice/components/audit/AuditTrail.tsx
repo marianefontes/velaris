@@ -23,7 +23,7 @@ export function AuditTrail() {
   if (!isOpen) return null;
 
   return (
-    <div className="absolute inset-0 z-20 flex flex-col overflow-hidden rounded-[28px] bg-[#090b13]/97 backdrop-blur-2xl">
+    <div className="absolute inset-0 z-20 flex flex-col overflow-hidden rounded-[28px] bg-background/[0.97] backdrop-blur-2xl">
       <div className="flex shrink-0 items-center justify-between border-b border-white/8 px-8 py-4">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15 ring-1 ring-primary/20">

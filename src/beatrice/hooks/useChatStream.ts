@@ -1,17 +1,17 @@
 import { useCallback } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { Locale } from "../../i18n/translations";
-import type { ChatMessage, HistoryEntry, ProfileId } from "../types/beatrice";
+import type { BeatriceSettings, ChatMessage, HistoryEntry, ProfileId } from "../types/beatrice";
 import {
   commandModeForPrompt,
   createStreamingAssistantMessage,
   createUserMessage,
   offlineMessage,
   parseEventStream,
-  requestProfile,
   submitChatRequest,
 } from "../orchestrators/chat.orchestrator";
 import { appendStreamingMetadata, patchMessage } from "../stores/workspace.store";
+import { trackStudyEvent } from "../../services/studyTracking";
 
 interface UseChatStreamParams {
   input: string;
@@ -19,6 +19,7 @@ interface UseChatStreamParams {
   history: HistoryEntry[];
   locale: Locale;
   profileId: ProfileId;
+  settings: BeatriceSettings;
   setHistory: Dispatch<SetStateAction<HistoryEntry[]>>;
   setInput: Dispatch<SetStateAction<string>>;
   setIsLoading: Dispatch<SetStateAction<boolean>>;
@@ -31,6 +32,7 @@ export function useChatStream({
   history,
   locale,
   profileId,
+  settings,
   setHistory,
   setInput,
   setIsLoading,
@@ -52,13 +54,47 @@ export function useChatStream({
 
       const nextHistory: HistoryEntry[] = [...history, { role: "user", content: text }];
       setHistory(nextHistory);
+      void trackStudyEvent("prompt_submitted", {
+        prompt: text,
+        profile: profileId,
+        command_mode: detectedCommand ?? null,
+        history_messages: nextHistory.length,
+      });
+
+      // rAF-batched streaming append: one setMessages per animation frame (~16ms
+      // at 60fps). Tokens that arrive within the same frame are coalesced into a
+      // single commit; the browser never skips a frame. This gives smooth 60fps
+      // visual flow while still bounding React commit rate to ≤60/s (vs one per
+      // token). Declared outside try so catch/finally can cancel a pending frame.
+      let full = "";
+      let rafId: number | null = null;
+      const scheduleCommit = () => {
+        if (rafId !== null) return;
+        rafId = requestAnimationFrame(() => {
+          rafId = null;
+          setMessages((previous) => patchMessage(previous, streamId, { content: full }));
+        });
+      };
+      const cancelScheduled = () => {
+        if (rafId !== null) {
+          cancelAnimationFrame(rafId);
+          rafId = null;
+        }
+      };
 
       try {
-        const response = await submitChatRequest(nextHistory, requestProfile(profileId, detectedCommand));
-        let full = "";
+        const response = await submitChatRequest(nextHistory, profileId, detectedCommand, settings);
+        let responseIntent: string | undefined;
+        let responseEngine: string | null | undefined;
+        let sourceCount = 0;
 
         for await (const parsed of parseEventStream(response)) {
           if (parsed.error) {
+            cancelScheduled();
+            void trackStudyEvent("response_error", {
+              error: parsed.error,
+              profile: profileId,
+            });
             setMessages((previous) =>
               patchMessage(previous, streamId, {
                 content: `⚠️ ${parsed.error}`,
@@ -70,25 +106,48 @@ export function useChatStream({
             return;
           }
 
-          if (parsed.sources !== undefined || parsed.intent !== undefined) {
+          if (
+            parsed.sources !== undefined ||
+            parsed.intent !== undefined ||
+            parsed.cognitive_skills !== undefined ||
+            parsed.engine !== undefined
+          ) {
+            if (parsed.intent !== undefined) responseIntent = parsed.intent;
+            if (parsed.engine !== undefined) responseEngine = parsed.engine;
+            if (parsed.sources !== undefined) sourceCount = parsed.sources.length;
             setMessages((previous) =>
               appendStreamingMetadata(previous, streamId, {
                 sources: parsed.sources,
                 intent: parsed.intent,
                 catalogMode: parsed.catalog_mode,
+                cognitiveSkills: parsed.cognitive_skills,
+                engine: parsed.engine,
               }),
             );
           }
 
           if (parsed.delta) {
             full += parsed.delta;
-            setMessages((previous) => patchMessage(previous, streamId, { content: full }));
+            if (settings.streaming) scheduleCommit();
           }
         }
 
-        setMessages((previous) => patchMessage(previous, streamId, { isStreaming: false }));
+        cancelScheduled();
+        setMessages((previous) => patchMessage(previous, streamId, { content: full, isStreaming: false }));
         setHistory((previous) => [...previous, { role: "assistant", content: full }]);
+        void trackStudyEvent("response_completed", {
+          response: full,
+          profile: profileId,
+          intent: responseIntent ?? null,
+          engine: responseEngine ?? null,
+          source_count: sourceCount,
+        });
       } catch {
+        cancelScheduled();
+        void trackStudyEvent("response_error", {
+          error: "oracle_unavailable",
+          profile: profileId,
+        });
         setMessages((previous) =>
           patchMessage(previous, streamId, {
             content: offlineMessage(locale),
@@ -97,10 +156,10 @@ export function useChatStream({
           }),
         );
       } finally {
+        cancelScheduled();
         setIsLoading(false);
       }
     },
-    [history, input, isLoading, locale, profileId, setHistory, setInput, setIsLoading, setMessages],
+    [history, input, isLoading, locale, profileId, settings, setHistory, setInput, setIsLoading, setMessages],
   );
 }
-

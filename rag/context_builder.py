@@ -1,0 +1,142 @@
+"""Build semantic RAG context without leaking implementation details."""
+
+from typing import Any
+
+SOURCE_LABELS: dict[str, str] = {
+    "component": "Component Registry",
+    "xai_component": "XAI Component Registry",
+    "pattern": "Pattern Library",
+    "token": "Token System",
+    "design_decision": "Decision Memory",
+    "guideline": "Guideline System",
+    "foundation": "Foundations",
+    "reasoning": "Reasoning Model",
+    "persona": "Persona Context",
+    "dev_integration": "Developer Integration",
+}
+
+ENTITY_KIND_LABELS: dict[str, str] = {
+    "component": "component",
+    "xai_component": "explainability component",
+    "pattern": "pattern",
+    "token": "token group",
+    "design_decision": "design decision",
+    "guideline": "guideline",
+    "foundation": "foundation",
+    "reasoning": "reasoning primitive",
+    "persona": "persona context",
+    "dev_integration": "developer guidance",
+}
+
+CATALOG_OPENINGS: dict[str, str] = {
+    "components": "O Aetheris possui atualmente {count} componentes oficiais.",
+    "patterns": "O Aetheris possui atualmente {count} padrões oficiais.",
+    "tokens": "O Aetheris possui atualmente {count} grupos de tokens oficiais.",
+    "decisions": "A memória de decisão do Aetheris registra {count} decisões.",
+    "all": "O registry semântico do Aetheris contém {count} entidades oficiais neste recorte.",
+}
+
+
+def semantic_source_label(page_type: str) -> str:
+    return SOURCE_LABELS.get(page_type, "Aetheris Registry")
+
+
+def semantic_entity_kind(page_type: str) -> str:
+    return ENTITY_KIND_LABELS.get(page_type, "registry entity")
+
+
+def evidence_strength(similarity: float | None) -> str:
+    if similarity is None:
+        return "registry"
+    if similarity >= 0.75:
+        return "strong"
+    if similarity >= 0.5:
+        return "partial"
+    return "weak"
+
+
+def split_semantic_fields(text: str) -> list[str]:
+    return [segment.strip() for segment in text.split(" | ") if segment.strip()]
+
+
+def serialize_sources(chunks: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    sources = []
+    for chunk in chunks:
+        page_type = chunk.get("page_type", "")
+        sources.append({
+            "title": chunk.get("title", ""),
+            "source": semantic_source_label(page_type),
+            "similarity": chunk.get("similarity", 1.0),
+            "page_type": page_type,
+            "retrieval_weight": chunk.get("retrieval_weight", 1.0),
+            "weighted_score": chunk.get("weighted_score", chunk.get("similarity", 1.0)),
+        })
+    return sources
+
+
+def build_dialogue_context(messages: list[dict[str, Any]]) -> str:
+    prior_user_msgs = [message for message in messages if message.get("role") == "user"]
+    if len(prior_user_msgs) <= 1:
+        return ""
+    return f"""
+# Dialogue Continuity
+
+This is user message {len(prior_user_msgs)} in the current session. Preserve
+coherence with previous recommendations unless the user explicitly asks to
+reconsider.
+""".strip()
+
+
+def build_rag_context(
+    chunks: list[dict[str, Any]],
+    *,
+    query: str,
+    intent: str,
+    catalog_mode: bool = False,
+    catalog_entity: str = "none",
+) -> str:
+    if not chunks:
+        return """
+# Aetheris Semantic Evidence
+
+No official semantic evidence was recovered for this request. Stay inside the
+Aetheris domain, avoid invention and use the out-of-scope policy when needed.
+""".strip()
+
+    mode = "full_catalog" if catalog_mode else "semantic_retrieval"
+    opening = ""
+    if catalog_mode:
+        opening_template = CATALOG_OPENINGS.get(catalog_entity, CATALOG_OPENINGS["all"])
+        opening = f"\nrequired_opening: {opening_template.format(count=len(chunks))}"
+
+    records = []
+    for index, chunk in enumerate(chunks, start=1):
+        page_type = chunk.get("page_type", "")
+        similarity = chunk.get("similarity")
+        fields = "\n".join(f"- {field}" for field in split_semantic_fields(chunk.get("text", "")))
+        records.append(f"""
+## Semantic Record {index}
+
+entity: {chunk.get("title", "")}
+semantic_area: {semantic_source_label(page_type)}
+entity_kind: {semantic_entity_kind(page_type)}
+evidence_strength: {evidence_strength(similarity)}
+content:
+{fields}
+""".strip())
+
+    return f"""
+# Aetheris Semantic Evidence
+
+retrieval_mode: {mode}
+intent: {intent}
+catalog_scope: {catalog_entity}
+entity_count: {len(chunks)}{opening}
+user_query: {query}
+
+Use these records as official Aetheris evidence. Transform them into a clear
+answer without exposing record numbers, metadata, files, routes or retrieval
+mechanics.
+
+{chr(10).join(records)}
+""".strip()

@@ -4,7 +4,7 @@ export function ChatLoadingState() {
       {[0, 1, 2].map((index) => (
         <span
           key={index}
-          className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary"
+          className="h-1.5 w-1.5 rounded-full bg-primary motion-safe:animate-bounce"
           style={{ animationDelay: `${index * 120}ms` }}
         />
       ))}

@@ -1,22 +1,28 @@
 import { ContextualInsights } from "../contextual/ContextualInsights";
-import { PersonaArtifacts } from "../contextual/PersonaArtifacts";
+import { PersonaComponentFocus } from "../contextual/PersonaComponentFocus";
 import { PersonaDecisionFeed } from "../contextual/PersonaDecisionFeed";
+import { PersonaDecisionCriteria } from "../contextual/PersonaDecisionCriteria";
 import { PersonaMetrics } from "../contextual/PersonaMetrics";
 import { PersonaRecommendations } from "../contextual/PersonaRecommendations";
-import { PersonaRecentActivity } from "../contextual/PersonaRecentActivity";
+import { PersonaThinkingModel } from "../contextual/PersonaThinkingModel";
 
 export function DesignerWorkspace() {
   return (
-    <section className="grid gap-5 xl:grid-cols-[1.25fr_0.75fr]">
-      <div className="space-y-5">
-        <PersonaMetrics />
-        <ContextualInsights />
-        <PersonaDecisionFeed />
+    <section className="space-y-4">
+      <PersonaMetrics />
+      <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+        <div className="space-y-4">
+          <PersonaThinkingModel />
+          <ContextualInsights />
+        </div>
+        <div className="space-y-4">
+          <PersonaRecommendations />
+          <PersonaDecisionCriteria />
+        </div>
       </div>
-      <div className="space-y-5">
-        <PersonaRecommendations />
-        <PersonaArtifacts />
-        <PersonaRecentActivity />
+      <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
+        <PersonaComponentFocus />
+        <PersonaDecisionFeed />
       </div>
     </section>
   );

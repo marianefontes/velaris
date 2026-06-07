@@ -1,12 +1,12 @@
 services:
-  - type: static_site
+  - type: web
     name: aetheris-app
-    env: static
+    runtime: static
     buildCommand: npm install && npm run build
     staticPublishPath: dist
     envVars:
-      - key: VITE_ORACLE_API_URL
-        sync: false
+      - key: VITE_API_BASE_URL
+        value: https://beatrice-chat-server.onrender.com
     routes:
       - type: rewrite
         source: /*
@@ -14,10 +14,34 @@ services:
 
   - type: web
     name: beatrice-chat-server
-    env: node
-    buildCommand: npm install
-    startCommand: npm start
+    runtime: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
     autoDeploy: true
     envVars:
-      - key: ANTHROPIC_API_KEY
+      - key: GROQ_API_KEY
         sync: false
+      - key: RESEARCH_ADMIN_KEY
+        generateValue: true
+      - key: STUDY_DB_PATH
+        value: /var/data/aetheris-study.sqlite3
+      - key: LABORATORY_DB_PATH
+        value: /var/data/aetheris-laboratory.sqlite3
+      - key: LABORATORY_AUTOMATION_ENABLED
+        value: "true"
+      - key: LABORATORY_SCHEDULE_TIMEZONE
+        value: Europe/Lisbon
+      - key: LABORATORY_AUTOMATION_CASE_SET
+        value: beatrice-core-v1
+      - key: LABORATORY_GROQ_MODEL
+        value: meta-llama/llama-4-scout-17b-16e-instruct
+      - key: LABORATORY_REQUEST_INTERVAL_SECONDS
+        value: "13"
+      - key: LABORATORY_RATE_LIMIT_RETRIES
+        value: "6"
+    disk:
+      name: aetheris-research-data
+      mountPath: /var/data
+      sizeGB: 5

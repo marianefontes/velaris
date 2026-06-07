@@ -311,12 +311,14 @@ export function DesignDecisionsPage() {
     <div className="space-y-16 pb-20">
       <section className="grid items-end gap-8 xl:grid-cols-[1.2fr_0.8fr]">
         <div>
-          <h1 className="text-6xl font-black tracking-tight text-white md:text-7xl">
-            {content.heroTitle} <span className="signature-text">{content.heroAccent}</span>
-          </h1>
-          <p className="mt-4 text-xs font-bold uppercase tracking-[0.2em] text-on-surface-variant">
+          <div className="page-eyebrow">
+            <BrainCircuit className="h-3.5 w-3.5" aria-hidden />
             {content.heroSubtitle}
-          </p>
+          </div>
+          <h1 className="text-5xl font-bold leading-[1.05] tracking-tight text-white sm:text-6xl">
+            {content.heroTitle}{" "}
+            <span className="signature-text">{content.heroAccent}</span>
+          </h1>
         </div>
 
         <div className="glass-panel rounded-[20px] p-6 shadow-glow">
@@ -360,7 +362,7 @@ export function DesignDecisionsPage() {
             </div>
 
             <Link
-              to="/beatrice-chat"
+              to="/oracle"
               className="flex w-full items-center justify-center gap-2 rounded-[20px] bg-signature py-4 font-bold text-on-primary transition-opacity hover:opacity-90"
             >
               {content.viewMatrix}

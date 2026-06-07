@@ -15,6 +15,34 @@ export const COMMAND_META: Record<CommandMode, CommandMeta> = {
     borderClass: "border-blue-400/25",
     bgClass: "bg-blue-400/8",
   },
+  memory: {
+    icon: "❖",
+    label: "MEMORY",
+    colorClass: "text-violet-300",
+    borderClass: "border-violet-300/30",
+    bgClass: "bg-violet-300/10",
+  },
+  decision: {
+    icon: "⌖",
+    label: "DECISION",
+    colorClass: "text-amber-300",
+    borderClass: "border-amber-300/30",
+    bgClass: "bg-amber-300/10",
+  },
+  perspectives: {
+    icon: "⟐",
+    label: "PERSPECTIVES",
+    colorClass: "text-sky-300",
+    borderClass: "border-sky-300/30",
+    bgClass: "bg-sky-300/10",
+  },
+  audit: {
+    icon: "✦",
+    label: "AUDIT",
+    colorClass: "text-emerald-300",
+    borderClass: "border-emerald-300/30",
+    bgClass: "bg-emerald-300/10",
+  },
   history: {
     icon: "◎",
     label: "HISTORY",
@@ -43,7 +71,142 @@ export const COMMAND_META: Record<CommandMode, CommandMeta> = {
     borderClass: "border-sky-400/25",
     bgClass: "bg-sky-400/8",
   },
+  simulate: {
+    icon: "⟁",
+    label: "SIMULATE",
+    colorClass: "text-cyan-400",
+    borderClass: "border-cyan-400/25",
+    bgClass: "bg-cyan-400/8",
+  },
+  capture: {
+    icon: "⊙",
+    label: "CAPTURE",
+    colorClass: "text-rose-400",
+    borderClass: "border-rose-400/25",
+    bgClass: "bg-rose-400/8",
+  },
+  document: {
+    icon: "≡",
+    label: "DOCUMENT",
+    colorClass: "text-indigo-400",
+    borderClass: "border-indigo-400/25",
+    bgClass: "bg-indigo-400/8",
+  },
+  learn: {
+    icon: "◑",
+    label: "FEEDBACK LEGACY",
+    colorClass: "text-lime-400",
+    borderClass: "border-lime-400/25",
+    bgClass: "bg-lime-400/8",
+  },
+  "feedback-review": {
+    icon: "◑",
+    label: "FEEDBACK",
+    colorClass: "text-lime-400",
+    borderClass: "border-lime-400/25",
+    bgClass: "bg-lime-400/8",
+  },
+  "token-impact": {
+    icon: "◇",
+    label: "TOKEN IMPACT",
+    colorClass: "text-pink-300",
+    borderClass: "border-pink-300/25",
+    bgClass: "bg-pink-300/8",
+  },
+  "contract-check": {
+    icon: "⌘",
+    label: "CONTRACT",
+    colorClass: "text-teal-300",
+    borderClass: "border-teal-300/25",
+    bgClass: "bg-teal-300/8",
+  },
+
+  // ── Core Oracle Engines ──────────────────────────────────────────────────
+  "organizational-memory": {
+    icon: "❖",
+    label: "ORG MEMORY",
+    colorClass: "text-violet-300",
+    borderClass: "border-violet-300/30",
+    bgClass: "bg-violet-300/10",
+  },
+  "decision-archaeology": {
+    icon: "⌖",
+    label: "ARCHAEOLOGY",
+    colorClass: "text-amber-300",
+    borderClass: "border-amber-300/30",
+    bgClass: "bg-amber-300/10",
+  },
+  "perspective-synthesis": {
+    icon: "⟐",
+    label: "PERSPECTIVES",
+    colorClass: "text-sky-300",
+    borderClass: "border-sky-300/30",
+    bgClass: "bg-sky-300/10",
+  },
+  "explainability-audit": {
+    icon: "✦",
+    label: "XAI AUDIT",
+    colorClass: "text-emerald-300",
+    borderClass: "border-emerald-300/30",
+    bgClass: "bg-emerald-300/10",
+  },
+
+  // ── Specialized Oracle Engines ───────────────────────────────────────────
+  "knowledge-gap": {
+    icon: "◌",
+    label: "KNOWLEDGE GAP",
+    colorClass: "text-rose-300",
+    borderClass: "border-rose-300/30",
+    bgClass: "bg-rose-300/10",
+  },
+  "governance-impact": {
+    icon: "⬢",
+    label: "GOV IMPACT",
+    colorClass: "text-cyan-300",
+    borderClass: "border-cyan-300/30",
+    bgClass: "bg-cyan-300/10",
+  },
+  "principle-conflict": {
+    icon: "⚖",
+    label: "PRINCIPLES",
+    colorClass: "text-orange-300",
+    borderClass: "border-orange-300/30",
+    bgClass: "bg-orange-300/10",
+  },
+  "adoption-friction": {
+    icon: "↯",
+    label: "ADOPTION",
+    colorClass: "text-yellow-300",
+    borderClass: "border-yellow-300/30",
+    bgClass: "bg-yellow-300/10",
+  },
+  "oracle-council": {
+    icon: "❂",
+    label: "COUNCIL",
+    colorClass: "text-fuchsia-300",
+    borderClass: "border-fuchsia-300/30",
+    bgClass: "bg-fuchsia-300/10",
+  },
 };
 
-export const COMMAND_ORDER: CommandMode[] = ["enforce", "migrate", "history", "why", "tradeoff", "score"];
+// Public command surface: one section, differentiated by internal category.
+export const ORACLE_ACTION_ORDER: CommandMode[] = [
+  "enforce",
+  "migrate",
+  "capture",
+  "document",
+  "token-impact",
+  "contract-check",
+  "feedback-review",
+];
 
+export const ORACLE_INVESTIGATION_ORDER: CommandMode[] = [
+  "memory",
+  "decision",
+  "perspectives",
+  "audit",
+  "knowledge-gap",
+  "governance-impact",
+  "principle-conflict",
+  "adoption-friction",
+];

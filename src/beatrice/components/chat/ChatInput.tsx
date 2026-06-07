@@ -1,11 +1,18 @@
 import { ArrowUp, Paperclip } from "lucide-react";
 import { COMMAND_META, commandHint, commandPlaceholder } from "../../domain/governance";
 import { useI18n } from "../../../i18n/I18nProvider";
+import { usePersonaContext } from "../../hooks/usePersonaContext";
 import { useWorkspace } from "../../providers/WorkspaceProvider";
 
 export function ChatInput() {
   const { t } = useI18n();
-  const { activeCommand, input, isLoading, setInput, submitPrompt } = useWorkspace();
+  const { activePersonaContext: strategy } = usePersonaContext();
+  const { activeCommand, input, isLoading, setInput, settings, submitPrompt } = useWorkspace();
+  const density = {
+    compact: "px-4 py-3",
+    comfortable: "px-4 py-4",
+    dense: "px-3 py-3",
+  }[settings.density];
 
   return (
     <>
@@ -28,7 +35,7 @@ export function ChatInput() {
         </div>
       )}
 
-      <div className="glass-panel flex items-end gap-3 rounded-2xl px-4 py-4 shadow-[0_0_48px_rgba(169,153,198,0.1)]">
+      <div className={`flex items-end gap-3 rounded-2xl border ${density} shadow-[0_0_48px_rgba(169,153,198,0.1)] ${strategy.theme.panel}`}>
         <textarea
           rows={activeCommand ? 4 : 1}
           value={input}
@@ -44,24 +51,24 @@ export function ChatInput() {
               void submitPrompt();
             }
           }}
-          placeholder={
-            isLoading
-              ? t("chat.responding")
-              : commandPlaceholder(activeCommand) ?? t("chat.promptPlaceholder")
-          }
+          placeholder={isLoading ? t("chat.responding") : commandPlaceholder(activeCommand) ?? `${strategy.label}: ${strategy.examples[0]}`}
           className={`flex-1 resize-none bg-transparent leading-6 text-white outline-none placeholder:text-slate-500 disabled:opacity-50 ${
             activeCommand ? "max-h-[200px] font-mono text-xs" : "max-h-[120px] text-sm"
           }`}
         />
         <div className="flex items-center gap-2">
-          <button className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white/10 hover:text-white">
+          <button
+            type="button"
+            aria-label="Attach context"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white/10 hover:text-white"
+          >
             <Paperclip className="h-4 w-4" />
           </button>
           <button
             type="button"
             disabled={isLoading}
             onClick={() => void submitPrompt()}
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-signature text-on-primary transition-opacity hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-40"
+            className={`flex h-9 w-9 items-center justify-center rounded-xl text-background transition-opacity hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-40 ${strategy.theme.signal}`}
           >
             {isLoading ? (
               <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
@@ -75,4 +82,3 @@ export function ChatInput() {
     </>
   );
 }
-

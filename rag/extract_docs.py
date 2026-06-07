@@ -21,6 +21,7 @@ from pathlib import Path
 # ─── Caminhos ────────────────────────────────────────────────────────────────
 BASE_DIR   = Path(__file__).parent.parent          # /AETHERIS/
 SRC_DIR    = BASE_DIR / "src" / "components"
+CAPABILITY_REGISTRY = BASE_DIR / "src" / "beatrice" / "domain" / "governance" / "capabilities.ts"
 OUTPUT_DIR = Path(__file__).parent                 # /AETHERIS/rag/
 PRODUCT_NAME = "Aetheris"
 
@@ -104,6 +105,95 @@ def extract_objects_from_array(source: str, array_name: str) -> list[str]:
     return []
 
 
+def extract_component_usage_guidance() -> dict[str, dict[str, list[str]]]:
+    """componentUsageGuidance.ts → regras Do/Don't em português por component id."""
+    src = read_tsx("componentUsageGuidance.ts")
+    if not src:
+        return {}
+
+    entry_pattern = re.compile(
+        r'^\s*(?:"([^"]+)"|([a-z][a-z0-9-]*))\s*:\s*guidance\s*\(',
+        re.MULTILINE,
+    )
+    result: dict[str, dict[str, list[str]]] = {}
+
+    for match in entry_pattern.finditer(src):
+        component_id = match.group(1) or match.group(2)
+        call_start = match.end() - 1
+        depth = 0
+        in_string = False
+        escaped = False
+        call_end = None
+
+        for index in range(call_start, len(src)):
+            char = src[index]
+            if in_string:
+                if escaped:
+                    escaped = False
+                elif char == "\\":
+                    escaped = True
+                elif char == '"':
+                    in_string = False
+                continue
+            if char == '"':
+                in_string = True
+            elif char == "(":
+                depth += 1
+            elif char == ")":
+                depth -= 1
+                if depth == 0:
+                    call_end = index
+                    break
+
+        if call_end is None:
+            continue
+
+        call_text = src[call_start + 1:call_end]
+        arrays: list[str] = []
+        array_depth = 0
+        array_start = None
+        in_string = False
+        escaped = False
+
+        for index, char in enumerate(call_text):
+            if in_string:
+                if escaped:
+                    escaped = False
+                elif char == "\\":
+                    escaped = True
+                elif char == '"':
+                    in_string = False
+                continue
+            if char == '"':
+                in_string = True
+            elif char == "[":
+                if array_depth == 0:
+                    array_start = index
+                array_depth += 1
+            elif char == "]":
+                array_depth -= 1
+                if array_depth == 0 and array_start is not None:
+                    arrays.append(call_text[array_start:index + 1])
+                    array_start = None
+
+        if len(arrays) < 2:
+            continue
+
+        def strings(array_text: str) -> list[str]:
+            values = re.findall(r'"((?:[^"\\]|\\.)*)"', array_text)
+            return [
+                value.replace('\\"', '"').replace("\\n", "\n").replace("\\t", "\t")
+                for value in values
+            ]
+
+        result[component_id] = {
+            "do": strings(arrays[0]),
+            "dont": strings(arrays[1]),
+        }
+
+    return result
+
+
 def make_id(source_file: str, title: str) -> str:
     slug = re.sub(r'[^a-z0-9]+', '_', title.lower()).strip('_')
     base = source_file.replace(".tsx", "").lower()
@@ -115,7 +205,8 @@ def build_chunk(source_file: str, page_type: str, title: str, fields: dict) -> d
     text_parts = [f"{PRODUCT_NAME.upper()} {page_type.upper()}: {title}"]
     field_order = [
         "description", "structure", "logic", "context_of_use",
-        "when_to_use", "when_not_to_use", "trade_offs", "aetheris_insight",
+        "when_to_use", "when_not_to_use", "trade_offs", "accessibility",
+        "rag_relation", "aetheris_insight",
     ]
     for key in field_order:
         val = fields.get(key, "")
@@ -137,6 +228,8 @@ def build_chunk(source_file: str, page_type: str, title: str, fields: dict) -> d
         "when_to_use": fields.get("when_to_use", ""),
         "when_not_to_use": fields.get("when_not_to_use", ""),
         "trade_offs": fields.get("trade_offs", ""),
+        "accessibility": fields.get("accessibility", ""),
+        "rag_relation": fields.get("rag_relation", ""),
         "aetheris_insight": fields.get("aetheris_insight", ""),
         "text": full_text,
         "char_count": len(full_text),
@@ -148,53 +241,48 @@ def build_chunk(source_file: str, page_type: str, title: str, fields: dict) -> d
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def extract_components(chunks: list):
-    """ComponentsPage.tsx → sections[] + xaiItems[]"""
+    """ComponentsPage.tsx → COMPONENT_CATALOG[]"""
     src = read_tsx("ComponentsPage.tsx")
     if not src:
         return
+    usage_guidance = extract_component_usage_guidance()
 
-    # seções principais (Actions, Feedback, Data Visualization, Inputs)
-    section_objects = extract_objects_from_array(src, "sections")
-    for sec_obj in section_objects:
-        section_title = extract_string_field(sec_obj, "title")
-        # extrai os items[] dentro desta seção
-        item_objects = extract_objects_from_array(sec_obj, "items")
-        for item_obj in item_objects:
-            title = extract_string_field(item_obj, "title")
-            if not title:
-                continue
-            fields = {
-                "status":           extract_string_field(item_obj, "status"),
-                "description":      extract_string_field(item_obj, "description"),
-                "logic":            extract_string_field(item_obj, "logic"),
-                "structure":        extract_string_field(item_obj, "structure"),
-                "when_to_use":      extract_string_field(item_obj, "whenToUse"),
-                "when_not_to_use":  extract_string_field(item_obj, "whenNotToUse"),
-                "trade_offs":       extract_string_field(item_obj, "tradeOffs"),
-                "aetheris_insight": extract_string_field(item_obj, "insight"),
-                "context_of_use":   f"Section: {section_title}",
-            }
-            chunks.append(build_chunk("ComponentsPage.tsx", "component", title, fields))
+    section_names = {
+        "actions": "Ações e Controles",
+        "forms": "Inputs e Formulários",
+        "structure": "Navegação e Estrutura",
+        "feedback": "Feedback e Estados",
+        "intelligence": "Inteligência, XAI e Auditabilidade",
+    }
 
-    # xai.items[] — Intelligence/XAI section (nested under xai: { items: [...] })
-    xai_src_match = src[src.find("xai:"):] if "xai:" in src else ""
-    xai_objects = extract_objects_from_array(xai_src_match, "items") if xai_src_match else []
-    for item_obj in xai_objects:
+    for item_obj in extract_objects_from_array(src, "COMPONENT_CATALOG"):
+        component_id = extract_string_field(item_obj, "id")
         title = extract_string_field(item_obj, "title")
         if not title:
             continue
+        section_id = extract_string_field(item_obj, "section")
+        page_type = (
+            "xai_component"
+            if component_id in {"confidence-badge", "source-attribution", "audit-panel"}
+            else "component"
+        )
+        component_guidance = usage_guidance.get(component_id, {})
+        do_rules = component_guidance.get("do", [])
+        dont_rules = component_guidance.get("dont", [])
         fields = {
             "status":           extract_string_field(item_obj, "status"),
             "description":      extract_string_field(item_obj, "description"),
             "logic":            extract_string_field(item_obj, "logic"),
             "structure":        extract_string_field(item_obj, "structure"),
-            "when_to_use":      extract_string_field(item_obj, "whenToUse"),
-            "when_not_to_use":  extract_string_field(item_obj, "whenNotToUse"),
+            "when_to_use":      " ".join(do_rules) or extract_string_field(item_obj, "whenToUse"),
+            "when_not_to_use":  " ".join(dont_rules) or extract_string_field(item_obj, "whenNotToUse"),
             "trade_offs":       extract_string_field(item_obj, "tradeOffs"),
+            "accessibility":    extract_string_field(item_obj, "accessibility"),
+            "rag_relation":     extract_string_field(item_obj, "ragRelation"),
             "aetheris_insight": extract_string_field(item_obj, "insight"),
-            "context_of_use":   "Section: Intelligence / XAI",
+            "context_of_use":   f"Section: {section_names.get(section_id, section_id)}",
         }
-        chunks.append(build_chunk("ComponentsPage.tsx", "xai_component", title, fields))
+        chunks.append(build_chunk("ComponentsPage.tsx", page_type, title, fields))
 
 
 def extract_patterns(chunks: list):
@@ -234,126 +322,78 @@ def extract_patterns(chunks: list):
 
 
 def extract_tokens(chunks: list):
-    """TokensPage.tsx → color tokens, typography, spacing"""
+    """TokensPage.tsx → canonical token contracts + documented aliases."""
     src = read_tsx("TokensPage.tsx")
     if not src:
         return
 
-    # Color palette — primaryScale + surfaceScale como um chunk combinado
-    primary_colors = []
-    for obj in extract_objects_from_array(src, "primaryScale"):
-        name  = extract_string_field(obj, "name")
+    for obj in extract_objects_from_array(src, "canonicalTokens"):
+        name = extract_string_field(obj, "name")
         value = extract_string_field(obj, "value")
-        if name and value:
-            primary_colors.append(f"{name}: {value}")
+        group = extract_string_field(obj, "group")
+        kind = extract_string_field(obj, "kind")
+        layer = extract_string_field(obj, "layer")
+        description = extract_string_field(obj, "description")
+        components = extract_string_field(obj, "components")
+        if not name or not value:
+            continue
 
-    surface_colors = []
-    for obj in extract_objects_from_array(src, "surfaceScale"):
-        name  = extract_string_field(obj, "name")
-        value = extract_string_field(obj, "value")
-        if name and value:
-            surface_colors.append(f"{name}: {value}")
-
-    if primary_colors or surface_colors:
-        text = f"{PRODUCT_NAME.upper()} COLOR TOKENS | Primary Scale: " + ", ".join(primary_colors) + \
-               " | Surface Scale: " + ", ".join(surface_colors)
+        text = (
+            f"{PRODUCT_NAME.upper()} TOKEN: {name} | "
+            f"Value: {value} | Group: {group} | Kind: {kind} | Layer: {layer} | "
+            f"Description: {description} | Components: {components}"
+        )
         chunks.append({
-            "id": "TokensPage.tsx :: color_tokens",
+            "id": f"TokensPage.tsx :: token_{make_id('', name).split(' :: ')[-1]}",
             "source": "TokensPage.tsx",
             "page_type": "token",
-            "title": "Color Tokens",
+            "title": name,
             "status": "Stable",
-            "structure": "Primary scale (#f5f0ff → #4a1aa0) + Surface scale (#000000 → #2c2c2f)",
-            "logic": "Primary tokens drive brand identity and interactive states. Surface tokens define depth hierarchy.",
-            "context_of_use": "Every component that uses color must reference these tokens, never raw hex values.",
-            "when_to_use": "Use primary-200 (#deccfd) for brand accent, primary-300 (#c2a0fc) for secondary. Use background (#0e0e10) for app background, surface-container (#19191c) for cards.",
-            "when_not_to_use": "Never use raw hex values outside this token system.",
+            "structure": f"{group} / {kind} / {layer}",
+            "logic": description,
+            "context_of_use": components,
+            "when_to_use": f"Use the {name} contract wherever the documented component context applies.",
+            "when_not_to_use": "Do not replace this contract with an unrelated raw value or one-off state token.",
             "trade_offs": "",
-            "aetheris_insight": "primary-200 and primary-300 form the signature gradient. Surface tokens create depth without shadows.",
+            "aetheris_insight": "Canonical tokens centralize values while semantic layers preserve explicit usage intent.",
+            "token_value": value,
+            "token_group": group,
+            "token_kind": kind,
+            "token_layer": layer,
             "text": text,
             "char_count": len(text),
         })
 
-    # Semantic colors — chunk separado
-    semantic_parts = []
-    for obj in extract_objects_from_array(src, "semanticColors"):
-        label    = extract_string_field(obj, "label")
-        variable = extract_string_field(obj, "variable")
-        value    = extract_string_field(obj, "value")
-        if label:
-            semantic_parts.append(f"{label} ({variable}): {value}")
+    for obj in extract_objects_from_array(src, "aliasTokens"):
+        name = extract_string_field(obj, "name")
+        target = extract_string_field(obj, "target")
+        resolved_value = extract_string_field(obj, "resolvedValue")
+        group = extract_string_field(obj, "group")
+        description = extract_string_field(obj, "description")
+        if not name or not target:
+            continue
 
-    if semantic_parts:
-        text = f"{PRODUCT_NAME.upper()} SEMANTIC COLOR TOKENS | " + " | ".join(semantic_parts)
+        text = (
+            f"{PRODUCT_NAME.upper()} TOKEN ALIAS: {name} | "
+            f"Target: {target} | Resolved value: {resolved_value} | Group: {group} | "
+            f"Description: {description}"
+        )
         chunks.append({
-            "id": "TokensPage.tsx :: semantic_colors",
+            "id": f"TokensPage.tsx :: alias_{make_id('', name).split(' :: ')[-1]}",
             "source": "TokensPage.tsx",
-            "page_type": "token",
-            "title": "Semantic Color Tokens",
+            "page_type": "token_alias",
+            "title": name,
             "status": "Stable",
-            "structure": "Named semantic roles mapped to hex values",
-            "logic": "Semantic tokens abstract color intent from raw values.",
-            "context_of_use": "Use semantic tokens (--aetheris-color-primary, --aetheris-color-error) for states and feedback.",
-            "when_to_use": "Use error (#ff6e84) for destructive actions and alerts. Use success (#7ee787) for confirmations.",
-            "when_not_to_use": "Do not use warning color for primary actions.",
-            "trade_offs": "",
-            "aetheris_insight": "Semantic tokens decouple meaning from aesthetics — changing a theme only requires updating token values.",
-            "text": text,
-            "char_count": len(text),
-        })
-
-    # Typography tokens
-    type_parts = []
-    for obj in extract_objects_from_array(src, "typographyTokens"):
-        label = extract_string_field(obj, "label")
-        meta  = extract_string_field(obj, "meta")
-        cls   = extract_string_field(obj, "className")
-        if label:
-            type_parts.append(f"{label} ({cls}): {meta}")
-
-    if type_parts:
-        text = f"{PRODUCT_NAME.upper()} TYPOGRAPHY TOKENS | " + " | ".join(type_parts)
-        chunks.append({
-            "id": "TokensPage.tsx :: typography_tokens",
-            "source": "TokensPage.tsx",
-            "page_type": "token",
-            "title": "Typography Tokens",
-            "status": "Stable",
-            "structure": "display-xl → heading-lg → body-md → label-sm",
-            "logic": "Four-level type scale balancing display impact with readable body density.",
-            "context_of_use": "Every text element should reference one of these four scales.",
-            "when_to_use": "display-xl for hero headlines, heading-lg for section anchors, body-md for documentation, label-sm for metadata and chips.",
-            "when_not_to_use": "Do not mix custom font sizes outside this scale.",
-            "trade_offs": "",
-            "aetheris_insight": "A constrained type scale is invisible when correct and jarring when broken.",
-            "text": text,
-            "char_count": len(text),
-        })
-
-    # Spacing tokens
-    spacing_parts = []
-    for obj in extract_objects_from_array(src, "spacingTokens"):
-        token = extract_string_field(obj, "token")
-        value = extract_string_field(obj, "value")
-        use   = extract_string_field(obj, "use")
-        if token:
-            spacing_parts.append(f"{token} ({value}): {use}")
-
-    if spacing_parts:
-        text = f"{PRODUCT_NAME.upper()} SPACING TOKENS | " + " | ".join(spacing_parts)
-        chunks.append({
-            "id": "TokensPage.tsx :: spacing_tokens",
-            "source": "TokensPage.tsx",
-            "page_type": "token",
-            "title": "Spacing Tokens",
-            "status": "Stable",
-            "structure": "space-1 (0.25rem) through space-10 (2.5rem)",
-            "logic": "Consistent rhythm across all layout decisions.",
-            "context_of_use": "All padding, margin and gap values should use these tokens.",
-            "when_to_use": "space-4 (1rem) for default card padding, space-6 for section blocks, space-10 for hero separation.",
-            "when_not_to_use": "Do not use arbitrary pixel values for spacing.",
-            "trade_offs": "",
-            "aetheris_insight": "Consistent spacing is what makes dense interfaces feel intentional rather than cramped.",
+            "structure": f"{name} → {target}",
+            "logic": description,
+            "context_of_use": f"{group} semantic contract",
+            "when_to_use": f"Reference {name} when the usage intent differs from its canonical target.",
+            "when_not_to_use": "Do not duplicate the resolved value as a new canonical token.",
+            "trade_offs": "The alias adds semantic vocabulary without increasing the canonical value inventory.",
+            "aetheris_insight": "Aliases keep component intent explicit while preventing unnecessary value duplication.",
+            "alias_target": target,
+            "resolved_value": resolved_value,
+            "token_group": group,
             "text": text,
             "char_count": len(text),
         })
@@ -449,37 +489,64 @@ def extract_guidelines(chunks: list):
             })
 
 
-def extract_foundations(chunks: list):
-    """FoundationsPage.tsx — extrai princípios de foundations se existirem"""
+def extract_accessibility(chunks: list):
+    """FoundationsPage.tsx → accessibility contracts + readiness checklist."""
     src = read_tsx("FoundationsPage.tsx")
     if not src:
         return
 
-    for array_name in ("foundations", "principles", "items", "cards"):
-        for obj in extract_objects_from_array(src, array_name):
-            title = extract_string_field(obj, "title")
-            desc  = (extract_string_field(obj, "description") or
-                     extract_string_field(obj, "body") or
-                     extract_string_field(obj, "text"))
-            if not title or not desc:
-                continue
-            text = f"{PRODUCT_NAME.upper()} FOUNDATION: {title} | {desc}"
-            chunks.append({
-                "id": make_id("FoundationsPage.tsx", title),
-                "source": "FoundationsPage.tsx",
-                "page_type": "foundation",
-                "title": title,
-                "status": "Stable",
-                "structure": "",
-                "logic": desc,
-                "context_of_use": "",
-                "when_to_use": "",
-                "when_not_to_use": "",
-                "trade_offs": "",
-                "aetheris_insight": "",
-                "text": text,
-                "char_count": len(text),
-            })
+    for obj in extract_objects_from_array(src, "ACCESSIBILITY_CONTRACTS"):
+        title = extract_string_field(obj, "title")
+        description = extract_string_field(obj, "description")
+        requirements = extract_string_field(obj, "requirements")
+        applies_to = extract_string_field(obj, "appliesTo")
+        token_references = extract_string_field(obj, "tokenReferences")
+        rag_relation = extract_string_field(obj, "ragRelation")
+        if not title or not description:
+            continue
+
+        fields = {
+            "description": description,
+            "structure": "Transversal accessibility contract",
+            "logic": requirements,
+            "context_of_use": applies_to,
+            "when_to_use": f"Apply before approving any affected component or pattern. Related tokens: {token_references}",
+            "when_not_to_use": "Accessibility is never optional or deferred as post-release polish.",
+            "accessibility": description,
+            "rag_relation": rag_relation,
+            "aetheris_insight": "Accessibility is a system-wide quality contract, not a component-specific add-on.",
+        }
+        chunks.append(build_chunk("FoundationsPage.tsx", "accessibility", title, fields))
+
+    checklist_items = []
+    for obj in extract_objects_from_array(src, "ACCESSIBILITY_READINESS_CHECKLIST"):
+        text = extract_string_field(obj, "text")
+        if text:
+            checklist_items.append(text)
+
+    if checklist_items:
+        checklist_text = " ".join(
+            f"{index + 1}. {item}" for index, item in enumerate(checklist_items)
+        )
+        fields = {
+            "description": "Gate obrigatório antes de um componente entrar no Aetheris.",
+            "structure": f"{len(checklist_items)} verificações de prontidão acessível",
+            "logic": checklist_text,
+            "context_of_use": "Component review, pattern review, documentation and Beatrice guidance.",
+            "when_to_use": "Use during design, implementation, QA and corpus review.",
+            "when_not_to_use": "Do not approve a component with undocumented or failed checks.",
+            "accessibility": checklist_text,
+            "rag_relation": "Fornece à Beatrice uma lista verificável para auditar prontidão e apontar lacunas.",
+            "aetheris_insight": "Prontidão acessível exige evidência reproduzível, não apenas intenção.",
+        }
+        chunks.append(
+            build_chunk(
+                "FoundationsPage.tsx",
+                "accessibility",
+                "Checklist de prontidão acessível",
+                fields,
+            )
+        )
 
 
 def extract_reasoning(chunks: list):
@@ -583,6 +650,62 @@ def extract_reasoning(chunks: list):
             "text":             text,
             "char_count":       len(text),
         })
+
+
+def extract_beatrice_capabilities(chunks: list):
+    """capabilities.ts → automatic skills and user-triggered Oracle commands."""
+    if not CAPABILITY_REGISTRY.exists():
+        print(f"  [AVISO] registry não encontrado: {CAPABILITY_REGISTRY}", file=sys.stderr)
+        return
+
+    source = CAPABILITY_REGISTRY.read_text(encoding="utf-8")
+    groups = (
+        ("AUTOMATIC_SKILLS", "automatic_skill"),
+        ("ORACLE_COMMANDS", "oracle_command"),
+    )
+
+    for array_name, page_type in groups:
+        for obj in extract_objects_from_array(source, array_name):
+            capability_id = extract_string_field(obj, "id")
+            name = extract_string_field(obj, "name")
+            capability_type = extract_string_field(obj, "type")
+            command = extract_string_field(obj, "command")
+            canonical_command = extract_string_field(obj, "canonicalCommand")
+            description = extract_string_field(obj, "description")
+            activation = extract_string_field(obj, "activation")
+            example = extract_string_field(obj, "example")
+            output = extract_string_field(obj, "output")
+            combines_with = extract_string_field(obj, "combinesWith")
+            rag_evidence = extract_string_field(obj, "ragEvidence")
+            auditability = extract_string_field(obj, "auditability")
+            if not capability_id or not name:
+                continue
+
+            text = (
+                f"{PRODUCT_NAME.upper()} BEATRICE CAPABILITY: {name} | "
+                f"Type: {capability_type} | Command: {command or 'automatic'} | "
+                f"Canonical command: {canonical_command or command or 'none'} | "
+                f"Description: {description} | Activation: {activation} | "
+                f"Example: {example} | Expected output: {output} | "
+                f"Can combine with: {combines_with} | RAG evidence: {rag_evidence} | "
+                f"Auditability: {auditability}"
+            )
+            chunks.append({
+                "id":               make_id("capabilities.ts", capability_id),
+                "source":           "beatrice/domain/governance/capabilities.ts",
+                "page_type":        page_type,
+                "title":            name,
+                "status":           "Experimental" if "experimental: true" in obj else "Stable",
+                "structure":        capability_type,
+                "logic":            description or output,
+                "context_of_use":   activation,
+                "when_to_use":      example,
+                "when_not_to_use":  "",
+                "trade_offs":       combines_with,
+                "aetheris_insight": auditability,
+                "text":             text,
+                "char_count":       len(text),
+            })
 
 
 def extract_persona(chunks: list):
@@ -782,11 +905,14 @@ def main():
     print("Extraindo guidelines (GuidelinesPage.tsx)…")
     extract_guidelines(chunks)
 
-    print("Extraindo foundations (FoundationsPage.tsx)…")
-    extract_foundations(chunks)
+    print("Extraindo acessibilidade (FoundationsPage.tsx)…")
+    extract_accessibility(chunks)
 
     print("Extraindo raciocínio XAI (ReasoningPage.tsx)…")
     extract_reasoning(chunks)
+
+    print("Extraindo capacidades da Beatrice (capabilities.ts)…")
+    extract_beatrice_capabilities(chunks)
 
     print("Extraindo persona (PersonaPage.tsx)…")
     extract_persona(chunks)
@@ -818,7 +944,7 @@ def main():
             "total_chunks": len(chunks),
             "sources": sources,
             "embedding_model": "BAAI/bge-m3",
-            "extractor_version": "2.1.0-tsx",
+            "extractor_version": "2.2.0-capability-registry",
             "note": "Extracted from React/TypeScript source — TSX is the source of truth",
         },
         "chunks": chunks,
@@ -833,9 +959,9 @@ def main():
     md_lines = [
         "# Aetheris Design System — Corpus Dump (TSX Source)",
         "",
-        f"> **Total chunks:** {len(chunks)}  ",
-        f"> **Extractor:** v2.1.0-tsx (React/TypeScript source)  ",
-        f"> **Embedding model:** BAAI/bge-m3  ",
+        f"> **Total chunks:** {len(chunks)}",
+        f"> **Extractor:** v2.2.0-capability-registry (React/TypeScript source)",
+        f"> **Embedding model:** BAAI/bge-m3",
         "",
         "---",
         "",

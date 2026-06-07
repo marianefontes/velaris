@@ -1,22 +1,30 @@
 import { ContextualInsights } from "../contextual/ContextualInsights";
-import { PersonaArtifacts } from "../contextual/PersonaArtifacts";
+import { PersonaComponentFocus } from "../contextual/PersonaComponentFocus";
 import { PersonaDecisionFeed } from "../contextual/PersonaDecisionFeed";
+import { PersonaDecisionCriteria } from "../contextual/PersonaDecisionCriteria";
+import { PersonaExamples } from "../contextual/PersonaExamples";
 import { PersonaMetrics } from "../contextual/PersonaMetrics";
 import { PersonaRecommendations } from "../contextual/PersonaRecommendations";
-import { PersonaRecentActivity } from "../contextual/PersonaRecentActivity";
+import { PersonaThinkingModel } from "../contextual/PersonaThinkingModel";
 
 export function TechWriterWorkspace() {
   return (
-    <section className="grid gap-5 xl:grid-cols-[1fr_1fr]">
-      <div className="space-y-5">
-        <PersonaMetrics />
-        <PersonaRecommendations />
-        <PersonaArtifacts />
+    <section className="space-y-4">
+      <PersonaMetrics />
+      <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
+        <div className="space-y-4">
+          <PersonaThinkingModel />
+          <PersonaExamples />
+        </div>
+        <div className="space-y-4">
+          <ContextualInsights />
+          <PersonaDecisionCriteria />
+        </div>
       </div>
-      <div className="space-y-5">
-        <ContextualInsights />
+      <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
+        <PersonaRecommendations />
+        <PersonaComponentFocus />
         <PersonaDecisionFeed />
-        <PersonaRecentActivity />
       </div>
     </section>
   );

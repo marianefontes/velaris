@@ -1,6 +1,6 @@
 import { Accessibility, Layers3, MessageSquareMore, Palette, Sparkles, Waypoints } from "lucide-react";
 import type { Locale } from "../../i18n/translations";
-import type { ChatContent, PromptStats } from "../types/beatrice";
+import type { ChatContent, PersonaStrategy, PromptStats, SuggestedPrompt } from "../types/beatrice";
 
 export function getChatContent(locale: Locale): ChatContent {
   if (locale === "en-US") {
@@ -148,5 +148,98 @@ export function getPromptStats(messageCount: number): PromptStats {
     messages: messageCount,
     decisions: Math.max(1, Math.floor(messageCount / 2)),
     confidence: "97%",
+  };
+}
+
+function personaChatLabels(locale: Locale) {
+  if (locale === "en-US") {
+    return {
+      activeThrough: "is active through",
+      operationalPain: "Operational pain",
+      thinkingStructure: "Thinking structure",
+      operator: "Operator",
+      primaryPain: "Primary pain",
+      metricsPrioritized: "Metrics prioritized",
+      operationalFears: "Operational fears",
+      vocabulary: "Vocabulary",
+      mentalStructure: "Mental structure",
+      retrievalWeighting: "Retrieval weighting",
+      active: "active",
+    };
+  }
+
+  return {
+    activeThrough: locale === "pt-PT" ? "está ativa através de" : "está ativa por meio de",
+    operationalPain: "Dor operacional",
+    thinkingStructure: "Estrutura de pensamento",
+    operator: "Operador",
+    primaryPain: "Dor principal",
+    metricsPrioritized: "Métricas priorizadas",
+    operationalFears: "Medos operacionais",
+    vocabulary: "Vocabulário",
+    mentalStructure: "Estrutura mental",
+    retrievalWeighting: "Peso do retrieval",
+    active: "ativa",
+  };
+}
+
+export function getPersonaChatContent(content: ChatContent, strategy: PersonaStrategy, locale: Locale): ChatContent {
+  const profile = strategy.cognitiveProfile;
+  const operationalProfile = strategy.operationalProfile;
+  const labels = personaChatLabels(locale);
+  const promptTitles = [
+    operationalProfile.title,
+    operationalProfile.prioritizedMetrics[0],
+    operationalProfile.operationalFears[0],
+    profile.decisionCriteria[0],
+  ];
+  const promptIcons = [strategy.icon, MessageSquareMore, Layers3, Waypoints];
+
+  const suggestedPrompts: SuggestedPrompt[] = strategy.examples.slice(0, 4).map((body, index) => ({
+    title: promptTitles[index] ?? strategy.workspaceTone,
+    body,
+    icon: promptIcons[index] ?? strategy.icon,
+  }));
+
+  const primaryInsight = strategy.insights[0];
+  const secondaryInsight = strategy.insights[1] ?? strategy.insights[0];
+
+  return {
+    ...content,
+    suggestedPrompts,
+    initialMessages: [
+      {
+        id: `assistant-persona-${strategy.id}`,
+        role: "assistant",
+        decisionId: strategy.operationalMode,
+        content: `${strategy.sessionTitle} ${labels.activeThrough} ${operationalProfile.fullName}, ${operationalProfile.title}. ${operationalProfile.primaryResponsibility}`,
+        responseCards: [
+          {
+            title: labels.operationalPain,
+            text: operationalProfile.primaryPain,
+            accent: "primary",
+          },
+          {
+            title: labels.thinkingStructure,
+            text: operationalProfile.mentalStructure.join(" → "),
+            accent: "secondary",
+          },
+        ],
+        conclusion: `${primaryInsight.detail} ${secondaryInsight.detail}`,
+      },
+    ],
+    activeContext: [
+      `${strategy.sessionTitle} ${labels.active}`,
+      `${labels.operator}: ${operationalProfile.fullName}, ${operationalProfile.title}`,
+      `${labels.primaryPain}: ${operationalProfile.primaryPain}`,
+      `${labels.metricsPrioritized}: ${operationalProfile.prioritizedMetrics.join(" / ")}`,
+      `${labels.operationalFears}: ${operationalProfile.operationalFears.join(" / ")}`,
+      `${labels.vocabulary}: ${profile.vocabulary.join(" · ")}`,
+      `${labels.mentalStructure}: ${operationalProfile.mentalStructure.join(" → ")}`,
+      `${labels.retrievalWeighting}: ${Object.entries(strategy.retrievalWeighting).map(([key, value]) => `${key} ${value.toFixed(2)}`).join(" · ")}`,
+      ...content.activeContext.slice(0, 1),
+    ],
+    recentTopics: strategy.examples.slice(0, 3),
+    coreRule: strategy.operationalMode,
   };
 }

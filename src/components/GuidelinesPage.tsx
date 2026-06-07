@@ -26,6 +26,13 @@ interface ToneExample {
   good: string;
 }
 
+interface CaseStudy {
+  beforeTitle: string;
+  beforeBody: string;
+  afterTitle: string;
+  afterBody: string;
+}
+
 function buildRules(prefix: string, rules: string[]): RuleItem[] {
   return rules.map((text, index) => ({
     id: `${prefix}-${String(index + 1).padStart(2, "0")}`,
@@ -532,145 +539,685 @@ function getGuidelinesContent(locale: Locale) {
   };
 }
 
+const RULE_NOTES: Record<string, { en: string; pt: string }> = {
+  "C1-01": {
+    en: "A single dominant action keeps priority visible without requiring interpretation.",
+    pt: "Uma única ação dominante mantém a prioridade visível sem exigir interpretação.",
+  },
+  "C1-02": {
+    en: "Scale, position and contrast should reveal the reading order before copy is processed.",
+    pt: "Escala, posição e contraste devem revelar a ordem de leitura antes do texto ser processado.",
+  },
+  "C1-03": {
+    en: "When everything asks for attention, the interface stops communicating priority.",
+    pt: "Quando tudo pede atenção, a interface deixa de comunicar prioridade.",
+  },
+  "C1-04": {
+    en: "Labels should name the outcome directly and remove the need for inference.",
+    pt: "Os rótulos devem nomear o resultado diretamente e eliminar a necessidade de inferência.",
+  },
+  "C2-01": {
+    en: "Lead with the conclusion so detail becomes support rather than an obstacle.",
+    pt: "Comece pela conclusão para que o detalhe funcione como apoio, não como obstáculo.",
+  },
+  "C2-02": {
+    en: "Related information becomes easier to compare when it shares a clear visual region.",
+    pt: "Informações relacionadas tornam-se mais fáceis de comparar quando ocupam uma região visual clara.",
+  },
+  "C2-03": {
+    en: "Advanced detail should appear only when it improves the decision at hand.",
+    pt: "O detalhe avançado deve aparecer apenas quando melhora a decisão em curso.",
+  },
+  "C2-04": {
+    en: "A section title should explain the purpose of what follows, not merely label it.",
+    pt: "O título de uma seção deve explicar o propósito do conteúdo seguinte, não apenas nomeá-lo.",
+  },
+  "E1-01": {
+    en: "Use the vocabulary of the task, not the vocabulary of the implementation.",
+    pt: "Use o vocabulário da tarefa, não o vocabulário da implementação.",
+  },
+  "E1-02": {
+    en: "The sequence of information should follow the way people evaluate and decide.",
+    pt: "A sequência da informação deve acompanhar a forma como as pessoas avaliam e decidem.",
+  },
+  "E1-03": {
+    en: "Consequences become useful when they are described through their human impact.",
+    pt: "As consequências tornam-se úteis quando são descritas pelo seu impacto humano.",
+  },
+  "E1-04": {
+    en: "Navigation should reflect the intent a person recognizes, not the system module.",
+    pt: "A navegação deve refletir a intenção reconhecida pela pessoa, não o módulo do sistema.",
+  },
+  "E2-01": {
+    en: "A recommendation gives the comparison a clear point of departure.",
+    pt: "Uma recomendação oferece à comparação um ponto de partida claro.",
+  },
+  "E2-02": {
+    en: "Evidence turns a suggested path into a decision someone can defend.",
+    pt: "A evidência transforma um caminho sugerido numa decisão que pode ser defendida.",
+  },
+  "E2-03": {
+    en: "Trade-offs should remain visible whenever the decision has meaningful costs.",
+    pt: "Os trade-offs devem permanecer visíveis sempre que a decisão tiver custos relevantes.",
+  },
+  "E2-04": {
+    en: "The interface should support progress before demanding exhaustive comprehension.",
+    pt: "A interface deve apoiar o avanço antes de exigir compreensão exaustiva.",
+  },
+  "F1-01": {
+    en: "Confirmation should close the interaction without becoming a new interruption.",
+    pt: "A confirmação deve concluir a interação sem se transformar numa nova interrupção.",
+  },
+  "F1-02": {
+    en: "Alert intensity should match the cost of ignoring the message.",
+    pt: "A intensidade do alerta deve corresponder ao custo de ignorar a mensagem.",
+  },
+  "F1-03": {
+    en: "Stable geometry preserves orientation while the system is still responding.",
+    pt: "Uma geometria estável preserva a orientação enquanto o sistema responde.",
+  },
+  "F1-04": {
+    en: "Feedback belongs beside the action so cause and effect remain connected.",
+    pt: "O feedback pertence junto da ação para manter causa e efeito conectados.",
+  },
+  "F2-01": {
+    en: "Visible uncertainty lets people calibrate how much weight to give the answer.",
+    pt: "A incerteza visível permite calibrar o peso que deve ser dado à resposta.",
+  },
+  "F2-02": {
+    en: "Consequential guidance should carry the evidence that makes it credible.",
+    pt: "Orientações consequentes devem trazer a evidência que as torna credíveis.",
+  },
+  "F2-03": {
+    en: "Rules and predictions require different language, treatment and expectations.",
+    pt: "Regras e previsões exigem linguagem, tratamento e expectativas diferentes.",
+  },
+  "F2-04": {
+    en: "Authority should come from traceability, never from exaggerated certainty.",
+    pt: "A autoridade deve vir da rastreabilidade, nunca de uma certeza exagerada.",
+  },
+  "L1-01": {
+    en: "Put the useful outcome first so the sentence can be understood at a glance.",
+    pt: "Coloque primeiro o resultado útil para que a frase seja compreendida de imediato.",
+  },
+  "L1-02": {
+    en: "Active voice makes responsibility and next action easier to identify.",
+    pt: "A voz ativa torna a responsabilidade e a próxima ação mais fáceis de identificar.",
+  },
+  "L1-03": {
+    en: "Concrete language reduces interpretation cost and improves recall.",
+    pt: "A linguagem concreta reduz o custo de interpretação e melhora a memorização.",
+  },
+  "L1-04": {
+    en: "Specialized terms should remain only when they add precision the user needs.",
+    pt: "Termos especializados devem permanecer apenas quando acrescentam precisão necessária.",
+  },
+  "L2-01": {
+    en: "Recovery language should acknowledge the problem and make the next step clear.",
+    pt: "A linguagem de recuperação deve reconhecer o problema e tornar claro o próximo passo.",
+  },
+  "L2-02": {
+    en: "A confirmation works best when it is brief, specific and final.",
+    pt: "Uma confirmação funciona melhor quando é breve, específica e conclusiva.",
+  },
+  "L2-03": {
+    en: "Warmth is most useful when someone is learning, not as a constant performance.",
+    pt: "O calor humano é mais útil durante a aprendizagem, não como atuação constante.",
+  },
+  "L2-04": {
+    en: "Stressful moments require clarity and respect rather than personality.",
+    pt: "Momentos de stress exigem clareza e respeito, não demonstrações de personalidade.",
+  },
+  "I1-01": {
+    en: "Core information must remain legible across themes, displays and visual conditions.",
+    pt: "A informação central deve permanecer legível entre temas, ecrãs e condições visuais.",
+  },
+  "I1-02": {
+    en: "Every essential action should be reachable and understandable without a pointer.",
+    pt: "Toda ação essencial deve ser alcançável e compreensível sem um dispositivo apontador.",
+  },
+  "I1-03": {
+    en: "Meaning should survive when visual styling is removed or interpreted differently.",
+    pt: "O significado deve sobreviver quando o estilo visual é removido ou interpretado de outra forma.",
+  },
+  "I1-04": {
+    en: "Compact layouts still need sufficient type size, spacing and reading rhythm.",
+    pt: "Layouts compactos continuam a exigir tamanho, espaçamento e ritmo de leitura adequados.",
+  },
+  "I2-01": {
+    en: "The safest flow removes avoidable mistakes before confirmation becomes necessary.",
+    pt: "O fluxo mais seguro elimina erros evitáveis antes de ser necessária uma confirmação.",
+  },
+  "I2-02": {
+    en: "Recovery should appear where the failure occurred and preserve the user's context.",
+    pt: "A recuperação deve surgir onde a falha ocorreu e preservar o contexto da pessoa.",
+  },
+  "I2-03": {
+    en: "Input represents effort and should not disappear because the system failed.",
+    pt: "O conteúdo introduzido representa esforço e não deve desaparecer por falha do sistema.",
+  },
+  "I2-04": {
+    en: "A blocked state should explain what happened and provide a viable next move.",
+    pt: "Um estado bloqueado deve explicar o que aconteceu e oferecer um próximo passo viável.",
+  },
+  "S1-01": {
+    en: "Repeated decisions should reuse the same interaction grammar.",
+    pt: "Decisões repetidas devem reutilizar a mesma gramática de interação.",
+  },
+  "S1-02": {
+    en: "Coherent spatial and feedback rules make separate pages feel like one system.",
+    pt: "Regras espaciais e de feedback coerentes fazem páginas distintas parecerem um único sistema.",
+  },
+  "S1-03": {
+    en: "Shared naming keeps implementation, documentation and interface aligned.",
+    pt: "Uma nomenclatura partilhada mantém implementação, documentação e interface alinhadas.",
+  },
+  "S1-04": {
+    en: "An existing pattern should evolve before a new exception is introduced.",
+    pt: "Um padrão existente deve evoluir antes de ser introduzida uma nova exceção.",
+  },
+  "S2-01": {
+    en: "Motion should clarify where content came from, changed or moved.",
+    pt: "O movimento deve esclarecer de onde o conteúdo veio, como mudou ou para onde foi.",
+  },
+  "S2-02": {
+    en: "Feedback must arrive quickly enough to preserve the sense of direct manipulation.",
+    pt: "O feedback deve chegar cedo o suficiente para preservar a sensação de manipulação direta.",
+  },
+  "S2-03": {
+    en: "Animation should never hold comprehension or control hostage.",
+    pt: "A animação nunca deve atrasar a compreensão nem o controlo.",
+  },
+  "S2-04": {
+    en: "Perceived speed is shaped by sequence, feedback and stability, not latency alone.",
+    pt: "A velocidade percebida depende de sequência, feedback e estabilidade, não apenas de latência.",
+  },
+};
+
+const CASE_STUDIES: Record<
+  string,
+  { en: CaseStudy; "pt-BR": CaseStudy; "pt-PT": CaseStudy }
+> = {
+  "radical-clarity": {
+    en: {
+      beforeTitle: "Monthly product performance report",
+      beforeBody: "See all data, download CSV, compare periods and explore 22 additional metrics.",
+      afterTitle: "Product performance",
+      afterBody: "Review this month's three decisive indicators, then open the complete report when needed.",
+    },
+    "pt-BR": {
+      beforeTitle: "Relatório mensal de desempenho do produto",
+      beforeBody: "Veja todos os dados, baixe o CSV, compare períodos e explore outras 22 métricas.",
+      afterTitle: "Desempenho do produto",
+      afterBody: "Consulte os três indicadores decisivos do mês e abra o relatório completo quando necessário.",
+    },
+    "pt-PT": {
+      beforeTitle: "Relatório mensal de desempenho do produto",
+      beforeBody: "Consulte todos os dados, descarregue o CSV, compare períodos e explore mais 22 métricas.",
+      afterTitle: "Desempenho do produto",
+      afterBody: "Consulte os três indicadores decisivos do mês e abra o relatório completo quando necessário.",
+    },
+  },
+  "information-layers": {
+    en: {
+      beforeTitle: "Everything appears at once",
+      beforeBody: "Summary, filters, methodology and raw data compete in the same reading plane.",
+      afterTitle: "Answer, context, depth",
+      afterBody: "The conclusion leads, supporting context follows, and technical detail remains available below.",
+    },
+    "pt-BR": {
+      beforeTitle: "Tudo aparece ao mesmo tempo",
+      beforeBody: "Resumo, filtros, metodologia e dados brutos competem no mesmo plano de leitura.",
+      afterTitle: "Resposta, contexto e profundidade",
+      afterBody: "A conclusão vem primeiro, o contexto orienta e o detalhe técnico permanece disponível abaixo.",
+    },
+    "pt-PT": {
+      beforeTitle: "Tudo surge ao mesmo tempo",
+      beforeBody: "Resumo, filtros, metodologia e dados brutos competem no mesmo plano de leitura.",
+      afterTitle: "Resposta, contexto e profundidade",
+      afterBody: "A conclusão surge primeiro, o contexto orienta e o detalhe técnico permanece disponível abaixo.",
+    },
+  },
+  "mental-models": {
+    en: {
+      beforeTitle: "Internal system language",
+      beforeBody: "Initiate entity provisioning and configure downstream access policies.",
+      afterTitle: "Task language",
+      afterBody: "Create the workspace, then choose who can access it.",
+    },
+    "pt-BR": {
+      beforeTitle: "Linguagem interna do sistema",
+      beforeBody: "Inicie o provisionamento da entidade e configure as políticas de acesso subsequentes.",
+      afterTitle: "Linguagem da tarefa",
+      afterBody: "Crie o espaço de trabalho e escolha quem poderá acessá-lo.",
+    },
+    "pt-PT": {
+      beforeTitle: "Linguagem interna do sistema",
+      beforeBody: "Inicie o aprovisionamento da entidade e configure as políticas de acesso subsequentes.",
+      afterTitle: "Linguagem da tarefa",
+      afterBody: "Crie o espaço de trabalho e escolha quem lhe pode aceder.",
+    },
+  },
+  "decision-support": {
+    en: {
+      beforeTitle: "A list without a position",
+      beforeBody: "Three options are presented with equal weight and no explanation of consequences.",
+      afterTitle: "A recommendation with boundaries",
+      afterBody: "One path is recommended, its evidence is named, and the trade-offs remain visible.",
+    },
+    "pt-BR": {
+      beforeTitle: "Uma lista sem posicionamento",
+      beforeBody: "Três opções recebem o mesmo peso, sem explicar suas consequências.",
+      afterTitle: "Uma recomendação com limites",
+      afterBody: "Um caminho é recomendado, as evidências são apresentadas e os trade-offs continuam visíveis.",
+    },
+    "pt-PT": {
+      beforeTitle: "Uma lista sem posicionamento",
+      beforeBody: "Três opções recebem o mesmo peso, sem explicação das respetivas consequências.",
+      afterTitle: "Uma recomendação com limites",
+      afterBody: "Um caminho é recomendado, a evidência é apresentada e os trade-offs continuam visíveis.",
+    },
+  },
+  "immediate-feedback": {
+    en: {
+      beforeTitle: "The action disappears into loading",
+      beforeBody: "The layout shifts, the button vanishes and the user cannot tell whether the request was received.",
+      afterTitle: "The interface answers in place",
+      afterBody: "The action remains anchored, progress is visible and completion appears beside the original intent.",
+    },
+    "pt-BR": {
+      beforeTitle: "A ação desaparece no carregamento",
+      beforeBody: "O layout muda, o botão some e não fica claro se a solicitação foi recebida.",
+      afterTitle: "A interface responde no lugar certo",
+      afterBody: "A ação permanece ancorada, o progresso fica visível e a conclusão aparece junto da intenção original.",
+    },
+    "pt-PT": {
+      beforeTitle: "A ação desaparece durante o carregamento",
+      beforeBody: "O layout muda, o botão desaparece e não é claro se o pedido foi recebido.",
+      afterTitle: "A interface responde no lugar certo",
+      afterBody: "A ação permanece ancorada, o progresso fica visível e a conclusão surge junto da intenção original.",
+    },
+  },
+  "trust-calibration": {
+    en: {
+      beforeTitle: "Absolute confidence",
+      beforeBody: "This is the correct component for your flow.",
+      afterTitle: "Calibrated confidence",
+      afterBody: "This component is the strongest match in the current corpus; two constraints still need validation.",
+    },
+    "pt-BR": {
+      beforeTitle: "Confiança absoluta",
+      beforeBody: "Este é o componente correto para o seu fluxo.",
+      afterTitle: "Confiança calibrada",
+      afterBody: "Este componente é a melhor correspondência no corpus atual; duas restrições ainda precisam de validação.",
+    },
+    "pt-PT": {
+      beforeTitle: "Confiança absoluta",
+      beforeBody: "Este é o componente correto para o seu fluxo.",
+      afterTitle: "Confiança calibrada",
+      afterBody: "Este componente é a correspondência mais forte no corpus atual; duas restrições ainda precisam de validação.",
+    },
+  },
+  voice: {
+    en: {
+      beforeTitle: "Operation completed successfully",
+      beforeBody: "The requested persistence procedure has been executed.",
+      afterTitle: "Changes saved",
+      afterBody: "Your tokens are now available throughout the system.",
+    },
+    "pt-BR": {
+      beforeTitle: "Operação concluída com sucesso",
+      beforeBody: "O procedimento de persistência solicitado foi executado.",
+      afterTitle: "Alterações salvas",
+      afterBody: "Seus tokens já estão disponíveis em todo o sistema.",
+    },
+    "pt-PT": {
+      beforeTitle: "Operação concluída com sucesso",
+      beforeBody: "O procedimento de persistência solicitado foi executado.",
+      afterTitle: "Alterações guardadas",
+      afterBody: "Os seus tokens já estão disponíveis em todo o sistema.",
+    },
+  },
+  tone: {
+    en: {
+      beforeTitle: "Error 403: access denied",
+      beforeBody: "The system names the failure but offers no understanding or recovery.",
+      afterTitle: "You do not have access to this page",
+      afterBody: "Contact your administrator to request permission. Your current work has been preserved.",
+    },
+    "pt-BR": {
+      beforeTitle: "Erro 403: acesso negado",
+      beforeBody: "O sistema nomeia a falha, mas não oferece entendimento nem recuperação.",
+      afterTitle: "Você não tem acesso a esta página",
+      afterBody: "Fale com a administração para pedir permissão. Seu trabalho atual foi preservado.",
+    },
+    "pt-PT": {
+      beforeTitle: "Erro 403: acesso negado",
+      beforeBody: "O sistema identifica a falha, mas não oferece compreensão nem recuperação.",
+      afterTitle: "Não tem acesso a esta página",
+      afterBody: "Contacte a administração para pedir permissão. O seu trabalho atual foi preservado.",
+    },
+  },
+  "inclusive-default": {
+    en: {
+      beforeTitle: "Meaning depends on color",
+      beforeBody: "Critical states are distinguished only by red and green inside a low-contrast layout.",
+      afterTitle: "Meaning survives every mode",
+      afterBody: "State, label, contrast and reading order communicate the same information together.",
+    },
+    "pt-BR": {
+      beforeTitle: "O significado depende da cor",
+      beforeBody: "Estados críticos são diferenciados apenas por vermelho e verde em um layout de baixo contraste.",
+      afterTitle: "O significado sobrevive em todos os modos",
+      afterBody: "Estado, rótulo, contraste e ordem de leitura comunicam juntos a mesma informação.",
+    },
+    "pt-PT": {
+      beforeTitle: "O significado depende da cor",
+      beforeBody: "Estados críticos distinguem-se apenas por vermelho e verde num layout de baixo contraste.",
+      afterTitle: "O significado sobrevive em todos os modos",
+      afterBody: "Estado, rótulo, contraste e ordem de leitura comunicam em conjunto a mesma informação.",
+    },
+  },
+  "forgiving-flows": {
+    en: {
+      beforeTitle: "One mistake erases the form",
+      beforeBody: "Submission fails, all fields reset and recovery starts from zero.",
+      afterTitle: "The system protects effort",
+      afterBody: "Input remains intact, the affected field is identified and the correction happens in context.",
+    },
+    "pt-BR": {
+      beforeTitle: "Um erro apaga o formulário",
+      beforeBody: "O envio falha, todos os campos são redefinidos e a recuperação começa do zero.",
+      afterTitle: "O sistema protege o esforço",
+      afterBody: "Os dados permanecem, o campo afetado é identificado e a correção acontece no contexto.",
+    },
+    "pt-PT": {
+      beforeTitle: "Um erro apaga o formulário",
+      beforeBody: "O envio falha, todos os campos são repostos e a recuperação começa do zero.",
+      afterTitle: "O sistema protege o esforço",
+      afterBody: "Os dados permanecem, o campo afetado é identificado e a correção acontece no contexto.",
+    },
+  },
+  patterns: {
+    en: {
+      beforeTitle: "Every page invents a new answer",
+      beforeBody: "The same decision uses different labels, spacing and confirmation behavior.",
+      afterTitle: "One decision, one grammar",
+      afterBody: "The interaction pattern, naming and feedback remain stable across the product.",
+    },
+    "pt-BR": {
+      beforeTitle: "Cada página inventa uma resposta",
+      beforeBody: "A mesma decisão usa rótulos, espaçamentos e confirmações diferentes.",
+      afterTitle: "Uma decisão, uma gramática",
+      afterBody: "O padrão de interação, a nomenclatura e o feedback permanecem estáveis no produto.",
+    },
+    "pt-PT": {
+      beforeTitle: "Cada página inventa uma resposta",
+      beforeBody: "A mesma decisão usa rótulos, espaçamentos e confirmações diferentes.",
+      afterTitle: "Uma decisão, uma gramática",
+      afterBody: "O padrão de interação, a nomenclatura e o feedback permanecem estáveis no produto.",
+    },
+  },
+  performance: {
+    en: {
+      beforeTitle: "Animation delays understanding",
+      beforeBody: "Content waits for decorative transitions while the layout keeps moving.",
+      afterTitle: "Motion explains change",
+      afterBody: "The response is immediate; restrained movement preserves orientation and confirms state.",
+    },
+    "pt-BR": {
+      beforeTitle: "A animação atrasa a compreensão",
+      beforeBody: "O conteúdo espera por transições decorativas enquanto o layout continua se movendo.",
+      afterTitle: "O movimento explica a mudança",
+      afterBody: "A resposta é imediata; o movimento contido preserva a orientação e confirma o estado.",
+    },
+    "pt-PT": {
+      beforeTitle: "A animação atrasa a compreensão",
+      beforeBody: "O conteúdo espera por transições decorativas enquanto o layout continua em movimento.",
+      afterTitle: "O movimento explica a mudança",
+      afterBody: "A resposta é imediata; o movimento contido preserva a orientação e confirma o estado.",
+    },
+  },
+};
+
+const CASE_STUDY_ALIASES: Record<string, string> = {
+  "voice-tone": "voice",
+  "context-aware-tone": "tone",
+  "consistent-patterns": "patterns",
+  "performance-motion": "performance",
+};
+
+function getCaseStudy(locale: Locale, principleId: string): CaseStudy {
+  const canonicalId = CASE_STUDY_ALIASES[principleId] ?? principleId;
+  return locale === "en-US" ? CASE_STUDIES[canonicalId].en : CASE_STUDIES[canonicalId][locale];
+}
+
+function getRuleNote(locale: Locale, ruleId: string): string {
+  const note = RULE_NOTES[ruleId];
+  return locale === "en-US" ? note.en : note.pt;
+}
+
 export function GuidelinesPage() {
   const { locale } = useI18n();
   const content = getGuidelinesContent(locale);
+  const isEnglish = locale === "en-US";
+  const isPtPt = locale === "pt-PT";
+  const copy = {
+    documentLabel: isEnglish
+      ? "Aetheris guidelines guide"
+      : isPtPt
+        ? "Guia de Diretrizes do Aetheris"
+        : "Guia de Diretrizes do Aetheris",
+    pillar: isEnglish ? "Pillar" : "Pilar",
+    rules: isEnglish ? "rules" : "regras",
+    caseStudy: isEnglish ? "In practice" : "Na prática",
+    before: isEnglish ? "Before" : "Antes",
+    after: isEnglish ? "After" : "Depois",
+    closingTitle: isEnglish ? "A system is what it repeatedly chooses." : "Um sistema é aquilo que escolhe repetidamente.",
+    closingBody: isEnglish
+      ? "These guidelines turn product intent into observable decisions. They are not decoration around the system. They are the standard the system must answer to."
+      : isPtPt
+        ? "Estas diretrizes transformam a intenção do produto em decisões observáveis. Não são decoração em torno do sistema. São o padrão ao qual o sistema deve responder."
+        : "Estas diretrizes transformam a intenção do produto em decisões observáveis. Não são decoração ao redor do sistema. São o padrão ao qual o sistema deve responder.",
+  };
 
   return (
-    <div className="space-y-16 pb-20">
-      <section className="grid gap-8 md:grid-cols-[1.1fr_0.9fr] md:items-end">
-        <div className="max-w-3xl">
-          <h1 className="text-6xl font-black leading-none tracking-tight text-white md:text-7xl">
-            {content.heroTitle} <br />
-            <span className="signature-text">{content.heroAccent}</span>
-          </h1>
-          <p className="mt-6 text-sm font-medium uppercase tracking-[0.2em] text-primary">
-            {content.heroEyebrow}
-          </p>
+    <main className="overflow-hidden bg-surface-immersive text-[#f7f3fa]">
+      <section className="relative isolate min-h-[360px] border-b border-white/[0.08]">
+        <div className="absolute inset-0 -z-20">
+          <img
+            src="/manifesto-portal.webp"
+            alt=""
+            aria-hidden="true"
+            className="ml-auto h-full w-[52%] object-cover object-center opacity-55"
+          />
         </div>
-        <div className="glass-panel rounded-3xl p-6 shadow-glow">
-          <div className="mb-4 flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-green-400" />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-300">
-              {content.version}
-            </span>
-          </div>
-          <p className="text-sm leading-7 text-slate-400">{content.versionText}</p>
-          <div className="mt-6 grid grid-cols-3 gap-3">
-            {content.stats.map(([label, value]) => (
-              <div key={label} className="rounded-2xl border border-white/5 bg-white/5 p-4 text-center">
-                <p className="text-2xl font-black text-white">{value}</p>
-                <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                  {label}
-                </p>
-              </div>
-            ))}
+        <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(9,9,13,1)_0%,rgba(9,9,13,0.97)_42%,rgba(9,9,13,0.45)_74%,rgba(9,9,13,0.7)_100%)]" />
+        <div className="absolute inset-x-0 bottom-0 -z-10 h-24 bg-gradient-to-t from-[#09090d] to-transparent" />
+
+        <div className="mx-auto flex min-h-[360px] w-full max-w-[1280px] flex-col justify-center px-6 py-5 sm:px-10 lg:px-10">
+          <div className="max-w-[640px]">
+            <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.28em] text-[#b9a3dc]">
+              {copy.documentLabel}
+            </p>
+            <h1 className="tracking-[-0.045em]">
+              <span className="block text-[2.5rem] font-semibold leading-[0.98] text-[#f7f3fa] sm:text-[3rem] lg:text-[3.5rem]">
+                {content.heroTitle}
+              </span>
+              <span className="mt-1 block text-[3.25rem] font-black leading-[0.88] text-[#c8a7ff] sm:text-[3.75rem] lg:text-[4.5rem]">
+                {content.heroAccent}
+              </span>
+            </h1>
+            <p className="mt-4 max-w-[600px] text-base leading-6 text-[#c1b9ca]">
+              {content.versionText}
+            </p>
+
+            <dl className="mt-5 grid max-w-[580px] grid-cols-3 border-y border-white/[0.1]">
+              {content.stats.map(([label, value], index) => (
+                <div
+                  key={label}
+                  className={`py-3 ${index > 0 ? "border-l border-white/[0.1] pl-5" : ""}`}
+                >
+                  <dd className="text-2xl font-semibold tracking-[-0.04em] text-[#f7f3fa]">
+                    {value}
+                  </dd>
+                  <dt className="mt-1.5 text-[9px] font-semibold uppercase tracking-[0.22em] text-[#8e8799]">
+                    {label}
+                  </dt>
+                </div>
+              ))}
+            </dl>
           </div>
         </div>
       </section>
 
-      <section>
-        <div className="mb-8 flex items-center gap-4">
-          <h2 className="text-2xl font-black tracking-tight text-white">{content.pillarsTitle}</h2>
-          <span className="signature-pill">{content.pillarsBadge}</span>
-        </div>
-        <div className="space-y-8">
-          {content.pillars.map((pillar) => (
-            <article key={pillar.id} className="glass-panel rounded-[28px] p-8 shadow-glow">
-              <div className="mb-8 flex flex-wrap items-center gap-4 border-b border-white/5 pb-6">
+      <div className="mx-auto w-full max-w-[1280px] px-6 sm:px-10 lg:px-10">
+        {content.pillars.map((pillar, pillarIndex) => {
+          const pillarNumber = String(pillarIndex + 1).padStart(2, "0");
+
+          return (
+            <section
+              key={pillar.id}
+              aria-labelledby={`pillar-${pillar.id}`}
+              className="relative border-b border-white/[0.08] py-12 sm:py-14 lg:py-16"
+            >
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute right-0 top-8 select-none text-[clamp(5rem,11vw,9rem)] font-black leading-none tracking-[-0.08em] text-white/[0.018]"
+              >
+                {pillarNumber}
+              </span>
+
+              <header className="relative grid gap-5 pb-8 md:grid-cols-[minmax(0,1fr)_minmax(300px,0.7fr)] md:items-end lg:pb-10">
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-primary">
-                    {pillar.id.toUpperCase()}
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#b99be9]">
+                    {copy.pillar} {pillarNumber}
                   </p>
-                  <h3 className="mt-2 text-3xl font-black tracking-tight text-white">
+                  <h2
+                    id={`pillar-${pillar.id}`}
+                    className="mt-3 max-w-[760px] text-[2rem] font-semibold leading-[1.02] tracking-[-0.035em] text-[#f7f3fa] sm:text-[2.25rem] lg:text-[2.5rem]"
+                  >
                     {pillar.title}
-                  </h3>
+                  </h2>
                 </div>
-                <p className="ml-auto max-w-2xl text-sm leading-7 text-slate-400">{pillar.summary}</p>
-              </div>
+                <p className="max-w-[520px] text-sm leading-6 text-[#aaa3b3] sm:text-base sm:leading-7 md:pb-0.5">
+                  {pillar.summary}
+                </p>
+              </header>
 
-              <div className="grid gap-6 xl:grid-cols-2">
-                {pillar.principles.map((principle) => (
-                  <div key={principle.id} className="rounded-[24px] border border-white/5 bg-surface-container-low p-6">
-                    <div className="mb-4 flex items-center justify-between gap-4">
-                      <div>
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-primary">
-                          {content.principleLabel}
+              <div>
+                {pillar.principles.map((principle, principleIndex) => {
+                  const principleNumber = pillarIndex * 2 + principleIndex + 1;
+                  const formattedPrinciple = String(principleNumber).padStart(2, "0");
+                  const caseStudy = getCaseStudy(locale, principle.id);
+
+                  return (
+                    <article
+                      key={principle.id}
+                      aria-labelledby={`principle-${principle.id}`}
+                      className="border-t border-white/[0.1] py-9 sm:py-10 lg:py-12"
+                    >
+                      <header className="grid gap-4 md:grid-cols-[64px_minmax(0,1fr)_auto] md:items-start">
+                        <p className="text-3xl font-semibold tracking-[-0.045em] text-[#b28af2] sm:text-4xl">
+                          {formattedPrinciple}
                         </p>
-                        <h4 className="mt-2 text-xl font-black text-white">{principle.title}</h4>
-                      </div>
-                      <span className="rounded-full border border-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                        {content.rulesLabel} 4
-                      </span>
-                    </div>
-                    <p className="mb-6 text-sm leading-7 text-slate-400">{principle.description}</p>
-                    <div className="grid gap-3">
-                      {principle.rules.map((rule) => (
-                        <div key={rule.id} className="rounded-xl border border-white/5 bg-white/5 p-4">
-                          <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                            {rule.id}
+                        <div className="max-w-[800px]">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#777181]">
+                            {content.principleLabel}
                           </p>
-                          <p className="text-sm leading-6 text-slate-300">{rule.text}</p>
+                          <h3
+                            id={`principle-${principle.id}`}
+                            className="mt-2 text-[1.5rem] font-semibold leading-[1.08] tracking-[-0.025em] text-[#f7f3fa] sm:text-[1.75rem] lg:text-[2rem]"
+                          >
+                            {principle.title}
+                          </h3>
+                          <p className="mt-3 max-w-[700px] text-sm leading-6 text-[#aaa3b3] sm:text-base">
+                            {principle.description}
+                          </p>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
+                        <p className="pt-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#777181]">
+                          {principle.rules.length} {copy.rules}
+                        </p>
+                      </header>
 
-      <section className="grid gap-4 md:grid-cols-2">
-        <div className="glass-panel rounded-2xl p-8 shadow-glow">
-          <h2 className="mb-6 text-2xl font-black tracking-tight text-white">{content.voiceTitle}</h2>
-          <div className="space-y-5">
-            {content.toneExamples.map((example, index) => (
-              <div key={example.category} className="rounded-xl border border-white/5 bg-white/5 p-4">
-                <div className="mb-3 flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-signature text-xs font-black text-on-primary">
-                    {String(index + 1).padStart(2, "0")}
-                  </div>
-                  <p className="text-sm font-bold text-white">{example.category}</p>
-                </div>
-                <div className="space-y-2">
-                  <div className="rounded-xl border border-error/20 bg-error/10 p-3 text-xs text-slate-300">
-                    {example.bad}
-                  </div>
-                  <div className="rounded-xl border border-green-500/20 bg-green-500/10 p-3 text-xs text-slate-300">
-                    {example.good}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+                      <ol className="mt-8 border-y border-white/[0.08]">
+                        {principle.rules.map((rule, ruleIndex) => (
+                          <li
+                            key={rule.id}
+                            className="grid gap-3 border-b border-white/[0.065] py-4 last:border-b-0 sm:grid-cols-[64px_minmax(0,1fr)] lg:grid-cols-[64px_minmax(0,1fr)_180px] lg:gap-5"
+                          >
+                            <p className="font-mono text-sm font-semibold tracking-[-0.02em] text-[#b28af2]">
+                              {formattedPrinciple}.{ruleIndex + 1}
+                            </p>
+                            <div className="max-w-[760px]">
+                              <h4 className="text-base font-semibold leading-7 text-[#eee9f2] sm:text-lg">
+                                {rule.text}
+                              </h4>
+                              <p className="mt-2 text-sm leading-6 text-[#88818f]">
+                                {getRuleNote(locale, rule.id)}
+                              </p>
+                            </div>
+                            <p className="self-start text-[9px] font-semibold uppercase tracking-[0.22em] text-[#66606c] sm:col-start-2 lg:col-start-auto lg:text-right">
+                              {pillar.title}
+                            </p>
+                          </li>
+                        ))}
+                      </ol>
 
-        <div className="glass-panel rounded-2xl p-8 shadow-glow">
-          <div className="mb-6 flex items-center justify-between gap-4">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-primary">
-                {content.reviewEyebrow}
-              </p>
-              <h2 className="mt-2 text-2xl font-black tracking-tight text-white">
-                {content.reviewTitle}
-              </h2>
-            </div>
-            <span className="rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-primary">
-              {content.reviewBadge}
-            </span>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {content.reviewStats.map(([label, value]) => (
-              <div key={label} className="rounded-xl bg-white/5 p-4 text-center">
-                <p className="text-2xl font-black text-white">{value}</p>
-                <p className="mt-1 text-[10px] uppercase tracking-widest text-slate-500">{label}</p>
+                      <section
+                        aria-label={`${copy.caseStudy}: ${principle.title}`}
+                        className="mt-9 overflow-hidden rounded-[20px] border border-white/[0.1] bg-white/[0.018]"
+                      >
+                        <header className="border-b border-white/[0.08] px-5 py-3.5 sm:px-6">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#9d80c9]">
+                            {copy.caseStudy}
+                          </p>
+                        </header>
+                        <div className="grid md:grid-cols-2">
+                          <div className="p-5 sm:p-6 md:border-r md:border-white/[0.08]">
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.26em] text-[#716b77]">
+                              {copy.before}
+                            </p>
+                            <h4 className="mt-4 max-w-[520px] text-lg font-semibold leading-tight tracking-[-0.02em] text-[#c7c0cb] sm:text-xl">
+                              {caseStudy.beforeTitle}
+                            </h4>
+                            <p className="mt-3 max-w-[540px] text-sm leading-6 text-[#7f7885]">
+                              {caseStudy.beforeBody}
+                            </p>
+                          </div>
+                          <div className="border-t border-white/[0.08] bg-[#c7a4ff]/[0.035] p-5 sm:p-6 md:border-t-0">
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.26em] text-[#b99be9]">
+                              {copy.after}
+                            </p>
+                            <h4 className="mt-4 max-w-[520px] text-lg font-semibold leading-tight tracking-[-0.02em] text-[#f4eef9] sm:text-xl">
+                              {caseStudy.afterTitle}
+                            </h4>
+                            <p className="mt-3 max-w-[540px] text-sm leading-6 text-[#b7afbe]">
+                              {caseStudy.afterBody}
+                            </p>
+                          </div>
+                        </div>
+                      </section>
+                    </article>
+                  );
+                })}
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-    </div>
+            </section>
+          );
+        })}
+
+        <footer className="py-20 sm:py-24 lg:py-28">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#8f75b7]">
+            {content.version}
+          </p>
+          <h2 className="mt-6 max-w-[880px] text-[2.75rem] font-semibold leading-[0.98] tracking-[-0.045em] text-[#f7f3fa] sm:text-[3.5rem] lg:text-[4.5rem]">
+            {copy.closingTitle}
+          </h2>
+          <p className="mt-6 max-w-[700px] text-base leading-7 text-[#aaa3b3]">
+            {copy.closingBody}
+          </p>
+        </footer>
+      </div>
+    </main>
   );
 }

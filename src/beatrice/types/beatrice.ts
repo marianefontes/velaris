@@ -13,9 +13,32 @@ export interface SourceChip {
   source: string;
   similarity: number;
   page_type?: string;
+  retrieval_weight?: number;
+  weighted_score?: number;
 }
 
-export type CommandMode = "enforce" | "migrate" | "history" | "why" | "tradeoff" | "score";
+export type GovernanceCommand =
+  | "enforce" | "migrate" | "memory" | "decision" | "perspectives" | "audit"
+  | "history" | "why" | "tradeoff"
+  | "score" | "simulate" | "capture" | "document" | "learn"
+  | "feedback-review" | "token-impact" | "contract-check";
+
+// Core Oracle Engines — user-selected specialized capabilities (Camada 2).
+export type OracleEngineId =
+  | "organizational-memory" | "decision-archaeology" | "perspective-synthesis" | "explainability-audit"
+  | "knowledge-gap" | "governance-impact" | "principle-conflict" | "adoption-friction"
+  | "oracle-council";
+
+export type CommandMode = GovernanceCommand | OracleEngineId;
+
+// Transparently disclosed cognitive skill (Camada 1) — XAI signal from the backend.
+export interface CognitiveSkill {
+  id: string;
+  label: string;
+  reason: string;
+  confidence: number;
+  intensity: "light" | "medium" | "high";
+}
 
 export interface ResponseCard {
   title: string;
@@ -36,11 +59,50 @@ export interface ChatMessage {
   intent?: string;
   commandMode?: CommandMode;
   catalogMode?: boolean;
+  cognitiveSkills?: CognitiveSkill[];
+  engine?: OracleEngineId | null;
 }
 
 export interface HistoryEntry {
   role: "user" | "assistant";
   content: string;
+}
+
+export type BeatriceDensity = "compact" | "comfortable" | "dense";
+export type BeatriceBlurIntensity = "low" | "medium" | "high";
+export type BeatriceVerbosity = "concise" | "balanced" | "detailed";
+export type BeatriceXAIDepth = "basic" | "standard" | "advanced";
+
+export interface BeatriceSettings {
+  streaming: boolean;
+  autoScroll: boolean;
+  showSources: boolean;
+  showConfidence: boolean;
+  density: BeatriceDensity;
+  blurIntensity: BeatriceBlurIntensity;
+  verbosity: BeatriceVerbosity;
+  xaiDepth: BeatriceXAIDepth;
+}
+
+export interface BeatriceConversation {
+  id: string;
+  title: string;
+  preview: string;
+  createdAt: string;
+  updatedAt: string;
+  messageCount: number;
+  messages: ChatMessage[];
+  history: HistoryEntry[];
+  settings: BeatriceSettings;
+  profileId: ProfileId;
+  locale: Locale;
+  isTitleCustom?: boolean;
+}
+
+export interface BeatriceHistorySnapshot {
+  version: 1;
+  activeConversationId: string;
+  conversations: BeatriceConversation[];
 }
 
 export interface ChatContent {
@@ -134,18 +196,26 @@ export interface AuditLabels {
 
 export type AuditTab = "decisions" | "timeline";
 
-export type ProfileId = "general" | "dev" | "designer" | "pm" | "qa" | "writer";
+export type ProfileId = "general" | "dev" | "designer" | "pm" | "qa" | "writer" | "a11y" | "maintainer";
 
 export interface PersonaStrategy {
   id: ProfileId;
   label: string;
   icon: LucideIcon;
   role: string;
+  sessionTitle: string;
+  operationalMode: string;
+  identityStatement: string;
   workspaceTitle: string;
   workspaceSubtitle: string;
   workspaceTone: string;
   status: string;
   accentClass: string;
+  reasoningStyle: string;
+  languagePattern: string;
+  operationalProfile: PersonaOperationalProfile;
+  cognitiveProfile: PersonaCognitiveProfile;
+  theme: PersonaTheme;
   reasoningPriorities: string[];
   retrievalWeighting: Record<string, number>;
   dashboardComposition: string[];
@@ -153,6 +223,8 @@ export interface PersonaStrategy {
   artifactRanking: string[];
   auditFocus: string[];
   insightOrdering: string[];
+  navigationFocus: PersonaNavigationItem[];
+  highlightedComponents: PersonaHighlightedComponent[];
   metrics: PersonaMetric[];
   insights: PersonaInsight[];
   recommendations: PersonaRecommendation[];
@@ -160,6 +232,65 @@ export interface PersonaStrategy {
   decisionFeed: PersonaDecision[];
   recentActivity: PersonaActivity[];
   widgets: string[];
+}
+
+export interface PersonaOperationalProfile {
+  fullName: string;
+  title: string;
+  specialty: string;
+  primaryResponsibility: string;
+  primaryPain: string;
+  tools: string[];
+  operationalEnvironment: string;
+  prioritizedMetrics: string[];
+  operationalFears: string[];
+  communicationStyle: string;
+  mentalStructure: string[];
+  mainFocus: string;
+}
+
+export interface PersonaCognitiveProfile {
+  objective: string[];
+  fears: string[];
+  heuristics: string[];
+  tradeOffs: Array<{ favors: string; resists: string }>;
+  textualStructure: string[];
+  vocabulary: string[];
+  alertPatterns: string[];
+  decisionCriteria: string[];
+  disagreementBias: string;
+  // ||| Phase 4 — adaptation instrumentation (optional during migration)
+  preferredDepth?: "low" | "medium" | "high";
+  technicalityLevel?: number;       // 0..1
+  riskSensitivity?: number;         // 0..1
+  trustCalibrationStyle?: "quantified" | "qualitative" | "comparative";
+  informationHierarchy?: string[];
+}
+
+/** Phase 4 alias — the new vocabulary for the cognitive lens concept. */
+export type CognitiveLens = PersonaCognitiveProfile;
+
+export interface PersonaTheme {
+  shell: string;
+  backdrop: string;
+  panel: string;
+  accentText: string;
+  accentBorder: string;
+  accentBg: string;
+  accentRing: string;
+  signal: string;
+  meter: string;
+}
+
+export interface PersonaNavigationItem {
+  label: string;
+  detail: string;
+}
+
+export interface PersonaHighlightedComponent {
+  name: string;
+  reason: string;
+  signal: string;
 }
 
 export interface PersonaMetric {
@@ -211,14 +342,26 @@ export interface CommandMeta {
 export interface WorkspaceState {
   content: ChatContent;
   messages: ChatMessage[];
+  conversations: BeatriceConversation[];
+  activeConversationId: string;
+  activeConversation: BeatriceConversation | null;
+  settings: BeatriceSettings;
   input: string;
   isLoading: boolean;
   healthData: HealthData | null;
   stats: PromptStats;
   activeCommand: CommandMode | null;
   bottomRef: RefObject<HTMLDivElement>;
+  clearConversations: () => void;
+  createConversation: () => void;
+  deleteConversation: (conversationId: string) => void;
+  exportConversations: () => void;
+  openConversation: (conversationId: string) => void;
+  renameConversation: (conversationId: string, title: string) => void;
+  resetSettings: () => void;
   setInput: (value: string) => void;
   submitPrompt: (promptText?: string) => Promise<void>;
+  updateSettings: (patch: Partial<BeatriceSettings>) => void;
 }
 
 export interface StreamChunk {
@@ -226,6 +369,8 @@ export interface StreamChunk {
   sources?: SourceChip[];
   intent?: string;
   catalog_mode?: boolean;
+  cognitive_skills?: CognitiveSkill[];
+  engine?: OracleEngineId | null;
   error?: string;
 }
 

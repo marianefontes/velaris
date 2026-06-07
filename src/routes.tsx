@@ -1,18 +1,14 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  Activity,
+  BarChart3,
   Blocks,
-  BookOpenText,
-  Brain,
-  CircleGauge,
-  Command,
+  BrainCircuit,
   Component,
-  FileSliders,
-  Home,
-  LayoutDashboard,
-  LibraryBig,
-  MessageSquareMore,
-  Palette,
-  UserRound,
+  FlaskConical,
+  House,
+  Telescope,
+  Workflow,
 } from "lucide-react";
 
 export interface AppRouteItem {
@@ -23,27 +19,22 @@ export interface AppRouteItem {
   icon: LucideIcon;
 }
 
+// ||| Information architecture
+// 9 primary surfaces. Keep this list aligned with the primary navigation contract.
+// Legacy and research destinations remain available by route.
+// Removed from menu:
+//   /intelligence → /reasoning
+//   /principles → /foundations
+//   /dashboard → /main
+//   /comparison → /evaluation?focus=baseline
+
 export const appRoutes: AppRouteItem[] = [
   {
     path: "/main",
-    label: "Main",
+    label: "Home",
     labelKey: "routes.main",
     badgeKey: "badges.main",
-    icon: Home,
-  },
-  {
-    path: "/dashboard",
-    label: "Oracle Dashboard",
-    labelKey: "routes.dashboard",
-    badgeKey: "badges.dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    path: "/components",
-    label: "Components",
-    labelKey: "routes.components",
-    badgeKey: "badges.components",
-    icon: Component,
+    icon: House,
   },
   {
     path: "/foundations",
@@ -53,66 +44,52 @@ export const appRoutes: AppRouteItem[] = [
     icon: Blocks,
   },
   {
-    path: "/guidelines",
-    label: "Guidelines",
-    labelKey: "routes.guidelines",
-    badgeKey: "badges.guidelines",
-    icon: BookOpenText,
-  },
-  {
-    path: "/persona",
-    label: "Persona",
-    labelKey: "routes.persona",
-    badgeKey: "badges.persona",
-    icon: UserRound,
-  },
-  {
-    path: "/patterns",
-    label: "Patterns",
-    labelKey: "routes.patterns",
-    badgeKey: "badges.patterns",
-    icon: Palette,
+    path: "/components",
+    label: "Components",
+    labelKey: "routes.components",
+    badgeKey: "badges.components",
+    icon: Component,
   },
   {
     path: "/reasoning",
     label: "Reasoning",
     labelKey: "routes.reasoning",
     badgeKey: "badges.reasoning",
-    icon: Brain,
+    icon: BrainCircuit,
   },
   {
-    path: "/system-evaluation",
-    label: "System Evaluation",
-    labelKey: "routes.systemEvaluation",
-    badgeKey: "badges.systemEvaluation",
-    icon: CircleGauge,
+    path: "/perspectives",
+    label: "Perspectives",
+    labelKey: "routes.perspectives",
+    badgeKey: "badges.perspectives",
+    icon: Telescope,
   },
   {
-    path: "/tokens",
-    label: "Tokens",
-    labelKey: "routes.tokens",
-    badgeKey: "badges.tokens",
-    icon: LibraryBig,
+    path: "/architecture",
+    label: "Architecture",
+    labelKey: "routes.architecture",
+    badgeKey: "badges.architecture",
+    icon: Workflow,
   },
   {
-    path: "/beatrice-chat",
-    label: "Beatrice Chat",
-    labelKey: "routes.beatriceChat",
-    badgeKey: "badges.beatriceChat",
-    icon: MessageSquareMore,
+    path: "/laboratory",
+    label: "Laboratory",
+    labelKey: "routes.laboratory",
+    badgeKey: "badges.laboratory",
+    icon: FlaskConical,
   },
   {
-    path: "/dev-integration",
-    label: "Dev Integration",
-    labelKey: "routes.devIntegration",
-    badgeKey: "badges.devIntegration",
-    icon: Command,
+    path: "/evaluation",
+    label: "Evaluation",
+    labelKey: "routes.evaluation",
+    badgeKey: "badges.evaluation",
+    icon: Activity,
   },
   {
-    path: "/design-decisions",
-    label: "Design Decisions",
-    labelKey: "routes.designDecisions",
-    badgeKey: "badges.designDecisions",
-    icon: FileSliders,
+    path: "/results",
+    label: "Results",
+    labelKey: "routes.results",
+    badgeKey: "badges.results",
+    icon: BarChart3,
   },
 ];

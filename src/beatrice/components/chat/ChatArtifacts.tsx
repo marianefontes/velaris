@@ -1,5 +1,5 @@
-import { PersonaWorkspace } from "../persona/PersonaWorkspace";
+import { PersonaSidebarPanel } from "../persona/PersonaSidebarPanel";
 
 export function ChatArtifacts() {
-  return <PersonaWorkspace />;
+  return <PersonaSidebarPanel />;
 }
