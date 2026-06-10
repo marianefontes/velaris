@@ -1,8 +1,9 @@
 import { PERSONA_STRATEGIES } from "./lenses";
+import { isCanonicalProfileId, PROFESSIONAL_PROFILE_IDS } from "./profileIds";
 import type { PersonaStrategy, ProfileId } from "./types";
 
 export function isProfileId(value: string): value is ProfileId {
-  return value in PERSONA_STRATEGIES;
+  return isCanonicalProfileId(value);
 }
 
 export function getPersonaStrategy(profileId: ProfileId): PersonaStrategy {
@@ -10,5 +11,5 @@ export function getPersonaStrategy(profileId: ProfileId): PersonaStrategy {
 }
 
 export function getPersonaOptions(): PersonaStrategy[] {
-  return Object.values(PERSONA_STRATEGIES).filter((strategy) => strategy.id !== "general");
+  return PROFESSIONAL_PROFILE_IDS.map((profileId) => PERSONA_STRATEGIES[profileId]);
 }

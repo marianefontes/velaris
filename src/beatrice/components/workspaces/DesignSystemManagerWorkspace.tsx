@@ -5,7 +5,7 @@ import { PersonaMetrics } from "../contextual/PersonaMetrics";
 import { PersonaRecommendations } from "../contextual/PersonaRecommendations";
 import { PersonaThinkingModel } from "../contextual/PersonaThinkingModel";
 
-export function ProductManagerWorkspace() {
+export function DesignSystemManagerWorkspace() {
   return (
     <section className="space-y-4">
       <PersonaMetrics />
