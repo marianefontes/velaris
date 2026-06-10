@@ -12,6 +12,7 @@ Usage:
 import asyncio
 import hashlib
 import json
+import math
 import os
 import re
 import secrets
@@ -26,10 +27,27 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
+from agent.evidence import evidence_tier
+from agent.navigation_actions import serialize_navigation_payload
+from agent.models import AgentChatRequest, CreateDecisionRecordInput, DecisionPatch
+from agent.registry import ToolRegistry
+from agent.runtime import AgentRuntime
+from agent.store import DecisionConflictError, agent_store
+from agent.tools import (
+    build_compare_design_options_tool,
+    build_create_decision_record_tool,
+    build_search_component_tool,
+    build_search_design_decision_tool,
+    build_search_explainability_tool,
+    build_search_pattern_tool,
+    build_search_token_tool,
+    build_validate_design_system_tool,
+)
 from cognition.engines.registry import resolve_engine
 from cognition.orchestration.reasoning_engine import CognitiveOrchestrationResult, build_cognitive_orchestration
+from cognition.orchestration.skill_application import filter_applied_skills
 from cognition.overrides.manual_override_parser import parse_manual_override
 from laboratory.automation import LaboratoryAutomation
 from laboratory.calibration import merge_profile_calibration
@@ -37,8 +55,22 @@ from laboratory.cases import list_case_sets, load_case_set
 from laboratory.runner import LaboratoryRunner, RateLimitError
 from laboratory.store import laboratory_store
 from prompts.intent_router import route_query
-from prompts.prompt_builder import PromptBuildContext, build_system_prompt
-from rag.context_builder import build_dialogue_context, build_rag_context, serialize_sources
+from prompts.perspective_ids import CANONICAL_PERSPECTIVE_IDS, normalize_profile_id
+from prompts.perspective_contracts import build_response_audit_metadata
+from prompts.perspective_health import build_perspective_health_payload
+from prompts.prompt_builder import (
+    PromptBuildContext,
+    build_surface_context_block,
+    build_system_prompt,
+)
+from rag.bootstrap import bootstrap_collection, corpus_available
+from rag.context_builder import (
+    build_dialogue_context,
+    build_perspective_evidence_block,
+    build_rag_context,
+    semantic_source_label,
+    serialize_sources,
+)
 from rag.evidence_metrics import build_evidence_metrics_block, compute_evidence_metrics
 from rag.retrieval import retrieve_catalog_chunks, retrieve_chunks
 from research.study_store import CONSENT_VERSION, study_store
@@ -62,7 +94,9 @@ LABORATORY_RATE_LIMIT_RETRIES = max(
     int(os.environ.get("LABORATORY_RATE_LIMIT_RETRIES", "6")),
 )
 RAG_DIR = Path(__file__).parent / "rag"
-DB_PATH = RAG_DIR / "chroma_db"
+# Persist the vector store on a durable path in production (e.g. a mounted disk)
+# so the startup bootstrap runs once instead of on every restart.
+DB_PATH = Path(os.environ.get("CHROMA_DB_PATH", str(RAG_DIR / "chroma_db")))
 COLLECTION_NAME = "aetheris_design_system"
 MAX_HISTORY_MESSAGES = 16
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
@@ -166,8 +200,10 @@ def _build_groq_messages(
     cognition: CognitiveOrchestrationResult,
     chunks: list[dict],
     calibration_override: dict | None = None,
+    agent_context: str = "",
+    surface_context: dict | None = None,
 ) -> list[dict]:
-    rag_context = build_rag_context(
+    rag_context = "" if agent_context else build_rag_context(
         chunks,
         query=query,
         intent=route.response_intent,
@@ -183,13 +219,216 @@ def _build_groq_messages(
         catalog_mode=route.catalog_mode,
         catalog_entity=route.catalog_entity,
         rag_context=rag_context,
+        answer_strategy=route.understanding.answer_strategy,
+        language=route.understanding.language,
         cognitive_context=cognition.prompt_context,
         dialogue_context=build_dialogue_context(messages),
+        agent_context=agent_context,
         calibration_override=calibration_override,
         evidence_metrics_block=_evidence_metrics_block(route, chunks),
+        perspective_evidence_block=build_perspective_evidence_block(chunks),
+        surface_context_block=build_surface_context_block(surface_context),
     )
     system_content = build_system_prompt(prompt_context)
     return [{"role": "system", "content": system_content}] + messages
+
+
+def _agent_retriever_for_route(route):
+    def retrieve(query: str, intent: str, top_k: int, profile: str) -> list[dict]:
+        if route.catalog_mode:
+            catalog_entity = {
+                "component_guidance": "components",
+                "pattern_guidance": "patterns",
+                "token_lookup": "tokens",
+            }.get(intent, route.catalog_entity)
+            return retrieve_catalog_chunks(
+                collection=_collection,
+                catalog_entity=catalog_entity,
+                profile=profile,
+            )
+        return retrieve_chunks(
+            collection=_collection,
+            embedder=_embedder,
+            rag_ready=_rag_ready,
+            query=query,
+            intent=intent,
+            top_k=top_k,
+            profile=profile,
+        )
+
+    return retrieve
+
+
+def _build_agent_registry(route) -> ToolRegistry:
+    retrieve = _agent_retriever_for_route(route)
+    registry = ToolRegistry()
+    for definition in (
+        build_search_component_tool(retrieve),
+        build_search_design_decision_tool(retrieve),
+        build_search_explainability_tool(retrieve),
+        build_search_pattern_tool(retrieve),
+        build_search_token_tool(retrieve),
+        build_compare_design_options_tool(retrieve),
+        build_validate_design_system_tool(retrieve),
+        build_create_decision_record_tool(agent_store),
+    ):
+        registry.register(definition)
+    return registry
+
+
+def _agent_chunks(context) -> list[dict]:
+    if not context.execution:
+        return []
+    return [
+        {
+            "text": item.semantic_text,
+            "component_id": item.component_id,
+            "title": item.title,
+            "source": item.source,
+            "page_type": item.page_type,
+            "status": item.status,
+            "similarity": item.similarity,
+            "retrieval_weight": item.retrieval_weight,
+            "weighted_score": item.weighted_score,
+        }
+        for item in context.execution.evidence
+    ]
+
+
+def _agent_sources(context) -> list[dict]:
+    if not context.execution:
+        return []
+    return [
+        {
+            "title": item.title,
+            "source": semantic_source_label(item.page_type),
+            "origin": item.source,
+            "excerpt": item.excerpt,
+            "similarity": item.similarity,
+            "evidence_tier": evidence_tier(
+                item.similarity,
+                has_results=True,
+            ),
+            "page_type": item.page_type,
+            "retrieval_weight": item.retrieval_weight,
+            "weighted_score": item.weighted_score,
+        }
+        for item in context.execution.evidence
+    ]
+
+
+def _rule_similarity_scorer(query: str, texts: list[str]) -> list[float]:
+    if not _rag_ready or _embedder is None or not texts:
+        return []
+    result = _embedder.encode(
+        [query, *texts],
+        return_dense=True,
+        return_sparse=False,
+        return_colbert_vecs=False,
+    )
+    vectors = result["dense_vecs"]
+    query_vector = vectors[0]
+    query_norm = math.sqrt(sum(float(value) ** 2 for value in query_vector))
+    scores: list[float] = []
+    for vector in vectors[1:]:
+        vector_norm = math.sqrt(sum(float(value) ** 2 for value in vector))
+        denominator = query_norm * vector_norm
+        if denominator == 0:
+            scores.append(0.0)
+            continue
+        dot_product = sum(
+            float(left) * float(right)
+            for left, right in zip(query_vector, vector, strict=True)
+        )
+        scores.append(max(0.0, min(1.0, dot_product / denominator)))
+    return scores
+
+
+def _merge_audit_metadata(agent_metadata, perspective_metadata: dict | None = None) -> dict:
+    payload = agent_metadata.model_dump(mode="json")
+    if perspective_metadata:
+        payload.update(perspective_metadata)
+    return payload
+
+
+def _build_response_audit_metadata(
+    profile: str,
+    response_text: str,
+    cognition: CognitiveOrchestrationResult,
+) -> dict:
+    applied_skills = filter_applied_skills(
+        response_text,
+        cognition.active_skills,
+    )
+    return build_response_audit_metadata(
+        profile,
+        response_text,
+        (
+            str(skill.get("id", ""))
+            for skill in applied_skills
+            if skill.get("id")
+        ),
+    )
+
+
+def _applied_cognitive_skills(
+    response_text: str,
+    cognition: CognitiveOrchestrationResult,
+) -> list[dict]:
+    return list(filter_applied_skills(response_text, cognition.active_skills))
+
+
+def _composition_failure_events(
+    *,
+    runtime: AgentRuntime,
+    agent_context,
+    profile: str,
+    cognition: CognitiveOrchestrationResult,
+    limitation: str,
+    error_message: str,
+) -> list[str]:
+    fallback = runtime.finalize_provider_fallback(
+        agent_context,
+        limitation=limitation,
+    )
+    if fallback:
+        response_text, final_audit = fallback
+        perspective_audit = _build_response_audit_metadata(
+            profile,
+            response_text,
+            cognition,
+        )
+        return [
+            _sse_payload({"delta": response_text}),
+            _sse_payload({
+                "final": True,
+                "cognitive_skills": _applied_cognitive_skills(
+                    response_text,
+                    cognition,
+                ),
+                "audit_metadata": _merge_audit_metadata(
+                    final_audit,
+                    perspective_audit,
+                ),
+                **serialize_navigation_payload(
+                    agent_context.navigation_action,
+                    agent_context.secondary_navigation_actions,
+                ),
+            }),
+            "data: [DONE]\n\n",
+        ]
+
+    final_audit = runtime.finalize_failure(
+        agent_context,
+        limitation=limitation,
+    )
+    return [
+        _sse_payload({
+            "error": error_message,
+            "request_id": agent_context.request_id,
+            "audit_metadata": _merge_audit_metadata(final_audit),
+        })
+    ]
 
 
 def _sanitize_calibration(raw) -> dict | None:
@@ -289,9 +528,14 @@ async def _generate_laboratory_answer(item: dict) -> dict:
     return {
         "answer_text": answer_text,
         "intent": route.response_intent,
-        "cognitive_skills": list(cognition.active_skills),
+        "cognitive_skills": _applied_cognitive_skills(answer_text, cognition),
         "sources": serialize_sources(chunks),
         "evidence_metrics": evidence_metrics,
+        "audit_metadata": _build_response_audit_metadata(
+            route.persona_profile,
+            answer_text,
+            cognition,
+        ),
         "prompt_tokens": int(usage.get("prompt_tokens", 0) or 0),
         "completion_tokens": int(usage.get("completion_tokens", 0) or 0),
     }
@@ -304,6 +548,8 @@ async def lifespan(app: FastAPI):
 
     study_store.initialize()
     print(f"Research database ready: {study_store.db_path}")
+    agent_store.initialize()
+    print(f"Agent database ready: {agent_store.db_path}")
     laboratory_store.initialize()
     interrupted = laboratory_store.interrupt_running_runs()
     _laboratory_runner = LaboratoryRunner(
@@ -344,11 +590,30 @@ async def lifespan(app: FastAPI):
 
                 _embedder = BGEM3FlagModel("BAAI/bge-m3", use_fp16=True)
                 _rag_ready = True
-                print("✅ BGE-M3 carregado — retrieval vetorial ativo")
+                print("✅ BGE-M3 carregado: retrieval vetorial ativo")
+
+                # Production deploys ship without rag/chroma_db (gitignored). If
+                # the collection is empty, rebuild it from the versioned corpus
+                # so retrieval works without a separate indexing step.
+                if _collection.count() == 0 and corpus_available():
+                    print("📚 Coleção vazia: reconstruindo índice a partir do corpus versionado...")
+                    indexed = bootstrap_collection(_collection, _embedder)
+                    print(f"✅ Bootstrap concluído: {indexed} chunks indexados ({_collection.count()} no total)")
             except ImportError:
                 _embedder = None
                 _rag_ready = False
-                print("⚠️  FlagEmbedding não instalado — RAG desativado (pip install FlagEmbedding)")
+                print("⚠️  FlagEmbedding não instalado: RAG desativado (pip install FlagEmbedding)")
+            except Exception as error:
+                # Model download failure, torch/device errors, corrupted cache:
+                # degrade to catalog-only mode instead of crashing the server
+                # or leaving _rag_ready inconsistent.
+                _embedder = None
+                _rag_ready = False
+                print(
+                    "⚠️  Falha ao carregar BGE-M3 "
+                    f"({type(error).__name__}): {error}. "
+                    "RAG desativado; respostas usarão o catálogo canônico."
+                )
         yield
     finally:
         if _laboratory_automation:
@@ -358,16 +623,56 @@ async def lifespan(app: FastAPI):
 
 # ||| FastAPI app
 app = FastAPI(title="Beatrice Chat Server", version="2.3.0", lifespan=lifespan)
+
+# CORS - configurable via ALLOWED_ORIGINS (comma-separated). Defaults to "*"
+# so the public prototype works out of the box; set it to the frontend origin(s)
+# in production to lock it down. We never use credentialed requests, so "*" is
+# safe here. Example: ALLOWED_ORIGINS="https://aetheris-app.onrender.com"
+_allowed_origins_raw = os.environ.get("ALLOWED_ORIGINS", "*").strip()
+ALLOWED_ORIGINS = (
+    ["*"]
+    if _allowed_origins_raw in ("", "*")
+    else [origin.strip() for origin in _allowed_origins_raw.split(",") if origin.strip()]
+)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
+def _catalog_health() -> tuple[bool, int]:
+    try:
+        from component_metadata import component_catalog
+
+        components = component_catalog().components
+        return True, len(components)
+    except Exception as error:
+        print(f"[beatrice:health] catalog load error: {error}")
+        return False, 0
+
+
+def _last_indexed_at() -> str | None:
+    dump_path = RAG_DIR / "aetheris-docs-dump.json"
+    if not dump_path.exists():
+        return None
+    from datetime import datetime, timezone
+
+    return datetime.fromtimestamp(
+        dump_path.stat().st_mtime, tz=timezone.utc
+    ).isoformat(timespec="seconds")
+
+
 def _health_payload() -> dict:
-    count = _collection.count() if _collection else 0
+    try:
+        count = _collection.count() if _collection else 0
+        collection_loaded = _collection is not None
+    except Exception as error:
+        print(f"[beatrice:health] collection error: {error}")
+        count = 0
+        collection_loaded = False
+    catalog_loaded, total_components = _catalog_health()
     automation = _laboratory_automation.status() if _laboratory_automation else {
         "enabled": LABORATORY_AUTOMATION_ENABLED,
         "paused": False,
@@ -382,9 +687,22 @@ def _health_payload() -> dict:
         "corpus_chunks": count,
         "rag_active": _rag_ready and count > 0,
         "embedder": "BAAI/bge-m3" if _rag_ready else "none",
+        "catalog_loaded": catalog_loaded,
+        "total_components": total_components,
+        "vector_collection_loaded": collection_loaded,
+        "vector_collection_count": count,
+        "embedding_model_loaded": _embedder is not None,
+        "active_llm_provider": "groq" if API_KEY else "none",
+        "last_indexed_at": _last_indexed_at(),
         "prompt_architecture": "modular",
         "cognitive_orchestration": "adaptive-hybrid",
         "persona_context_engine": "operational-profiles",
+        "agent_layer": {
+            "enabled": True,
+            "planner": "rule-based",
+            "decision_store": "sqlite",
+            "memory": "session-project",
+        },
         "laboratory_automation": {
             "enabled": automation["enabled"],
             "paused": automation["paused"],
@@ -402,6 +720,62 @@ def health():
 @app.get("/api/health")
 def health_api():
     return _health_payload()
+
+
+@app.get("/api/knowledge/health")
+def knowledge_health():
+    payload = _health_payload()
+    dump_path = RAG_DIR / "aetheris-docs-dump.json"
+    corpus_version = None
+    if dump_path.exists():
+        try:
+            corpus_version = json.loads(dump_path.read_text(encoding="utf-8")).get("version")
+        except (json.JSONDecodeError, OSError):
+            corpus_version = None
+    warnings: list[dict[str, str]] = []
+    if not payload["rag_active"]:
+        warnings.append({"code": "rag_inactive", "message": "Vector retrieval is inactive."})
+    if not payload["catalog_loaded"]:
+        warnings.append({"code": "catalog_missing", "message": "Canonical catalog failed to load."})
+    return {
+        "status": payload["status"],
+        "corpus": {
+            "chunks": payload["corpus_chunks"],
+            "corpus_version": corpus_version,
+            "last_indexed_at": payload["last_indexed_at"],
+        },
+        "chromadb": {
+            "loaded": payload["vector_collection_loaded"],
+            "count": payload["vector_collection_count"],
+            "embedder": payload["embedder"],
+        },
+        "catalog": {
+            "loaded": payload["catalog_loaded"],
+            "total_components": payload["total_components"],
+        },
+        "warnings": warnings,
+    }
+
+
+@app.get("/api/orchestration/health")
+def orchestration_health():
+    from agent.comprehension import orchestration_health_snapshot
+
+    return {
+        "status": "ok",
+        **orchestration_health_snapshot(),
+    }
+
+
+@app.get("/api/knowledge/perspectives/health")
+def perspectives_health():
+    payload = build_perspective_health_payload(_collection)
+    if payload["warnings"]:
+        print(
+            "[beatrice:health] perspective warnings: "
+            + "; ".join(warning["code"] for warning in payload["warnings"])
+        )
+    return payload
 
 
 class CreateResearchInvitePayload(BaseModel):
@@ -433,8 +807,15 @@ class StudyEventPayload(BaseModel):
 class CreateLaboratoryRunPayload(BaseModel):
     case_set_id: str = Field(min_length=2, max_length=100)
     version_label: str = Field(min_length=2, max_length=80)
-    profiles: list[str] = Field(min_length=1, max_length=7)
+    profiles: list[str] = Field(min_length=1, max_length=8)
     repetitions: Literal[1] = 1
+
+    @field_validator("profiles", mode="before")
+    @classmethod
+    def canonical_profiles(cls, value):
+        if not isinstance(value, list):
+            return value
+        return [normalize_profile_id(profile, default="") for profile in value]
 
 
 class LaboratoryReviewPayload(BaseModel):
@@ -486,15 +867,7 @@ ALLOWED_STUDY_EVENTS = {
     "survey_answered",
     "study_completed",
 }
-ALLOWED_LABORATORY_PROFILES = {
-    "designer",
-    "dev",
-    "pm",
-    "qa",
-    "writer",
-    "a11y",
-    "maintainer",
-}
+ALLOWED_LABORATORY_PROFILES = set(CANONICAL_PERSPECTIVE_IDS)
 ALLOWED_REVIEW_METRICS = {
     "factual_correctness",
     "source_fidelity",
@@ -936,19 +1309,60 @@ def record_study_event(
     return {"recorded": True, "consent_version": CONSENT_VERSION}
 
 
+@app.post("/api/decisions", status_code=201)
+def create_decision(payload: CreateDecisionRecordInput):
+    return agent_store.create_decision(payload)
+
+
+@app.get("/api/decisions")
+def list_decisions(
+    status: str | None = None,
+    workflow: str | None = None,
+    profile: str | None = None,
+    project_id: str | None = None,
+    limit: int = 50,
+    offset: int = 0,
+):
+    return {
+        "decisions": agent_store.list_decisions(
+            status=status,
+            workflow=workflow,
+            profile=profile,
+            project_id=project_id,
+            limit=limit,
+            offset=offset,
+        )
+    }
+
+
+@app.get("/api/decisions/{decision_id}")
+def get_decision(decision_id: str):
+    decision = agent_store.get_decision(decision_id)
+    if not decision:
+        raise HTTPException(status_code=404, detail="Decision not found")
+    return decision
+
+
+@app.patch("/api/decisions/{decision_id}")
+def update_decision(decision_id: str, payload: DecisionPatch):
+    try:
+        decision = agent_store.update_decision_status(decision_id, payload.status)
+    except DecisionConflictError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    if not decision:
+        raise HTTPException(status_code=404, detail="Decision not found")
+    return decision
+
+
 @app.post("/api/chat")
-async def chat(payload: dict) -> StreamingResponse:
-    if not API_KEY:
-        async def _err():
-            yield _sse_payload({"error": "GROQ_API_KEY não definida. Inicie o servidor com GROQ_API_KEY=gsk_..."})
-
-        return StreamingResponse(_err(), media_type="text/event-stream")
-
-    raw_messages = payload.get("messages", [])
-    messages = _trim_history(raw_messages if isinstance(raw_messages, list) else [])
-    profile = payload.get("profile", "general")
-    command_mode = payload.get("command_mode")
-    explicit_calibration = _sanitize_calibration(payload.get("calibration"))
+async def chat(payload: AgentChatRequest) -> StreamingResponse:
+    messages = _trim_history([
+        message.model_dump(mode="json")
+        for message in payload.messages
+    ])
+    profile = payload.profile
+    command_mode = payload.command_mode
+    explicit_calibration = _sanitize_calibration(payload.calibration)
     raw_query = _last_user_query(messages)
     manual_override = parse_manual_override(raw_query)
     query = _model_query_from_override(raw_query, manual_override.clean_query)
@@ -967,29 +1381,114 @@ async def chat(payload: dict) -> StreamingResponse:
         messages=messages,
         manual_override=manual_override,
     )
-    chunks = _build_chunks(query, route, cognition)
-    groq_messages = _build_groq_messages(
-        messages, query, route, cognition, chunks,
-        calibration_override=calibration_override,
+    runtime = AgentRuntime(
+        registry=_build_agent_registry(route),
+        store=agent_store,
+        model=MODEL,
+        rule_scorer=_rule_similarity_scorer,
     )
-
+    agent_context = runtime.prepare(
+        query=query,
+        profile=route.persona_profile,
+        routed_intent=route.response_intent,
+        command_mode=route.active_command_mode,
+        session_id=payload.session_id,
+        project_id=payload.project_id,
+        preferred_detail_level=payload.preferred_detail_level,
+        catalog_mode=route.catalog_mode,
+        understanding=route.understanding,
+    )
     active_engine = resolve_engine(route.active_command_mode)
 
     async def stream() -> AsyncGenerator[str, None]:
-        # ||| XAI attribution | emitted before text so the frontend can build audit state.
-        # Always carries the disclosed cognitive skills + active oracle engine, even
-        # when no chunks were retrieved, so the UI can surface the reasoning signal.
+        sources = _agent_sources(agent_context)
+        initial_audit = agent_context.audit_metadata(
+            execution_status=(
+                "running" if agent_context.should_compose
+                else agent_store.get_run(agent_context.request_id)["status"]
+            )
+        )
         meta: dict = {
             "intent": route.response_intent,
+            "workflow": agent_context.plan.workflow,
+            "tools_used": [
+                tool.model_dump(mode="json")
+                for tool in initial_audit.tools_used
+            ],
             "catalog_mode": route.catalog_mode,
             "engine": active_engine.id if active_engine else None,
-            "cognitive_skills": list(cognition.active_skills),
             "calibration_version": active_calibration.get("id"),
+            "audit_metadata": _merge_audit_metadata(initial_audit),
         }
-        if chunks:
-            meta["sources"] = serialize_sources(chunks)
+        if sources:
+            meta["sources"] = sources
         yield _sse_payload(meta)
 
+        if not agent_context.should_compose:
+            deterministic_response = agent_context.deterministic_response or ""
+            if agent_context.deterministic_response:
+                yield _sse_payload({"delta": agent_context.deterministic_response})
+            perspective_audit = _build_response_audit_metadata(
+                route.persona_profile,
+                deterministic_response,
+                cognition,
+            )
+            yield _sse_payload({
+                "final": True,
+                "cognitive_skills": _applied_cognitive_skills(
+                    deterministic_response,
+                    cognition,
+                ),
+                "audit_metadata": _merge_audit_metadata(
+                    agent_context.audit_metadata(
+                        execution_status=agent_store.get_run(
+                            agent_context.request_id
+                        )["status"]
+                    ),
+                    perspective_audit,
+                ),
+                **serialize_navigation_payload(
+                    agent_context.navigation_action,
+                    agent_context.secondary_navigation_actions,
+                ),
+            })
+            yield "data: [DONE]\n\n"
+            return
+
+        if not API_KEY:
+            for event in _composition_failure_events(
+                runtime=runtime,
+                agent_context=agent_context,
+                profile=route.persona_profile,
+                cognition=cognition,
+                limitation="GROQ_API_KEY is not configured.",
+                error_message=(
+                    "GROQ_API_KEY não definida. Inicie o servidor com "
+                    "GROQ_API_KEY=gsk_..."
+                ),
+            ):
+                yield event
+            return
+
+        runtime.start_composition(agent_context)
+        chunks = _agent_chunks(agent_context)
+        groq_messages = _build_groq_messages(
+            messages,
+            query,
+            route,
+            cognition,
+            chunks,
+            calibration_override=calibration_override,
+            agent_context=runtime.structured_context(agent_context),
+            surface_context=payload.surface_context,
+        )
+        generated_text: list[str] = []
+        buffer_until_validation = (
+            agent_context.plan.workflow in {
+                "component_decision",
+                "token_lookup",
+            }
+        )
         async with httpx.AsyncClient(timeout=60.0) as client:
             try:
                 async with client.stream(
@@ -1002,18 +1501,50 @@ async def chat(payload: dict) -> StreamingResponse:
                     json={
                         "model": MODEL,
                         "max_tokens": _max_tokens_for_response(route.catalog_mode, route.active_command_mode),
+                        "temperature": 0.0,
                         "stream": True,
                         "messages": groq_messages,
                     },
                 ) as resp:
                     if resp.status_code == 401:
-                        yield _sse_payload({"error": "GROQ_API_KEY inválida (401). Verifique a chave."})
+                        for event in _composition_failure_events(
+                            runtime=runtime,
+                            agent_context=agent_context,
+                            profile=route.persona_profile,
+                            cognition=cognition,
+                            limitation="Groq rejected the configured API key.",
+                            error_message=(
+                                "GROQ_API_KEY inválida (401). Verifique a chave."
+                            ),
+                        ):
+                            yield event
                         return
                     if resp.status_code == 429:
-                        yield _sse_payload({"error": "Limite de requisições Groq atingido (429). Aguarde alguns segundos e tente novamente."})
+                        for event in _composition_failure_events(
+                            runtime=runtime,
+                            agent_context=agent_context,
+                            profile=route.persona_profile,
+                            cognition=cognition,
+                            limitation="Groq rate limit was reached.",
+                            error_message=(
+                                "Limite de requisições Groq atingido (429). "
+                                "Aguarde alguns segundos e tente novamente."
+                            ),
+                        ):
+                            yield event
                         return
                     if resp.status_code >= 400:
-                        yield _sse_payload({"error": f"Erro Groq HTTP {resp.status_code}. Tente novamente."})
+                        for event in _composition_failure_events(
+                            runtime=runtime,
+                            agent_context=agent_context,
+                            profile=route.persona_profile,
+                            cognition=cognition,
+                            limitation=f"Groq returned HTTP {resp.status_code}.",
+                            error_message=(
+                                f"Erro Groq HTTP {resp.status_code}. Tente novamente."
+                            ),
+                        ):
+                            yield event
                         return
 
                     async for line in resp.aiter_lines():
@@ -1021,19 +1552,72 @@ async def chat(payload: dict) -> StreamingResponse:
                             continue
                         data = line[6:].strip()
                         if data == "[DONE]":
-                            yield "data: [DONE]\n\n"
                             break
                         try:
                             parsed = json.loads(data)
                             text = parsed["choices"][0]["delta"].get("content")
                             if text:
-                                yield _sse_payload({"delta": text})
+                                generated_text.append(text)
+                                if not buffer_until_validation:
+                                    yield _sse_payload({"delta": text})
                         except Exception:
                             pass
             except httpx.TimeoutException:
-                yield _sse_payload({"error": "Timeout na requisição ao Groq (60s). Tente novamente."})
+                for event in _composition_failure_events(
+                    runtime=runtime,
+                    agent_context=agent_context,
+                    profile=route.persona_profile,
+                    cognition=cognition,
+                    limitation="Groq request timed out after 60 seconds.",
+                    error_message=(
+                        "Timeout na requisição ao Groq (60s). Tente novamente."
+                    ),
+                ):
+                    yield event
+                return
             except httpx.ConnectError:
-                yield _sse_payload({"error": "Sem conexão com a API Groq. Verifique sua internet."})
+                for event in _composition_failure_events(
+                    runtime=runtime,
+                    agent_context=agent_context,
+                    profile=route.persona_profile,
+                    cognition=cognition,
+                    limitation="The server could not connect to Groq.",
+                    error_message=(
+                        "Sem conexão com a API Groq. Verifique sua internet."
+                    ),
+                ):
+                    yield event
+                return
+
+        generated_response = "".join(generated_text)
+        response_text = runtime.validate_response(
+            agent_context,
+            generated_response,
+        )
+        if buffer_until_validation and response_text:
+            yield _sse_payload({"delta": response_text})
+        perspective_audit = _build_response_audit_metadata(
+            route.persona_profile,
+            response_text,
+            cognition,
+        )
+        final_audit = runtime.finalize_success(agent_context, response_text)
+        yield _sse_payload({
+            "final": True,
+            "cognitive_skills": _applied_cognitive_skills(
+                response_text,
+                cognition,
+            ),
+            "audit_metadata": _merge_audit_metadata(
+                final_audit,
+                perspective_audit,
+            ),
+            **serialize_navigation_payload(
+                agent_context.navigation_action,
+                agent_context.secondary_navigation_actions,
+            ),
+        })
+        yield "data: [DONE]\n\n"
 
     return StreamingResponse(
         stream(),
