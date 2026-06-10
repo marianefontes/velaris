@@ -1,5 +1,5 @@
-// ||| Comparison data layer — fetches the two sides of /comparison.
-// Beatrice reuses the live /api/chat SSE endpoint (same contract as the chat,
+// ||| Comparison data layer : fetches the two sides of /comparison.
+// Abraxos reuses the live /api/chat SSE endpoint (same contract as the chat,
 // without touching BeatriceChatPage). The generic LLM side is a clearly-isolated
 // local mock until a dedicated endpoint exists.
 
@@ -17,14 +17,14 @@ interface BeatriceStreamMeta {
   engine?: string | null;
 }
 
-function confidenceFromSources(sources: ComparisonSource[]): number | null {
+function evidenceSimilarityFromSources(sources: ComparisonSource[]): number | null {
   if (sources.length === 0) return null;
-  // Perceived confidence = mean retrieval similarity, surfaced as a percentage.
+  // Mean retrieval relevance. This is not answer confidence.
   const mean = sources.reduce((sum, source) => sum + source.similarity, 0) / sources.length;
   return Math.round(mean * 100);
 }
 
-// ||| Beatrice — contextual, source-grounded answer via the real RAG+XAI pipeline.
+// ||| Abraxos: contextual, source-grounded answer via the real RAG+XAI pipeline.
 export async function getBeatriceComparisonAnswer(
   question: string,
   options: { onDelta?: (full: string) => void; signal?: AbortSignal } = {},
@@ -97,12 +97,12 @@ export async function getBeatriceComparisonAnswer(
     answer: answer.trim(),
     intent: meta.intent,
     sources,
-    confidence: confidenceFromSources(sources),
+    evidenceSimilarity: evidenceSimilarityFromSources(sources),
     engine: meta.engine ?? null,
   };
 }
 
-// ||| Generic LLM — broad parametric answer, no retrieval, no sources.
+// ||| Generic LLM : broad parametric answer, no retrieval, no sources.
 // TODO | replace mock generic answer with dedicated generic LLM endpoint.
 // The shape already matches a future async endpoint so the page does not change.
 export async function getGenericLLMComparisonAnswer(

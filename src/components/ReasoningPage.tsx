@@ -1,11 +1,12 @@
-// ||| Phase IB · /reasoning — cognitive pipeline surface
-// Public documentation for Beatrice's two capability types plus the end-to-end
-// cognitive pipeline.
+// ||| Phase IB · /reasoning : cognitive pipeline surface
+// Public documentation for Abraxos, the Evidence Weaver, capabilities, and the
+// end-to-end cognitive pipeline.
 
-import { useState } from "react";
-import type { ReactNode } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { useI18n } from "../i18n/I18nProvider";
+import { getReasoningPageContent } from "../i18n/pages/reasoningPage";
 import {
   Activity,
   AlertTriangle,
@@ -44,12 +45,13 @@ import {
 import type { CapabilityDefinition } from "../beatrice/domain/governance";
 import type { CognitiveFlowStep } from "../types/oracle";
 import { CognitiveFlow } from "./oracle/CognitiveFlow";
+import { PageHero, PageShell, SectionIntroHeader } from "./ui/VisualPrimitives";
 
 // ──────────────────────────────────────────────────────────────────────────
-// Section model — 4 final sections per spec
+// Section model
 // ──────────────────────────────────────────────────────────────────────────
 
-type FocusId = "overview" | "skills" | "commands" | "pipeline";
+type FocusId = "overview" | "weaver" | "skills" | "commands" | "pipeline";
 
 interface SectionMeta {
   id: FocusId;
@@ -59,14 +61,15 @@ interface SectionMeta {
 }
 
 const SECTIONS: SectionMeta[] = [
-  { id: "overview", label: "Overview", role: "Beatrice cognition", icon: Sparkles },
-  { id: "skills", label: "Habilidades da Beatrice", role: "Ativação automática", icon: Lightbulb },
-  { id: "commands", label: "Comandos do Oráculo", role: "Ações e modos acionáveis", icon: Wrench },
+  { id: "overview", label: "Overview", role: "Abraxos cognition", icon: Sparkles },
+  { id: "weaver", label: "Evidence Weaver", role: "Evidence orchestration", icon: Network },
+  { id: "skills", label: "Habilidades do Abraxos", role: "Ativação automática", icon: Lightbulb },
+  { id: "commands", label: "Comandos do Oráculo", role: "Ativação manual", icon: Wrench },
   { id: "pipeline", label: "Pipeline", role: "9 stages", icon: Workflow },
 ];
 
 // ──────────────────────────────────────────────────────────────────────────
-// Intelligence data — from IntelligencePage (merged here per spec)
+// Intelligence data : from IntelligencePage (merged here per spec)
 // ──────────────────────────────────────────────────────────────────────────
 
 const CAPABILITY_ICONS: Record<string, LucideIcon> = {
@@ -115,12 +118,20 @@ const FLOW_IDS = [
 // Page root
 // ──────────────────────────────────────────────────────────────────────────
 
+const COMMAND_SECTION_HASHES = new Set([
+  "comandos-do-oraculo",
+  "comandos-operacional",
+  "comandos-investigativo",
+]);
+
 export function ReasoningPage() {
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedFocus = searchParams.get("focus");
+  const hashFocus = COMMAND_SECTION_HASHES.has(location.hash.replace("#", "")) ? "commands" : null;
   const focus = requestedFocus === "engines"
     ? "commands"
-    : (requestedFocus as FocusId | null) ?? "overview";
+    : (requestedFocus as FocusId | null) ?? hashFocus ?? "overview";
   const active = SECTIONS.find((section) => section.id === focus) ?? SECTIONS[0];
 
   const updateFocus = (next: FocusId) => {
@@ -134,17 +145,24 @@ export function ReasoningPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-[1280px] px-6 py-10 text-slate-200 lg:px-10">
+    <PageShell>
       <Hero />
       <SectionNav active={active.id} onChange={updateFocus} />
 
-      <div className="mt-10">
+      <div
+        id={`reasoning-panel-${active.id}`}
+        role="tabpanel"
+        aria-labelledby={`reasoning-tab-${active.id}`}
+        tabIndex={0}
+        className="mt-10 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      >
         {active.id === "overview" ? <OverviewSection onJump={updateFocus} /> : null}
+        {active.id === "weaver" ? <EvidenceWeaverSection /> : null}
         {active.id === "skills" ? <SkillsSection /> : null}
         {active.id === "commands" ? <CommandsSection /> : null}
         {active.id === "pipeline" ? <PipelineSection /> : null}
       </div>
-    </div>
+    </PageShell>
   );
 }
 
@@ -153,21 +171,25 @@ export function ReasoningPage() {
 // ──────────────────────────────────────────────────────────────────────────
 
 function Hero() {
+  const { locale } = useI18n();
+  const copy = getReasoningPageContent(locale).hero;
   return (
-    <header className="page-hero">
-      <div className="page-eyebrow">
-        <BrainCircuit className="h-3.5 w-3.5" aria-hidden />
-        Cognitive pipeline
-      </div>
-      <h1 className="page-h1">
-        How Beatrice <em className="not-italic text-primary">actually thinks</em>.
-      </h1>
-      <p className="page-lead">
-        A Beatrice combina dois tipos de capacidade: habilidades internas que ela aplica
-        automaticamente e comandos acionáveis que o usuário chama com <code>/</code>.
-        Cada capacidade declara quando atua, o que produz e quais evidências sustentam a resposta.
-      </p>
-    </header>
+    <div className="reasoning-page-hero">
+      <PageHero
+        eyebrow={
+          <>
+            <BrainCircuit className="h-3.5 w-3.5" aria-hidden />
+            {copy.eyebrow}
+          </>
+        }
+        title={
+          <>
+            {copy.titleLead} <em className="not-italic text-primary">{copy.titleAccent}</em>.
+          </>
+        }
+        description={copy.lead}
+      />
+    </div>
   );
 }
 
@@ -176,19 +198,48 @@ function Hero() {
 // ──────────────────────────────────────────────────────────────────────────
 
 function SectionNav({ active, onChange }: { active: FocusId; onChange: (next: FocusId) => void }) {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
+  const copy = getReasoningPageContent(locale);
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  const handleKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>, index: number) => {
+    let nextIndex = index;
+    if (event.key === "ArrowRight") nextIndex = (index + 1) % SECTIONS.length;
+    else if (event.key === "ArrowLeft") nextIndex = (index - 1 + SECTIONS.length) % SECTIONS.length;
+    else if (event.key === "Home") nextIndex = 0;
+    else if (event.key === "End") nextIndex = SECTIONS.length - 1;
+    else return;
+
+    event.preventDefault();
+    const next = SECTIONS[nextIndex];
+    onChange(next.id);
+    tabRefs.current[nextIndex]?.focus();
+  };
+
   return (
-    <nav aria-label="Reasoning sections" className="flex flex-wrap gap-2">
-      {SECTIONS.map((section) => {
+    <nav
+      aria-label={copy.hero.navAria}
+      role="tablist"
+      className="flex gap-2 overflow-x-auto pb-1 xl:grid xl:grid-cols-5 xl:overflow-visible"
+    >
+      {SECTIONS.map((section, index) => {
         const Icon = section.icon;
         const isActive = section.id === active;
         return (
           <button
             key={section.id}
+            ref={(node) => {
+              tabRefs.current[index] = node;
+            }}
+            id={`reasoning-tab-${section.id}`}
             type="button"
             onClick={() => onChange(section.id)}
-            aria-pressed={isActive}
-            className={isActive ? "section-tab-active" : "section-tab"}
+            onKeyDown={(event) => handleKeyDown(event, index)}
+            role="tab"
+            aria-selected={isActive}
+            aria-controls={`reasoning-panel-${section.id}`}
+            tabIndex={isActive ? 0 : -1}
+            className={`${isActive ? "section-tab-active" : "section-tab"} focus-ring shrink-0 xl:min-w-0 xl:flex-col xl:items-start xl:gap-1 xl:text-left`}
           >
             <Icon className="h-3.5 w-3.5" aria-hidden />
             <span className="font-semibold">{t(`pages.reasoning.sections.${section.id}.label`)}</span>
@@ -203,11 +254,12 @@ function SectionNav({ active, onChange }: { active: FocusId; onChange: (next: Fo
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// SECTION 1 — Overview (cognitive flow + navigation to skills/engines/pipeline)
+// SECTION 1 : Overview
 // ──────────────────────────────────────────────────────────────────────────
 
 function OverviewSection({ onJump }: { onJump: (next: FocusId) => void }) {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
+  const copy = getReasoningPageContent(locale).overview;
   const P = "pages.intelligence";
 
   const flow: CognitiveFlowStep[] = FLOW_IDS.map((id) => ({
@@ -218,9 +270,9 @@ function OverviewSection({ onJump }: { onJump: (next: FocusId) => void }) {
   return (
     <>
       <ZoneShell
-        eyebrow="Cognitive architecture"
-        title="How a question becomes an explainable answer"
-        caption="The path every question travels — from interpretation to a response delivered together with its sources and confidence. Each step is a named codebase artifact."
+        eyebrow={copy.flowEyebrow}
+        title={copy.flowTitle}
+        caption={copy.flowCaption}
         icon={<Sparkles className="h-3.5 w-3.5" aria-hidden />}
       >
         <div className="content-card">
@@ -229,49 +281,43 @@ function OverviewSection({ onJump }: { onJump: (next: FocusId) => void }) {
       </ZoneShell>
 
       <ZoneShell
-        eyebrow="What makes Beatrice different"
-        title="Architecture, not magic"
-        caption="A generic LLM answers from broad parametric knowledge. Beatrice constrains generation through retrieved design-system documentation and exposes the reasoning evidence through source attribution and confidence calibration."
+        eyebrow={copy.differenceEyebrow}
+        title={copy.differenceTitle}
+        caption={copy.differenceCaption}
         icon={<Scale className="h-3.5 w-3.5" aria-hidden />}
       >
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {[
-            { label: "Domain specificity", body: "Reasons inside the Aetheris design system" },
-            { label: "Retrieved documentation", body: "Answers constrained by the corpus" },
-            { label: "Cited sources", body: "Every claim is traceable" },
-            { label: "Confidence score", body: "Uncertainty calibrated from retrieval" },
-            { label: "Classified intent", body: "The interpretation is explicit" },
-            { label: "Persona adaptation", body: "Depth and focus fit the active lens" },
-          ].map((card) => (
-            <div key={card.label} className="rounded-2xl border border-white/8 bg-white/[0.02] p-4">
-              <div className="mb-2 text-xs font-semibold text-slate-100">{card.label}</div>
-              <p className="text-[11px] leading-relaxed text-slate-400">{card.body}</p>
+          {copy.differenceCards.map(([label, body]) => (
+            <div key={label} className="rounded-2xl border border-white/8 bg-white/[0.02] p-4">
+              <div className="mb-2 text-xs font-semibold text-slate-100">{label}</div>
+              <p className="text-[11px] leading-relaxed text-slate-400">{body}</p>
             </div>
           ))}
         </div>
       </ZoneShell>
 
       <ZoneShell
-        eyebrow="What to explore"
-        title="Dois tipos de capacidade"
-        caption="A Beatrice escolhe as habilidades. O usuário escolhe os comandos. O pipeline conecta ambos à evidência e à explicabilidade."
+        eyebrow={copy.exploreEyebrow}
+        title={copy.exploreTitle}
+        caption={copy.exploreCaption}
       >
-        <div className="grid gap-3 md:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-2">
           {[
-            { id: "skills" as FocusId, label: "Habilidades da Beatrice", icon: <Lightbulb className="h-4 w-4" aria-hidden />, body: "Capacidades internas, detectadas por intenção e aplicadas sem comando manual." },
-            { id: "commands" as FocusId, label: "Comandos do Oráculo", icon: <Wrench className="h-4 w-4" aria-hidden />, body: "Ações operacionais e modos investigativos que o usuário aciona com / no chat." },
-            { id: "pipeline" as FocusId, label: "Pipeline", icon: <Workflow className="h-4 w-4" aria-hidden />, body: "Nove etapas verificáveis, da interpretação da pergunta à resposta com fontes e confiança." },
+            { id: "weaver" as FocusId, ...copy.exploreCards.weaver, icon: <Network className="h-4 w-4" aria-hidden /> },
+            { id: "skills" as FocusId, ...copy.exploreCards.skills, icon: <Lightbulb className="h-4 w-4" aria-hidden /> },
+            { id: "commands" as FocusId, ...copy.exploreCards.commands, icon: <Wrench className="h-4 w-4" aria-hidden /> },
+            { id: "pipeline" as FocusId, ...copy.exploreCards.pipeline, icon: <Workflow className="h-4 w-4" aria-hidden /> },
           ].map((card) => (
             <button
               key={card.id}
               type="button"
               onClick={() => onJump(card.id)}
-              className="rounded-2xl border border-white/8 bg-white/[0.02] p-5 text-left transition-colors hover:border-white/20 hover:bg-white/[0.04]"
+              className="focus-ring rounded-2xl border border-white/8 bg-white/[0.02] p-5 text-left transition-colors hover:border-white/20 hover:bg-white/[0.04]"
             >
               <div className="mb-2 flex items-center gap-2 text-primary">{card.icon}<span className="text-sm font-semibold text-slate-100">{card.label}</span></div>
               <p className="text-[11px] leading-relaxed text-slate-400">{card.body}</p>
               <div className="mt-3 flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-primary">
-                <span>Open</span>
+                <span>{copy.open}</span>
                 <ArrowRight className="h-3 w-3" aria-hidden />
               </div>
             </button>
@@ -283,15 +329,104 @@ function OverviewSection({ onJump }: { onJump: (next: FocusId) => void }) {
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// SECTION 2 — Beatrice skills
+// SECTION 2 : Evidence Weaver
+// ──────────────────────────────────────────────────────────────────────────
+
+function EvidenceWeaverSection() {
+  const { locale } = useI18n();
+  const copy = getReasoningPageContent(locale).weaver;
+
+  return (
+    <ZoneShell
+      eyebrow={copy.eyebrow}
+      title={copy.title}
+      caption={copy.caption}
+      icon={<Network className="h-3.5 w-3.5" aria-hidden />}
+      variant="xai"
+    >
+      <div
+        data-testid="evidence-weaver"
+        className="overflow-hidden rounded-2xl border border-primary/20 bg-[linear-gradient(145deg,rgba(222,204,253,0.075),rgba(255,255,255,0.018)_42%,rgba(10,10,12,0.35))] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
+      >
+        <ol className="grid gap-px bg-white/[0.06] sm:grid-cols-2 xl:grid-cols-4">
+          {copy.steps.map((step, index) => (
+            <li key={step.title} className="min-w-0 bg-surface-container-highest/95 p-5">
+              <div className="mb-4 flex items-center gap-3">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/[0.08] font-mono text-[10px] font-semibold text-primary">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <span
+                  aria-hidden="true"
+                  className="h-px min-w-0 flex-1 bg-gradient-to-r from-primary/35 to-transparent"
+                />
+              </div>
+              <h3 className="text-sm font-semibold text-slate-100">{step.title}</h3>
+              <p className="mt-2 text-xs leading-6 text-slate-400">{step.body}</p>
+            </li>
+          ))}
+        </ol>
+
+        <nav
+          aria-label={copy.architectureFlowLabel}
+          data-testid="evidence-weaver-flow"
+          className="border-t border-white/[0.07] px-5 py-4"
+        >
+          <ol className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            {copy.architectureFlow.map((step, index) => (
+              <li key={step.label} className="flex min-w-0 items-center gap-3 sm:flex-1">
+                <div className="min-w-0 sm:flex-1 sm:text-center">
+                  <p className="text-[11px] font-medium text-slate-300">{step.label}</p>
+                  <p className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.14em] leading-5 text-slate-500">
+                    {step.detail}
+                  </p>
+                </div>
+                {index < copy.architectureFlow.length - 1 ? (
+                  <ArrowRight
+                    className="hidden h-3.5 w-3.5 shrink-0 text-white/15 sm:block"
+                    aria-hidden
+                  />
+                ) : null}
+              </li>
+            ))}
+          </ol>
+        </nav>
+
+        <div className="grid gap-4 border-t border-white/[0.07] p-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+          <div>
+            <p className="text-sm font-semibold text-slate-100">{copy.relationshipTitle}</p>
+            <p className="mt-2 max-w-4xl text-xs leading-6 text-slate-400">{copy.relationshipBody}</p>
+            <blockquote
+              data-testid="evidence-weaver-closing"
+              className="mt-4 max-w-4xl border-l border-primary/20 pl-4 text-xs leading-6 text-slate-500"
+            >
+              {copy.closingLines.map((line, index) => (
+                <p key={line} className={index > 0 ? "mt-2" : undefined}>
+                  {line}
+                </p>
+              ))}
+            </blockquote>
+          </div>
+          <p className="max-w-sm shrink-0 rounded-xl border border-primary/15 bg-primary/[0.06] px-4 py-3 text-xs font-semibold leading-5 text-primary">
+            {copy.motto}
+          </p>
+        </div>
+      </div>
+    </ZoneShell>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// SECTION 3 : Abraxos skills
 // ──────────────────────────────────────────────────────────────────────────
 
 function SkillsSection() {
+  const { locale } = useI18n();
+  const copy = getReasoningPageContent(locale).skills;
   return (
     <ZoneShell
-      eyebrow="Ativação automática"
-      title="Habilidades da Beatrice"
-      caption="A Beatrice ativa estas habilidades automaticamente ao interpretar a intenção, o contexto e o tipo de problema apresentado pelo usuário. Elas funcionam como comportamentos internos de análise, permitindo que o oráculo recomende componentes, detecte mau uso, avalie acessibilidade, verifique impacto de tokens e identifique riscos de governança sem exigir comandos manuais."
+      eyebrow={copy.eyebrow}
+      title={copy.title}
+      caption={copy.caption}
       icon={<Sparkles className="h-3.5 w-3.5" aria-hidden />}
     >
       <div className="mb-5 rounded-2xl border border-primary/15 bg-primary/[0.05] p-4 shadow-[0_0_32px_rgba(169,153,198,0.06)]">
@@ -300,9 +435,9 @@ function SkillsSection() {
             <Lightbulb className="h-4 w-4" aria-hidden />
           </span>
           <div>
-            <p className="text-xs font-semibold text-slate-100">Aplicada pela Beatrice</p>
+            <p className="text-xs font-semibold text-slate-100">{copy.appliedBy}</p>
             <p className="mt-1 text-xs leading-6 text-slate-400">
-              O usuário não precisa chamar essas habilidades diretamente. Elas são combinadas pela Beatrice conforme a pergunta exige.
+              {copy.appliedBody}
             </p>
           </div>
         </div>
@@ -313,35 +448,40 @@ function SkillsSection() {
         ))}
       </div>
       <div className="mt-4 rounded-2xl border border-white/8 bg-white/[0.02] p-4 text-xs leading-6 text-slate-400">
-        <strong className="text-slate-200">Auditabilidade:</strong> a interface pode mostrar quais habilidades foram aplicadas, o motivo e a confiança. Retrieval Deep Dive continua sendo um mecanismo interno e não aparece como habilidade pública.
+        <strong className="text-slate-200">{copy.auditLabel}</strong> {copy.auditBody}
       </div>
     </ZoneShell>
   );
 }
 
 function CommandsSection() {
+  const { locale } = useI18n();
+  const copy = getReasoningPageContent(locale).commands;
   return (
     <ZoneShell
-      eyebrow="Ações e modos acionáveis"
-      title="Comandos do Oráculo"
-      caption="Use comandos do oráculo quando quiser direcionar explicitamente a Beatrice. Alguns comandos executam ações operacionais, como validar, migrar ou capturar evidências. Outros ativam modos investigativos, como recuperar memória institucional, reconstruir decisões, sintetizar perspectivas ou auditar fontes, lacunas e confiança."
+      id="comandos-do-oraculo"
+      eyebrow={copy.eyebrow}
+      title={copy.title}
+      caption={copy.caption}
       icon={<Wrench className="h-3.5 w-3.5" aria-hidden />}
     >
-      <p className="-mt-3 mb-5 text-xs leading-6 text-slate-400">
-        Diferente das habilidades automáticas, os comandos precisam ser acionados manualmente no chat usando <code className="text-primary">/</code>.
+      <p className="mb-6 text-xs leading-6 text-slate-400">
+        {copy.manual}
       </p>
 
       <CommandHowTo />
 
-      <div className="mb-4 flex flex-wrap gap-2">
+      <div className="mb-4 grid gap-3 md:grid-cols-2">
         <CategoryLegend
-          label="Ação operacional"
-          description="Executa uma tarefa concreta e retorna um artefato, validação ou transformação."
+          id="comandos-operacional"
+          label={copy.operational}
+          description={copy.operationalDescription}
           tone="primary"
         />
         <CategoryLegend
-          label="Modo investigativo"
-          description="Orienta o raciocínio da Beatrice para uma análise profunda e explicável."
+          id="comandos-investigativo"
+          label={copy.investigative}
+          description={copy.investigativeDescription}
           tone="secondary"
         />
       </div>
@@ -353,7 +493,7 @@ function CommandsSection() {
       </div>
 
       <div className="mt-4 rounded-2xl border border-white/8 bg-white/[0.02] p-4 text-xs leading-6 text-slate-400">
-        <strong className="text-slate-200">Compatibilidade:</strong> os nomes canônicos longos continuam funcionando. Os aliases antigos <code>/history</code>, <code>/why</code>, <code>/score</code> e <code>/simulate</code> também permanecem disponíveis como fallback.
+        <strong className="text-slate-200">{copy.compatibilityLabel}</strong> {copy.compatibilityBody}
       </div>
     </ZoneShell>
   );
@@ -361,11 +501,13 @@ function CommandsSection() {
 
 function SkillCard({ capability }: { capability: CapabilityDefinition }) {
   const Icon = CAPABILITY_ICONS[capability.id] ?? BrainCircuit;
+  const { locale } = useI18n();
+  const copy = getReasoningPageContent(locale).capability;
 
   return (
     <article
       className="content-card h-full"
-      title="Ativada automaticamente quando a Beatrice identifica essa necessidade na pergunta."
+      title={copy.automaticTitle}
     >
       <div className="mb-3 flex items-start gap-3">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
@@ -374,22 +516,25 @@ function SkillCard({ capability }: { capability: CapabilityDefinition }) {
         <div className="min-w-0">
           <h3 className="font-serif text-base font-semibold text-white">{capability.name}</h3>
           <p className="mt-1 inline-flex rounded-full border border-primary/15 bg-primary/[0.06] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-primary">
-            Auto · Detectada por intenção
+            {copy.automaticBadge}
           </p>
         </div>
       </div>
 
       <p className="mb-3 text-sm leading-6 text-slate-400">{capability.description}</p>
-      <CapabilityField label="Ativada quando" value={capability.activation} />
-      <CapabilityField label="Saída esperada" value={capability.output} />
-      <CapabilityField label="Pode combinar com" value={capability.combinesWith} />
-      <CapabilityField label="Evidência RAG" value={capability.ragEvidence} />
+      <CapabilityField label={copy.activatedWhen} value={capability.activation} />
+      <CapabilityField label={copy.expectedOutput} value={capability.output} />
+      <CapabilityField label={copy.combinesWith} value={capability.combinesWith} />
+      <CapabilityField label={copy.ragEvidence} value={capability.ragEvidence} />
     </article>
   );
 }
 
 function CommandCard({ capability }: { capability: CapabilityDefinition }) {
   const Icon = CAPABILITY_ICONS[capability.id] ?? Wrench;
+  const { locale } = useI18n();
+  const pageCopy = getReasoningPageContent(locale);
+  const copy = pageCopy.capability;
   const isOperational = capability.type === "Ação operacional";
   const accent = isOperational ? "text-primary" : "text-secondary";
   const badgeClass = isOperational
@@ -399,7 +544,7 @@ function CommandCard({ capability }: { capability: CapabilityDefinition }) {
   return (
     <article
       className="content-card h-full"
-      title="Acione manualmente no chat usando este comando."
+      title={copy.manualTitle}
     >
       <div className="mb-3 flex items-start gap-3">
         <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] ${accent}`}>
@@ -410,7 +555,7 @@ function CommandCard({ capability }: { capability: CapabilityDefinition }) {
             <h3 className="font-serif text-base font-semibold text-white">{capability.name}</h3>
             {capability.experimental ? (
               <span className="rounded-full border border-fuchsia-300/20 bg-fuchsia-300/[0.06] px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.14em] text-fuchsia-300">
-                Experimental
+                {copy.experimental}
               </span>
             ) : null}
           </div>
@@ -421,31 +566,24 @@ function CommandCard({ capability }: { capability: CapabilityDefinition }) {
       </div>
 
       <span className={`mb-3 inline-flex rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] ${badgeClass}`}>
-        {capability.type}
+        {isOperational ? pageCopy.commands.operational : pageCopy.commands.investigative}
       </span>
       <p className="mb-3 text-sm leading-6 text-slate-400">{capability.description}</p>
-      <CapabilityField label="Quando usar" value={capability.activation} />
-      <CapabilityField label="Entrada exemplo" value={capability.example} mono />
-      <CapabilityField label="Saída esperada" value={capability.output} />
-      <CapabilityField label="Evidência RAG" value={capability.ragEvidence} />
-      <CapabilityField label="Combina com habilidades" value={capability.combinesWith} />
+      <CapabilityField label={copy.whenToUse} value={capability.activation} />
+      <CapabilityField label={copy.exampleInput} value={capability.example} mono />
+      <CapabilityField label={copy.expectedOutput} value={capability.output} />
+      <CapabilityField label={copy.ragEvidence} value={capability.ragEvidence} />
+      <CapabilityField label={copy.combinesWithSkills} value={capability.combinesWith} />
       {capability.canonicalCommand ? (
-        <CapabilityField label="Contrato canônico" value={capability.canonicalCommand} mono />
+        <CapabilityField label={copy.canonicalContract} value={capability.canonicalCommand} mono />
       ) : null}
     </article>
   );
 }
 
 function CommandHowTo() {
-  const examples = [
-    '/enforce <Button color="red">Delete</Button>',
-    "/migrate LegacyDrawer → Drawer",
-    "/capture [cole uma discussão de PR ou decisão de produto]",
-    "/memory O que já foi decidido sobre o uso de modais em ações destrutivas?",
-    "/decision Por que usamos Toast em vez de Alert para feedback não bloqueante?",
-    "/perspectives Compare essa decisão do ponto de vista de design, frontend e QA.",
-    "/audit Mostre as fontes, lacunas e nível de confiança desta recomendação.",
-  ];
+  const { locale } = useI18n();
+  const copy = getReasoningPageContent(locale).commands;
 
   return (
     <div
@@ -458,18 +596,18 @@ function CommandHowTo() {
             <Wrench className="h-4 w-4" aria-hidden />
           </span>
           <div>
-            <h3 className="font-serif text-lg font-semibold text-white">Como acionar um comando</h3>
+            <h3 className="font-serif text-lg font-semibold text-white">{copy.howTitle}</h3>
             <p className="mt-1 text-sm leading-6 text-slate-300">
-              No chat da Beatrice, digite <code className="text-primary">/</code> e escolha um comando disponível. Depois, escreva a pergunta, o contexto ou o artefato que deseja analisar.
+              {copy.howBody}
             </p>
             <p className="mt-2 text-xs leading-5 text-slate-500">
-              Comandos funcionam como atalhos explícitos de raciocínio ou ação. Eles ajudam quando você quer controlar o tipo de resposta que a Beatrice deve produzir.
+              {copy.howHint}
             </p>
           </div>
         </div>
       </div>
       <div className="grid gap-px bg-white/[0.05] md:grid-cols-2">
-        {examples.map((example) => (
+        {copy.examples.map((example) => (
           <code key={example} className="bg-surface-container-highest/90 px-4 py-3 font-mono text-[10px] leading-5 text-primary/85">
             {example}
           </code>
@@ -480,10 +618,12 @@ function CommandHowTo() {
 }
 
 function CategoryLegend({
+  id,
   label,
   description,
   tone,
 }: {
+  id?: string;
   label: string;
   description: string;
   tone: "primary" | "secondary";
@@ -493,9 +633,9 @@ function CategoryLegend({
     : "border-secondary/15 bg-secondary/[0.05] text-secondary";
 
   return (
-    <div className={`rounded-xl border px-3 py-2 ${classes}`} title={description}>
-      <p className="text-[9px] font-bold uppercase tracking-[0.14em]">{label}</p>
-      <p className="mt-1 max-w-sm text-[10px] leading-4 text-slate-500">{description}</p>
+    <div id={id} className={`scroll-mt-28 rounded-xl border px-4 py-3 ${classes}`}>
+      <p className="text-[10px] font-bold uppercase tracking-[0.14em]">{label}</p>
+      <p className="mt-1.5 text-xs leading-5 text-slate-400">{description}</p>
     </div>
   );
 }
@@ -510,7 +650,7 @@ function CapabilityField({ label, value, mono = false }: { label: string; value:
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// SECTION 4 — Full reasoning pipeline (9 stages, expandable)
+// SECTION 5 : Full reasoning pipeline (9 stages, expandable)
 // Confidence calibration is internal to this section (not a separate tab).
 // ──────────────────────────────────────────────────────────────────────────
 
@@ -542,7 +682,7 @@ const PIPELINE: PipelineStage[] = [
     output: "{ retrieval_intent, response_intent, top_k, catalog_mode }",
     artefact: "prompts/intent_router.py · route_query",
     detail:
-      "Catalog mode is detected first (structural list queries). Otherwise command_mode overrides the intent. Otherwise a keyword-frequency vote across 7 intent vocabularies selects the highest-scoring intent — or 'general' if no signal.",
+      "Catalog mode is detected first (structural list queries). Otherwise command_mode overrides the intent. Otherwise a keyword-frequency vote across 7 intent vocabularies selects the highest-scoring intent : or 'general' if no signal.",
     group: "ingest",
   },
   {
@@ -602,7 +742,7 @@ const PIPELINE: PipelineStage[] = [
     output: "SSE 'sources' event before text",
     artefact: "server.py · streaming handler",
     detail:
-      "Source chips are emitted as the first SSE event — before the first text delta arrives. The frontend renders attribution as a first-class audit surface, not a post-hoc footnote.",
+      "Source chips are emitted as the first SSE event : before the first text delta arrives. The frontend renders attribution as a first-class audit surface, not a post-hoc footnote.",
     group: "explain",
   },
   {
@@ -628,32 +768,35 @@ function groupAccent(group: PipelineStage["group"]): string {
 
 function PipelineSection() {
   const [openStep, setOpenStep] = useState<number | null>(null);
+  const { locale } = useI18n();
+  const copy = getReasoningPageContent(locale).pipeline;
   return (
     <ZoneShell
-      eyebrow="Full pipeline"
-      title="Nine stages, end to end"
-      caption="Each stage takes a structured input, produces a structured output, and lives in a named codebase artifact. Click a stage to read its role. Confidence calibration (stage 9) is internal to the pipeline — not a separate section."
+      eyebrow={copy.eyebrow}
+      title={copy.title}
+      caption={copy.caption}
       icon={<Network className="h-3.5 w-3.5" aria-hidden />}
       variant="xai"
     >
       <ol className="space-y-2">
-        {PIPELINE.map((stage) => {
-          const isOpen = openStep === stage.step;
+        {copy.stages.map((stage, index) => {
+          const step = index + 1;
+          const isOpen = openStep === step;
           const accent = groupAccent(stage.group);
           return (
-            <li key={stage.step}>
+            <li key={stage.label}>
               <button
                 type="button"
-                onClick={() => setOpenStep(isOpen ? null : stage.step)}
+                onClick={() => setOpenStep(isOpen ? null : step)}
                 aria-expanded={isOpen}
-                className="w-full rounded-2xl border border-white/8 bg-white/[0.02] p-5 text-left transition-colors hover:bg-white/[0.04]"
+                className="focus-ring w-full rounded-2xl border border-white/8 bg-white/[0.02] p-5 text-left transition-colors hover:bg-white/[0.04]"
               >
                 <div className="flex items-start gap-4">
                   <div
                     className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border font-mono text-xs"
                     style={{ borderColor: accent, color: accent }}
                   >
-                    {String(stage.step).padStart(2, "0")}
+                    {String(step).padStart(2, "0")}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-baseline gap-3">
@@ -662,13 +805,13 @@ function PipelineSection() {
                         {stage.artefact}
                       </code>
                       <span className="text-[10px] uppercase tracking-widest" style={{ color: accent }}>
-                        {stage.group}
+                        {copy.groupLabels[stage.group]}
                       </span>
                     </div>
                     <div className="mt-2 grid gap-2 text-[11px] sm:grid-cols-[auto_1fr] sm:gap-x-4">
-                      <span className="text-slate-500">in:</span>
+                      <span className="text-slate-500">{copy.input}</span>
                       <span className="font-mono text-slate-400">{stage.input}</span>
-                      <span className="text-slate-500">out:</span>
+                      <span className="text-slate-500">{copy.output}</span>
                       <span className="font-mono text-slate-400">{stage.output}</span>
                     </div>
                     {isOpen ? (
@@ -700,6 +843,7 @@ function ZoneShell({
   icon,
   children,
   variant,
+  id,
 }: {
   eyebrow: string;
   title: string;
@@ -707,18 +851,17 @@ function ZoneShell({
   icon?: ReactNode;
   children: ReactNode;
   variant?: "xai";
+  id?: string;
 }) {
   return (
-    <section className={`content-section${variant === "xai" ? " content-section-xai" : ""}`}>
-      <header className="mb-4 flex items-baseline gap-3">
-        <span className="section-eyebrow">
-          {icon ?? <BrainCircuit className="h-3.5 w-3.5" aria-hidden />}
-          {eyebrow}
-        </span>
-      </header>
-      <h2 className="section-h2">{title}</h2>
-      {caption ? <p className="section-lead">{caption}</p> : null}
-      {children}
+    <section id={id} className={`content-section scroll-mt-28${variant === "xai" ? " content-section-xai" : ""}`}>
+      <SectionIntroHeader
+        description={caption}
+        eyebrow={eyebrow}
+        icon={icon}
+        title={title}
+      />
+      <div className="section-intro-body">{children}</div>
     </section>
   );
 }

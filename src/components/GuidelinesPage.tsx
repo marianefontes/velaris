@@ -1,5 +1,10 @@
+import { Compass } from "lucide-react";
 import { useI18n } from "../i18n/I18nProvider";
 import type { Locale } from "../i18n/translations";
+import {
+  FoundationSection,
+  FoundationSectionHero,
+} from "./ui/FoundationPrimitives";
 
 interface RuleItem {
   id: string;
@@ -249,7 +254,7 @@ function getGuidelinesContent(locale: Locale) {
       rulesLabel: "Rules",
       voiceTitle: "Tone Calibration",
       toneExamplesTitle: "Writing Examples",
-      reviewEyebrow: "Aetheris review",
+      reviewEyebrow: "Velaris review",
       reviewTitle: "Guideline Compliance Report",
       reviewBadge: "92% aligned",
       reviewStats: [
@@ -503,7 +508,7 @@ function getGuidelinesContent(locale: Locale) {
     rulesLabel: isPtPt ? "Regras" : "Regras",
     voiceTitle: isPtPt ? "Calibração de Tom" : "Calibração de Tom",
     toneExamplesTitle: isPtPt ? "Exemplos de Escrita" : "Exemplos de Escrita",
-    reviewEyebrow: "Aetheris review",
+    reviewEyebrow: "Velaris review",
     reviewTitle: isPtPt ? "Relatório de Conformidade" : "Relatório de Conformidade",
     reviewBadge: isPtPt ? "92% alinhado" : "92% alinhado",
     reviewStats: [
@@ -1004,15 +1009,19 @@ export function GuidelinesPage() {
   const isPtPt = locale === "pt-PT";
   const copy = {
     documentLabel: isEnglish
-      ? "Aetheris guidelines guide"
+      ? "Velaris guidelines guide"
       : isPtPt
-        ? "Guia de Diretrizes do Aetheris"
-        : "Guia de Diretrizes do Aetheris",
+        ? "Guia de Diretrizes do Velaris"
+        : "Guia de Diretrizes do Velaris",
     pillar: isEnglish ? "Pillar" : "Pilar",
     rules: isEnglish ? "rules" : "regras",
     caseStudy: isEnglish ? "In practice" : "Na prática",
     before: isEnglish ? "Before" : "Antes",
     after: isEnglish ? "After" : "Depois",
+    noteLabel: isEnglish ? "System criterion" : "Critério do sistema",
+    note: isEnglish
+      ? "Product intent becomes credible when it produces observable, repeatable decisions."
+      : "A intenção do produto ganha credibilidade quando produz decisões observáveis e repetíveis.",
     closingTitle: isEnglish ? "A system is what it repeatedly chooses." : "Um sistema é aquilo que escolhe repetidamente.",
     closingBody: isEnglish
       ? "These guidelines turn product intent into observable decisions. They are not decoration around the system. They are the standard the system must answer to."
@@ -1022,64 +1031,27 @@ export function GuidelinesPage() {
   };
 
   return (
-    <main className="overflow-hidden bg-surface-immersive text-[#f7f3fa]">
-      <section className="relative isolate min-h-[360px] border-b border-white/[0.08]">
-        <div className="absolute inset-0 -z-20">
-          <img
-            src="/manifesto-portal.webp"
-            alt=""
-            aria-hidden="true"
-            className="ml-auto h-full w-[52%] object-cover object-center opacity-55"
-          />
-        </div>
-        <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(9,9,13,1)_0%,rgba(9,9,13,0.97)_42%,rgba(9,9,13,0.45)_74%,rgba(9,9,13,0.7)_100%)]" />
-        <div className="absolute inset-x-0 bottom-0 -z-10 h-24 bg-gradient-to-t from-[#09090d] to-transparent" />
+    <div className="foundation-page">
+      <FoundationSectionHero
+        description={content.versionText}
+        eyebrow={copy.documentLabel}
+        icon={Compass}
+        metrics={content.stats.map(([label, value]) => ({ label, value }))}
+        note={copy.note}
+        noteLabel={copy.noteLabel}
+        titleAccent={content.heroAccent}
+        titleLead={content.heroTitle}
+      />
 
-        <div className="mx-auto flex min-h-[360px] w-full max-w-[1280px] flex-col justify-center px-6 py-5 sm:px-10 lg:px-10">
-          <div className="max-w-[640px]">
-            <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.28em] text-[#b9a3dc]">
-              {copy.documentLabel}
-            </p>
-            <h1 className="tracking-[-0.045em]">
-              <span className="block text-[2.5rem] font-semibold leading-[0.98] text-[#f7f3fa] sm:text-[3rem] lg:text-[3.5rem]">
-                {content.heroTitle}
-              </span>
-              <span className="mt-1 block text-[3.25rem] font-black leading-[0.88] text-[#c8a7ff] sm:text-[3.75rem] lg:text-[4.5rem]">
-                {content.heroAccent}
-              </span>
-            </h1>
-            <p className="mt-4 max-w-[600px] text-base leading-6 text-[#c1b9ca]">
-              {content.versionText}
-            </p>
-
-            <dl className="mt-5 grid max-w-[580px] grid-cols-3 border-y border-white/[0.1]">
-              {content.stats.map(([label, value], index) => (
-                <div
-                  key={label}
-                  className={`py-3 ${index > 0 ? "border-l border-white/[0.1] pl-5" : ""}`}
-                >
-                  <dd className="text-2xl font-semibold tracking-[-0.04em] text-[#f7f3fa]">
-                    {value}
-                  </dd>
-                  <dt className="mt-1.5 text-[9px] font-semibold uppercase tracking-[0.22em] text-[#8e8799]">
-                    {label}
-                  </dt>
-                </div>
-              ))}
-            </dl>
-          </div>
-        </div>
-      </section>
-
-      <div className="mx-auto w-full max-w-[1280px] px-6 sm:px-10 lg:px-10">
+      <div className="foundation-content-shell">
         {content.pillars.map((pillar, pillarIndex) => {
           const pillarNumber = String(pillarIndex + 1).padStart(2, "0");
 
           return (
-            <section
+            <FoundationSection
               key={pillar.id}
               aria-labelledby={`pillar-${pillar.id}`}
-              className="relative border-b border-white/[0.08] py-12 sm:py-14 lg:py-16"
+              className="relative"
             >
               <span
                 aria-hidden="true"
@@ -1122,7 +1094,7 @@ export function GuidelinesPage() {
                           {formattedPrinciple}
                         </p>
                         <div className="max-w-[800px]">
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#777181]">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#a59eaa]">
                             {content.principleLabel}
                           </p>
                           <h3
@@ -1135,7 +1107,7 @@ export function GuidelinesPage() {
                             {principle.description}
                           </p>
                         </div>
-                        <p className="pt-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#777181]">
+                        <p className="pt-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#a59eaa]">
                           {principle.rules.length} {copy.rules}
                         </p>
                       </header>
@@ -1157,7 +1129,7 @@ export function GuidelinesPage() {
                                 {getRuleNote(locale, rule.id)}
                               </p>
                             </div>
-                            <p className="self-start text-[9px] font-semibold uppercase tracking-[0.22em] text-[#66606c] sm:col-start-2 lg:col-start-auto lg:text-right">
+                            <p className="self-start text-[10px] font-semibold uppercase tracking-[0.2em] text-[#9b94a1] sm:col-start-2 lg:col-start-auto lg:text-right">
                               {pillar.title}
                             </p>
                           </li>
@@ -1175,7 +1147,7 @@ export function GuidelinesPage() {
                         </header>
                         <div className="grid md:grid-cols-2">
                           <div className="p-5 sm:p-6 md:border-r md:border-white/[0.08]">
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.26em] text-[#716b77]">
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#a39ca8]">
                               {copy.before}
                             </p>
                             <h4 className="mt-4 max-w-[520px] text-lg font-semibold leading-tight tracking-[-0.02em] text-[#c7c0cb] sm:text-xl">
@@ -1202,15 +1174,15 @@ export function GuidelinesPage() {
                   );
                 })}
               </div>
-            </section>
+            </FoundationSection>
           );
         })}
 
-        <footer className="py-20 sm:py-24 lg:py-28">
+        <footer className="border-t border-white/[0.08] py-14 sm:py-16 lg:py-20">
           <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#8f75b7]">
             {content.version}
           </p>
-          <h2 className="mt-6 max-w-[880px] text-[2.75rem] font-semibold leading-[0.98] tracking-[-0.045em] text-[#f7f3fa] sm:text-[3.5rem] lg:text-[4.5rem]">
+          <h2 className="mt-5 max-w-[880px] text-[2.25rem] font-semibold leading-[1.02] tracking-[-0.04em] text-[#f7f3fa] sm:text-[2.75rem] lg:text-[3.25rem]">
             {copy.closingTitle}
           </h2>
           <p className="mt-6 max-w-[700px] text-base leading-7 text-[#aaa3b3]">
@@ -1218,6 +1190,6 @@ export function GuidelinesPage() {
           </p>
         </footer>
       </div>
-    </main>
+    </div>
   );
 }

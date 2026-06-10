@@ -1,4 +1,4 @@
-// ||| Types for the /comparison experience — Beatrice vs a generic LLM.
+// ||| Types for the /comparison experience: Abraxos vs a generic LLM.
 
 export interface ComparisonSource {
   title: string;
@@ -10,8 +10,8 @@ export interface BeatriceComparisonResult {
   answer: string;
   intent?: string;
   sources: ComparisonSource[];
-  // 0..100, derived from retrieval similarity. null when no sources were returned.
-  confidence: number | null;
+  // 0..100 mean evidence similarity. This is retrieval relevance, not answer confidence.
+  evidenceSimilarity: number | null;
   engine?: string | null;
 }
 

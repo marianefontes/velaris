@@ -1,4 +1,4 @@
-// ||| EXTRACTED (Phase: nav refactor — safe extraction step)
+// ||| EXTRACTED (Phase: nav refactor : safe extraction step)
 // Source of truth: src/components/DashboardPage.tsx (inline "Current context"
 // filter block, original lines ~48-95). This is a faithful, prop-driven
 // extraction of the session-context chip row that the migration spec maps to
@@ -11,7 +11,7 @@
 import type { Locale } from "../../../i18n/translations";
 
 export interface CurrentContextPanelProps {
-  /** Active locale — drives the chip labels (matches DashboardPage behaviour). */
+  /** Active locale : drives the chip labels (matches DashboardPage behaviour). */
   locale: Locale;
   /** Currently selected context chip. */
   activeFilter: string;
@@ -25,7 +25,7 @@ export interface CurrentContextPanelProps {
   filters?: string[];
 }
 
-/** Localized default chips — verbatim from the original DashboardPage logic. */
+/** Localized default chips : verbatim from the original DashboardPage logic. */
 export function getDefaultContextFilters(locale: Locale): string[] {
   return locale === "en-US"
     ? ["Current context", "Document base", "UX evaluation"]

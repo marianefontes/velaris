@@ -1,10 +1,11 @@
-import { ShieldCheck, Sparkles } from "lucide-react";
+import { ChevronDown, FileText, ShieldCheck, Sparkles } from "lucide-react";
+import { useId, useState } from "react";
 import { MarkdownRenderer } from "../../beatrice/components/primitives";
 import { useI18n } from "../../i18n/I18nProvider";
 import type { BeatriceComparisonResult, GenericComparisonResult } from "../../types/comparison";
 
-// ||| One side of the comparison. The Beatrice variant exposes its XAI surface
-// (intent, sources, confidence); the generic variant deliberately shows none of
+// ||| One side of the comparison. The Abraxos variant exposes its XAI surface
+// (intent, sources, evidence similarity); the generic variant shows none of
 // it, making the architectural difference visible rather than asserted.
 
 function PanelLoading() {
@@ -14,6 +15,48 @@ function PanelLoading() {
       <div className="h-3 w-full animate-pulse rounded bg-white/10" />
       <div className="h-3 w-5/6 animate-pulse rounded bg-white/10" />
       <div className="h-3 w-2/3 animate-pulse rounded bg-white/10" />
+    </div>
+  );
+}
+
+function ComparisonSource({
+  similarity,
+  source,
+  title,
+}: {
+  similarity: number;
+  source: string;
+  title: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const detailId = useId();
+
+  return (
+    <div
+      className="rounded-xl border border-primary/20 bg-primary/[0.06]"
+      onKeyDown={(event) => {
+        if (event.key !== "Escape" || !open) return;
+        event.preventDefault();
+        setOpen(false);
+      }}
+    >
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={detailId}
+        onClick={() => setOpen((current) => !current)}
+        className="focus-ring flex min-h-11 w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-semibold text-primary"
+      >
+        <FileText aria-hidden="true" className="h-4 w-4 shrink-0" />
+        <span className="min-w-0 flex-1 truncate">{title || source}</span>
+        <span className="text-[11px] tabular-nums">{similarity}%</span>
+        <ChevronDown aria-hidden="true" className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div id={detailId} className="border-t border-primary/15 px-3 py-2.5">
+          <p className="break-words font-mono text-[11px] leading-5 text-slate-300">{source}</p>
+        </div>
+      )}
     </div>
   );
 }
@@ -38,7 +81,7 @@ export function BeatriceAnswerPanel({
             <Sparkles className="h-4 w-4" aria-hidden />
           </span>
           <div>
-            <p className="text-sm font-bold text-white">Beatrice</p>
+            <p className="text-sm font-bold text-white">Abraxos</p>
             <p className="text-[10px] uppercase tracking-widest text-primary/70">{t("pages.comparison.beatrice.badge")}</p>
           </div>
         </div>
@@ -57,28 +100,26 @@ export function BeatriceAnswerPanel({
         ) : null}
       </div>
 
-      {/* ||| XAI footer — sources + calibrated confidence, with graceful fallback. */}
+      {/* ||| XAI footer: sources and retrieval relevance, with graceful fallback. */}
       {result && (
         <footer className="mt-4 border-t border-white/[0.06] pt-3">
-          {result.confidence !== null && (
+          {result.evidenceSimilarity !== null && (
             <div className="mb-2 flex items-center gap-2 text-[11px] text-slate-400">
-              <ShieldCheck className="h-3.5 w-3.5 text-emerald-300/80" aria-hidden />
-              {t("pages.comparison.beatrice.confidenceLabel")}
-              <span className="font-semibold text-emerald-300/90">{result.confidence}%</span>
-              <span className="text-slate-600">· {t("pages.comparison.beatrice.confidenceNote")}</span>
+              <ShieldCheck className="h-3.5 w-3.5 text-success/80" aria-hidden />
+              {t("pages.comparison.beatrice.evidenceSimilarityLabel")}
+              <span className="font-semibold text-technical-number">{result.evidenceSimilarity}%</span>
+              <span className="text-slate-600">· {t("pages.comparison.beatrice.evidenceSimilarityNote")}</span>
             </div>
           )}
           {result.sources.length > 0 ? (
-            <div className="flex flex-wrap gap-1.5">
+            <div className="space-y-2">
               {result.sources.map((source, index) => (
-                <span
+                <ComparisonSource
                   key={`${source.title}-${index}`}
-                  title={`${source.source} · ${Math.round(source.similarity * 100)}% similarity`}
-                  className="flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-[10px] font-semibold text-primary"
-                >
-                  <span className="h-1.5 w-1.5 rounded-full bg-primary opacity-70" />
-                  {source.title || source.source}
-                </span>
+                  similarity={Math.round(source.similarity * 100)}
+                  source={source.source}
+                  title={source.title}
+                />
               ))}
             </div>
           ) : (

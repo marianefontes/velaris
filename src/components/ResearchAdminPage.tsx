@@ -137,7 +137,7 @@ export function ResearchAdminPage() {
       <main className="mx-auto max-w-[1120px]">
         <header className="mb-10 border-b border-white/[0.07] pb-8">
           <div className="mb-4 flex items-center gap-3">
-            <img src="/aetheris.png" alt="Aetheris" className="h-9 w-9 object-contain" />
+            <img src="/aetheris.png" alt="Velaris" width="1536" height="1024" className="h-9 w-9 object-contain" />
             <span className="text-[10px] font-bold uppercase tracking-[0.26em] text-primary/70">Research console</span>
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">Convites da avaliação acadêmica</h1>
@@ -204,8 +204,8 @@ export function ResearchAdminPage() {
             </form>
 
             {generatedLink ? (
-              <div className="mt-5 rounded-xl border border-emerald-300/20 bg-emerald-300/[0.04] p-4">
-                <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-emerald-300">Link criado</p>
+              <div className="mt-5 rounded-xl border border-success/20 bg-success/[0.04] p-4">
+                <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-success">Link criado</p>
                 <p className="break-all font-mono text-[11px] leading-5 text-slate-300">{generatedLink}</p>
                 <button onClick={copyLink} type="button" className="mt-3 inline-flex items-center gap-2 text-xs font-semibold text-primary">
                   {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
@@ -258,7 +258,7 @@ export function ResearchAdminPage() {
                         <span className="font-mono text-[10px] text-slate-600">{invite.event_count ?? 0} eventos</span>
                         <span className={`rounded-full border px-2 py-1 text-[9px] font-bold uppercase tracking-widest ${
                           invite.status === "completed"
-                            ? "border-emerald-300/25 text-emerald-300"
+                            ? "border-success/25 text-success"
                             : invite.status === "started"
                               ? "border-primary/25 text-primary"
                               : "border-white/10 text-slate-500"

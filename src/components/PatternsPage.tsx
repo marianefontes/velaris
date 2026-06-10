@@ -15,6 +15,11 @@ import {
 } from "lucide-react";
 import { useI18n } from "../i18n/I18nProvider";
 import type { Locale } from "../i18n/translations";
+import {
+  FoundationSection,
+  FoundationSectionHeader,
+  FoundationSectionHero,
+} from "./ui/FoundationPrimitives";
 
 interface HighlightStat {
   label: string;
@@ -47,7 +52,7 @@ function getPatternsContent(locale: Locale) {
       heroTitle: "Patterns",
       heroAccent: "Library",
       heroInsight: {
-        eyebrow: "Aetheris framing",
+        eyebrow: "Velaris framing",
         text: "High-level interaction blueprints designed for complex workflows. Every pattern is optimized for assisted navigation and human cognitive load reduction.",
       } satisfies HeroInsight,
       stats: [
@@ -63,7 +68,7 @@ function getPatternsContent(locale: Locale) {
       guideEyebrow: "Reading model",
       guideTitle: "How to read this library",
       guideText:
-        "Structure describes arrangement. Logic explains the cognitive mechanism. Context identifies fit, while contraindications and trade-offs expose the boundaries of the decision. Each insight closes the pattern with an Aetheris principle.",
+        "Structure describes arrangement. Logic explains the cognitive mechanism. Context identifies fit, while contraindications and trade-offs expose the boundaries of the decision. Each insight closes the pattern with a Velaris principle.",
       foundationalLabel: "Foundational pattern",
       complementaryLabel: "Complementary pattern",
       labels: {
@@ -72,7 +77,7 @@ function getPatternsContent(locale: Locale) {
         context: "Context of Use",
         whenNotToUse: "When Not to Use",
         tradeOffs: "Trade-offs",
-        insight: "Aetheris Insight",
+        insight: "Velaris Insight",
       },
       primaryPatterns: [
         {
@@ -262,7 +267,7 @@ function getPatternsContent(locale: Locale) {
           icon: ArrowRightLeft,
         },
       ] satisfies PatternDefinition[],
-      footerEyebrow: "Aetheris Architecture v4.2",
+      footerEyebrow: "Velaris Architecture v4.2",
       footerText:
         "The best interface is a mental model made visible. We do not build buttons; we build environments for thought.",
       footerAccent: "environments for thought",
@@ -276,10 +281,10 @@ function getPatternsContent(locale: Locale) {
     heroTitle: isPtPt ? "Biblioteca de" : "Biblioteca de",
     heroAccent: isPtPt ? "Padrões" : "Padrões",
     heroInsight: {
-      eyebrow: "Enquadramento Aetheris",
+      eyebrow: "Enquadramento Velaris",
       text: isPtPt
-        ? "Blueprints de interação de alto nível concebidos para workflows complexos. Cada padrão é otimizado para navegação assistida e redução da carga cognitiva humana."
-        : "Blueprints de interação de alto nível pensados para fluxos complexos. Cada padrão é otimizado para navegação assistida e redução da carga cognitiva humana.",
+        ? "Modelos estruturais de interação concebidos para fluxos complexos. Cada padrão é otimizado para navegação assistida e redução da carga cognitiva humana."
+        : "Modelos estruturais de interação pensados para fluxos complexos. Cada padrão é otimizado para navegação assistida e redução da carga cognitiva humana.",
     } satisfies HeroInsight,
     stats: [
       { label: "Padrões", value: "11" },
@@ -295,8 +300,8 @@ function getPatternsContent(locale: Locale) {
     guideEyebrow: "Modelo de leitura",
     guideTitle: isPtPt ? "Como ler esta biblioteca" : "Como ler esta biblioteca",
     guideText: isPtPt
-      ? "A estrutura descreve a composição. A lógica explica o mecanismo cognitivo. O contexto identifica a adequação, enquanto contraindicações e trade-offs expõem os limites da decisão. Cada insight encerra o padrão com um princípio Aetheris."
-      : "A estrutura descreve a composição. A lógica explica o mecanismo cognitivo. O contexto identifica a adequação, enquanto contraindicações e trade-offs expõem os limites da decisão. Cada insight encerra o padrão com um princípio Aetheris.",
+      ? "A estrutura descreve a composição. A lógica explica o mecanismo cognitivo. O contexto identifica a adequação, enquanto contraindicações e trade-offs expõem os limites da decisão. Cada insight encerra o padrão com um princípio Velaris."
+      : "A estrutura descreve a composição. A lógica explica o mecanismo cognitivo. O contexto identifica a adequação, enquanto contraindicações e trade-offs expõem os limites da decisão. Cada insight encerra o padrão com um princípio Velaris.",
     foundationalLabel: "Padrão fundamental",
     complementaryLabel: "Padrão complementar",
     labels: {
@@ -304,8 +309,8 @@ function getPatternsContent(locale: Locale) {
       logic: isPtPt ? "Lógica" : "Lógica",
       context: isPtPt ? "Contexto de uso" : "Contexto de uso",
       whenNotToUse: isPtPt ? "Quando não usar" : "Quando não usar",
-      tradeOffs: isPtPt ? "Trade-offs" : "Trade-offs",
-      insight: "Aetheris Insight",
+      tradeOffs: isPtPt ? "Decisões de equilíbrio" : "Decisões de equilíbrio",
+      insight: "Velaris Insight",
     },
     primaryPatterns: [
         {
@@ -549,23 +554,12 @@ function getPatternsContent(locale: Locale) {
         icon: ArrowRightLeft,
       },
     ] satisfies PatternDefinition[],
-    footerEyebrow: "Aetheris Architecture v4.2",
+    footerEyebrow: "Velaris Architecture v4.2",
     footerText: isPtPt
       ? "A melhor interface é um modelo mental tornado visível. Não construímos botões; construímos ambientes para pensar."
       : "A melhor interface é um modelo mental tornado visível. Não construímos botões; construímos ambientes para pensar.",
     footerAccent: isPtPt ? "ambientes para pensar" : "ambientes para pensar",
   };
-}
-
-function PatternMetric({ label, value }: HighlightStat) {
-  return (
-    <div className="min-w-0 border-l border-white/[0.09] px-4 py-4 first:border-l-0 sm:px-5">
-      <dd className="text-2xl font-semibold tracking-[-0.04em] text-[#f5f1f7]">{value}</dd>
-      <dt className="mt-1.5 text-[9px] font-semibold uppercase tracking-[0.2em] text-[#77717d]">
-        {label}
-      </dt>
-    </div>
-  );
 }
 
 function PatternField({
@@ -584,8 +578,8 @@ function PatternField({
     tradeoff: "border-warning/[0.14] bg-warning/[0.025]",
   };
   const labelClasses = {
-    default: "text-[#716a77]",
-    context: "text-[#82798a]",
+    default: "text-[#aaa2af]",
+    context: "text-[#b0a8b6]",
     boundary: "text-[#c78491]",
     tradeoff: "text-[#aa8467]",
   };
@@ -593,7 +587,7 @@ function PatternField({
   return (
     <section className={`border p-5 sm:p-6 ${toneClasses[tone]}`}>
       <h3
-        className={`text-[9px] font-semibold uppercase tracking-[0.22em] ${labelClasses[tone]}`}
+        className={`text-[10px] font-semibold uppercase tracking-[0.18em] ${labelClasses[tone]}`}
       >
         {label}
       </h3>
@@ -605,7 +599,7 @@ function PatternField({
 function PatternInsight({ label, text }: { label: string; text: string }) {
   return (
     <section className="border-y border-[#b28af2]/[0.14] bg-[#b28af2]/[0.025] px-5 py-5 sm:px-6">
-      <h3 className="text-[9px] font-semibold uppercase tracking-[0.22em] text-[#a98ad8]">
+      <h3 className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#c8acef]">
         {label}
       </h3>
       <p className="mt-3 max-w-[880px] text-sm font-medium italic leading-7 text-[#d1c2df]">
@@ -648,7 +642,7 @@ function PatternChapter({
       {foundational ? (
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -inset-x-6 inset-y-4 -z-10 rounded-[24px] bg-[radial-gradient(circle_at_86%_8%,rgba(178,138,242,0.075),transparent_32%),rgba(255,255,255,0.008)] sm:-inset-x-8"
+          className="pointer-events-none absolute inset-x-0 inset-y-4 -z-10 rounded-[24px] bg-[radial-gradient(circle_at_86%_8%,rgba(178,138,242,0.075),transparent_32%),rgba(255,255,255,0.008)] lg:-inset-x-8"
         />
       ) : null}
 
@@ -660,7 +654,7 @@ function PatternChapter({
         <div className="min-w-0">
           <header className="grid gap-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
             <div>
-              <p className="text-[9px] font-semibold uppercase tracking-[0.24em] text-[#85768f]">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#b3a5bc]">
                 {pattern.category ?? pattern.tag ?? (foundational ? foundationalLabel : complementaryLabel)}
               </p>
               <h2 className="mt-2 text-[1.625rem] font-semibold leading-[1.05] tracking-[-0.03em] text-[#f5f1f7] sm:text-[2rem]">
@@ -694,7 +688,7 @@ function PatternChapter({
                         : ""
                   }`}
                 >
-                  <h3 className="text-[9px] font-semibold uppercase tracking-[0.22em] text-[#716a77]">
+                  <h3 className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#aaa2af]">
                     {field.label}
                   </h3>
                   <p className="mt-3 max-w-[650px] text-sm leading-7 text-[#aaa2af]">
@@ -756,7 +750,7 @@ function PatternClosing({
 
   return (
     <footer className="border-t border-white/[0.09] py-16 sm:py-20">
-      <p className="text-[9px] font-semibold uppercase tracking-[0.25em] text-[#756c7c]">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#aaa2af]">
         {eyebrow}
       </p>
       <p className="mt-5 max-w-[900px] text-[2rem] font-light leading-[1.18] tracking-[-0.035em] text-[#eee9f1] sm:text-[2.5rem]">
@@ -774,69 +768,26 @@ export function PatternsPage() {
   const patterns = [...content.primaryPatterns, ...content.compactPatterns];
 
   return (
-    <article className="pb-20">
-      <header className="relative isolate overflow-hidden border-b border-white/[0.09] pb-10 pt-1">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 right-0 -z-20 hidden w-[62%] sm:block"
-        >
-          <img
-            src="/patterns-architecture.webp"
-            alt=""
-            className="h-full w-full object-cover object-right opacity-55"
-          />
-        </div>
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(9,9,13,1)_0%,rgba(9,9,13,0.98)_48%,rgba(9,9,13,0.72)_72%,rgba(9,9,13,0.48)_100%)]"
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-20 bg-gradient-to-b from-[#09090d] to-transparent"
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-28 bg-gradient-to-t from-[#09090d] to-transparent"
-        />
-        <div className="relative max-w-[820px]">
-          <div className="page-eyebrow">
-            <Filter className="h-3.5 w-3.5" aria-hidden />
-            {content.heroLabel}
-          </div>
-          <h1 className="text-[2.5rem] font-semibold leading-[0.98] tracking-[-0.045em] text-[#f5f1f7] sm:text-[3rem] lg:text-[3.5rem]">
-            {content.heroTitle}{" "}
-            <span className="text-[#c8a7ff]">{content.heroAccent}</span>
-          </h1>
-          <p className="mt-4 max-w-[700px] text-sm leading-6 text-[#aaa2af] sm:text-[15px]">
-            {content.heroInsight.text}
-          </p>
-        </div>
+    <article className="foundation-page">
+      <FoundationSectionHero
+        description={content.heroInsight.text}
+        eyebrow={content.heroLabel}
+        icon={Filter}
+        metrics={content.stats}
+        note={content.thesisText}
+        noteLabel={content.thesisEyebrow}
+        titleAccent={content.heroAccent}
+        titleLead={content.heroTitle}
+      />
 
-        <dl className="relative mt-8 grid grid-cols-2 border-y border-white/[0.09] sm:grid-cols-3 lg:grid-cols-5">
-          {content.stats.map((item) => (
-            <PatternMetric key={item.label} {...item} />
-          ))}
-        </dl>
-
-        <section className="relative mt-7 grid gap-3 md:grid-cols-[180px_minmax(0,1fr)] md:gap-8">
-          <p className="text-[9px] font-semibold uppercase tracking-[0.24em] text-[#85768f]">
-            {content.thesisEyebrow}
-          </p>
-          <p className="max-w-[780px] text-sm leading-7 text-[#aaa2af]">{content.thesisText}</p>
-        </section>
-      </header>
-
-      <section className="grid gap-5 border-b border-white/[0.09] py-9 md:grid-cols-[220px_minmax(0,1fr)] md:gap-10">
-        <div>
-          <p className="text-[9px] font-semibold uppercase tracking-[0.25em] text-[#8e779e]">
-            {content.guideEyebrow}
-          </p>
-          <h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-[#eee9f1]">
-            {content.guideTitle}
-          </h2>
-        </div>
-        <p className="max-w-[780px] text-sm leading-7 text-[#aaa2af]">{content.guideText}</p>
-      </section>
+      <div className="foundation-content-shell">
+      <FoundationSection>
+        <FoundationSectionHeader
+          aside={<p>{content.guideText}</p>}
+          eyebrow={content.guideEyebrow}
+          title={content.guideTitle}
+        />
+      </FoundationSection>
 
       <div>
         {patterns.map((pattern, index) => (
@@ -857,6 +808,7 @@ export function PatternsPage() {
         text={content.footerText}
         accent={content.footerAccent}
       />
+      </div>
     </article>
   );
 }

@@ -1,8 +1,13 @@
-// ||| /oracle — conversational oracle surface (Beatrice chat)
-// Aetheris home → /main
+// ||| /oracle: conversational surface for Abraxos
+// Velaris home → /main
 
 import { BeatriceChatPage } from "../beatrice/pages/BeatriceChatPage";
+import { BeatriceVisualFrame } from "./oracle/BeatriceVisualFrame";
 
 export function OraclePage() {
-  return <BeatriceChatPage />;
+  return (
+    <BeatriceVisualFrame>
+      <BeatriceChatPage />
+    </BeatriceVisualFrame>
+  );
 }

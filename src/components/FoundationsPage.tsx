@@ -15,6 +15,11 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { useI18n } from "../i18n/I18nProvider";
 import type { Locale } from "../i18n/translations";
+import {
+  FoundationSection,
+  FoundationSectionHeader,
+  FoundationSectionHero,
+} from "./ui/FoundationPrimitives";
 
 interface SummaryContract {
   title: string;
@@ -43,7 +48,7 @@ export const ACCESSIBILITY_CONTRACTS: AccessibilityContract[] = [
     id: "contrast-legibility",
     title: "Contraste e legibilidade",
     description:
-      "O Aetheris deve garantir leitura clara em superfícies escuras, translúcidas ou elevadas. Estados semânticos e níveis de confiança não dependem apenas da cor.",
+      "O Velaris deve garantir leitura clara em superfícies escuras, translúcidas ou elevadas. Estados semânticos e níveis de confiança não dependem apenas da cor.",
     requirements:
       "Manter contraste AA como base; distinguir text-primary, text-secondary, text-muted e text-disabled; validar texto sobre glass surfaces; combinar feedback com texto e ícone",
     appliesTo:
@@ -51,7 +56,7 @@ export const ACCESSIBILITY_CONTRACTS: AccessibilityContract[] = [
     tokenReferences:
       "text-primary, text-secondary, text-muted, text-disabled, feedback-error",
     ragRelation:
-      "Permite que a Beatrice avalie legibilidade, contraste e redundância semântica em recomendações de interface.",
+      "Permite que Abraxos avalie legibilidade, contraste e redundância semântica em recomendações de interface.",
   },
   {
     id: "focus-keyboard",
@@ -76,7 +81,7 @@ export const ACCESSIBILITY_CONTRACTS: AccessibilityContract[] = [
     appliesTo: "Button, Input, Select, Toggle, chips, badges e botões de ícone",
     tokenReferences: "target-size-min, space-2, space-3, space-4",
     ragRelation:
-      "Ajuda a Beatrice a identificar quando compactação visual cria risco de erro ou exclusão motora.",
+      "Ajuda Abraxos a identificar quando compactação visual cria risco de erro ou exclusão motora.",
   },
   {
     id: "accessible-states",
@@ -101,13 +106,13 @@ export const ACCESSIBILITY_CONTRACTS: AccessibilityContract[] = [
       "Formulários, tabelas, navegação, componentes de disclosure e superfícies XAI",
     tokenReferences: "text-primary, text-muted, feedback-error",
     ragRelation:
-      "Permite que fontes, evidências e confiança sejam explicadas textualmente em respostas e auditorias da Beatrice.",
+      "Permite que fontes, evidências e confiança sejam explicadas textualmente em respostas e auditorias do Abraxos.",
   },
   {
     id: "non-color-feedback",
     title: "Feedback não apenas por cor",
     description:
-      "O Aetheris não comunica significado crítico apenas por verde, amarelo ou vermelho. Cor reforça uma mensagem que também existe em texto, ícone ou estrutura.",
+      "O Velaris não comunica significado crítico apenas por verde, amarelo ou vermelho. Cor reforça uma mensagem que também existe em texto, ícone ou estrutura.",
     requirements:
       "Combinar success, warning, error e info com rótulo ou ícone; nomear o nível de confiança; identificar a origem da evidência; indicar conflitos e lacunas de auditoria",
     appliesTo: "Alert, Toast, Confidence Badge, Source Attribution e Audit Panel",
@@ -126,7 +131,7 @@ export const ACCESSIBILITY_CONTRACTS: AccessibilityContract[] = [
       "Modal/Dialog, Toast, Tooltip, Skeleton Loader, Command Palette e Audit Panel",
     tokenReferences: "motion-fast, motion-standard, motion-reduced",
     ragRelation:
-      "Ajuda a Beatrice a separar movimento funcional de ornamentação que aumenta carga cognitiva.",
+      "Ajuda Abraxos a separar movimento funcional de ornamentação que aumenta carga cognitiva.",
   },
 ];
 
@@ -135,7 +140,7 @@ const ACCESSIBILITY_CONTRACTS_EN: AccessibilityContract[] = [
     id: "contrast-legibility",
     title: "Contrast and legibility",
     description:
-      "Aetheris must remain readable across dark, translucent and elevated surfaces. Semantic states and confidence levels never rely on color alone.",
+      "Velaris must remain readable across dark, translucent and elevated surfaces. Semantic states and confidence levels never rely on color alone.",
     requirements:
       "Maintain AA contrast as the baseline; distinguish text-primary, text-secondary, text-muted and text-disabled; validate copy over glass surfaces; pair feedback with text and icons",
     appliesTo:
@@ -143,7 +148,7 @@ const ACCESSIBILITY_CONTRACTS_EN: AccessibilityContract[] = [
     tokenReferences:
       "text-primary, text-secondary, text-muted, text-disabled, feedback-error",
     ragRelation:
-      "Lets Beatrice evaluate legibility, contrast and semantic redundancy in interface guidance.",
+      "Lets Abraxos evaluate legibility, contrast and semantic redundancy in interface guidance.",
   },
   {
     id: "focus-keyboard",
@@ -168,7 +173,7 @@ const ACCESSIBILITY_CONTRACTS_EN: AccessibilityContract[] = [
     appliesTo: "Button, Input, Select, Toggle, chips, badges and icon buttons",
     tokenReferences: "target-size-min, space-2, space-3, space-4",
     ragRelation:
-      "Helps Beatrice identify when visual compression introduces motor-access or error risk.",
+      "Helps Abraxos identify when visual compression introduces motor-access or error risk.",
   },
   {
     id: "accessible-states",
@@ -192,13 +197,13 @@ const ACCESSIBILITY_CONTRACTS_EN: AccessibilityContract[] = [
     appliesTo: "Forms, tables, navigation, disclosure components and XAI surfaces",
     tokenReferences: "text-primary, text-muted, feedback-error",
     ragRelation:
-      "Ensures sources, evidence and confidence can be communicated textually in Beatrice answers and audits.",
+      "Ensures sources, evidence and confidence can be communicated textually in Abraxos answers and audits.",
   },
   {
     id: "non-color-feedback",
     title: "Feedback beyond color",
     description:
-      "Aetheris never communicates critical meaning through green, yellow or red alone. Color reinforces a message that also exists in text, iconography or structure.",
+      "Velaris never communicates critical meaning through green, yellow or red alone. Color reinforces a message that also exists in text, iconography or structure.",
     requirements:
       "Pair success, warning, error and info with labels or icons; name confidence levels; identify evidence origins; surface audit conflicts and gaps",
     appliesTo: "Alert, Toast, Confidence Badge, Source Attribution and Audit Panel",
@@ -217,7 +222,7 @@ const ACCESSIBILITY_CONTRACTS_EN: AccessibilityContract[] = [
       "Modal/Dialog, Toast, Tooltip, Skeleton Loader, Command Palette and Audit Panel",
     tokenReferences: "motion-fast, motion-standard, motion-reduced",
     ragRelation:
-      "Helps Beatrice distinguish functional motion from ornament that increases cognitive load.",
+      "Helps Abraxos distinguish functional motion from ornament that increases cognitive load.",
   },
 ];
 
@@ -362,11 +367,11 @@ function getAccessibilityContent(locale: Locale) {
 
   if (isEnglish) {
     return {
-      eyebrow: "Aetheris accessibility guide",
+      eyebrow: "Velaris accessibility guide",
       titleLead: "Accessibility",
       titleAccent: "Guide",
       description:
-        "Accessibility in Aetheris is a transversal foundation, not a final adjustment. It defines the minimum criteria for components, patterns and Beatrice answers to remain readable, keyboard navigable, assistive-technology compatible and safe across contexts.",
+        "Accessibility in Velaris is a transversal foundation, not a final adjustment. It defines the minimum criteria for components, patterns and Abraxos answers to remain readable, keyboard navigable, assistive-technology compatible and safe across contexts.",
       secondary:
         "This section establishes contrast, focus, target size, state, feedback, motion and validation contracts before a component is considered ready for use.",
       contractLabel: "Readiness standard",
@@ -382,8 +387,10 @@ function getAccessibilityContent(locale: Locale) {
       checklistLabel: "Adoption gate",
       checklistTitle: "Accessible readiness checklist",
       checklistDescription:
-        "A component only enters Aetheris when these checks are documented and reproducible. The checklist is also indexed as evidence for Beatrice.",
+        "A component only enters Velaris when these checks are documented and reproducible. The checklist is also indexed as evidence for Abraxos.",
       checklistStatus: "10 required checks",
+      noteLabel: "System standard",
+      note: "Accessibility is a quality contract that crosses every product surface.",
       summaries: SUMMARY_EN,
       contracts: ACCESSIBILITY_CONTRACTS_EN,
       checklist: ACCESSIBILITY_READINESS_CHECKLIST_EN,
@@ -391,11 +398,11 @@ function getAccessibilityContent(locale: Locale) {
   }
 
   const copy = {
-    eyebrow: "Guia de Acessibilidade do Aetheris",
+    eyebrow: "Guia de Acessibilidade do Velaris",
     titleLead: "Guia de",
     titleAccent: "Acessibilidade",
     description:
-      "A acessibilidade no Aetheris é tratada como uma fundação transversal, não como um ajuste posterior. Ela define critérios mínimos para que componentes, padrões e respostas da Beatrice sejam legíveis, navegáveis por teclado, compreensíveis por tecnologias assistivas e seguros para diferentes contextos de uso.",
+      "A acessibilidade no Velaris é tratada como uma fundação transversal, não como um ajuste posterior. Ela define critérios mínimos para que componentes, padrões e respostas do Abraxos sejam legíveis, navegáveis por teclado, compreensíveis por tecnologias assistivas e seguros para diferentes contextos de uso.",
     secondary:
       "Esta seção estabelece contratos de contraste, foco, alvo mínimo, estado, feedback, movimento e validação antes que um componente seja considerado pronto para uso.",
     contractLabel: "Padrão de prontidão",
@@ -411,8 +418,10 @@ function getAccessibilityContent(locale: Locale) {
     checklistLabel: "Gate de adoção",
     checklistTitle: "Checklist de prontidão acessível",
     checklistDescription:
-      "Um componente só entra no Aetheris quando estas verificações estão documentadas e podem ser reproduzidas. A checklist também é indexada como evidência para a Beatrice.",
+      "Um componente só entra no Velaris quando estas verificações estão documentadas e podem ser reproduzidas. A checklist também é indexada como evidência para Abraxos.",
     checklistStatus: "10 verificações obrigatórias",
+    noteLabel: "Padrão do sistema",
+    note: "A acessibilidade é um contrato de qualidade que atravessa todas as superfícies do produto.",
     summaries: SUMMARY_PT,
     contracts: ACCESSIBILITY_CONTRACTS,
     checklist: ACCESSIBILITY_READINESS_CHECKLIST,
@@ -433,95 +442,53 @@ export function FoundationsPage() {
   const content = getAccessibilityContent(locale);
 
   return (
-    <main className="overflow-hidden bg-surface-immersive text-[#f7f3fa]">
-      <section className="relative isolate min-h-[360px] border-b border-white/[0.08]">
-        <div className="absolute inset-0 -z-20">
-          <img
-            src="/accessibility-hero.png"
-            alt=""
-            aria-hidden="true"
-            className="ml-auto h-full w-[52%] object-cover object-center opacity-70"
-          />
-        </div>
-        <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(9,9,13,1)_0%,rgba(9,9,13,0.97)_42%,rgba(9,9,13,0.45)_74%,rgba(9,9,13,0.7)_100%)]" />
-        <div className="absolute inset-x-0 bottom-0 -z-10 h-24 bg-gradient-to-t from-[#09090d] to-transparent" />
+    <div className="foundation-page">
+      <FoundationSectionHero
+        description={content.description}
+        eyebrow={content.eyebrow}
+        icon={Accessibility}
+        metrics={[
+          { label: content.sectionLabel, value: "7" },
+          { label: content.contractLabel, value: "10" },
+          { label: content.summaries[0].title, value: content.summaries[0].value },
+        ]}
+        note={content.note}
+        noteLabel={content.noteLabel}
+        titleAccent={content.titleAccent}
+        titleLead={content.titleLead}
+      />
 
-        <div className="mx-auto flex min-h-[360px] w-full max-w-[1280px] flex-col justify-center px-6 py-5 sm:px-10 lg:px-10">
-          <div className="max-w-[640px]">
-            <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.28em] text-[#b9a3dc]">
-              {content.eyebrow}
-            </p>
-            <h1 className="tracking-[-0.045em]">
-              <span className="block text-[2.5rem] font-semibold leading-[0.98] text-[#f7f3fa] sm:text-[3rem] lg:text-[3.5rem]">
-                {content.titleLead}
-              </span>
-              <span className="mt-1 block text-[3.25rem] font-black leading-[0.88] text-[#c8a7ff] sm:text-[3.75rem] lg:text-[4.5rem]">
-                {content.titleAccent}
-              </span>
-            </h1>
-            <p className="mt-4 max-w-[600px] text-base leading-6 text-[#c1b9ca]">
-              {content.description}
-            </p>
+      <div className="foundation-content-shell">
+      <FoundationSection aria-labelledby="accessibility-summary-title">
+        <FoundationSectionHeader
+          description={content.summaryDescription}
+          eyebrow={content.summaryLabel}
+          id="accessibility-summary-title"
+          title={content.summaryTitle}
+        />
 
-            <dl className="mt-5 grid max-w-[580px] grid-cols-3 border-y border-white/[0.1]">
-              {[
-                [content.sectionLabel, "7"],
-                [content.contractLabel, "10"],
-                [content.summaries[0].title, content.summaries[0].value],
-              ].map(([label, value], index) => (
-                <div
-                  key={label}
-                  className={`py-3 ${index > 0 ? "border-l border-white/[0.1] pl-5" : ""}`}
-                >
-                  <dd className="text-2xl font-semibold tracking-[-0.04em] text-[#f7f3fa]">
-                    {value}
-                  </dd>
-                  <dt className="mt-1.5 text-[9px] font-semibold uppercase tracking-[0.22em] text-[#8e8799]">
-                    {label}
-                  </dt>
-                </div>
-              ))}
-            </dl>
-          </div>
-        </div>
-      </section>
-
-      <div className="mx-auto w-full max-w-[1280px] space-y-8 px-6 py-10 sm:px-10 lg:px-10">
-      <section aria-labelledby="accessibility-summary-title">
-        <header className="mb-6 max-w-3xl">
-          <p className="section-eyebrow">{content.summaryLabel}</p>
-          <h2 id="accessibility-summary-title" className="text-3xl font-bold text-white">
-            {content.summaryTitle}
-          </h2>
-          <p className="mt-3 text-sm leading-7 text-on-surface-variant">
-            {content.summaryDescription}
-          </p>
-        </header>
-
-        <dl className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <dl className="foundation-summary-ledger">
           {content.summaries.map((item) => {
             const Icon = item.icon;
             return (
-              <div key={item.title} className="glass-card rounded-[24px] p-5">
-                <div className="flex items-center justify-between gap-3">
-                  <dt className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
-                    {item.title}
-                  </dt>
+              <div key={item.title} className="foundation-summary-item">
+                <dt className="foundation-summary-label">
+                  <span>{item.title}</span>
                   <Icon className="h-4 w-4 text-primary" aria-hidden />
-                </div>
-                <dd className="mt-5 text-2xl font-black tracking-tight text-white">
+                </dt>
+                <dd className="foundation-summary-value">
                   {item.value}
                 </dd>
-                <p className="mt-3 text-xs leading-6 text-on-surface-variant">
+                <dd className="foundation-summary-description">
                   {item.description}
-                </p>
+                </dd>
               </div>
             );
           })}
         </dl>
-      </section>
+      </FoundationSection>
 
-      <section
+      <FoundationSection
         aria-label={content.sectionLabel}
         className="grid items-start gap-5 lg:grid-cols-2"
       >
@@ -584,30 +551,24 @@ export function FoundationsPage() {
             </article>
           );
         })}
-      </section>
+      </FoundationSection>
 
-      <section
+      <FoundationSection
         aria-labelledby="accessibility-checklist-title"
-        className="xai-block rounded-[32px] p-7 sm:p-9"
+        className="border-b-0"
       >
-        <header className="grid gap-5 border-b border-white/[0.07] pb-7 lg:grid-cols-[1fr_auto] lg:items-end">
-          <div className="max-w-3xl">
-            <p className="section-eyebrow">{content.checklistLabel}</p>
-            <h2
-              id="accessibility-checklist-title"
-              className="text-3xl font-bold tracking-tight text-white"
-            >
-              {content.checklistTitle}
-            </h2>
-            <p className="mt-3 text-sm leading-7 text-on-surface-variant">
-              {content.checklistDescription}
-            </p>
-          </div>
-          <span className="signature-pill h-fit">
+        <FoundationSectionHeader
+          aside={
+            <span className="signature-pill h-fit">
             <BadgeCheck className="h-3.5 w-3.5" aria-hidden />
             {content.checklistStatus}
-          </span>
-        </header>
+            </span>
+          }
+          description={content.checklistDescription}
+          eyebrow={content.checklistLabel}
+          id="accessibility-checklist-title"
+          title={content.checklistTitle}
+        />
 
         <ol className="mt-7 grid gap-x-8 gap-y-3 md:grid-cols-2">
           {content.checklist.map((item, index) => (
@@ -622,8 +583,8 @@ export function FoundationsPage() {
             </li>
           ))}
         </ol>
-      </section>
+      </FoundationSection>
       </div>
-    </main>
+    </div>
   );
 }

@@ -1,10 +1,12 @@
-// ||| /foundations — guidelines, accessibility, patterns and tokens
+// ||| /foundations : guidelines, accessibility, patterns and tokens
 // Legacy focus IDs remain stable so existing links keep working.
 
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useRef } from "react";
+import type { KeyboardEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Accessibility, Compass, LayoutGrid, Palette, Shapes, Sparkles } from "lucide-react";
 import { useI18n } from "../i18n/I18nProvider";
+import { PageHero, PageShell } from "./ui/VisualPrimitives";
 
 const GuidelinesPage = lazy(() =>
   import("./GuidelinesPage").then((module) => ({ default: module.GuidelinesPage })),
@@ -39,50 +41,38 @@ export function FoundationsPage() {
   const focus = SECTIONS.some((section) => section.id === requestedFocus)
     ? requestedFocus
     : "manifesto";
-  const usesImmersiveBackground = focus === "manifesto" || focus === "patterns";
 
   const updateFocus = (next: FocusId) => {
+    const nextParams = new URLSearchParams(searchParams);
     if (next === "manifesto") {
-      searchParams.delete("focus");
+      nextParams.delete("focus");
     } else {
-      searchParams.set("focus", next);
+      nextParams.set("focus", next);
     }
-    setSearchParams(searchParams, { replace: true });
+    setSearchParams(nextParams, { replace: true });
   };
 
   return (
-    <div className={usesImmersiveBackground ? "bg-surface-immersive text-slate-200" : "text-slate-200"}>
-      <div className="mx-auto w-full max-w-[1280px] px-6 pt-10 lg:px-10">
+    <div className="min-w-0 bg-surface-immersive text-slate-200">
+      <PageShell className="pb-0">
         <Hero />
         <SectionNav active={focus} onChange={updateFocus} />
-      </div>
+      </PageShell>
 
-      {focus === "manifesto" ? (
-        <div className="mt-4">
-          <Suspense fallback={<SectionSkeleton immersive />}>
-            <GuidelinesPage />
-          </Suspense>
-        </div>
-      ) : focus === "foundations" ? (
-        <div className="mt-4">
-          <Suspense fallback={<SectionSkeleton immersive />}>
-            <AccessibilityPage />
-          </Suspense>
-        </div>
-      ) : (
-        <div className="mx-auto mt-10 w-full max-w-[1280px] px-6 pb-10 lg:px-10">
-          {focus === "patterns" ? (
-            <Suspense fallback={<SectionSkeleton />}>
-              <PatternsPage />
-            </Suspense>
-          ) : null}
-          {focus === "tokens" ? (
-            <Suspense fallback={<SectionSkeleton />}>
-              <TokensPage />
-            </Suspense>
-          ) : null}
-        </div>
-      )}
+      <div
+        id="foundation-panel"
+        role="tabpanel"
+        aria-labelledby={`foundation-tab-${focus}`}
+        className="foundation-tabpanel"
+        tabIndex={0}
+      >
+        <Suspense fallback={<SectionSkeleton />}>
+          {focus === "manifesto" ? <GuidelinesPage /> : null}
+          {focus === "foundations" ? <AccessibilityPage /> : null}
+          {focus === "patterns" ? <PatternsPage /> : null}
+          {focus === "tokens" ? <TokensPage /> : null}
+        </Suspense>
+      </div>
     </div>
   );
 }
@@ -91,40 +81,91 @@ function Hero() {
   const { t } = useI18n();
 
   return (
-    <header className="page-hero">
-      <div className="page-eyebrow">
-        <LayoutGrid className="h-3.5 w-3.5" aria-hidden />
-        {t("pages.foundations.eyebrow")}
-      </div>
-      <h1 className="page-h1">
-        {t("pages.foundations.hero.titleLead")}{" "}
-        <span className="page-h1-accent">{t("pages.foundations.hero.titleAccent")}</span>.
-      </h1>
-      <p className="max-w-3xl text-sm leading-relaxed text-slate-400">
-        {t("pages.foundations.hero.description")}
-      </p>
-    </header>
+    <PageHero
+      eyebrow={
+        <>
+          <LayoutGrid className="h-3.5 w-3.5" aria-hidden />
+          {t("pages.foundations.eyebrow")}
+        </>
+      }
+      title={
+        <>
+          {t("pages.foundations.hero.titleLead")}{" "}
+          <span className="page-h1-accent">{t("pages.foundations.hero.titleAccent")}</span>.
+        </>
+      }
+      description={t("pages.foundations.hero.description")}
+    />
   );
 }
 
 function SectionNav({ active, onChange }: { active: FocusId; onChange: (next: FocusId) => void }) {
   const { t } = useI18n();
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  useEffect(() => {
+    const activeIndex = SECTIONS.findIndex((section) => section.id === active);
+    const activeTab = tabRefs.current[activeIndex];
+    if (!activeTab) return;
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    activeTab.scrollIntoView({
+      behavior: reduceMotion ? "auto" : "smooth",
+      block: "nearest",
+      inline: "nearest",
+    });
+  }, [active]);
+
+  const focusTab = (index: number) => {
+    const normalizedIndex = (index + SECTIONS.length) % SECTIONS.length;
+    tabRefs.current[normalizedIndex]?.focus();
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    if (event.key === "ArrowRight") {
+      event.preventDefault();
+      focusTab(index + 1);
+    } else if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      focusTab(index - 1);
+    } else if (event.key === "Home") {
+      event.preventDefault();
+      focusTab(0);
+    } else if (event.key === "End") {
+      event.preventDefault();
+      focusTab(SECTIONS.length - 1);
+    }
+  };
 
   return (
-    <nav aria-label={t("pages.foundations.navigationLabel")} className="flex flex-wrap gap-2">
-      {SECTIONS.map((section) => {
+    <nav
+      aria-label={t("pages.foundations.navigationLabel")}
+      role="tablist"
+      aria-orientation="horizontal"
+      className="flex gap-2 overflow-x-auto xl:grid xl:grid-cols-4 xl:overflow-visible"
+    >
+      {SECTIONS.map((section, index) => {
         const Icon = section.icon;
         const isActive = section.id === active;
 
         return (
           <button
             key={section.id}
+            ref={(node) => {
+              tabRefs.current[index] = node;
+            }}
+            id={`foundation-tab-${section.id}`}
             type="button"
+            role="tab"
+            aria-controls="foundation-panel"
+            aria-selected={isActive}
+            data-state={isActive ? "active" : "inactive"}
+            tabIndex={isActive ? 0 : -1}
             onClick={() => onChange(section.id)}
-            aria-pressed={isActive}
-            className={isActive ? "section-tab-active" : "section-tab"}
+            onKeyDown={(event) => handleKeyDown(event, index)}
+            className={`${isActive ? "section-tab-active" : "section-tab"} shrink-0 xl:min-w-0 xl:flex-col xl:items-start xl:gap-1 xl:text-left`}
           >
-            <Icon className="h-3.5 w-3.5" aria-hidden />
+            <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden strokeWidth={1.5} />
             <span className="font-semibold">
               {t(`pages.foundations.sections.${section.id}.label`)}
             </span>
@@ -138,14 +179,14 @@ function SectionNav({ active, onChange }: { active: FocusId; onChange: (next: Fo
   );
 }
 
-function SectionSkeleton({ immersive = false }: { immersive?: boolean }) {
+function SectionSkeleton() {
   const { t } = useI18n();
 
   return (
-    <div className={immersive ? "flex min-h-screen items-center justify-center" : "section-skeleton"}>
+    <div role="status" aria-live="polite" className="section-skeleton mx-auto min-h-[22rem] max-w-[1280px]">
       <div className="section-skeleton-inner">
         <div className="mb-2 flex items-center justify-center gap-2">
-          <Sparkles className="h-3.5 w-3.5 animate-pulse text-primary" aria-hidden />
+          <Sparkles className="h-3.5 w-3.5 text-primary motion-safe:animate-pulse" aria-hidden />
           <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-400">
             {t("pages.foundations.loading")}
           </span>

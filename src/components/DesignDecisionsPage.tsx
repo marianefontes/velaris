@@ -44,7 +44,7 @@ function getDesignDecisionsContent(locale: Locale) {
       heroTitle: "Architectural",
       heroAccent: "Truths.",
       heroSubtitle: "Systemic resolution of foundational interface trade-offs",
-      live: "AETHERIS LIVE",
+      live: "VELARIS LIVE",
       liveText:
         "I am currently analyzing the intersection of task density and user focus for Rule 04: Modal vs. Drawer. Recommendation: favor Drawer for complex configurations that require persistent context.",
       ruleTag: "Rule 04",
@@ -53,7 +53,7 @@ function getDesignDecisionsContent(locale: Locale) {
       contextSignalsTitle: "Context Signals",
       tradeOffsTitle: "Trade-offs",
       viewMatrix: "VIEW FULL MATRIX",
-      inferenceCore: "Aetheris Inference Core",
+      inferenceCore: "Velaris Inference Core",
       analysisTitle: "Neural Architecture Analysis",
       analysisText:
         "The decision engine resolves design conflicts by weighting cognitive load, aesthetic integrity and interaction friction. Each recommendation exists to make a trade-off explicit, not to hide it.",
@@ -62,7 +62,7 @@ function getDesignDecisionsContent(locale: Locale) {
       whyTitle: "Why this page matters",
       whyText:
         "Design decisions turn the system from a static catalog into an explainable product. They capture not only what was chosen, but the reasoning, constraints and UX trade-offs behind each choice, which is exactly what the Oracle needs to communicate with trust.",
-      connectedText: "Connected to Beatrice Chat, Reasoning and System Evaluation",
+      connectedText: "Connected to Abraxos Chat, Reasoning and System Evaluation",
       contextSignals: [
         { text: "High Density Content", tone: "primary" },
         { text: "Persistent Context", tone: "primary" },
@@ -85,14 +85,14 @@ function getDesignDecisionsContent(locale: Locale) {
           rule: "Rule 12",
           title: "List vs. Bento",
           description:
-            "List layout excels for scannable, sequential data with consistent row density. Bento grid excels for heterogeneous content where size encodes priority — larger cells signal higher importance. Use List when users compare items row by row. Use Bento when visual hierarchy and content variety matter more than strict alignment. Trade-off: Bento requires more design effort per item; List is faster to implement but less expressive.",
+            "List layout excels for scannable, sequential data with consistent row density. Bento grid excels for heterogeneous content where size encodes priority : larger cells signal higher importance. Use List when users compare items row by row. Use Bento when visual hierarchy and content variety matter more than strict alignment. Trade-off: Bento requires more design effort per item; List is faster to implement but less expressive.",
           tags: ["Context: Data-heavy", "Context: Editorial"],
         },
         {
           rule: "Rule 15",
           title: "Haptic Feedback",
           description:
-            "Haptic feedback confirms high-stakes or irreversible actions on mobile — deletes, confirmations and state toggles. Reserve for moments where tactile confirmation reduces user anxiety about permanence. When to use: destructive actions, form submissions, binary state changes. When not to use: passive events, informational toasts, decorative interactions. Trade-off: overuse degrades trust and drains battery; underuse leaves users uncertain after consequential actions.",
+            "Haptic feedback confirms high-stakes or irreversible actions on mobile : deletes, confirmations and state toggles. Reserve for moments where tactile confirmation reduces user anxiety about permanence. When to use: destructive actions, form submissions, binary state changes. When not to use: passive events, informational toasts, decorative interactions. Trade-off: overuse degrades trust and drains battery; underuse leaves users uncertain after consequential actions.",
           tags: ["Context: Mobile", "Context: Confirmation"],
         },
       ] satisfies SupportingDecision[],
@@ -123,7 +123,7 @@ function getDesignDecisionsContent(locale: Locale) {
       heroTitle: "Verdades",
       heroAccent: "Arquitecturais.",
       heroSubtitle: "Resolução sistémica de trade-offs fundacionais de interface",
-      live: "AETHERIS LIVE",
+      live: "VELARIS LIVE",
       liveText:
         "Estou neste momento a analisar a intersecção entre densidade de tarefa e foco do utilizador para a Regra 04: Modal vs. Drawer. Recomendação: favorecer Drawer para configurações complexas que exigem contexto persistente.",
       ruleTag: "Regra 04",
@@ -132,7 +132,7 @@ function getDesignDecisionsContent(locale: Locale) {
       contextSignalsTitle: "Sinais de contexto",
       tradeOffsTitle: "Trade-offs",
       viewMatrix: "VER MATRIZ COMPLETA",
-      inferenceCore: "Núcleo de inferência Aetheris",
+      inferenceCore: "Núcleo de inferência Velaris",
       analysisTitle: "Análise da arquitectura neural",
       analysisText:
         "O motor de decisão resolve conflitos de design ponderando carga cognitiva, integridade estética e fricção de interação. Cada recomendação existe para tornar um trade-off explícito, não para o esconder.",
@@ -141,7 +141,7 @@ function getDesignDecisionsContent(locale: Locale) {
       whyTitle: "Porque esta página importa",
       whyText:
         "As decisões de design transformam o sistema de um catálogo estático num produto explicável. Capturam não apenas o que foi escolhido, mas o raciocínio, as restrições e os trade-offs de UX por trás de cada escolha, que é exactamente o que o Oráculo precisa de comunicar com confiança.",
-      connectedText: "Ligado ao Chat da Beatrice, Raciocínio e Avaliação do Sistema",
+      connectedText: "Ligado à consulta ao Abraxos, Raciocínio e Avaliação do Sistema",
       contextSignals: [
         { text: "Conteúdo de alta densidade", tone: "primary" },
         { text: "Contexto persistente", tone: "primary" },
@@ -201,7 +201,7 @@ function getDesignDecisionsContent(locale: Locale) {
     heroTitle: "Verdades",
     heroAccent: "Arquiteturais.",
     heroSubtitle: "Resolução sistêmica de trade-offs fundacionais de interface",
-    live: "AETHERIS LIVE",
+    live: "VELARIS LIVE",
     liveText:
       "Estou analisando neste momento a interseção entre densidade de tarefa e foco do usuário para a Regra 04: Modal vs. Drawer. Recomendação: favorecer Drawer para configurações complexas que exigem contexto persistente.",
     ruleTag: "Regra 04",
@@ -210,7 +210,7 @@ function getDesignDecisionsContent(locale: Locale) {
     contextSignalsTitle: "Sinais de contexto",
     tradeOffsTitle: "Trade-offs",
     viewMatrix: "VER MATRIZ COMPLETA",
-    inferenceCore: "Núcleo de inferência Aetheris",
+    inferenceCore: "Núcleo de inferência Velaris",
     analysisTitle: "Análise da arquitetura neural",
     analysisText:
       "O motor de decisão resolve conflitos de design ponderando carga cognitiva, integridade estética e fricção de interação. Cada recomendação existe para tornar um trade-off explícito, não para escondê-lo.",
@@ -219,7 +219,7 @@ function getDesignDecisionsContent(locale: Locale) {
     whyTitle: "Por que esta página importa",
     whyText:
       "As decisões de design transformam o sistema de um catálogo estático em um produto explicável. Elas capturam não apenas o que foi escolhido, mas o raciocínio, as restrições e os trade-offs de UX por trás de cada escolha, que é exatamente o que o Oráculo precisa comunicar com confiança.",
-    connectedText: "Conectado ao Chat da Beatrice, Raciocínio e Avaliação do Sistema",
+    connectedText: "Conectado à consulta ao Abraxos, Raciocínio e Avaliação do Sistema",
     contextSignals: [
       { text: "Conteúdo de alta densidade", tone: "primary" },
       { text: "Contexto persistente", tone: "primary" },

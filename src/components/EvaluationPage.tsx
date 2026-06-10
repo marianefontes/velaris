@@ -1,6 +1,6 @@
-// ||| Phase IB · /evaluation — academic validation surface
+// ||| Phase IB · /evaluation : academic validation surface
 // 4 final sections: methodology, instruments (all metrics aggregated),
-// baseline (Beatrice vs generic LLM, merged from ComparisonPage),
+// baseline (Abraxos vs generic LLM, merged from ComparisonPage),
 // status (explicit "pending collection" flag for all metrics).
 //
 // Rule: metrics shown as definition + target only.
@@ -9,6 +9,7 @@
 import type { ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useI18n } from "../i18n/I18nProvider";
+import { getEvaluationHeader } from "../i18n/pages/technicalPageHeaders";
 import {
   Activity,
   Beaker,
@@ -28,19 +29,66 @@ import {
   Workflow,
 } from "lucide-react";
 import { EvaluationMatrix } from "./comparison/EvaluationMatrix";
+import { PageHero, PageShell, SectionIntroHeader } from "./ui/VisualPrimitives";
 
 // ──────────────────────────────────────────────────────────────────────────
-// Section model — 4 final sections per spec
+// Section model : 4 final sections per spec
 // ──────────────────────────────────────────────────────────────────────────
 
 type FocusId = "methodology" | "instruments" | "baseline" | "status";
 
-const SECTIONS: Array<{ id: FocusId; label: string; role: string; icon: typeof Activity }> = [
-  { id: "methodology", label: "Methodology", role: "evaluation framework", icon: Microscope },
-  { id: "instruments", label: "Instruments & Targets", role: "metrics", icon: Target },
-  { id: "baseline", label: "Baseline Comparison", role: "Beatrice vs generic LLM", icon: Scale },
-  { id: "status", label: "Status", role: "data collection", icon: Clock },
+const SECTIONS: Array<{ id: FocusId; icon: typeof Activity }> = [
+  { id: "methodology", icon: Microscope },
+  { id: "instruments", icon: Target },
+  { id: "baseline", icon: Scale },
+  { id: "status", icon: Clock },
 ];
+
+const DIMENSION_IDS = [
+  "sus",
+  "clarity",
+  "trust",
+  "precision",
+  "satisfaction",
+  "task",
+  "confidence",
+  "explanation",
+  "perspective",
+  "qualitative",
+] as const;
+
+const CLARITY_AXIS_IDS = [
+  "directAnswer",
+  "evidenceAttribution",
+  "vocabularyFit",
+  "confidenceCalibration",
+  "tradeoffVisibility",
+] as const;
+
+const SUS_ITEM_KEYS = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"] as const;
+const BASELINE_FEATURE_KEYS = ["0", "1", "2", "3"] as const;
+
+const ECE_BINS = [
+  { range: "0.0-0.2", expected: "0.10" },
+  { range: "0.2-0.4", expected: "0.30" },
+  { range: "0.4-0.6", expected: "0.50" },
+  { range: "0.6-0.8", expected: "0.70" },
+  { range: "0.8-1.0", expected: "0.90" },
+] as const;
+
+const STATUS_ROW_IDS = [
+  "sus",
+  "clarity",
+  "kappa",
+  "ece",
+  "precision",
+  "nps",
+  "task",
+  "divergence",
+  "qualitative",
+] as const;
+
+type CollectionStatus = "scaffolded" | "in-progress" | "complete";
 
 // ──────────────────────────────────────────────────────────────────────────
 // Page root
@@ -62,7 +110,7 @@ export function EvaluationPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-[1280px] px-6 py-10 text-slate-200 lg:px-10">
+    <PageShell>
       <Hero />
       <SectionNav active={active.id} onChange={updateFocus} />
 
@@ -72,7 +120,7 @@ export function EvaluationPage() {
         {active.id === "baseline" ? <BaselineSection /> : null}
         {active.id === "status" ? <StatusSection /> : null}
       </div>
-    </div>
+    </PageShell>
   );
 }
 
@@ -81,29 +129,34 @@ export function EvaluationPage() {
 // ──────────────────────────────────────────────────────────────────────────
 
 function Hero() {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
+  const copy = getEvaluationHeader(locale);
   return (
-    <header className="page-hero">
-      <div className="page-eyebrow">
-        <Beaker className="h-3.5 w-3.5" aria-hidden />
-        {t("pages.evaluation.eyebrow")}
-      </div>
-      <h1 className="page-h1">
-        How Aetheris is <em className="not-italic text-primary">measured</em>.
-      </h1>
-      <p className="page-lead">
-        The platform is a research artifact. This surface scaffolds the methodology that turns it
-        into measured results — what is measured, how it is measured, what ranges count as evidence,
-        and what remains pending collection.
-      </p>
-    </header>
+    <PageHero
+      eyebrow={
+        <>
+          <Beaker className="h-3.5 w-3.5" aria-hidden />
+          {t("pages.evaluation.eyebrow")}
+        </>
+      }
+      title={
+        <>
+          {copy.titleLead} <em className="not-italic text-primary">{copy.titleAccent}</em>.
+        </>
+      }
+      description={copy.lead}
+    />
   );
 }
 
 function SectionNav({ active, onChange }: { active: FocusId; onChange: (next: FocusId) => void }) {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
+  const copy = getEvaluationHeader(locale);
   return (
-    <nav aria-label="Evaluation sections" className="flex flex-wrap gap-2">
+    <nav
+      aria-label={copy.navigationAria}
+      className="flex gap-2 overflow-x-auto xl:grid xl:grid-cols-4 xl:overflow-visible"
+    >
       {SECTIONS.map((section) => {
         const Icon = section.icon;
         const isActive = section.id === active;
@@ -113,9 +166,9 @@ function SectionNav({ active, onChange }: { active: FocusId; onChange: (next: Fo
             type="button"
             onClick={() => onChange(section.id)}
             aria-pressed={isActive}
-            className={isActive ? "section-tab-active" : "section-tab"}
+            className={`${isActive ? "section-tab-active" : "section-tab"} shrink-0 xl:min-w-0 xl:flex-col xl:items-start xl:gap-1 xl:text-left`}
           >
-            <Icon className="h-3.5 w-3.5" aria-hidden />
+            <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden strokeWidth={1.5} />
             <span className="font-semibold">{t(`pages.evaluation.sections.${section.id}.label`)}</span>
             <span className="hidden text-[10px] uppercase tracking-widest opacity-50 sm:inline">
               {t(`pages.evaluation.sections.${section.id}.role`)}
@@ -128,59 +181,39 @@ function SectionNav({ active, onChange }: { active: FocusId; onChange: (next: Fo
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// SECTION 1 — Methodology (was overview)
+// SECTION 1 : Methodology
 // ──────────────────────────────────────────────────────────────────────────
 
-type CollectionStatus = "scaffolded" | "in-progress" | "complete";
-
-interface EvalDimension {
-  id: string;
-  label: string;
-  instrument: string;
-  target: string;
-  status: CollectionStatus;
-}
-
-const DIMENSIONS: EvalDimension[] = [
-  { id: "sus", label: "System Usability Scale", instrument: "Brooke, 1996 — 10 items, 5-point Likert", target: "≥ 75 (good)", status: "scaffolded" },
-  { id: "clarity", label: "Explanation clarity", instrument: "5-axis rubric, blind-rated", target: "mean ≥ 4/5", status: "scaffolded" },
-  { id: "trust", label: "Trust calibration", instrument: "Confidence vs accuracy delta", target: "ECE ≤ 0.10", status: "scaffolded" },
-  { id: "precision", label: "Retrieval precision @ k", instrument: "Top-3 relevance vote against gold set", target: "P@3 ≥ 0.80", status: "scaffolded" },
-  { id: "satisfaction", label: "User satisfaction", instrument: "Post-session NPS-style score", target: "NPS ≥ +30", status: "scaffolded" },
-  { id: "task", label: "Task success", instrument: "Pre-defined scenarios, pass/partial/fail", target: "≥ 80% pass", status: "scaffolded" },
-  { id: "confidence", label: "Confidence distribution", instrument: "Histogram of stated confidence per regime", target: "<10% in low band by design", status: "scaffolded" },
-  { id: "explanation", label: "Explanation quality rubric", instrument: "5 axes × 5-point scale, 3 raters", target: "Cohen's κ ≥ 0.60", status: "scaffolded" },
-  { id: "perspective", label: "Cross-perspective divergence", instrument: "Same query × N lenses, semantic delta", target: "principled divergence on ≥ 70% of cases", status: "scaffolded" },
-  { id: "qualitative", label: "Qualitative feedback", instrument: "Thematic analysis of open-ended responses", target: "saturation at 12+ participants", status: "scaffolded" },
-];
-
 function MethodologySection() {
+  const { t } = useI18n();
+  const M = "pages.evaluation.methodology";
+
   return (
     <>
       <ZoneShell
-        eyebrow="Methodology overview"
-        title="Ten dimensions, ten instruments"
-        caption="Each row below is a deliberate measurement. Status is explicit — all are scaffolded (rubric defined, collection pending). The TCC will report against this exact table."
+        eyebrow={t(`${M}.overview.eyebrow`)}
+        title={t(`${M}.overview.title`)}
+        caption={t(`${M}.overview.caption`)}
         icon={<Microscope className="h-3.5 w-3.5" aria-hidden />}
       >
-        <div className="overflow-hidden rounded-2xl border border-white/8">
+        <div className="table-scroll rounded-2xl border border-white/8">
           <table className="w-full text-xs">
             <thead className="bg-white/[0.03] text-[10px] uppercase tracking-widest text-slate-500">
               <tr>
-                <th className="px-4 py-3 text-left font-semibold">Dimension</th>
-                <th className="px-4 py-3 text-left font-semibold">Instrument</th>
-                <th className="px-4 py-3 text-left font-semibold">Target</th>
-                <th className="px-4 py-3 text-left font-semibold">Status</th>
+                <th className="px-4 py-3 text-left font-semibold">{t(`${M}.table.dimension`)}</th>
+                <th className="px-4 py-3 text-left font-semibold">{t(`${M}.table.instrument`)}</th>
+                <th className="px-4 py-3 text-left font-semibold">{t(`${M}.table.target`)}</th>
+                <th className="px-4 py-3 text-left font-semibold">{t(`${M}.table.status`)}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {DIMENSIONS.map((dim) => (
-                <tr key={dim.id}>
-                  <td className="px-4 py-3 font-semibold text-slate-100">{dim.label}</td>
-                  <td className="px-4 py-3 text-[11px] text-slate-400">{dim.instrument}</td>
-                  <td className="px-4 py-3 font-mono text-[11px] text-cyan-300">{dim.target}</td>
+              {DIMENSION_IDS.map((id) => (
+                <tr key={id}>
+                  <td className="px-4 py-3 font-semibold text-slate-100">{t(`${M}.dimensions.${id}.label`)}</td>
+                  <td className="px-4 py-3 text-[11px] text-slate-400">{t(`${M}.dimensions.${id}.instrument`)}</td>
+                  <td className="px-4 py-3 font-mono text-[11px] text-technical-number">{t(`${M}.dimensions.${id}.target`)}</td>
                   <td className="px-4 py-3">
-                    <StatusChip status={dim.status} />
+                    <StatusChip status="scaffolded" />
                   </td>
                 </tr>
               ))}
@@ -190,13 +223,13 @@ function MethodologySection() {
       </ZoneShell>
 
       <ZoneShell
-        eyebrow="Sampling frame"
-        title="Population, sample size, ethics"
+        eyebrow={t(`${M}.sampling.eyebrow`)}
+        title={t(`${M}.sampling.title`)}
       >
         <div className="grid gap-3 lg:grid-cols-3">
-          <Card label="Population" body="Design-system practitioners (designers, frontend engineers, PMs, QAs, content strategists) at organizations operating multi-product platforms. Mid-to-senior level." />
-          <Card label="Target sample" body="N ≥ 18 across the 7 cognitive perspectives, minimum 2 per perspective. Mixed-method: 30-minute structured session + open-ended exit interview." />
-          <Card label="Ethics" body="Informed consent. No PII captured. Session recordings anonymized at transcription. Raw data retained 12 months for academic audit." />
+          <Card label={t(`${M}.sampling.population.label`)} body={t(`${M}.sampling.population.body`)} />
+          <Card label={t(`${M}.sampling.targetSample.label`)} body={t(`${M}.sampling.targetSample.body`)} />
+          <Card label={t(`${M}.sampling.ethics.label`)} body={t(`${M}.sampling.ethics.body`)} />
         </div>
       </ZoneShell>
     </>
@@ -204,74 +237,59 @@ function MethodologySection() {
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// SECTION 2 — Instruments & Targets (all metrics aggregated)
+// SECTION 2 : Instruments & Targets
 // ──────────────────────────────────────────────────────────────────────────
 
-const SUS_ITEMS = [
-  "I think that I would like to use this system frequently.",
-  "I found the system unnecessarily complex.",
-  "I thought the system was easy to use.",
-  "I think that I would need the support of a technical person to be able to use this system.",
-  "I found the various functions in this system were well integrated.",
-  "I thought there was too much inconsistency in this system.",
-  "I would imagine that most people would learn to use this system very quickly.",
-  "I found the system very cumbersome to use.",
-  "I felt very confident using the system.",
-  "I needed to learn a lot of things before I could get going with this system.",
-];
-
-const CLARITY_AXES = [
-  { axis: "Direct answer", anchor1: "Buried in qualifications", anchor5: "Lands in the first sentence" },
-  { axis: "Evidence attribution", anchor1: "Unsourced assertion", anchor5: "Every claim traced to a chunk" },
-  { axis: "Vocabulary fit", anchor1: "Generic technical prose", anchor5: "Active lens vocabulary throughout" },
-  { axis: "Confidence calibration", anchor1: "Confident wherever, hedged nowhere", anchor5: "Calibration matches evidence strength" },
-  { axis: "Trade-off visibility", anchor1: "Only the chosen path appears", anchor5: "Alternatives named and weighed" },
-];
-
 function InstrumentsSection() {
+  const { t } = useI18n();
+  const I = "pages.evaluation.instruments";
+
   return (
     <>
       <ZoneShell
-        eyebrow="SUS — System Usability Scale"
-        title="10-item Likert scale (Brooke 1996)"
-        caption="Target ≥ 75 (good). Pending collection. Score = ((Σ odd − 5) + (25 − Σ even)) × 2.5, range 0–100."
+        eyebrow={t(`${I}.sus.eyebrow`)}
+        title={t(`${I}.sus.title`)}
+        caption={t(`${I}.sus.caption`)}
         icon={<Gauge className="h-3.5 w-3.5" aria-hidden />}
       >
-        <PendingBanner label="SUS score" target="≥ 75" />
+        <PendingBanner label={t(`${I}.sus.bannerLabel`)} target={t(`${I}.sus.bannerTarget`)} />
         <ol className="space-y-2">
-          {SUS_ITEMS.map((item, index) => (
-            <li key={item} className={`flex items-start gap-3 rounded-xl border border-white/8 bg-white/[0.02] p-4 text-sm ${index % 2 !== 0 ? "border-rose-300/15" : ""}`}>
+          {SUS_ITEM_KEYS.map((key, index) => (
+            <li
+              key={key}
+              className={`flex items-start gap-3 rounded-xl border border-white/8 bg-white/[0.02] p-4 text-sm ${index % 2 !== 0 ? "border-rose-300/15" : ""}`}
+            >
               <span className="mt-0.5 font-mono text-[10px] uppercase tracking-widest text-slate-500">
                 Q{String(index + 1).padStart(2, "0")} · {index % 2 === 0 ? "+" : "−"}
               </span>
-              <span className="text-slate-300">{item}</span>
+              <span className="text-slate-300">{t(`${I}.sus.items.${key}`)}</span>
             </li>
           ))}
         </ol>
       </ZoneShell>
 
       <ZoneShell
-        eyebrow="Explanation Clarity — 5-axis rubric"
-        title="Blind-rated, 3 raters, Cohen's κ ≥ 0.60"
-        caption="Target mean ≥ 4/5 per axis. Pending collection. Anchors below are the 1 and 5 marks."
+        eyebrow={t(`${I}.clarity.eyebrow`)}
+        title={t(`${I}.clarity.title`)}
+        caption={t(`${I}.clarity.caption`)}
         icon={<FileText className="h-3.5 w-3.5" aria-hidden />}
       >
-        <PendingBanner label="Clarity mean" target="≥ 4/5 per axis" />
-        <div className="overflow-hidden rounded-2xl border border-white/8">
+        <PendingBanner label={t(`${I}.clarity.bannerLabel`)} target={t(`${I}.clarity.bannerTarget`)} />
+        <div className="table-scroll rounded-2xl border border-white/8">
           <table className="w-full text-xs">
             <thead className="bg-white/[0.03] text-[10px] uppercase tracking-widest text-slate-500">
               <tr>
-                <th className="px-4 py-3 text-left font-semibold">Axis</th>
-                <th className="px-4 py-3 text-left font-semibold">1 — anchor low</th>
-                <th className="px-4 py-3 text-left font-semibold">5 — anchor high</th>
+                <th className="px-4 py-3 text-left font-semibold">{t(`${I}.clarity.table.axis`)}</th>
+                <th className="px-4 py-3 text-left font-semibold">{t(`${I}.clarity.table.anchorLow`)}</th>
+                <th className="px-4 py-3 text-left font-semibold">{t(`${I}.clarity.table.anchorHigh`)}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {CLARITY_AXES.map((row) => (
-                <tr key={row.axis}>
-                  <td className="px-4 py-3 font-semibold text-slate-200">{row.axis}</td>
-                  <td className="px-4 py-3 text-rose-200/80">{row.anchor1}</td>
-                  <td className="px-4 py-3 text-emerald-200/80">{row.anchor5}</td>
+              {CLARITY_AXIS_IDS.map((id) => (
+                <tr key={id}>
+                  <td className="px-4 py-3 font-semibold text-slate-200">{t(`${I}.clarity.axes.${id}.axis`)}</td>
+                  <td className="px-4 py-3 text-rose-200/80">{t(`${I}.clarity.axes.${id}.anchor1`)}</td>
+                  <td className="px-4 py-3 text-success/80">{t(`${I}.clarity.axes.${id}.anchor5`)}</td>
                 </tr>
               ))}
             </tbody>
@@ -280,33 +298,29 @@ function InstrumentsSection() {
       </ZoneShell>
 
       <ZoneShell
-        eyebrow="Trust Calibration — ECE"
-        title="Expected Calibration Error ≤ 0.10"
-        caption="ECE = Σᵢ (nᵢ/N) · |accᵢ − confᵢ| over k bins. Per-perspective ECE tracked. All bins pending collection."
+        eyebrow={t(`${I}.trust.eyebrow`)}
+        title={t(`${I}.trust.title`)}
+        caption={t(`${I}.trust.caption`)}
         icon={<ShieldCheck className="h-3.5 w-3.5" aria-hidden />}
       >
-        <PendingBanner label="ECE" target="≤ 0.10" />
-        <div className="overflow-hidden rounded-2xl border border-white/8">
+        <PendingBanner label={t(`${I}.trust.bannerLabel`)} target={t(`${I}.trust.bannerTarget`)} />
+        <div className="table-scroll rounded-2xl border border-white/8">
           <table className="w-full text-xs">
             <thead className="bg-white/[0.03] text-[10px] uppercase tracking-widest text-slate-500">
               <tr>
-                <th className="px-4 py-3 text-left font-semibold">Confidence bin</th>
-                <th className="px-4 py-3 text-right font-semibold">Expected accuracy</th>
-                <th className="px-4 py-3 text-right font-semibold">Observed accuracy</th>
+                <th className="px-4 py-3 text-left font-semibold">{t(`${I}.trust.table.bin`)}</th>
+                <th className="px-4 py-3 text-right font-semibold">{t(`${I}.trust.table.expected`)}</th>
+                <th className="px-4 py-3 text-right font-semibold">{t(`${I}.trust.table.observed`)}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {[
-                { range: "0.0–0.2", expected: "0.10", observed: "pending" },
-                { range: "0.2–0.4", expected: "0.30", observed: "pending" },
-                { range: "0.4–0.6", expected: "0.50", observed: "pending" },
-                { range: "0.6–0.8", expected: "0.70", observed: "pending" },
-                { range: "0.8–1.0", expected: "0.90", observed: "pending" },
-              ].map((bin) => (
+              {ECE_BINS.map((bin) => (
                 <tr key={bin.range}>
                   <td className="px-4 py-3 font-mono text-slate-300">{bin.range}</td>
                   <td className="px-4 py-3 text-right font-mono text-slate-400">{bin.expected}</td>
-                  <td className="px-4 py-3 text-right font-mono text-slate-500 italic">{bin.observed}</td>
+                  <td className="px-4 py-3 text-right font-mono text-slate-500 italic">
+                    {t("pages.evaluation.statuses.pending")}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -315,61 +329,61 @@ function InstrumentsSection() {
       </ZoneShell>
 
       <ZoneShell
-        eyebrow="Retrieval Precision @ k"
-        title="P@3 ≥ 0.80 against gold set"
-        caption="Top-3 relevance vote by domain experts against curated query–answer pairs. Pending collection."
+        eyebrow={t(`${I}.precision.eyebrow`)}
+        title={t(`${I}.precision.title`)}
+        caption={t(`${I}.precision.caption`)}
         icon={<Database className="h-3.5 w-3.5" aria-hidden />}
       >
-        <PendingBanner label="P@3" target="≥ 0.80" />
+        <PendingBanner label={t(`${I}.precision.bannerLabel`)} target={t(`${I}.precision.bannerTarget`)} />
         <div className="grid gap-3 sm:grid-cols-3">
-          <Card label="Procedure" body="Curated 20-query gold set. 2 domain-expert raters vote relevance per returned chunk. P@k = fraction of top-k chunks rated relevant." />
-          <Card label="Per-lens" body="P@3 tracked separately per perspective since retrieval weights differ across lenses." />
-          <Card label="Threshold" body="P@3 < 0.70 triggers corpus audit (missing page_type) and retrieval weight recalibration." />
+          <Card label={t(`${I}.precision.procedure.label`)} body={t(`${I}.precision.procedure.body`)} />
+          <Card label={t(`${I}.precision.perLens.label`)} body={t(`${I}.precision.perLens.body`)} />
+          <Card label={t(`${I}.precision.threshold.label`)} body={t(`${I}.precision.threshold.body`)} />
         </div>
       </ZoneShell>
 
       <ZoneShell
-        eyebrow="User Satisfaction — NPS"
-        title="Net Promoter Score ≥ +30"
-        caption="Post-session NPS-style 0–10 rating with open-ended reason. Pending collection."
+        eyebrow={t(`${I}.satisfaction.eyebrow`)}
+        title={t(`${I}.satisfaction.title`)}
+        caption={t(`${I}.satisfaction.caption`)}
         icon={<ThumbsUp className="h-3.5 w-3.5" aria-hidden />}
       >
-        <PendingBanner label="NPS" target="≥ +30" />
+        <PendingBanner label={t(`${I}.satisfaction.bannerLabel`)} target={t(`${I}.satisfaction.bannerTarget`)} />
       </ZoneShell>
 
       <ZoneShell
-        eyebrow="Task Success"
-        title="≥ 80% pass rate on pre-defined scenarios"
-        caption="Pre-defined task scenarios rated pass / partial / fail. Pending collection."
+        eyebrow={t(`${I}.task.eyebrow`)}
+        title={t(`${I}.task.title`)}
+        caption={t(`${I}.task.caption`)}
         icon={<CheckSquare className="h-3.5 w-3.5" aria-hidden />}
       >
-        <PendingBanner label="Task success" target="≥ 80% pass" />
+        <PendingBanner label={t(`${I}.task.bannerLabel`)} target={t(`${I}.task.bannerTarget`)} />
       </ZoneShell>
 
       <ZoneShell
-        eyebrow="Confidence Distribution"
-        title="< 10% in low-confidence band by design"
-        caption="Histogram of stated confidence levels per regime. Pending collection."
+        eyebrow={t(`${I}.confidence.eyebrow`)}
+        title={t(`${I}.confidence.title`)}
+        caption={t(`${I}.confidence.caption`)}
         icon={<Radar className="h-3.5 w-3.5" aria-hidden />}
       >
-        <PendingBanner label="Low-confidence band" target="< 10%" />
+        <PendingBanner label={t(`${I}.confidence.bannerLabel`)} target={t(`${I}.confidence.bannerTarget`)} />
       </ZoneShell>
 
       <ZoneShell
-        eyebrow="Cross-perspective Divergence"
-        title="Principled divergence on ≥ 70% of queries"
-        caption="Same query × N lenses, semantic delta. Divergence must be explained by lens vocabulary (verified by rubric)."
+        eyebrow={t(`${I}.divergence.eyebrow`)}
+        title={t(`${I}.divergence.title`)}
+        caption={t(`${I}.divergence.caption`)}
         icon={<Telescope className="h-3.5 w-3.5" aria-hidden />}
       >
-        <PendingBanner label="Divergence rate" target="≥ 70% principled" />
+        <PendingBanner label={t(`${I}.divergence.bannerLabel`)} target={t(`${I}.divergence.bannerTarget`)} />
         <div className="space-y-3">
           <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-5">
-            <h3 className="mb-2 text-sm font-semibold text-slate-100">Divergence metric</h3>
-            <p className="text-xs leading-relaxed text-slate-400">For a query Q, run Beatrice through every perspective P. Compute semantic similarity between responses pairwise. Divergence = 1 − mean(pairwise similarity). Principled divergence requires the divergent dimension to be one the perspective's vocabulary named.</p>
+            <h3 className="mb-2 text-sm font-semibold text-slate-100">{t(`${I}.divergence.metricTitle`)}</h3>
+            <p className="text-xs leading-relaxed text-slate-400">{t(`${I}.divergence.metricBody`)}</p>
           </div>
           <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-5">
-            <h3 className="mb-2 text-sm font-semibold text-slate-100">Convergence threshold</h3>
-            <p className="text-xs leading-relaxed text-slate-400">On queries where evidence is unambiguous (factual lookup), responses should converge. Convergence rate = fraction of unambiguous queries where divergence &lt; 0.20.</p>
+            <h3 className="mb-2 text-sm font-semibold text-slate-100">{t(`${I}.divergence.convergenceTitle`)}</h3>
+            <p className="text-xs leading-relaxed text-slate-400">{t(`${I}.divergence.convergenceBody`)}</p>
           </div>
         </div>
       </ZoneShell>
@@ -378,42 +392,49 @@ function InstrumentsSection() {
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// SECTION 3 — Baseline Comparison (merged from ComparisonPage)
+// SECTION 3 : Baseline Comparison
 // ──────────────────────────────────────────────────────────────────────────
 
 function BaselineSection() {
   const { t } = useI18n();
-  const P = "pages.comparison";
+  const B = "pages.evaluation.baseline";
+  const C = "pages.comparison";
 
   return (
     <>
       <ZoneShell
-        eyebrow="Baseline rationale"
-        title="Why compare Beatrice to a generic LLM"
-        caption="The evaluation baseline is a generic LLM answering the same design-system questions without retrieval, source attribution or confidence calibration. The delta between the two models on each criterion is the primary academic contribution."
+        eyebrow={t(`${B}.rationale.eyebrow`)}
+        title={t(`${B}.rationale.title`)}
+        caption={t(`${B}.rationale.caption`)}
         icon={<Scale className="h-3.5 w-3.5" aria-hidden />}
       >
         <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-5">
-          <p className="mb-4 text-sm leading-relaxed text-slate-300">
-            {t(`${P}.why.body`)}
-          </p>
+          <p className="mb-4 text-sm leading-relaxed text-slate-300">{t(`${C}.why.body`)}</p>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.22em] text-primary">Beatrice — RAG + XAI</div>
+              <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
+                {t(`${B}.rationale.abraxosTitle`)}
+              </div>
               <ul className="space-y-1 text-xs text-slate-400">
-                <li className="flex items-start gap-2"><span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-emerald-300" /> Domain-grounded via ChromaDB corpus</li>
-                <li className="flex items-start gap-2"><span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-emerald-300" /> Source attribution per claim</li>
-                <li className="flex items-start gap-2"><span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-emerald-300" /> Confidence calibrated from retrieval similarity</li>
-                <li className="flex items-start gap-2"><span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-emerald-300" /> Perspective-adaptive framing</li>
+                {BASELINE_FEATURE_KEYS.map((key) => (
+                  <li key={key} className="flex items-start gap-2">
+                    <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-success" />
+                    {t(`${B}.rationale.abraxos.${key}`)}
+                  </li>
+                ))}
               </ul>
             </div>
             <div>
-              <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.22em] text-slate-400">Generic LLM</div>
+              <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.22em] text-slate-400">
+                {t(`${B}.rationale.genericTitle`)}
+              </div>
               <ul className="space-y-1 text-xs text-slate-400">
-                <li className="flex items-start gap-2"><span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-slate-500" /> Broad parametric knowledge only</li>
-                <li className="flex items-start gap-2"><span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-slate-500" /> No source attribution</li>
-                <li className="flex items-start gap-2"><span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-slate-500" /> No explicit confidence signal</li>
-                <li className="flex items-start gap-2"><span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-slate-500" /> No domain constraint</li>
+                {BASELINE_FEATURE_KEYS.map((key) => (
+                  <li key={key} className="flex items-start gap-2">
+                    <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-slate-500" />
+                    {t(`${B}.rationale.generic.${key}`)}
+                  </li>
+                ))}
               </ul>
             </div>
           </div>
@@ -423,20 +444,20 @@ function BaselineSection() {
       <EvaluationMatrix />
 
       <ZoneShell
-        eyebrow="Live comparison"
-        title="Try it — same question, two reasoning models"
-        caption="The live comparison demo has moved to Oracle. Ask Beatrice a design-system question, then compare to a generic LLM answer via the Perspectives surface."
+        eyebrow={t(`${B}.live.eyebrow`)}
+        title={t(`${B}.live.title`)}
+        caption={t(`${B}.live.caption`)}
         icon={<Workflow className="h-3.5 w-3.5" aria-hidden />}
       >
         <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-5 text-sm text-slate-400">
-          The live head-to-head demo (Beatrice vs generic LLM, same query) is accessible at{" "}
+          {t(`${B}.live.bodyPrefix`)}{" "}
           <a
             href="/perspectives"
             className="text-primary underline underline-offset-2 hover:no-underline"
           >
-            Perspectives → Comparison
+            {t(`${B}.live.link`)}
           </a>
-          . The matrix above is the static, citable version for the TCC evaluation appendix.
+          {t(`${B}.live.bodySuffix`)}
         </div>
       </ZoneShell>
     </>
@@ -444,55 +465,44 @@ function BaselineSection() {
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// SECTION 4 — Status (explicit "pending collection" for all metrics)
+// SECTION 4 : Status
 // ──────────────────────────────────────────────────────────────────────────
 
 function StatusSection() {
+  const { t } = useI18n();
+  const S = "pages.evaluation.status";
+
   return (
     <ZoneShell
-      eyebrow="Data collection status"
-      title="What has been collected — and what has not"
-      caption="All metrics are scaffolded: rubric defined, instruments ready, targets set. No data collected yet. The TCC evaluation chapter will fill this table with real results."
+      eyebrow={t(`${S}.eyebrow`)}
+      title={t(`${S}.title`)}
+      caption={t(`${S}.caption`)}
       icon={<Clock className="h-3.5 w-3.5" aria-hidden />}
     >
-      <div className="mb-4 rounded-2xl border border-amber-300/20 bg-amber-300/[0.04] p-4">
-        <p className="text-xs text-amber-200">
-          <strong className="text-amber-300">All metrics below are pending data collection.</strong>{" "}
-          Numbers shown are targets and definitions — not results. Fabricated results would
-          invalidate the academic contribution.
-        </p>
+      <div className="feedback-banner-warning mb-4 rounded-2xl p-4">
+        <p className="text-xs">{t(`${S}.warning`)}</p>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-white/8">
+      <div className="table-scroll rounded-2xl border border-white/8">
         <table className="w-full text-xs">
           <thead className="bg-white/[0.03] text-[10px] uppercase tracking-widest text-slate-500">
             <tr>
-              <th className="px-4 py-3 text-left font-semibold">Metric</th>
-              <th className="px-4 py-3 text-left font-semibold">Target</th>
-              <th className="px-4 py-3 text-left font-semibold">Result</th>
-              <th className="px-4 py-3 text-left font-semibold">Collection status</th>
+              <th className="px-4 py-3 text-left font-semibold">{t(`${S}.table.metric`)}</th>
+              <th className="px-4 py-3 text-left font-semibold">{t(`${S}.table.target`)}</th>
+              <th className="px-4 py-3 text-left font-semibold">{t(`${S}.table.result`)}</th>
+              <th className="px-4 py-3 text-left font-semibold">{t(`${S}.table.collectionStatus`)}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
-            {[
-              { metric: "SUS", target: "≥ 75", result: "—", status: "pending" as const },
-              { metric: "Explanation clarity (mean)", target: "≥ 4/5 per axis", result: "—", status: "pending" as const },
-              { metric: "Cohen's κ (inter-rater)", target: "≥ 0.60", result: "—", status: "pending" as const },
-              { metric: "ECE (trust calibration)", target: "≤ 0.10", result: "—", status: "pending" as const },
-              { metric: "Retrieval P@3", target: "≥ 0.80", result: "—", status: "pending" as const },
-              { metric: "NPS (satisfaction)", target: "≥ +30", result: "—", status: "pending" as const },
-              { metric: "Task success rate", target: "≥ 80% pass", result: "—", status: "pending" as const },
-              { metric: "Cross-perspective divergence", target: "≥ 70% principled", result: "—", status: "pending" as const },
-              { metric: "Qualitative saturation", target: "12+ participants", result: "—", status: "pending" as const },
-            ].map((row) => (
-              <tr key={row.metric}>
-                <td className="px-4 py-3 font-semibold text-slate-100">{row.metric}</td>
-                <td className="px-4 py-3 font-mono text-[11px] text-cyan-300">{row.target}</td>
-                <td className="px-4 py-3 font-mono text-[11px] text-slate-600 italic">{row.result}</td>
+            {STATUS_ROW_IDS.map((id) => (
+              <tr key={id}>
+                <td className="px-4 py-3 font-semibold text-slate-100">{t(`${S}.rows.${id}.metric`)}</td>
+                <td className="px-4 py-3 font-mono text-[11px] text-technical-number">{t(`${S}.rows.${id}.target`)}</td>
+                <td className="px-4 py-3 font-mono text-[11px] text-slate-600 italic">:</td>
                 <td className="px-4 py-3">
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-amber-300">
+                  <span className="feedback-pill-warning">
                     <Clock className="h-2.5 w-2.5" aria-hidden />
-                    pending
+                    {t("pages.evaluation.statuses.pending")}
                   </span>
                 </td>
               </tr>
@@ -509,24 +519,26 @@ function StatusSection() {
 // ──────────────────────────────────────────────────────────────────────────
 
 function StatusChip({ status }: { status: CollectionStatus }) {
+  const { t } = useI18n();
   const tone = {
     scaffolded: "border-slate-500/30 text-slate-400",
-    "in-progress": "border-amber-300/30 text-amber-300",
-    complete: "border-emerald-300/30 text-emerald-300",
+    "in-progress": "feedback-pill-warning",
+    complete: "feedback-pill-success",
   }[status];
   return (
     <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest ${tone}`}>
-      {status}
+      {t(`pages.evaluation.statuses.${status}`)}
     </span>
   );
 }
 
 function PendingBanner({ label, target }: { label: string; target: string }) {
+  const { t } = useI18n();
   return (
-    <div className="mb-4 flex flex-wrap items-center gap-3 rounded-2xl border border-amber-300/20 bg-amber-300/[0.04] px-4 py-3">
-      <Clock className="h-3.5 w-3.5 shrink-0 text-amber-300" aria-hidden />
-      <span className="text-xs text-amber-200">
-        <strong className="text-amber-300">{label}</strong>: target {target} — pending data collection.
+    <div className="feedback-banner-warning mb-4 flex flex-wrap items-center gap-3 rounded-2xl px-4 py-3">
+      <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden />
+      <span className="text-xs">
+        {t("pages.evaluation.pendingBanner", { label, target })}
       </span>
     </div>
   );
@@ -556,15 +568,13 @@ function ZoneShell({
 }) {
   return (
     <section className="content-section">
-      <header className="mb-4 flex items-baseline gap-3">
-        <span className="section-eyebrow">
-          {icon ?? <Activity className="h-3.5 w-3.5" aria-hidden />}
-          {eyebrow}
-        </span>
-      </header>
-      <h2 className="section-h2">{title}</h2>
-      {caption ? <p className="section-lead">{caption}</p> : null}
-      {children}
+      <SectionIntroHeader
+        description={caption}
+        eyebrow={eyebrow}
+        icon={icon ?? <Activity className="h-3.5 w-3.5" aria-hidden />}
+        title={title}
+      />
+      <div className="section-intro-body">{children}</div>
     </section>
   );
 }

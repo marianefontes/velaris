@@ -8,7 +8,6 @@ import {
   FlaskConical,
   Gauge,
   Layers3,
-  LoaderCircle,
   MessageSquareText,
   RefreshCw,
   ShieldCheck,
@@ -28,6 +27,12 @@ import { useStudyParticipantSession } from "../hooks/useStudyParticipantSession"
 import { useLaboratorySnapshot } from "../hooks/useLaboratorySnapshot";
 import { readResearchAdminKey } from "../services/researchAdminAuth";
 import type { LaboratoryResults } from "../types/laboratory";
+import {
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  PageShell,
+} from "./ui/VisualPrimitives";
 
 const COPY: Record<Locale, {
   eyebrow: string;
@@ -78,7 +83,7 @@ const COPY: Record<Locale, {
     eyebrow: "Resultados do estudo",
     title: "O que o uso real",
     accent: "revelou.",
-    lead: "Evidências agregadas da avaliação acadêmica do Aetheris. Os números abaixo vêm das sessões registradas e nunca expõem a identidade de participantes.",
+    lead: "Evidências agregadas da avaliação acadêmica do Velaris. Os números abaixo vêm das sessões registradas e nunca expõem a identidade de participantes.",
     live: "Dados reais",
     privacy: "Agregado e anonimizado",
     updated: "Atualizado",
@@ -96,7 +101,7 @@ const COPY: Record<Locale, {
     dsExperience: "Experiência com design systems",
     dsFrequency: "Frequência de uso",
     usageEyebrow: "Comportamento observado",
-    usageTitle: "Como o Aetheris foi utilizado",
+    usageTitle: "Como o Velaris foi utilizado",
     events: "Eventos registrados",
     pageViews: "Páginas acessadas",
     prompts: "Perguntas enviadas",
@@ -123,7 +128,7 @@ const COPY: Record<Locale, {
     eyebrow: "Resultados do estudo",
     title: "O que a utilização real",
     accent: "revelou.",
-    lead: "Evidências agregadas da avaliação académica do Aetheris. Os números abaixo vêm das sessões registadas e nunca expõem a identidade dos participantes.",
+    lead: "Evidências agregadas da avaliação académica do Velaris. Os números abaixo vêm das sessões registadas e nunca expõem a identidade dos participantes.",
     live: "Dados reais",
     privacy: "Agregado e anonimizado",
     updated: "Atualizado",
@@ -141,7 +146,7 @@ const COPY: Record<Locale, {
     dsExperience: "Experiência com design systems",
     dsFrequency: "Frequência de utilização",
     usageEyebrow: "Comportamento observado",
-    usageTitle: "Como o Aetheris foi utilizado",
+    usageTitle: "Como o Velaris foi utilizado",
     events: "Eventos registados",
     pageViews: "Páginas acedidas",
     prompts: "Perguntas enviadas",
@@ -168,7 +173,7 @@ const COPY: Record<Locale, {
     eyebrow: "Study results",
     title: "What real usage",
     accent: "revealed.",
-    lead: "Aggregated evidence from the Aetheris academic evaluation. The figures below come from recorded sessions and never expose participant identities.",
+    lead: "Aggregated evidence from the Velaris academic evaluation. The figures below come from recorded sessions and never expose participant identities.",
     live: "Real data",
     privacy: "Aggregated and anonymized",
     updated: "Updated",
@@ -186,7 +191,7 @@ const COPY: Record<Locale, {
     dsExperience: "Design-system experience",
     dsFrequency: "Usage frequency",
     usageEyebrow: "Observed behavior",
-    usageTitle: "How Aetheris was used",
+    usageTitle: "How Velaris was used",
     events: "Recorded events",
     pageViews: "Page views",
     prompts: "Questions submitted",
@@ -284,7 +289,7 @@ export function StudyResultsPage() {
   if (status === "error" || !results) return <ResultsError copy={copy} onRetry={load} />;
 
   return (
-    <div className="mx-auto w-full max-w-[1280px] px-5 py-10 text-slate-200 sm:px-6 lg:px-10">
+    <PageShell>
       {laboratoryResults ? (
         <ResultsModeNav active={activeSection} onChange={setActiveSection} locale={locale} />
       ) : null}
@@ -320,7 +325,10 @@ export function StudyResultsPage() {
       ) : (
         <>
           <section className="mb-14">
-            <div className="grid overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.018] sm:grid-cols-2 lg:grid-cols-4">
+            <div
+              data-abraxos-focus="results-metrics"
+              className="grid overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.018] sm:grid-cols-2 lg:grid-cols-4"
+            >
               <SummaryMetric label={copy.invited} value={results.participants.invited} />
               <SummaryMetric label={copy.started} value={results.participants.started} />
               <SummaryMetric label={copy.completed} value={results.participants.completed} />
@@ -365,7 +373,7 @@ export function StudyResultsPage() {
                 icon={<Clock3 />}
                 label={copy.averageDuration}
                 value={results.usage.average_session_minutes === null
-                  ? "—"
+                  ? ":"
                   : `${formatNumber(results.usage.average_session_minutes, locale)} ${copy.minutes}`}
               />
             </div>
@@ -392,7 +400,7 @@ export function StudyResultsPage() {
       </section>
       </>
       )}
-    </div>
+    </PageShell>
   );
 }
 
@@ -475,7 +483,7 @@ function LaboratoryResultsView({ results, locale }: { results: LaboratoryResults
         <SummaryMetric
           label={isEnglish ? "Latest score" : "Nota mais recente"}
           value={results.latest?.aggregate.score === null || results.latest?.aggregate.score === undefined
-            ? "—"
+            ? ":"
             : `${Math.round(results.latest.aggregate.score * 100)}%`}
           accent
         />
@@ -602,10 +610,7 @@ function laboratoryMetricLabel(metric: string, locale: Locale): string {
 function ResultsLoading({ copy }: { copy: typeof COPY[Locale] }) {
   return (
     <div className="mx-auto flex min-h-[60vh] max-w-[1280px] items-center justify-center px-6">
-      <div className="flex items-center gap-3 text-sm text-slate-400">
-        <LoaderCircle className="h-4 w-4 animate-spin text-primary" />
-        {copy.eyebrow}
-      </div>
+      <LoadingState title={copy.eyebrow} description={copy.lead} />
     </div>
   );
 }
@@ -613,38 +618,43 @@ function ResultsLoading({ copy }: { copy: typeof COPY[Locale] }) {
 function ResultsError({ copy, onRetry }: { copy: typeof COPY[Locale]; onRetry: () => void }) {
   return (
     <div className="mx-auto flex min-h-[65vh] max-w-xl flex-col justify-center px-6">
-      <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl border border-error/20 bg-error/[0.05]">
-        <Activity className="h-5 w-5 text-error" />
-      </div>
-      <h1 className="text-2xl font-bold tracking-tight text-white">{copy.errorTitle}</h1>
-      <p className="mt-3 text-sm leading-6 text-slate-400">{copy.errorBody}</p>
-      <button
-        type="button"
-        onClick={onRetry}
-        className="mt-7 inline-flex w-fit items-center gap-2 rounded-full border border-white/10 px-5 py-2.5 text-xs font-semibold text-slate-300 transition hover:border-primary/25 hover:text-white"
-      >
-        <RefreshCw className="h-3.5 w-3.5" />
-        {copy.retry}
-      </button>
+      <h1 className="sr-only">{copy.errorTitle}</h1>
+      <ErrorState
+        icon={<Activity className="h-5 w-5 text-error" />}
+        title={copy.errorTitle}
+        description={copy.errorBody}
+        action={
+          <button
+            type="button"
+            onClick={onRetry}
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/10 px-5 py-2.5 text-xs font-semibold text-slate-300 transition-colors hover:border-primary/25 hover:text-white"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            {copy.retry}
+          </button>
+        }
+      />
     </div>
   );
 }
 
 function EmptyResults({ copy }: { copy: typeof COPY[Locale] }) {
   return (
-    <section className="mb-14 grid min-h-[300px] place-items-center rounded-2xl border border-dashed border-white/10 bg-white/[0.015] px-6 py-14 text-center">
-      <div className="max-w-lg">
-        <UsersRound className="mx-auto h-8 w-8 text-slate-600" />
-        <h2 className="mt-5 text-xl font-semibold text-white">{copy.emptyTitle}</h2>
-        <p className="mt-3 text-sm leading-6 text-slate-500">{copy.emptyBody}</p>
-        <Link
-          to="/evaluation"
-          className="mt-6 inline-flex items-center gap-2 text-xs font-semibold text-primary transition hover:text-white"
-        >
-          {copy.evaluationCta}
-          <ArrowRight className="h-3.5 w-3.5" />
-        </Link>
-      </div>
+    <section className="mb-14">
+      <EmptyState
+        icon={<UsersRound className="h-5 w-5" />}
+        title={copy.emptyTitle}
+        description={copy.emptyBody}
+        action={
+          <Link
+            to="/evaluation"
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-xs font-semibold text-primary transition-colors hover:text-white"
+          >
+            {copy.evaluationCta}
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        }
+      />
     </section>
   );
 }
@@ -767,8 +777,8 @@ function EvidencePanel({
 }) {
   const observed = tone === "observed";
   return (
-    <div className={`rounded-2xl border p-6 ${observed ? "border-emerald-300/15 bg-emerald-300/[0.025]" : "border-amber-300/15 bg-amber-300/[0.025]"}`}>
-      <div className={`mb-5 ${observed ? "text-emerald-300" : "text-amber-300"}`}>{icon}</div>
+    <div className={`rounded-2xl border p-6 ${observed ? "border-success/15 bg-success/[0.025]" : "border-warning/15 bg-warning/[0.025]"}`}>
+      <div className={`mb-5 ${observed ? "text-success" : "text-warning"}`}>{icon}</div>
       <h3 className="text-sm font-semibold text-white">{label}</h3>
       <p className="mt-3 text-xs leading-6 text-slate-400">{body}</p>
     </div>

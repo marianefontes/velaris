@@ -6,9 +6,16 @@ import { useI18n } from "../../i18n/I18nProvider";
 // The generic side is "low" because it lacks the mechanism, not because it is bad.
 
 type Level = "high" | "medium" | "low" | "none";
+type CriterionId =
+  | "domain-grounding"
+  | "source-traceability"
+  | "confidence-calibration"
+  | "ds-specificity"
+  | "decision-usefulness"
+  | "hallucination-risk";
 
 // id ↔ level mapping. Text comes from pages.comparison.matrix.items.<id>.
-const CRITERIA: Array<{ id: string; beatriceLevel: Level; genericLevel: Level }> = [
+const CRITERIA: Array<{ id: CriterionId; beatriceLevel: Level; genericLevel: Level }> = [
   { id: "domain-grounding", beatriceLevel: "high", genericLevel: "low" },
   { id: "source-traceability", beatriceLevel: "high", genericLevel: "none" },
   { id: "confidence-calibration", beatriceLevel: "high", genericLevel: "none" },
@@ -18,8 +25,8 @@ const CRITERIA: Array<{ id: string; beatriceLevel: Level; genericLevel: Level }>
 ];
 
 const LEVEL_STYLE: Record<Level, string> = {
-  high: "text-emerald-300 border-emerald-300/30 bg-emerald-300/10",
-  medium: "text-amber-300 border-amber-300/30 bg-amber-300/10",
+  high: "text-success border-success/30 bg-success/10",
+  medium: "text-warning border-warning/30 bg-warning/10",
   low: "text-slate-400 border-white/10 bg-surface-container/60",
   none: "text-slate-600 border-white/[0.06] bg-surface-container/40",
 };
@@ -35,7 +42,7 @@ export function EvaluationMatrix() {
   );
 
   return (
-    <section className="content-section">
+    <section data-abraxos-focus="evaluation-baseline" className="content-section">
       <span className="section-eyebrow">
         <Sparkles className="h-3.5 w-3.5" aria-hidden />
         {t(`${M}.eyebrow`)}
@@ -44,7 +51,7 @@ export function EvaluationMatrix() {
       <p className="section-lead">{t(`${M}.lead`)}</p>
 
       <div className="content-card overflow-hidden p-0">
-        {/* Header row — hidden on mobile, where each criterion stacks. */}
+        {/* Header row : hidden on mobile, where each criterion stacks. */}
         <div className="hidden grid-cols-[1.2fr_1.4fr_1.4fr] gap-4 border-b border-white/[0.08] px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 sm:grid">
           <span>{t(`${M}.colCriterion`)}</span>
           <span className="text-primary/80">{t(`${M}.colBeatrice`)}</span>

@@ -2,6 +2,11 @@ import { Palette } from "lucide-react";
 import type { ReactNode } from "react";
 import { useI18n } from "../i18n/I18nProvider";
 import type { Locale } from "../i18n/translations";
+import {
+  FoundationSection,
+  FoundationSectionHeader,
+  FoundationSectionHero,
+} from "./ui/FoundationPrimitives";
 
 type TokenKind = "color" | "system";
 type TokenLayer = "primitive" | "semantic" | "xai";
@@ -21,6 +26,7 @@ type TokenGroupId =
   | "elevation"
   | "layering"
   | "dimension"
+  | "technical"
   | "xai";
 
 interface TokenDefinition {
@@ -68,11 +74,11 @@ const canonicalTokens: TokenDefinition[] = [
   { name: "surface-bright", value: "#2c2c2f", group: "surface", kind: "color", layer: "primitive", description: "Brightest dark surface for placeholders.", components: "Skeleton, hover" },
 
   // Existing semantic color: 5
-  { name: "--aetheris-color-primary", value: "#deccfd", group: "semantic-color", kind: "color", layer: "semantic", description: "Primary semantic action and focus color. Resolves to primary-200.", components: "Button, Link, focus" },
-  { name: "--aetheris-color-secondary", value: "#c2a0fc", group: "semantic-color", kind: "color", layer: "semantic", description: "Secondary semantic accent. Resolves to primary-300.", components: "Badge, source, icon" },
-  { name: "--aetheris-color-success", value: "#7ee787", group: "semantic-color", kind: "color", layer: "semantic", description: "Successful completion and positive evidence.", components: "Alert, Toast, Confidence Badge" },
-  { name: "--aetheris-color-warning", value: "#ffa657", group: "semantic-color", kind: "color", layer: "semantic", description: "Caution, partial evidence, and medium confidence.", components: "Alert, Confidence Badge" },
-  { name: "--aetheris-color-error", value: "#ff6e84", group: "semantic-color", kind: "color", layer: "semantic", description: "Error, destructive action, and conflict.", components: "Form Field, Alert, Audit Panel" },
+  { name: "--velaris-color-primary", value: "#deccfd", group: "semantic-color", kind: "color", layer: "semantic", description: "Primary semantic action and focus color. Resolves to primary-200.", components: "Button, Link, focus" },
+  { name: "--velaris-color-secondary", value: "#c2a0fc", group: "semantic-color", kind: "color", layer: "semantic", description: "Secondary semantic accent. Resolves to primary-300.", components: "Badge, source, icon" },
+  { name: "--velaris-color-success", value: "#7ee787", group: "semantic-color", kind: "color", layer: "semantic", description: "Successful completion and positive evidence.", components: "Alert, Toast, Confidence Badge" },
+  { name: "--velaris-color-warning", value: "#ffa657", group: "semantic-color", kind: "color", layer: "semantic", description: "Caution, partial evidence, and medium confidence.", components: "Alert, Confidence Badge" },
+  { name: "--velaris-color-error", value: "#ff6e84", group: "semantic-color", kind: "color", layer: "semantic", description: "Error, destructive action, and conflict.", components: "Form Field, Alert, Audit Panel" },
 
   // Existing system: typography 4
   { name: "display-xl", value: "text-6xl font-black tracking-tighter", group: "typography", kind: "system", layer: "primitive", description: "Hero headlines and identity surfaces.", components: "Page hero, brand" , previewClass: "text-5xl font-black tracking-tighter" },
@@ -91,7 +97,7 @@ const canonicalTokens: TokenDefinition[] = [
   { name: "radius-sm", value: "0.5rem", group: "radius-shadow", kind: "system", layer: "primitive", description: "Inputs, pills, and compact cards.", components: "Input, Badge" },
   { name: "radius-md", value: "1rem", group: "radius-shadow", kind: "system", layer: "primitive", description: "Standard panels and control groups.", components: "Card, Alert" },
   { name: "radius-xl", value: "2rem", group: "radius-shadow", kind: "system", layer: "primitive", description: "Hero cards and immersive surfaces.", components: "Dialog, Workbench" },
-  { name: "shadow-glow", value: "0 0 64px rgba(179,157,219,0.12)", group: "radius-shadow", kind: "system", layer: "primitive", description: "Specialized Aetheris ambient emphasis.", components: "Identity, XAI focal points" },
+  { name: "shadow-glow", value: "0 0 64px rgba(179,157,219,0.12)", group: "radius-shadow", kind: "system", layer: "primitive", description: "Specialized Velaris ambient emphasis.", components: "Identity, XAI focal points" },
 
   // Existing system: motion 4
   { name: "motion-fast", value: "160ms", group: "motion", kind: "system", layer: "primitive", description: "Micro interactions and control feedback.", components: "Button, Link, Toggle" },
@@ -168,7 +174,24 @@ const canonicalTokens: TokenDefinition[] = [
   { name: "xai-source-bg", value: "rgba(222,204,253,0.06)", group: "xai", kind: "color", layer: "xai", description: "Grounded source and provenance surface.", components: "Source Attribution, RAG response" },
   { name: "xai-source-border", value: "#c2a0fc", group: "xai", kind: "color", layer: "xai", description: "Inspectable source boundary. Resolves to primary-300.", components: "Source Attribution" },
   { name: "xai-evidence-highlight", value: "rgba(222,204,253,0.16)", group: "xai", kind: "color", layer: "xai", description: "Evidence emphasis derived from primary-200 with opacity.", components: "Source Attribution, Tooltip" },
-  { name: "xai-audit-running", value: "#c2a0fc", group: "xai", kind: "color", layer: "xai", description: "Audit process currently executing.", components: "Audit Panel, Chat da Beatrice" },
+  { name: "xai-audit-running", value: "#c2a0fc", group: "xai", kind: "color", layer: "xai", description: "Audit process currently executing.", components: "Audit Panel, Consulta ao Abraxos" },
+
+  // Technical color system: syntax, metadata, and engineering surfaces
+  { name: "technical.foreground", value: "#e8e1f5", group: "technical", kind: "color", layer: "semantic", description: "Default monospace foreground for technical surfaces. Lavender base, easier on the eyes than saturated IDE defaults.", components: "Code block, trace panel, inline code" },
+  { name: "technical.keyword", value: "#c4a7e7", group: "technical", kind: "color", layer: "semantic", description: "Reserved words, pipeline stages, and language keywords in technical surfaces.", components: "Code Snippet, Execution Trace, Pipeline" },
+  { name: "technical.type", value: "#9ccfd8", group: "technical", kind: "color", layer: "semantic", description: "Types, classes, entities, enums, and schema metadata such as page_type.", components: "Developers, Corpus table, API Explorer" },
+  { name: "technical.entity", value: "#9ccfd8", group: "technical", kind: "color", layer: "semantic", description: "Reserved alias for domain entities. Currently resolves to technical.type.", components: "Future: interfaces, domain models" },
+  { name: "technical.string", value: "#31748f", group: "technical", kind: "color", layer: "semantic", description: "Text literals, configuration values, and quoted labels.", components: "Code Snippet, Dev Integration" },
+  { name: "technical.property", value: "#e8e1f5", group: "technical", kind: "color", layer: "semantic", description: "Properties, module names, and file paths. Resolves to technical.foreground.", components: "Architecture tiers, RAG pipeline, Snippets" },
+  { name: "technical.number", value: "#eb6f92", group: "technical", kind: "color", layer: "semantic", description: "Numeric data, metrics, targets, versions, and coverage values.", components: "Evaluation META, Laboratory metrics" },
+  { name: "technical.command", value: "#f6c177", group: "technical", kind: "color", layer: "semantic", description: "Functions, executable shell commands, and runnable actions.", components: "Developers, Dev Integration, Scripts" },
+  { name: "technical.operator", value: "#b0a8bc", group: "technical", kind: "color", layer: "semantic", description: "Operators, separators, and structural punctuation in code.", components: "Code Snippet, Markdown code" },
+  { name: "technical.comment", value: "#6e6a78", group: "technical", kind: "color", layer: "semantic", description: "Secondary hints, trailing notes, and low-priority technical metadata.", components: "Execution Trace, inline hints" },
+  { name: "technical.accent", value: "#9d7fe6", group: "technical", kind: "color", layer: "semantic", description: "Focused technical highlight that is not branding or feedback.", components: "Baseline tags, technical links" },
+  { name: "technical.surface", value: "rgba(255,255,255,0.022)", group: "technical", kind: "color", layer: "semantic", description: "Background for monospace blocks and engineering panels.", components: "Code block, trace panel" },
+  { name: "technical.surface-border", value: "rgba(255,255,255,0.10)", group: "technical", kind: "color", layer: "semantic", description: "Structural border for technical blocks.", components: "Code block, API panel" },
+  { name: "technical.chip-bg", value: "rgba(194,160,252,0.05)", group: "technical", kind: "color", layer: "semantic", description: "Inline technical chip background.", components: "Path chip, artefact chip" },
+  { name: "technical.chip-border", value: "rgba(158,180,204,0.18)", group: "technical", kind: "color", layer: "semantic", description: "Inline technical chip border.", components: "Path chip, artefact chip" },
 ];
 
 const aliasTokens: AliasDefinition[] = [
@@ -176,18 +199,21 @@ const aliasTokens: AliasDefinition[] = [
   { name: "state-disabled-text", target: "text-disabled", resolvedValue: "rgba(173,170,173,0.45)", group: "Interaction", description: "Disabled foreground is governed by the text contract." },
   { name: "state-disabled-border", target: "border-subtle", resolvedValue: "rgba(255,255,255,0.07)", group: "Interaction", description: "Disabled boundaries remain quiet without a duplicate value." },
   { name: "feedback-info-text", target: "feedback-info-icon", resolvedValue: "#deccfd", group: "Feedback", description: "Info text and icon share the same foreground contract." },
-  { name: "feedback-success-text", target: "--aetheris-color-success", resolvedValue: "#7ee787", group: "Feedback", description: "Success foreground resolves to the semantic success color." },
-  { name: "feedback-success-icon", target: "--aetheris-color-success", resolvedValue: "#7ee787", group: "Feedback", description: "Success icon resolves to the semantic success color." },
-  { name: "feedback-warning-text", target: "--aetheris-color-warning", resolvedValue: "#ffa657", group: "Feedback", description: "Warning foreground resolves to the semantic warning color." },
-  { name: "feedback-warning-icon", target: "--aetheris-color-warning", resolvedValue: "#ffa657", group: "Feedback", description: "Warning icon resolves to the semantic warning color." },
+  { name: "feedback-success-text", target: "--velaris-color-success", resolvedValue: "#7ee787", group: "Feedback", description: "Success foreground resolves to the semantic success color." },
+  { name: "feedback-success-icon", target: "--velaris-color-success", resolvedValue: "#7ee787", group: "Feedback", description: "Success icon resolves to the semantic success color." },
+  { name: "feedback-warning-text", target: "--velaris-color-warning", resolvedValue: "#ffa657", group: "Feedback", description: "Warning foreground resolves to the semantic warning color." },
+  { name: "feedback-warning-icon", target: "--velaris-color-warning", resolvedValue: "#ffa657", group: "Feedback", description: "Warning icon resolves to the semantic warning color." },
   { name: "feedback-error-text", target: "feedback-error-icon", resolvedValue: "#ff6e84", group: "Feedback", description: "Error text and icon share one foreground contract." },
-  { name: "xai-confidence-high", target: "--aetheris-color-success", resolvedValue: "#7ee787", group: "XAI", description: "High calibrated confidence reuses semantic success." },
-  { name: "xai-confidence-medium", target: "--aetheris-color-warning", resolvedValue: "#ffa657", group: "XAI", description: "Medium confidence communicates caution without a new hue." },
-  { name: "xai-confidence-low", target: "--aetheris-color-error", resolvedValue: "#ff6e84", group: "XAI", description: "Low confidence reuses the semantic error signal." },
-  { name: "xai-audit-complete", target: "--aetheris-color-success", resolvedValue: "#7ee787", group: "XAI", description: "Completed audits reuse semantic success." },
-  { name: "xai-audit-conflict", target: "--aetheris-color-error", resolvedValue: "#ff6e84", group: "XAI", description: "Policy or evidence conflicts reuse semantic error." },
+  { name: "xai-confidence-high", target: "--velaris-color-success", resolvedValue: "#7ee787", group: "XAI", description: "High calibrated confidence reuses semantic success." },
+  { name: "xai-confidence-medium", target: "--velaris-color-warning", resolvedValue: "#ffa657", group: "XAI", description: "Medium confidence communicates caution without a new hue." },
+  { name: "xai-confidence-low", target: "--velaris-color-error", resolvedValue: "#ff6e84", group: "XAI", description: "Low confidence reuses the semantic error signal." },
+  { name: "xai-audit-complete", target: "--velaris-color-success", resolvedValue: "#7ee787", group: "XAI", description: "Completed audits reuse semantic success." },
+  { name: "xai-audit-conflict", target: "--velaris-color-error", resolvedValue: "#ff6e84", group: "XAI", description: "Policy or evidence conflicts reuse semantic error." },
   { name: "surface-dialog", target: "surface-container-high", resolvedValue: "#1f1f22", group: "Surface", description: "Dialog is a semantic usage contract over the high container." },
   { name: "surface-popover", target: "surface-container-highest", resolvedValue: "#262528", group: "Surface", description: "Popover is a semantic usage contract over the highest container." },
+  { name: "technical.path", target: "technical.property", resolvedValue: "#e8e1f5", group: "Technical", description: "File and module paths reuse the property role." },
+  { name: "technical.metadata", target: "technical.type", resolvedValue: "#9ccfd8", group: "Technical", description: "Schema metadata and enums reuse the type role." },
+  { name: "technical.link", target: "technical.accent", resolvedValue: "#9d7fe6", group: "Technical", description: "Technical documentation links reuse the accent role." },
 ];
 
 const coverageRows: CoverageRow[] = [
@@ -199,7 +225,7 @@ const coverageRows: CoverageRow[] = [
   { components: "Command Palette", componentCount: 1, groups: ["surface-popover", "overlay-backdrop", "z-command", "state-selected", "focus-ring"], rationale: "Command discovery combines search, selection, and global overlay behavior." },
   { components: "Confidence Badge", componentCount: 1, groups: ["xai-confidence", "feedback", "radius", "typography"], rationale: "Confidence maps calibrated evidence to reusable semantic feedback." },
   { components: "Source Attribution, Audit Panel", componentCount: 2, groups: ["xai-source", "xai-evidence", "xai-audit", "surface", "border", "typography"], rationale: "Traceability requires inspectable evidence, process status, and readable provenance." },
-  { components: "Skeleton Loader, Explanation Bubble, Chat da Beatrice", componentCount: 3, groups: ["surface-skeleton", "xai-evidence", "xai-source", "feedback", "motion"], rationale: "Loading and explanation surfaces must preserve context while evidence and responses are assembled." },
+  { components: "Skeleton Loader, Explanation Bubble, Consulta ao Abraxos", componentCount: 3, groups: ["surface-skeleton", "xai-evidence", "xai-source", "feedback", "motion"], rationale: "Loading and explanation surfaces must preserve context while evidence and responses are assembled." },
 ];
 
 const semanticGroupIds: TokenGroupId[] = [
@@ -221,6 +247,7 @@ const semanticInterfaceTokens = canonicalTokens.filter(
   (token) => token.layer === "semantic" && token.group !== "semantic-color",
 );
 const xaiTokens = canonicalTokens.filter((token) => token.layer === "xai");
+const technicalTokens = canonicalTokens.filter((token) => token.group === "technical");
 
 const tokenMetrics = {
   canonical: canonicalTokens.length,
@@ -253,11 +280,11 @@ const TOKEN_DESCRIPTIONS_PT: Record<string, string> = {
   "surface-container-high": "Base elevada para painéis e diálogos.",
   "surface-container-highest": "Superfície opaca mais alta para popovers.",
   "surface-bright": "Superfície escura mais clara para placeholders e hover.",
-  "--aetheris-color-primary": "Cor semântica principal de ação e foco. Resolve para primary-200.",
-  "--aetheris-color-secondary": "Acento semântico secundário. Resolve para primary-300.",
-  "--aetheris-color-success": "Conclusão bem-sucedida e evidência positiva.",
-  "--aetheris-color-warning": "Cautela, evidência parcial e confiança média.",
-  "--aetheris-color-error": "Erro, ação destrutiva e conflito.",
+  "--velaris-color-primary": "Cor semântica principal de ação e foco. Resolve para primary-200.",
+  "--velaris-color-secondary": "Acento semântico secundário. Resolve para primary-300.",
+  "--velaris-color-success": "Conclusão bem-sucedida e evidência positiva.",
+  "--velaris-color-warning": "Cautela, evidência parcial e confiança média.",
+  "--velaris-color-error": "Erro, ação destrutiva e conflito.",
   "display-xl": "Títulos de hero e superfícies de identidade.",
   "heading-lg": "Seções principais e âncoras de conteúdo.",
   "body-md": "Texto de interface legível com ritmo equilibrado.",
@@ -270,7 +297,7 @@ const TOKEN_DESCRIPTIONS_PT: Record<string, string> = {
   "radius-sm": "Inputs, badges e superfícies compactas.",
   "radius-md": "Painéis padrão e grupos de controles.",
   "radius-xl": "Superfícies imersivas e diálogos amplos.",
-  "shadow-glow": "Ênfase ambiente característica do Aetheris.",
+  "shadow-glow": "Ênfase ambiente característica do Velaris.",
   "motion-fast": "Microinterações e resposta de controles.",
   "motion-base": "Transição padrão para cards e mudanças de layout.",
   "motion-slow": "Ênfase significativa e revelações em etapas.",
@@ -326,6 +353,21 @@ const TOKEN_DESCRIPTIONS_PT: Record<string, string> = {
   "xai-source-border": "Limite de fonte inspecionável. Resolve para primary-300.",
   "xai-evidence-highlight": "Ênfase de evidência derivada de primary-200 com opacidade.",
   "xai-audit-running": "Processo de auditoria atualmente em execução.",
+  "technical.foreground": "Foreground padrão monospace em superfícies técnicas. Base lavanda, mais confortável que defaults saturados de IDE.",
+  "technical.keyword": "Palavras reservadas, estágios de pipeline e keywords em superfícies técnicas.",
+  "technical.type": "Tipos, entidades, enums e metadados de schema como page_type.",
+  "technical.entity": "Alias reservado para entidades de domínio. Hoje resolve para technical.type.",
+  "technical.string": "Literais textuais, valores de configuração e labels entre aspas.",
+  "technical.property": "Propriedades, nomes de módulo e caminhos de arquivo.",
+  "technical.number": "Dados numéricos, métricas, metas, versões e cobertura.",
+  "technical.command": "Comandos de shell executáveis e ações runnable.",
+  "technical.operator": "Operadores, separadores e pontuação estrutural em código.",
+  "technical.comment": "Hints secundários, notas de rodapé e metadados de baixa prioridade.",
+  "technical.accent": "Destaque técnico pontual que não é branding nem feedback.",
+  "technical.surface": "Fundo para blocos monospace e painéis de engenharia.",
+  "technical.surface-border": "Borda estrutural para blocos técnicos.",
+  "technical.chip-bg": "Fundo de chip técnico inline.",
+  "technical.chip-border": "Borda de chip técnico inline.",
 };
 
 const ALIAS_DESCRIPTIONS_PT: Record<string, string> = {
@@ -345,6 +387,9 @@ const ALIAS_DESCRIPTIONS_PT: Record<string, string> = {
   "xai-audit-conflict": "Conflitos de política ou evidência reutilizam o contrato de erro.",
   "surface-dialog": "Diálogos usam um contrato semântico sobre o contentor elevado.",
   "surface-popover": "Popovers usam um contrato semântico sobre o contentor mais alto.",
+  "technical.path": "Caminhos de arquivo e módulo reutilizam o papel property.",
+  "technical.metadata": "Metadados de schema e enums reutilizam o papel type.",
+  "technical.link": "Links técnicos de documentação reutilizam o papel accent.",
 };
 
 const COVERAGE_RATIONALE_PT: Record<string, string> = {
@@ -356,7 +401,7 @@ const COVERAGE_RATIONALE_PT: Record<string, string> = {
   "Command Palette": "A descoberta de comandos combina pesquisa, seleção e comportamento global de overlay.",
   "Confidence Badge": "A confiança relaciona evidência calibrada a feedback semântico reutilizável.",
   "Source Attribution, Audit Panel": "Rastreabilidade exige evidência inspecionável, estado de processo e proveniência legível.",
-  "Skeleton Loader, Explanation Bubble, Chat da Beatrice": "Carregamento e explicação devem preservar o contexto enquanto evidências e respostas são reunidas.",
+  "Skeleton Loader, Explanation Bubble, Consulta ao Abraxos": "Carregamento e explicação devem preservar o contexto enquanto evidências e respostas são reunidas.",
 };
 
 function getCopy(locale: Locale) {
@@ -366,6 +411,8 @@ function getCopy(locale: Locale) {
       titleLead: "Design",
       titleAccent: "Tokens",
       subtitle: "Base values, interface contracts, and explainability states organized from foundation to application.",
+      heroNoteLabel: "Taxonomy contract",
+      heroNote: "Values become reusable system decisions when their purpose and resolution remain explicit.",
       metrics: {
         documented: "Documented",
         preserved: "Preserved base",
@@ -380,9 +427,10 @@ function getCopy(locale: Locale) {
       guideTitle: "How to read this taxonomy",
       guideBody: "Primitive tokens preserve base values. Semantic tokens describe reusable interface roles. XAI tokens encode confidence, source, evidence, and audit states. Aliases connect these layers without duplicating values.",
       chapters: {
-        primitive: { eyebrow: "Foundation", title: "Preserved primitive tokens", lead: "Base values sustaining the original Aetheris identity, with the five historical semantic colors identified separately." },
+        primitive: { eyebrow: "Foundation", title: "Preserved primitive tokens", lead: "Base values sustaining the original Velaris identity, with the five historical semantic colors identified separately." },
         semantic: { eyebrow: "Interface contracts", title: "Semantic interface tokens", lead: "Reusable roles describing intent, visual state, and interface behavior without creating a token for every intent." },
-        xai: { eyebrow: "Explainability", title: "Specialized XAI tokens", lead: "Contracts for confidence, source, evidence, and auditability in Beatrice responses." },
+        technical: { eyebrow: "Engineering surfaces", title: "Technical Color System", lead: "A Velaris-native palette for code, architecture, metadata, and documentation — derived from lavender and violet, not IDE defaults." },
+        xai: { eyebrow: "Explainability", title: "Specialized XAI tokens", lead: "Contracts for confidence, source, evidence, and auditability in Abraxos responses." },
         aliases: { eyebrow: "Resolution model", title: "Aliases and semantic contracts", lead: "One value can support several explicit contracts without duplicating visual decisions." },
         coverage: { eyebrow: "Application", title: "Component coverage", lead: "Token groups mapped to the behavioral needs of the 25 primary components." },
       },
@@ -421,8 +469,19 @@ function getCopy(locale: Locale) {
       tokenGroups: "Token groups",
       rationale: "Rationale",
       aliasesNote: "Aliases are explicit names for existing decisions. They do not create new colors and do not increase the canonical token count.",
-      xaiNote: "XAI tokens encode meaning rather than decoration. They sustain Confidence Badge, Source Attribution, Audit Panel, Explanation Bubble, Beatrice Chat, and RAG-retrieved responses.",
-      typeSample: "Aetheris evidence",
+      xaiNote: "XAI tokens encode meaning rather than decoration. They sustain Confidence Badge, Source Attribution, Audit Panel, Explanation Bubble, Abraxos Chat, and RAG-retrieved responses.",
+      technicalWhenUse: "Use for file paths, shell commands, schema metadata, numeric targets, monospace blocks, execution traces, and engineering documentation.",
+      technicalWhenNot: "Do not use for navigation, CTAs, brand moments, success/warning/error states, or persona themes. Those belong to primary, secondary, and feedback contracts.",
+      technicalRule: "technical = what it is · feedback = how it is",
+      technicalExamples: [
+        ["server.py", "technical.property"],
+        ["npm run dev", "technical.command"],
+        ["page_type = architecture", "technical.type"],
+        ["META ≥ 0.80", "technical.number"],
+        ["Execution completed", "feedback-success"],
+        ["Warning: evidence missing", "feedback-warning"],
+      ],
+      typeSample: "Velaris evidence",
       opacity: "with opacity",
     };
   }
@@ -430,9 +489,11 @@ function getCopy(locale: Locale) {
   if (locale === "pt-PT") {
     return {
       eyebrow: "Taxonomia da linguagem visual",
-      titleLead: "Design",
-      titleAccent: "Tokens",
+      titleLead: "Tokens de",
+      titleAccent: "Design",
       subtitle: "Valores base, contratos de interface e estados de explicabilidade organizados da fundação à aplicação.",
+      heroNoteLabel: "Contrato da taxonomia",
+      heroNote: "Os valores tornam-se decisões reutilizáveis quando a sua finalidade e resolução permanecem explícitas.",
       metrics: {
         documented: "Documentados",
         preserved: "Base preservada",
@@ -447,9 +508,10 @@ function getCopy(locale: Locale) {
       guideTitle: "Como ler esta taxonomia",
       guideBody: "Tokens primitivos preservam valores base. Tokens semânticos descrevem papéis reutilizáveis de interface. Tokens XAI codificam confiança, fonte, evidência e auditoria. Aliases ligam estas camadas sem duplicar valores.",
       chapters: {
-        primitive: { eyebrow: "Fundação", title: "Tokens primitivos preservados", lead: "Valores base que sustentam a identidade original do Aetheris, com as cinco cores semânticas históricas identificadas em separado." },
+        primitive: { eyebrow: "Fundação", title: "Tokens primitivos preservados", lead: "Valores base que sustentam a identidade original do Velaris, com as cinco cores semânticas históricas identificadas em separado." },
         semantic: { eyebrow: "Contratos de interface", title: "Tokens semânticos de interface", lead: "Papéis reutilizáveis que descrevem intenção, estado visual e comportamento sem criar um token para cada finalidade." },
-        xai: { eyebrow: "Explicabilidade", title: "Tokens especializados de XAI", lead: "Contratos específicos para confiança, fonte, evidência e auditabilidade nas respostas da Beatrice." },
+        technical: { eyebrow: "Superfícies de engenharia", title: "Technical Color System", lead: "Paleta nativa Velaris para código, arquitetura, metadados e documentação — derivada de lavanda e violeta, não de defaults de IDE." },
+        xai: { eyebrow: "Explicabilidade", title: "Tokens especializados de XAI", lead: "Contratos específicos para confiança, fonte, evidência e auditabilidade nas respostas do Abraxos." },
         aliases: { eyebrow: "Modelo de resolução", title: "Aliases e contratos semânticos", lead: "Um mesmo valor pode sustentar vários contratos explícitos sem duplicar decisões visuais." },
         coverage: { eyebrow: "Aplicação", title: "Cobertura por componente", lead: "Relação entre grupos de tokens e as necessidades comportamentais dos 25 componentes principais." },
       },
@@ -464,6 +526,17 @@ function getCopy(locale: Locale) {
         dimension: ["Dimensões e acessibilidade", "Alturas de controlos, alvos mínimos e escala de ícones."],
         typography: ["Tipografia semântica", "Papéis complementares para painéis, metadados e evidência técnica."],
       },
+      technicalWhenUse: "Use para paths, comandos shell, metadados de schema, metas numéricas, blocos monospace, traces de execução e documentação de engenharia.",
+      technicalWhenNot: "Não use para navegação, CTAs, momentos de marca, estados success/warning/error ou temas de persona. Esses papéis pertencem a primary, secondary e feedback.",
+      technicalRule: "technical = o que é · feedback = como está",
+      technicalExamples: [
+        ["server.py", "technical.property"],
+        ["npm run dev", "technical.command"],
+        ["page_type = architecture", "technical.type"],
+        ["META ≥ 0.80", "technical.number"],
+        ["Execução concluída", "feedback-success"],
+        ["Aviso: evidência em falta", "feedback-warning"],
+      ],
       primaryScale: "Escala Primary",
       surfaceScale: "Escala Surface",
       preservedColors: "Contratos semânticos de cor preservados",
@@ -488,17 +561,19 @@ function getCopy(locale: Locale) {
       tokenGroups: "Grupos de tokens",
       rationale: "Justificação",
       aliasesNote: "Aliases são nomes explícitos para decisões existentes. Não criam novas cores nem aumentam a contagem de tokens canónicos.",
-      xaiNote: "Tokens XAI codificam significado, não decoração. Sustentam Confidence Badge, Source Attribution, Audit Panel, Explanation Bubble, Chat da Beatrice e respostas recuperadas por RAG.",
-      typeSample: "Evidência Aetheris",
+      xaiNote: "Tokens XAI codificam significado, não decoração. Sustentam Confidence Badge, Source Attribution, Audit Panel, Explanation Bubble, Consulta ao Abraxos e respostas recuperadas por RAG.",
+      typeSample: "Evidência Velaris",
       opacity: "com opacidade",
     };
   }
 
   return {
     eyebrow: "Taxonomia da linguagem visual",
-    titleLead: "Design",
-    titleAccent: "Tokens",
+    titleLead: "Tokens de",
+    titleAccent: "Design",
     subtitle: "Valores base, contratos de interface e estados de explicabilidade organizados da fundação à aplicação.",
+    heroNoteLabel: "Contrato da taxonomia",
+    heroNote: "Valores se tornam decisões reutilizáveis quando sua finalidade e resolução permanecem explícitas.",
     metrics: {
       documented: "Documentados",
       preserved: "Base preservada",
@@ -513,9 +588,10 @@ function getCopy(locale: Locale) {
     guideTitle: "Como ler esta taxonomia",
     guideBody: "Tokens primitivos preservam valores base. Tokens semânticos descrevem papéis reutilizáveis de interface. Tokens XAI codificam confiança, fonte, evidência e auditoria. Aliases conectam essas camadas sem duplicar valores.",
     chapters: {
-      primitive: { eyebrow: "Fundação", title: "Tokens primitivos preservados", lead: "Valores base que sustentam a identidade original do Aetheris, com as cinco cores semânticas históricas identificadas separadamente." },
+      primitive: { eyebrow: "Fundação", title: "Tokens primitivos preservados", lead: "Valores base que sustentam a identidade original do Velaris, com as cinco cores semânticas históricas identificadas separadamente." },
       semantic: { eyebrow: "Contratos de interface", title: "Tokens semânticos de interface", lead: "Papéis reutilizáveis que descrevem intenção, estado visual e comportamento sem criar um token para cada finalidade." },
-      xai: { eyebrow: "Explicabilidade", title: "Tokens especializados de XAI", lead: "Contratos específicos para confiança, fonte, evidência e auditabilidade nas respostas da Beatrice." },
+      technical: { eyebrow: "Superfícies de engenharia", title: "Technical Color System", lead: "Paleta nativa Velaris para código, arquitetura, metadados e documentação — derivada de lavanda e violeta, não de defaults de IDE." },
+      xai: { eyebrow: "Explicabilidade", title: "Tokens especializados de XAI", lead: "Contratos específicos para confiança, fonte, evidência e auditabilidade nas respostas do Abraxos." },
       aliases: { eyebrow: "Modelo de resolução", title: "Aliases e contratos semânticos", lead: "Um mesmo valor pode sustentar diferentes contratos explícitos sem duplicar decisões visuais." },
       coverage: { eyebrow: "Aplicação", title: "Cobertura por componente", lead: "Relação entre grupos de tokens e as necessidades comportamentais dos 25 componentes principais." },
     },
@@ -530,6 +606,17 @@ function getCopy(locale: Locale) {
       dimension: ["Dimensões e acessibilidade", "Alturas de controles, alvos mínimos e escala de ícones."],
       typography: ["Tipografia semântica", "Papéis complementares para painéis, metadados e evidência técnica."],
     },
+    technicalWhenUse: "Use para paths, comandos shell, metadados de schema, metas numéricas, blocos monospace, traces de execução e documentação de engenharia.",
+    technicalWhenNot: "Não use para navegação, CTAs, momentos de marca, estados success/warning/error ou temas de persona. Esses papéis pertencem a primary, secondary e feedback.",
+    technicalRule: "technical = o que é · feedback = como está",
+    technicalExamples: [
+      ["server.py", "technical.property"],
+      ["npm run dev", "technical.command"],
+      ["page_type = architecture", "technical.type"],
+      ["META ≥ 0.80", "technical.number"],
+      ["Execução concluída", "feedback-success"],
+      ["Aviso: evidência em falta", "feedback-warning"],
+    ],
     primaryScale: "Escala Primary",
     surfaceScale: "Escala Surface",
     preservedColors: "Contratos semânticos de cor preservados",
@@ -554,8 +641,8 @@ function getCopy(locale: Locale) {
     tokenGroups: "Grupos de tokens",
     rationale: "Justificativa",
     aliasesNote: "Aliases são nomes explícitos para decisões existentes. Eles não criam novas cores nem aumentam a contagem de tokens canônicos.",
-    xaiNote: "Tokens XAI codificam significado, não decoração. Eles sustentam Confidence Badge, Source Attribution, Audit Panel, Explanation Bubble, Chat da Beatrice e respostas recuperadas por RAG.",
-    typeSample: "Evidência Aetheris",
+    xaiNote: "Tokens XAI codificam significado, não decoração. Eles sustentam Confidence Badge, Source Attribution, Audit Panel, Explanation Bubble, Consulta ao Abraxos e respostas recuperadas por RAG.",
+    typeSample: "Evidência Velaris",
     opacity: "com opacidade",
   };
 }
@@ -587,19 +674,9 @@ function aliasCategory(group: string, locale: Locale) {
     Feedback: "Feedback",
     XAI: "XAI",
     Surface: "Superfície",
+    Technical: "Técnico",
   };
   return labels[group] ?? group;
-}
-
-function TaxonomyMetric({ value, label }: { value: number; label: string }) {
-  return (
-    <div className="min-w-0 border-l border-white/[0.09] px-4 py-4 first:border-l-0 sm:px-5">
-      <dd className="text-2xl font-semibold tracking-[-0.04em] text-[#f5f1f7]">{value}</dd>
-      <dt className="mt-1.5 text-[9px] font-semibold uppercase tracking-[0.2em] text-[#77717d]">
-        {label}
-      </dt>
-    </div>
-  );
 }
 
 function TokenChapter({
@@ -627,7 +704,7 @@ function TokenChapter({
       {tone === "xai" ? (
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -inset-x-6 inset-y-3 -z-10 rounded-[24px] bg-[radial-gradient(circle_at_82%_12%,rgba(178,138,242,0.09),transparent_38%),rgba(255,255,255,0.012)] sm:-inset-x-8"
+          className="pointer-events-none absolute inset-x-0 inset-y-3 -z-10 rounded-[24px] bg-[radial-gradient(circle_at_82%_12%,rgba(178,138,242,0.09),transparent_38%),rgba(255,255,255,0.012)] lg:-inset-x-8"
         />
       ) : null}
       <div className="grid grid-cols-[44px_minmax(0,1fr)] gap-x-4 sm:grid-cols-[56px_minmax(0,1fr)] sm:gap-x-6">
@@ -635,7 +712,7 @@ function TokenChapter({
           {number}
         </p>
         <header>
-          <p className="text-[9px] font-semibold uppercase tracking-[0.26em] text-[#8e779e]">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#b4a3c0]">
             {eyebrow}
           </p>
           <h2 className="mt-2 text-[1.625rem] font-semibold leading-[1.05] tracking-[-0.03em] text-[#f5f1f7] sm:text-[2rem]">
@@ -662,7 +739,7 @@ function ColorScale({
     <section className="border-t border-white/[0.075] py-7 first:border-t-0 first:pt-0">
       <div className="mb-4 flex items-baseline justify-between gap-4">
         <h3 className="text-base font-semibold tracking-[-0.02em] text-[#eee9f1]">{title}</h3>
-        <span className="font-mono text-[10px] text-[#69636e]">{tokens.length}</span>
+        <span className="font-mono text-[10px] text-[#aaa2af]">{tokens.length}</span>
       </div>
       <div
         className="grid gap-2"
@@ -677,7 +754,7 @@ function ColorScale({
             <code className="mt-2 block truncate font-mono text-[9px] text-[#c8c0ce]">
               {token.name}
             </code>
-            <code className="mt-0.5 block font-mono text-[9px] text-[#66606a]">
+            <code className="mt-0.5 block font-mono text-[10px] text-[#aaa2af]">
               {token.value}
             </code>
           </div>
@@ -698,7 +775,7 @@ function TokenLedger({
 }) {
   return (
     <div className="border-y border-white/[0.08]">
-      <div className="hidden grid-cols-[minmax(160px,0.75fr)_minmax(160px,0.8fr)_minmax(0,1.3fr)_minmax(150px,0.75fr)] gap-5 border-b border-white/[0.08] py-3 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#625c67] lg:grid">
+      <div className="hidden grid-cols-[minmax(160px,0.75fr)_minmax(160px,0.8fr)_minmax(0,1.3fr)_minmax(150px,0.75fr)] gap-5 border-b border-white/[0.08] py-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#aaa2af] lg:grid">
         <span>{copy.token}</span>
         <span>{copy.value}</span>
         <span>{copy.role}</span>
@@ -726,7 +803,7 @@ function TokenLedger({
               {token.value}
             </code>
             <p className="text-xs leading-5 text-[#aaa2af]">{tokenDescription(token, locale)}</p>
-            <p className="text-[10px] uppercase leading-5 tracking-[0.12em] text-[#66606a]">
+            <p className="text-[10px] uppercase leading-5 tracking-[0.12em] text-[#aaa2af]">
               {token.components}
             </p>
           </li>
@@ -754,9 +831,9 @@ function LedgerGroup({
       <header className="mb-5 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
         <div>
           <h3 className="text-lg font-semibold tracking-[-0.025em] text-[#eee9f1]">{title}</h3>
-          <p className="mt-1.5 max-w-[680px] text-xs leading-5 text-[#817a87]">{description}</p>
+          <p className="mt-1.5 max-w-[680px] text-xs leading-5 text-[#aaa2af]">{description}</p>
         </div>
-        <p className="font-mono text-[10px] text-[#69636e]">
+        <p className="font-mono text-[10px] text-[#aaa2af]">
           {tokens.length} {copy.count}
         </p>
       </header>
@@ -778,7 +855,7 @@ function TypographyLedger({
     <section className="border-t border-white/[0.075] py-8">
       <div className="mb-5 flex items-baseline justify-between gap-4">
         <h3 className="text-lg font-semibold tracking-[-0.025em] text-[#eee9f1]">{copy.typography}</h3>
-        <span className="font-mono text-[10px] text-[#69636e]">{tokens.length}</span>
+        <span className="font-mono text-[10px] text-[#aaa2af]">{tokens.length}</span>
       </div>
       <div className="border-y border-white/[0.08]">
         {tokens.map((token) => (
@@ -788,7 +865,7 @@ function TypographyLedger({
           >
             <div>
               <code className="font-mono text-[11px] font-semibold text-[#e9e3ed]">{token.name}</code>
-              <code className="mt-1 block break-all font-mono text-[9px] leading-4 text-[#716879]">
+              <code className="mt-1 block break-all font-mono text-[10px] leading-4 text-[#aaa2af]">
                 {token.value}
               </code>
             </div>
@@ -797,7 +874,7 @@ function TypographyLedger({
             </p>
             <div>
               <p className="text-xs leading-5 text-[#aaa2af]">{tokenDescription(token, locale)}</p>
-              <p className="mt-1.5 text-[9px] uppercase tracking-[0.14em] text-[#625c67]">
+              <p className="mt-1.5 text-[10px] uppercase tracking-[0.12em] text-[#aaa2af]">
                 {token.components}
               </p>
             </div>
@@ -832,7 +909,7 @@ function XaiLedger({ locale, copy }: { locale: Locale; copy: PageCopy }) {
     <div>
       <p className="mb-6 max-w-[820px] text-sm leading-6 text-[#a9a1af]">{copy.xaiNote}</p>
       <div className="border-y border-[#b28af2]/[0.16]">
-        <div className="hidden grid-cols-[minmax(170px,0.85fr)_110px_minmax(160px,0.75fr)_minmax(0,1.2fr)] gap-5 border-b border-white/[0.08] py-3 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#6d6573] lg:grid">
+        <div className="hidden grid-cols-[minmax(170px,0.85fr)_110px_minmax(160px,0.75fr)_minmax(0,1.2fr)] gap-5 border-b border-white/[0.08] py-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#aaa2af] lg:grid">
           <span>{copy.token}</span>
           <span>{copy.type}</span>
           <span>{copy.value}</span>
@@ -846,7 +923,7 @@ function XaiLedger({ locale, copy }: { locale: Locale; copy: PageCopy }) {
             <code className="break-all font-mono text-[11px] font-semibold leading-5 text-[#eee8f3]">
               {contract.name}
             </code>
-            <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[#a98ad8]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#c8acef]">
               {contract.type}
             </p>
             <div>
@@ -854,14 +931,14 @@ function XaiLedger({ locale, copy }: { locale: Locale; copy: PageCopy }) {
                 {contract.value}
               </code>
               {contract.target ? (
-                <code className="mt-1 block break-all font-mono text-[9px] text-[#69616f]">
+                <code className="mt-1 block break-all font-mono text-[10px] text-[#aaa2af]">
                   → {contract.target}
                 </code>
               ) : null}
             </div>
             <div>
               <p className="text-xs leading-5 text-[#aaa2af]">{contract.description}</p>
-              <p className="mt-1 text-[9px] uppercase tracking-[0.14em] text-[#625c67]">
+              <p className="mt-1 text-[10px] uppercase tracking-[0.12em] text-[#aaa2af]">
                 {contract.components}
               </p>
             </div>
@@ -880,7 +957,7 @@ function ResolutionStudies({ copy }: { copy: PageCopy }) {
           primary-200: #deccfd
         </code>
         <div className="mt-4 space-y-2 font-mono text-[10px] leading-5 text-[#8d8593]">
-          <p>--aetheris-color-primary → primary-200</p>
+          <p>--velaris-color-primary → primary-200</p>
           <p>focus-ring → primary-200 {copy.opacity}</p>
           <p>border-focus → primary-200</p>
           <p>xai-evidence-highlight → primary-200 {copy.opacity}</p>
@@ -888,12 +965,12 @@ function ResolutionStudies({ copy }: { copy: PageCopy }) {
       </article>
       <article className="border-t border-white/[0.09] py-6 md:border-l md:border-t-0 md:pl-8">
         <code className="font-mono text-xs font-semibold text-[#9bd7a2]">
-          --aetheris-color-success: #7ee787
+          --velaris-color-success: #7ee787
         </code>
         <div className="mt-4 space-y-2 font-mono text-[10px] leading-5 text-[#8d8593]">
-          <p>xai-confidence-high → --aetheris-color-success</p>
-          <p>feedback-success-icon → --aetheris-color-success</p>
-          <p>xai-audit-complete → --aetheris-color-success</p>
+          <p>xai-confidence-high → --velaris-color-success</p>
+          <p>feedback-success-icon → --velaris-color-success</p>
+          <p>xai-audit-complete → --velaris-color-success</p>
         </div>
       </article>
     </div>
@@ -923,12 +1000,12 @@ function AliasTable({ locale, copy }: { locale: Locale; copy: PageCopy }) {
                 <code className="font-mono text-[10px] text-[#b699df]">{alias.target}</code>
               </td>
               <td className="px-4 py-3">
-                <code className="font-mono text-[10px] text-[#77707c]">{alias.resolvedValue}</code>
+                <code className="font-mono text-[10px] text-[#aaa2af]">{alias.resolvedValue}</code>
               </td>
               <td className="px-4 py-3 text-xs leading-5 text-[#aaa2af]">
                 {aliasDescription(alias, locale)}
               </td>
-              <td className="px-4 py-3 text-[9px] font-semibold uppercase tracking-[0.16em] text-[#69626e]">
+              <td className="px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#aaa2af]">
                 {aliasCategory(alias.group, locale)}
               </td>
             </tr>
@@ -957,7 +1034,7 @@ function CoverageTable({ locale, copy }: { locale: Locale; copy: PageCopy }) {
                 <p className="max-w-[280px] text-xs font-semibold leading-5 text-[#eee9f1]">
                   {row.components}
                 </p>
-                <p className="mt-1 font-mono text-[9px] text-[#68616d]">
+                <p className="mt-1 font-mono text-[10px] text-[#aaa2af]">
                   {row.componentCount} {copy.components.toLowerCase()}
                 </p>
               </td>
@@ -995,46 +1072,27 @@ export function TokensPage() {
   ] as const;
 
   return (
-    <article className="pb-20">
-      <header className="relative overflow-hidden border-b border-white/[0.09] pb-10 pt-1">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-[#8b4ff5]/[0.08] blur-3xl"
+    <article className="foundation-page">
+      <FoundationSectionHero
+        description={copy.subtitle}
+        eyebrow={copy.eyebrow}
+        icon={Palette}
+        metricNote={copy.countNote}
+        metrics={metrics.map(([label, value]) => ({ label, value }))}
+        note={copy.heroNote}
+        noteLabel={copy.heroNoteLabel}
+        titleAccent={copy.titleAccent}
+        titleLead={copy.titleLead}
+      />
+
+      <div className="foundation-content-shell">
+      <FoundationSection>
+        <FoundationSectionHeader
+          aside={<p>{copy.guideBody}</p>}
+          eyebrow={copy.guideEyebrow}
+          title={copy.guideTitle}
         />
-        <div className="relative max-w-[820px]">
-          <div className="page-eyebrow">
-            <Palette className="h-3.5 w-3.5" aria-hidden />
-            {copy.eyebrow}
-          </div>
-          <h1 className="text-[2.5rem] font-semibold leading-[0.98] tracking-[-0.045em] text-[#f5f1f7] sm:text-[3rem] lg:text-[3.5rem]">
-            {copy.titleLead} <span className="text-[#c8a7ff]">{copy.titleAccent}</span>
-          </h1>
-          <p className="mt-4 max-w-[700px] text-sm leading-6 text-[#aaa2af] sm:text-[15px]">
-            {copy.subtitle}
-          </p>
-        </div>
-
-        <dl className="relative mt-8 grid grid-cols-2 border-y border-white/[0.09] sm:grid-cols-4 xl:grid-cols-7">
-          {metrics.map(([label, value]) => (
-            <TaxonomyMetric key={label} label={label} value={value} />
-          ))}
-        </dl>
-        <p className="relative mt-3 max-w-[900px] text-[10px] leading-5 text-[#6f6874]">
-          {copy.countNote}
-        </p>
-      </header>
-
-      <section className="grid gap-5 border-b border-white/[0.09] py-9 md:grid-cols-[220px_minmax(0,1fr)] md:gap-10">
-        <div>
-          <p className="text-[9px] font-semibold uppercase tracking-[0.25em] text-[#8e779e]">
-            {copy.guideEyebrow}
-          </p>
-          <h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-[#eee9f1]">
-            {copy.guideTitle}
-          </h2>
-        </div>
-        <p className="max-w-[780px] text-sm leading-7 text-[#aaa2af]">{copy.guideBody}</p>
-      </section>
+      </FoundationSection>
 
       <TokenChapter number="01" {...copy.chapters.primitive}>
         <ColorScale title={copy.primaryScale} tokens={primaryTokens} />
@@ -1090,19 +1148,43 @@ export function TokensPage() {
         })}
       </TokenChapter>
 
-      <TokenChapter number="03" tone="xai" {...copy.chapters.xai}>
+      <TokenChapter number="03" {...copy.chapters.technical}>
+        <div className="mb-8 max-w-[800px] space-y-4 rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5">
+          <p className="text-sm font-semibold tracking-[-0.02em] text-[#eee9f1]">{copy.technicalRule}</p>
+          <p className="text-sm leading-6 text-[#aaa2af]">{copy.technicalWhenUse}</p>
+          <p className="text-sm leading-6 text-[#aaa2af]">{copy.technicalWhenNot}</p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {copy.technicalExamples.map(([sample, token]) => (
+              <div key={sample} className="flex items-center justify-between gap-3 rounded-xl border border-white/[0.07] px-3 py-2">
+                <code className="font-mono text-[10px] text-technical-string">{sample}</code>
+                <code className="font-mono text-[10px] text-technical-accent">{token}</code>
+              </div>
+            ))}
+          </div>
+        </div>
+        <LedgerGroup
+          title="Technical roles"
+          description="Engineering and documentation colors derived from the Velaris lavender system."
+          tokens={technicalTokens}
+          locale={locale}
+          copy={copy}
+        />
+      </TokenChapter>
+
+      <TokenChapter number="04" tone="xai" {...copy.chapters.xai}>
         <XaiLedger locale={locale} copy={copy} />
       </TokenChapter>
 
-      <TokenChapter number="04" {...copy.chapters.aliases}>
+      <TokenChapter number="05" {...copy.chapters.aliases}>
         <p className="mb-6 max-w-[800px] text-sm leading-6 text-[#aaa2af]">{copy.aliasesNote}</p>
         <ResolutionStudies copy={copy} />
         <AliasTable locale={locale} copy={copy} />
       </TokenChapter>
 
-      <TokenChapter number="05" {...copy.chapters.coverage}>
+      <TokenChapter number="06" {...copy.chapters.coverage}>
         <CoverageTable locale={locale} copy={copy} />
       </TokenChapter>
+      </div>
     </article>
   );
 }

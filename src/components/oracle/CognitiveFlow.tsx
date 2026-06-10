@@ -1,8 +1,8 @@
 import type { CognitiveFlowStep } from "../../types/oracle";
 
 // ||| The cognitive pipeline as an ordered stepper. A vertical rail keeps the
-// sequence legible on every viewport and reads as a reasoning trace, not a
-// decorative diagram — each node is a stage the answer actually passes through.
+// sequence legible on every viewport and reads as an execution trace, not a
+// decorative diagram : each node is a stage the answer actually passes through.
 
 export function CognitiveFlow({ steps }: { steps: CognitiveFlowStep[] }) {
   return (

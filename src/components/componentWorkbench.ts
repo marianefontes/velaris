@@ -59,14 +59,13 @@ const intentLabel = (intent: string, labels: Record<string, string>, fallback: s
   labels[key(intent)] ?? fallback;
 
 export function createInitialPlaygroundConfig(
-  id: ComponentId,
+  _id: ComponentId,
   states: readonly string[],
   intents: readonly string[],
 ): ComponentPlaygroundConfig {
   return {
     state: states[0] ?? "Default",
     intent: intents[0] ?? "Default",
-    label: id === "button" ? "Gerar análise" : undefined,
   };
 }
 
@@ -146,13 +145,13 @@ function generateGenericSnippet(id: ComponentId, config: ComponentPlaygroundConf
       );
       return previewState(
         config.state,
-        `<TextInput label="${label}" type="${type}"${stateProp(state, "filled", 'value="Aetheris"')}${stateProp(state, "focus", "autoFocus")}${stateProp(state, "error", 'error="Revise o valor informado"')}${stateProp(state, "disabled", "disabled")} />`,
+        `<TextInput label="${label}" type="${type}"${stateProp(state, "filled", 'value="Velaris"')}${stateProp(state, "focus", "autoFocus")}${stateProp(state, "error", 'error="Revise o valor informado"')}${stateProp(state, "disabled", "disabled")} />`,
       );
     }
     case "text-area": {
       const label = intentLabel(
         intent,
-        { prompt: "Prompt da Beatrice", comment: "Comentário", description: "Contexto da análise" },
+        { prompt: "Prompt do Abraxos", comment: "Comentário", description: "Contexto da análise" },
         "Texto longo",
       );
       return previewState(
@@ -220,7 +219,7 @@ function generateGenericSnippet(id: ComponentId, config: ComponentPlaygroundConf
       );
       return previewState(
         config.state,
-        `<Card${stateProp(state, "selected", "selected")}${stateProp(state, "loading", "loading")}${stateProp(state, "disabled", "disabled")}>\n  <CardTitle>${title}</CardTitle>\n  <CardDescription>Conteúdo contextual do Aetheris.</CardDescription>\n</Card>`,
+        `<Card${stateProp(state, "selected", "selected")}${stateProp(state, "loading", "loading")}${stateProp(state, "disabled", "disabled")}>\n  <CardTitle>${title}</CardTitle>\n  <CardDescription>Conteúdo contextual do Velaris.</CardDescription>\n</Card>`,
       );
     }
     case "modal-dialog": {
@@ -303,7 +302,7 @@ function generateGenericSnippet(id: ComponentId, config: ComponentPlaygroundConf
       const score = state === "unavailable" ? 0 : state === "partial match" ? 0.54 : state === "high match" ? 0.96 : 0.87;
       return previewState(
         config.state,
-        `<SourceAttribution title="Documentação Aetheris" purpose="${purpose}"${stateProp(state, "expanded", "expanded")}${stateProp(state, "unavailable", "unavailable")} score={${score}} />`,
+        `<SourceAttribution title="Documentação Velaris" purpose="${purpose}"${stateProp(state, "expanded", "expanded")}${stateProp(state, "unavailable", "unavailable")} score={${score}} />`,
       );
     }
     case "audit-panel": {
@@ -319,7 +318,7 @@ function generateGenericSnippet(id: ComponentId, config: ComponentPlaygroundConf
       const as = intent === "hierarchy" ? "h2" : intent === "metadata" ? "span" : "p";
       return previewState(
         config.state,
-        `<Typography as="${as}" token="${token}">\n  ${intentLabel(intent, { hierarchy: "Inteligência verificável", reading: "Uma resposta apoiada por evidências.", metadata: "CONFIDENCE SCORE" }, "Texto Aetheris")}\n</Typography>`,
+        `<Typography as="${as}" token="${token}">\n  ${intentLabel(intent, { hierarchy: "Inteligência verificável", reading: "Uma resposta apoiada por evidências.", metadata: "CONFIDENCE SCORE" }, "Texto Velaris")}\n</Typography>`,
       );
     }
     case "icon": {
@@ -334,9 +333,15 @@ function generateGenericSnippet(id: ComponentId, config: ComponentPlaygroundConf
   }
 }
 
-export function generateComponentSnippet(id: ComponentId, config: ComponentPlaygroundConfig) {
-  if (id === "button") return generateButtonSnippet(config);
-  return `/* Workbench intent: ${config.intent} */\n${generateGenericSnippet(id, config)}`;
+export function generateComponentSnippet(
+  id: ComponentId,
+  config: ComponentPlaygroundConfig,
+  locale: Locale = "pt-BR",
+) {
+  const source = id === "button"
+    ? generateButtonSnippet(config)
+    : `/* Workbench intent: ${config.intent} */\n${generateGenericSnippet(id, config)}`;
+  return localizeComponentSnippet(source, locale);
 }
 
 function parseButtonSnippet(draft: string): SnippetParseResult {
@@ -381,6 +386,7 @@ export function parseComponentSnippet(
   draft: string,
   states: readonly string[],
   intents: readonly string[],
+  locale: Locale = "pt-BR",
 ): SnippetParseResult {
   if (id === "button") return parseButtonSnippet(draft);
 
@@ -390,7 +396,7 @@ export function parseComponentSnippet(
   for (const state of states) {
     for (const intent of intents) {
       const config = { state, intent };
-      if (normalize(generateComponentSnippet(id, config)) === source) {
+      if (normalize(generateComponentSnippet(id, config, locale)) === source) {
         return { ok: true, config };
       }
     }
@@ -398,3 +404,5 @@ export function parseComponentSnippet(
 
   return { ok: false, error: "unsupported-props" };
 }
+import type { Locale } from "../i18n/translations";
+import { localizeComponentSnippet } from "../i18n/pages/componentSnippets";

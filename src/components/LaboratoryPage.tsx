@@ -54,15 +54,17 @@ import type {
   LaboratoryRunItem,
   LaboratorySnapshot,
 } from "../types/laboratory";
+import { PageShell } from "./ui/VisualPrimitives";
 
 const PROFILES = [
-  { id: "designer", label: "Designer" },
   { id: "dev", label: "Developer" },
-  { id: "pm", label: "Product" },
+  { id: "designer", label: "Designer" },
+  { id: "product_designer", label: "Product Designer" },
   { id: "qa", label: "QA" },
-  { id: "writer", label: "Tech Writer" },
-  { id: "a11y", label: "Accessibility" },
+  { id: "tech_writer", label: "Tech Writer" },
+  { id: "a11y", label: "Accessibility Specialist" },
   { id: "maintainer", label: "Maintainer" },
+  { id: "design_system_manager", label: "Design System Manager" },
 ];
 
 const METRIC_LABELS: Record<string, string> = {
@@ -88,7 +90,7 @@ function formatMetric(value: number | null | undefined): string {
 }
 
 function formatDate(value: string | null | undefined): string {
-  if (!value) return "—";
+  if (!value) return ":";
   return new Intl.DateTimeFormat("pt-BR", {
     day: "2-digit",
     month: "short",
@@ -194,7 +196,7 @@ export function LaboratoryPage() {
   }
 
   return (
-    <div className="relative mx-auto w-full max-w-[1480px] overflow-hidden px-5 py-9 text-slate-200 sm:px-7 lg:px-10">
+    <PageShell width="wide" className="relative overflow-hidden">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(circle_at_18%_0%,rgba(222,204,253,0.08),transparent_42%)]" />
       <header className="relative border-b border-white/[0.08] pb-8">
         <div className="flex flex-wrap items-end justify-between gap-6">
@@ -306,7 +308,7 @@ export function LaboratoryPage() {
           />
         </aside>
 
-        <main className="min-w-0">
+        <div className="min-w-0">
           {selectedRun ? (
             <RunWorkspace
               run={selectedRun}
@@ -327,10 +329,10 @@ export function LaboratoryPage() {
           ) : (
             <EmptyLaboratory />
           )}
-        </main>
+        </div>
       </div>
       )}
-    </div>
+    </PageShell>
   );
 }
 
@@ -372,7 +374,7 @@ function AutomationOverview({
         </div>
         <div className="bg-surface-container-low p-5">
           <p className="text-[9px] font-bold uppercase tracking-widest text-slate-600">Próxima candidata</p>
-          <p className="mt-3 text-sm font-semibold text-slate-200">{nextSlot?.version_label ?? "—"}</p>
+          <p className="mt-3 text-sm font-semibold text-slate-200">{nextSlot?.version_label ?? ":"}</p>
           <p className="mt-2 font-mono text-[9px] text-slate-600">
             {nextSlot ? `${formatDate(nextSlot.scheduled_for)} · ${nextSlot.repetitions} repetição(ões)` : "Sem janela"}
           </p>
@@ -659,9 +661,9 @@ function RecommendationDetail({
           <div className="mt-3 divide-y divide-white/[0.06] overflow-hidden rounded-xl border border-white/[0.07]">
             {checks.map((check) => (
               <div key={check.id} className="grid gap-2 bg-white/[0.015] px-4 py-3 sm:grid-cols-[auto_1fr_auto] sm:items-center">
-                {check.passed ? <CheckCircle2 className="h-4 w-4 text-emerald-300" /> : <Ban className="h-4 w-4 text-rose-300" />}
+                {check.passed ? <CheckCircle2 className="h-4 w-4 text-success" /> : <Ban className="h-4 w-4 text-rose-300" />}
                 <span className="text-[10px] leading-5 text-slate-400">{check.rationale}</span>
-                <span className="font-mono text-[9px] text-slate-600">{String(check.observed ?? "—")}</span>
+                <span className="font-mono text-[9px] text-slate-600">{String(check.observed ?? ":")}</span>
               </div>
             ))}
           </div>
@@ -822,7 +824,7 @@ function RunComposer({
   }, [caseSets, caseSetId]);
 
   return (
-    <section className="rounded-2xl border border-white/[0.09] bg-white/[0.025] p-5">
+    <section data-abraxos-focus="lab-run" className="rounded-2xl border border-white/[0.09] bg-white/[0.025] p-5">
       <SectionLabel icon={<Play />} label="Nova execução" />
       <div className="mt-5 space-y-5">
         <FieldLabel label="Identificador da versão">
@@ -928,7 +930,7 @@ function RunHistory({
               <div className="flex items-center gap-2">
                 <RunStatusDot status={run.status} />
                 <p className="truncate text-xs font-semibold text-slate-200">{run.version_label}</p>
-                {run.is_baseline ? <span className="rounded-full bg-cyan-300/10 px-2 py-0.5 text-[8px] font-bold uppercase tracking-widest text-cyan-200">baseline</span> : null}
+                {run.is_baseline ? <span className="rounded-full border border-technical-accent/20 bg-technical-accent/10 px-2 py-0.5 text-[8px] font-bold uppercase tracking-widest text-technical-accent">baseline</span> : null}
               </div>
               <p className="mt-1.5 font-mono text-[9px] text-slate-600">{formatDate(run.created_at)} · {run.completed_items}/{run.total_items}</p>
             </div>
@@ -968,7 +970,7 @@ function RunWorkspace({
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <RunStatusChip status={run.status} />
-              {run.is_baseline ? <span className="rounded-full border border-cyan-300/20 bg-cyan-300/[0.06] px-2.5 py-1 text-[9px] font-bold uppercase tracking-widest text-cyan-200">baseline ativa</span> : null}
+              {run.is_baseline ? <span className="rounded-full border border-technical-accent/20 bg-technical-accent/10 px-2.5 py-1 text-[9px] font-bold uppercase tracking-widest text-technical-accent">baseline ativa</span> : null}
             </div>
             <h2 className="mt-4 text-2xl font-semibold tracking-tight text-white">{run.version_label}</h2>
             <p className="mt-2 font-mono text-[10px] leading-5 text-slate-600">
@@ -1060,7 +1062,7 @@ function MetricBoard({
     <section>
       <div className="mb-3 flex items-center justify-between">
         <SectionLabel icon={<Gauge />} label="Métricas agregadas" />
-        <p className="text-[9px] uppercase tracking-widest text-slate-700">0–100 · maior é melhor</p>
+        <p className="text-[9px] uppercase tracking-widest text-slate-700">0-100 · maior é melhor</p>
       </div>
       {ordered.length ? (
         <div className="grid gap-px overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.08] sm:grid-cols-2 xl:grid-cols-4">
@@ -1076,7 +1078,7 @@ function MetricBoard({
           ))}
           <div className="bg-[#121215] p-4">
             <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-slate-600">ECE da confiança</p>
-            <p className="mt-3 font-mono text-lg font-semibold text-amber-200">{calibration?.ece ?? "dados insuficientes"}</p>
+            <p className="mt-3 font-mono text-lg font-semibold text-technical-number">{calibration?.ece ?? "dados insuficientes"}</p>
             <p className="mt-2 text-[9px] leading-4 text-slate-700">{calibration?.reason}</p>
           </div>
         </div>
@@ -1143,12 +1145,12 @@ function CaseInspector({
       {item.error ? (
         <div className={`mt-5 rounded-xl border p-4 text-xs ${
           item.status === "waiting_rate_limit"
-            ? "border-amber-300/20 bg-amber-300/[0.04] text-amber-100"
+            ? "border-warning/20 bg-warning/[0.04] text-warning"
             : "border-error/20 bg-error/[0.04] text-rose-200"
         }`}>
           {item.error}
           {item.status === "waiting_rate_limit" && item.retry_after ? (
-            <span className="mt-1 block font-mono text-[9px] uppercase tracking-wider text-amber-200/60">
+            <span className="mt-1 block font-mono text-[9px] uppercase tracking-wider text-technical-number/60">
               tentativa {item.retry_count + 1} · retoma {formatDate(item.retry_after)}
             </span>
           ) : null}
@@ -1261,7 +1263,7 @@ function ItemMetrics({ metrics }: { metrics: LaboratoryMetric[] }) {
         {metrics.map((metric) => (
           <div key={`${metric.metric_name}-${metric.evaluator_version}`} className="grid gap-2 bg-white/[0.015] px-4 py-3 sm:grid-cols-[190px_80px_1fr] sm:items-center">
             <p className="text-[10px] font-semibold text-slate-300">{METRIC_LABELS[metric.metric_name] ?? metric.metric_name}</p>
-            <p className={`font-mono text-[10px] ${metric.value === null ? "text-amber-200" : "text-primary"}`}>{formatMetric(metric.value)}</p>
+            <p className={`font-mono text-[10px] ${metric.value === null ? "text-warning" : "text-primary"}`}>{formatMetric(metric.value)}</p>
             <p className="text-[10px] leading-4 text-slate-600">{metric.rationale}</p>
           </div>
         ))}
@@ -1329,9 +1331,9 @@ function ActionButton({ icon, label, onClick }: { icon: ReactNode; label: string
 
 function RunStatusDot({ status }: { status: string }) {
   const tone = status === "completed"
-    ? "bg-emerald-300"
+    ? "bg-success"
     : status === "waiting_rate_limit"
-      ? "bg-amber-300 animate-pulse"
+      ? "bg-warning animate-pulse"
       : status === "running" || status === "queued"
       ? "bg-primary animate-pulse"
       : status === "failed" || status === "partial"

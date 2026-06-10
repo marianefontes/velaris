@@ -322,10 +322,10 @@ export function StudyPage() {
     return (
       <StudyFrame>
         <div className="mx-auto flex min-h-[68vh] max-w-2xl flex-col justify-center py-16">
-          <div className="mb-7 flex h-14 w-14 items-center justify-center rounded-2xl border border-emerald-300/20 bg-emerald-300/[0.06]">
-            <CheckCircle2 className="h-6 w-6 text-emerald-300" />
+          <div className="mb-7 flex h-14 w-14 items-center justify-center rounded-2xl border border-success/20 bg-success/[0.06]">
+            <CheckCircle2 className="h-6 w-6 text-success" />
           </div>
-          <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.25em] text-emerald-300/80">
+          <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.25em] text-success/80">
             Participação {invite?.participant_code}
           </p>
           <h1 className="max-w-xl text-3xl font-bold tracking-tight text-white sm:text-4xl">
@@ -352,9 +352,9 @@ export function StudyPage() {
       <div className="grid gap-12 py-10 lg:grid-cols-[0.78fr_1.22fr] lg:gap-20 lg:py-16">
         <aside className="lg:sticky lg:top-10 lg:self-start">
           <div className="mb-8 flex items-center gap-3">
-            <img src="/aetheris.png" alt="Aetheris" className="h-10 w-10 object-contain" />
+            <img src="/aetheris.png" alt="Velaris" className="h-10 w-10 object-contain" />
             <div>
-              <p className="text-xs font-black tracking-[0.25em] text-white">AETHERIS</p>
+              <p className="text-xs font-black tracking-[0.25em] text-white">VELARIS</p>
               <p className="mt-1 text-[9px] uppercase tracking-[0.2em] text-slate-600">Pesquisa acadêmica</p>
             </div>
           </div>
@@ -363,7 +363,7 @@ export function StudyPage() {
             Participante {invite?.participant_code}
           </p>
           <h1 className="text-3xl font-bold leading-tight tracking-tight text-white sm:text-4xl">
-            Antes de conversar com a Beatrice.
+            Antes de consultar Abraxos.
           </h1>
           <p className="mt-5 text-sm leading-6 text-slate-400">
             Precisamos conhecer brevemente seu contexto profissional e registrar seu consentimento para a pesquisa do TCC.
@@ -510,7 +510,7 @@ export function StudyPage() {
               <p className="text-sm font-semibold text-white">Termo resumido de consentimento</p>
               <div className="mt-3 space-y-3 text-xs leading-5 text-slate-400">
                 <p>
-                  Esta atividade integra o trabalho acadêmico sobre o Aetheris, desenvolvido por Mariane Beatriz Soares Fontes e Gabrielle Canalle no CESAR.
+                  Esta atividade integra o trabalho acadêmico sobre o Velaris, desenvolvido por Mariane Beatriz Soares Fontes e Gabrielle Canalle no CESAR.
                 </p>
                 <p>
                   Nome, cargo, perfil profissional, respostas, perguntas enviadas, respostas recebidas, páginas acessadas e tempo de interação poderão ser registrados para análise acadêmica e estudantil.
