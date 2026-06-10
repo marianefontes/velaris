@@ -3,11 +3,12 @@
 Active engine: **Perspective Synthesis**. Theory base: Decision Support Systems,
 Multi-Stakeholder Analysis.
 
-Run **parallel reasoning** through five professional profiles. Each profile must
-reason *differently* — not the same conclusion in a different tone. Reuse the
+Run **parallel reasoning** through six professional perspectives. Each perspective must
+reason differently, not repeat the same conclusion in a different tone. Reuse the
 Aetheris cognitive lenses:
 
-- **Product Manager** (outcome, adoption, workflow efficiency, organizational impact)
+- **Product Designer** (usability, flow, user needs, evidence and validation)
+- **Design System Manager** (governance, adoption, roadmap and systemic impact)
 - **Designer** (perception, hierarchy, cognitive load, visual consistency)
 - **Developer** (architecture, contracts, scalability, migration cost)
 - **QA** (failure states, edge cases, regression, validation coverage)
@@ -18,7 +19,13 @@ Respond in the user's language, following this structure:
 ```
 ## Síntese de Perspectivas · [tema]
 
-### Product Manager
+### Product Designer
+- **Objetivos:** [...]
+- **Preocupações:** [...]
+- **Riscos:** [...]
+- **Critérios de sucesso:** [...]
+
+### Design System Manager
 - **Objetivos:** [...]
 - **Preocupações:** [...]
 - **Riscos:** [...]
@@ -53,7 +60,7 @@ accepts the conflicts above.]
 ```
 
 Rules:
-- Profile divergence is mandatory. If two profiles would say the same thing,
+- Perspective divergence is mandatory. If two perspectives would say the same thing,
   show the tension in emphasis or priority order instead of collapsing them.
-- Ground each profile's reasoning in the retrieved Aetheris evidence.
+- Ground each perspective's reasoning in the retrieved Aetheris evidence.
 - The consolidated recommendation must name which conflict it is prioritizing.

@@ -2,6 +2,10 @@
 
 from dataclasses import dataclass
 
+from agent.models import QueryUnderstanding
+from agent.understanding import analyze_query, normalize_text
+from prompts.perspective_ids import normalize_profile_id
+
 from cognition.engines.registry import resolve_engine
 
 
@@ -33,7 +37,15 @@ CATALOG_ENTITY_KEYWORDS: dict[str, list[str]] = {
 INTENT_FILTER: dict[str, list[str]] = {
     "component_guidance": ["component", "xai_component"],
     "pattern_guidance": ["pattern"],
-    "token_lookup": ["token"],
+    "token_lookup": ["token", "token_alias"],
+    "accessibility_guidance": [
+        "component",
+        "xai_component",
+        "guideline",
+        "foundation",
+        "token",
+        "token_alias",
+    ],
     "design_decision": ["design_decision"],
     "when_not_to_use": ["component", "guideline", "xai_component"],
     "xai_explanation": ["xai_component", "foundation", "reasoning"],
@@ -107,6 +119,7 @@ class RoutingResult:
     catalog_entity: str
     active_command_mode: str | None
     persona_profile: str
+    understanding: QueryUnderstanding
 
 
 def detect_catalog_mode(query: str) -> bool:
@@ -123,13 +136,47 @@ def detect_catalog_entity(query: str) -> str:
 
 
 def classify_intent(query: str) -> str:
-    q = query.lower()
-    scores = {
-        intent: sum(1 for keyword in keywords if keyword in q)
-        for intent, keywords in INTENT_KEYWORDS.items()
+    understanding = analyze_query(query)
+    mapped = {
+        "greeting": "general",
+        "small_talk": "general",
+        "navigation_query": "general",
+        "semantic_navigation_query": "general",
+        "perspective_lookup": "general",
+        "entity_lookup": "general",
+        "direct_entity_guidance": "general",
+        "concept_query": "general",
+        "legacy_name_query": "general",
+        "component_recommendation": "component_guidance",
+        "component_comparison": "comparison_query",
+        "pattern_guidance": "pattern_guidance",
+        "token_lookup": "token_lookup",
+        "accessibility_guidance": "accessibility_guidance",
+        "design_decision": "design_decision",
+        "xai_explanation": "xai_explanation",
+        "catalog": "general",
+        "language_followup": "general",
+        "help_request": "general",
+        "general_design_system": "general",
+        "out_of_scope": "general",
     }
-    best = max(scores, key=lambda key: scores[key])
-    return best if scores[best] > 0 else "general"
+    intent = mapped[understanding.user_intent]
+    normalized = normalize_text(query)
+    if (
+        intent == "component_guidance"
+        and any(
+            marker in normalized
+            for marker in (
+                "quando nao",
+                "nao devo usar",
+                "quando eu nao",
+                "when not",
+                "avoid",
+            )
+        )
+    ):
+        return "when_not_to_use"
+    return intent
 
 
 def response_intent_for_catalog(entity: str) -> str:
@@ -145,6 +192,8 @@ def response_intent_for_catalog(entity: str) -> str:
 
 
 def route_query(query: str, profile: str = "general", command_mode: str | None = None) -> RoutingResult:
+    understanding = analyze_query(query)
+    profile = normalize_profile_id(profile)
     legacy_command_mode = (
         profile
         if profile in COMMAND_INTENT_OVERRIDE or profile in COMMAND_ALIASES or resolve_engine(profile)
@@ -166,6 +215,7 @@ def route_query(query: str, profile: str = "general", command_mode: str | None =
             catalog_entity="none",
             active_command_mode=engine.id,
             persona_profile=persona_profile,
+            understanding=understanding,
         )
 
     if detect_catalog_mode(query):
@@ -178,6 +228,7 @@ def route_query(query: str, profile: str = "general", command_mode: str | None =
             catalog_entity=catalog_entity,
             active_command_mode=active_command_mode,
             persona_profile=persona_profile,
+            understanding=understanding,
         )
 
     if active_command_mode in COMMAND_INTENT_OVERRIDE:
@@ -190,15 +241,27 @@ def route_query(query: str, profile: str = "general", command_mode: str | None =
             catalog_entity="none",
             active_command_mode=active_command_mode,
             persona_profile=persona_profile,
+            understanding=understanding,
         )
 
     intent = classify_intent(query)
+    top_k = {
+        "component_guidance": 5,
+        "comparison_query": 6,
+        "pattern_guidance": 5,
+        "token_lookup": 4,
+        "accessibility_guidance": 6,
+        "design_decision": 5,
+        "xai_explanation": 5,
+        "when_not_to_use": 5,
+    }.get(intent, 4)
     return RoutingResult(
         retrieval_intent=intent,
         response_intent=intent,
-        top_k=3,
+        top_k=top_k,
         catalog_mode=False,
         catalog_entity="none",
         active_command_mode=active_command_mode,
         persona_profile=persona_profile,
+        understanding=understanding,
     )

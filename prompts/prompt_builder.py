@@ -9,6 +9,7 @@ from prompts.cognitive_profiles import (
     effective_calibration,
 )
 from prompts.loader import load_prompt, load_prompt_sequence
+from prompts.perspective_contracts import build_perspective_response_contract_prompt
 
 SYSTEM_LAYERS: list[str] = [
     "system/core.md",
@@ -25,6 +26,7 @@ INTENT_PROMPTS: dict[str, str] = {
     "pattern_guidance": "intents/patternGuidance.md",
     "design_decision": "intents/designDecision.md",
     "token_lookup": "intents/tokenLookup.md",
+    "accessibility_guidance": "intents/accessibilityGuidance.md",
     "when_not_to_use": "intents/componentGuidance.md",
     "xai_explanation": "intents/explainability.md",
     "new_product_scaffolding": "intents/patternGuidance.md",
@@ -33,13 +35,14 @@ INTENT_PROMPTS: dict[str, str] = {
 
 RESPONSE_TEMPLATES: dict[str, str] = {
     "component_guidance": "responses/componentResponse.md",
-    "pattern_guidance": "responses/componentResponse.md",
+    "pattern_guidance": "responses/patternResponse.md",
+    "accessibility_guidance": "responses/accessibilityResponse.md",
     "design_decision": "responses/decisionResponse.md",
     "token_lookup": "responses/tokenResponse.md",
     "when_not_to_use": "responses/componentResponse.md",
-    "xai_explanation": "responses/decisionResponse.md",
+    "xai_explanation": "responses/xaiResponse.md",
     "new_product_scaffolding": "responses/componentResponse.md",
-    "comparison_query": "responses/decisionResponse.md",
+    "comparison_query": "responses/comparisonResponse.md",
     "out_of_scope": "responses/outOfScope.md",
 }
 
@@ -62,8 +65,11 @@ class PromptBuildContext:
     catalog_mode: bool
     catalog_entity: str
     rag_context: str
+    answer_strategy: str = "documentation_help"
+    language: str = "unknown"
     cognitive_context: str = ""
     dialogue_context: str = ""
+    agent_context: str = ""
     # User-tunable calibration override from /perspectives.
     # Accepts a dict with optional keys: depth, technicality, risk_sensitivity.
     # None or empty = lens defaults apply.
@@ -71,6 +77,10 @@ class PromptBuildContext:
     # Computed retrieval evidence metrics block, injected for XAI engines
     # (explainability-audit, knowledge-gap) so scores are grounded, not invented.
     evidence_metrics_block: str = ""
+    # Exact source similarity and tier values for specialized perspective
+    # contracts. This is retrieval relevance, not answer confidence.
+    perspective_evidence_block: str = ""
+    surface_context_block: str = ""
 
 
 def build_intent_prompt(intent: str) -> str:
@@ -93,6 +103,24 @@ def build_response_template(intent: str, catalog_mode: bool = False, command_mod
     return load_prompt(path, required=False) if path else ""
 
 
+def build_surface_context_block(surface_context: dict | None) -> str:
+    if not surface_context:
+        return ""
+    lines = [
+        f"- {key}: {value}"
+        for key, value in surface_context.items()
+        if value not in (None, "")
+    ]
+    if not lines:
+        return ""
+    return (
+        "\n# UI Surface Context\n"
+        + "\n".join(lines)
+        + "\nUse this context to tailor the answer to the user's current page. "
+        "Do not reveal these internal labels unless helpful."
+    )
+
+
 def build_runtime_frame(context: PromptBuildContext) -> str:
     command = context.command_mode or "none"
     catalog_state = "active" if context.catalog_mode else "inactive"
@@ -105,14 +133,19 @@ def build_runtime_frame(context: PromptBuildContext) -> str:
 - user_profile: {context.profile}
 - retrieval_intent: {context.retrieval_intent}
 - response_intent: {context.response_intent}
+- answer_strategy: {context.answer_strategy}
+- required_language: {context.language}
 - command_mode: {command}
 - oracle_engine: {engine_state}
 - catalog_mode: {catalog_state}
 - catalog_scope: {context.catalog_entity}
 {perspective_block}
+{context.surface_context_block}
 
 Use this frame only to adapt the answer. Do not reveal these labels to the user.
 When an oracle_engine is active, follow its response contract exactly.
+Use the required_language when it is known. For pt-PT, prefer Portuguese from
+Portugal vocabulary without caricature or forced regionalisms.
 """.strip()
 
 
@@ -154,6 +187,11 @@ def build_system_prompt(context: PromptBuildContext) -> str:
         ),
         context.evidence_metrics_block,
         context.dialogue_context,
+        context.agent_context,
         context.rag_context,
+        build_perspective_response_contract_prompt(
+            context.profile,
+            context.perspective_evidence_block,
+        ),
     ]
     return "\n\n---\n\n".join(part.strip() for part in parts if part and part.strip())

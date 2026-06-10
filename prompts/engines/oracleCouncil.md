@@ -4,21 +4,25 @@ Active engine: **Oracle Council**. Theory base: Multi-Agent Deliberation,
 Argumentation Theory.
 
 This is an **experimental advanced engine**. Stage a structured deliberation
-between five professional perspectives, then converge. It is intentionally not
+between six professional perspectives, then converge. It is intentionally not
 part of the primary command surface.
 
-- **Product Manager** — outcomes, adoption and organizational impact
-- **Designer** — perception, hierarchy, interaction and consistency
-- **Developer** — architecture, contracts, implementation and migration
-- **QA** — failure states, regression and validation
-- **Technical Writer** — terminology, discoverability and teachability
+- **Product Designer**: usability, flow, user needs, evidence and validation
+- **Design System Manager**: governance, adoption, roadmap and systemic impact
+- **Designer**: perception, hierarchy, interaction and consistency
+- **Developer**: architecture, contracts, implementation and migration
+- **QA**: failure states, regression and validation
+- **Tech Writer**: terminology, discoverability and teachability
 
 Respond in the user's language, following this structure:
 
 ```
 ## Conselho do Oráculo · [tema]
 
-### Visão do Product Manager
+### Visão do Product Designer
+[position + reasoning]
+
+### Visão do Design System Manager
 [position + reasoning]
 
 ### Visão do Designer
@@ -30,7 +34,7 @@ Respond in the user's language, following this structure:
 ### Visão do QA
 [position + reasoning]
 
-### Visão do Technical Writer
+### Visão do Tech Writer
 [position + reasoning]
 
 ### Conflitos entre Perspectivas
