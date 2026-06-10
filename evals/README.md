@@ -97,13 +97,14 @@ Cada linha do JSONL é um objeto JSON com os campos abaixo. Todos os campos são
   // ao menos um dos termos para o perspective_signal ser 1.0.
   // Omitir uma perspectiva → perspective_signal "pending-review" para ela.
   "perspective_expectations": {
-    "designer": { "any_of": ["hierarquia", "atenção", "carga cognitiva"] },
     "dev":      { "any_of": ["estado", "contrato", "orquestração"] },
-    "pm":       { "any_of": ["conclusão", "abandono", "workflow"] },
+    "designer": { "any_of": ["hierarquia", "tokens", "consistência visual"] },
+    "product_designer": { "any_of": ["usabilidade", "fluxo", "validação"] },
     "qa":       { "any_of": ["falha", "regressão", "critério"] },
-    "writer":   { "any_of": ["mensagem", "terminologia", "compreensão"] },
+    "tech_writer": { "any_of": ["mensagem", "terminologia", "compreensão"] },
     "a11y":     { "any_of": ["foco", "tecnologia assistiva", "screen reader"] },
-    "maintainer": { "any_of": ["precedente", "governança", "consistência"] }
+    "maintainer": { "any_of": ["manutenção", "acoplamento", "duplicação"] },
+    "design_system_manager": { "any_of": ["governança", "adoção", "roadmap"] }
   },
 
   // Termos estruturais esperados na resposta (seções, headers, palavras-chave
@@ -161,13 +162,14 @@ O sistema executa cada caso por perspectiva. Cada perspectiva representa um pape
 
 | Perspectiva | Papel | Foco |
 |------------|-------|------|
-| `designer` | Designer de produto | Hierarquia visual, carga cognitiva, consistência |
-| `dev` | Desenvolvedor frontend | Contratos de componente, estado, implementação |
-| `pm` | Product Manager | Conclusão de fluxo, adoção, velocidade |
-| `qa` | QA / Tester | Critérios de aceitação, regressão, cobertura |
-| `writer` | Content designer | Terminologia, clareza, modelo mental |
-| `a11y` | Especialista em acessibilidade | ARIA, foco, tecnologia assistiva |
-| `maintainer` | Responsável pelo design system | Precedente, governança, drift |
+| `dev` | Developer | Contratos, estado, integração e implementação |
+| `designer` | Designer | Composição, hierarquia, tokens e consistência visual |
+| `product_designer` | Product Designer | Usabilidade, fluxo, necessidades, evidência e validação |
+| `qa` | QA | Critérios de aceite, regressão, estados e cobertura |
+| `tech_writer` | Tech Writer | Terminologia, exemplos, microcopy e instruções |
+| `a11y` | Accessibility Specialist | WCAG, ARIA, foco, teclado e tecnologia assistiva |
+| `maintainer` | Maintainer | Manutenção, acoplamento, duplicação e custo de evolução |
+| `design_system_manager` | Design System Manager | Governança, adoção, prioridade, roadmap e maturidade |
 
 ---
 
