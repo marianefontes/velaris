@@ -20,7 +20,7 @@ class CognitiveOrchestrationResult:
     manual_override: ManualOverride = field(default_factory=ManualOverride)
     prompt_context: str = ""
     retrieval_top_k: int = 3
-    # Serializable, user-facing skill disclosure (XAI signal for the frontend).
+    # Serializable candidates. The runtime discloses only observably applied skills.
     active_skills: tuple[dict[str, Any], ...] = field(default_factory=tuple)
 
 

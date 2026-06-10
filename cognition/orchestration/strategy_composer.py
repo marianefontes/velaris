@@ -28,37 +28,6 @@ def _intensity(weight: float) -> str:
     return "light"
 
 
-def _disclosable_skills(activations: list[StrategyActivation]) -> list[tuple[str, str]]:
-    """Top reasoning skills that may be named to the user (label, focus)."""
-    disclosable: list[tuple[str, str]] = []
-    for activation in activations:
-        label = skill_display_name(activation.id)
-        if label is None:
-            continue
-        disclosable.append((label, STRATEGIES[activation.id].natural_focus))
-        if len(disclosable) == 3:
-            break
-    return disclosable
-
-
-def _disclosure_directive(activations: list[StrategyActivation]) -> str:
-    skills = _disclosable_skills(activations)
-    if not skills:
-        return ""
-    pairs = "; ".join(f"{label} ({focus})" for label, focus in skills)
-    return (
-        "Transparent skill disclosure (required):\n"
-        f"- Active reasoning skills, in order of weight: {pairs}.\n"
-        "- Open your answer with ONE short, natural sentence, in the user's language, "
-        "that names the skill or skills you are using and briefly why "
-        '(e.g. "Estou usando Architecture Analysis porque sua pergunta envolve '
-        'dependências estruturais."). Name at most the top two skills.\n'
-        "- Keep it conversational — never a bullet list, log, or list of internal labels.\n"
-        "- Name only the cognitive skills above. Never expose retrieval mechanics, "
-        "chunk names, files, vector scores or internal orchestration fields."
-    )
-
-
 def compose_strategy_context(
     *,
     activations: list[StrategyActivation],
@@ -88,14 +57,12 @@ def compose_strategy_context(
 # Cognitive Orchestration Context
 
 This layer guides adaptive reasoning. The internal weighting machinery stays
-hidden, but the *names* of the active reasoning skills may be disclosed to the
-user as described below — this is an explainability feature, not a leak.
+hidden. The runtime may disclose only skills whose operational effect is
+observable in the final response.
 
 selection_mode: {override_state}
 complexity: overall={complexity.overall}, scope={complexity.scope}, depth={complexity.depth}
 ambiguity: score={ambiguity.score}, guidance={assumptions}
-
-{_disclosure_directive(activations)}
 
 Reasoning emphasis:
 {chr(10).join(emphasis_lines)}
@@ -103,8 +70,11 @@ Reasoning emphasis:
 Composition rules:
 - Combine the active cognitive lenses instead of treating them as isolated modes.
 - Use the strongest lenses first, but allow secondary lenses to correct blind spots.
-- Disclose which skills you are using per the directive above, then answer; do not
-  keep narrating the skills throughout the response.
+- Every selected skill must materially change at least one recommendation, risk,
+  guardrail, implementation detail or validation criterion. Naming a skill without
+  applying its operational heuristics does not satisfy this contract.
+- Do not announce skill names inside the answer. The runtime performs
+  post-response validation and discloses only skills with observable application.
 - Never expose weights, intensities, confidence numbers or retrieval mechanics.
 
 {chr(10).join(lens_blocks)}
