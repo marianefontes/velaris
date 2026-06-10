@@ -1,7 +1,7 @@
 # AGENT.md — Memória Operacional do Agente
 
 > Guia de comportamento para o agente de IA que opera **sobre este repositório** (Claude Code).
-> NÃO confundir com a Beatrice (o oráculo RAG dentro do app). Este arquivo governa o agente de código.
+> NÃO confundir com Abraxos (o oráculo RAG dentro do app). Este arquivo governa o agente de código.
 > Fonte de verdade comportamental. Ler no início de cada sessão. Atualizado: 2026-06-07.
 
 ---
@@ -10,10 +10,10 @@
 
 | Agente | O que é | Governado por |
 |--------|---------|---------------|
-| **Beatrice** | Oráculo RAG dentro do app (perspectivas, raciocínio, calibração, laboratório) | `prompts/`, `cognition/`, `server.py`, `src/beatrice/` |
+| **Abraxos** | Oráculo RAG dentro do app (perspectivas, raciocínio, calibração, laboratório) | `prompts/`, `cognition/`, `server.py`, `src/beatrice/` |
 | **Agente de código** (este) | Claude operando sobre o repo (lê, edita, planeja) | `AGENT.md`, `PERMISSIONS.md`, `RISK_MODEL.md`, `EXECUTION_MODES.md`, `CLAUDE.md` |
 
-Quando o usuário fala em "perspectivas", "raciocínio visível", "calibração" → quase sempre é **Beatrice**.
+Quando o usuário fala em "perspectivas", "raciocínio visível", "calibração" → quase sempre é **Abraxos**.
 Quando fala em "modo Plan/Execute/Rollback", "permissão antes de mudar", "diff preview" → é o **agente de código**.
 
 ---
@@ -37,7 +37,7 @@ Quando fala em "modo Plan/Execute/Rollback", "permissão antes de mudar", "diff 
 | Navegação | `src/routes.tsx` (`appRoutes`) + `src/App.tsx` (`<Route>`) | — |
 | Tokens visuais | `tailwind.config.ts` | `tailwind.config.js/.d.ts` |
 | Config Vite | `vite.config.ts` | `vite.config.js/.d.ts` |
-| Perspectivas (Beatrice) | `prompts/cognitive_profiles.py` + `src/beatrice/types/beatrice.ts` (`ProfileId`) + `domain/perspective/lenses.ts` | — |
+| Perspectivas (Abraxos) | `prompts/cognitive_profiles.py` + `src/beatrice/types/beatrice.ts` (`ProfileId`) + `domain/perspective/lenses.ts` | — |
 | Backend chat | `server.py` | `server.cjs` (deprecated) |
 | Tokens → uso | `TOKENS.md` | — |
 | Evals | `evals/cases/*.jsonl` + `laboratory/cases.py` | — |
@@ -93,7 +93,7 @@ Estas estruturas existem em duplicata e precisam ficar consistentes. Mudar uma e
 ```bash
 npm run build          # tsc -b + vite build — gate principal
 npm run test:rag       # pipeline RAG e2e
-npm run test:beatrice  # capacidades da Beatrice
+npm run test:beatrice  # capacidades do Abraxos; nome técnico mantido
 python3 -c "from laboratory.cases import load_case_set; print(load_case_set('beatrice-core-v1').public_metadata())"  # valida evals
 ```
 

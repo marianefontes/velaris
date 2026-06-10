@@ -1,7 +1,8 @@
-# CONTEXTO TCC — Aetheris / Oráculo Beatrice
+# CONTEXTO TCC: Aetheris / Oráculo Abraxos
 
 > Documento de contexto completo para uso por IA auxiliar no desenvolvimento.  
 > Sintetiza o projeto de pesquisa acadêmico (proposta TCC) + estado atual de implementação + lacunas restantes.  
+> Nota de identidade: o oráculo passou a se chamar Abraxos em 10 de junho de 2026. As menções históricas a Beatrice abaixo registram o nome usado nas fases anteriores do projeto.
 > **Autora:** Mariane Beatriz Soares Fontes  
 > **Co-autora:** Gabrielle Canalle  
 > **Instituição:** CESAR — Centro de Estudos e Sistemas Avançados do Recife  

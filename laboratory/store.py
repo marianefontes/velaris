@@ -8,6 +8,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from prompts.perspective_ids import CANONICAL_PERSPECTIVE_IDS, normalize_profile_id
+
 from .calibration import source_calibration, validate_calibration
 from .cases import CaseSet
 
@@ -30,6 +32,37 @@ def _decode(value: str | None, default: Any) -> Any:
         return json.loads(value)
     except (TypeError, json.JSONDecodeError):
         return default
+
+
+def _canonical_profile(value: object) -> str:
+    raw_value = str(value).strip() if value is not None else ""
+    return normalize_profile_id(raw_value, default=raw_value)
+
+
+def _canonical_profiles(values: object) -> list[str]:
+    if not isinstance(values, list):
+        return []
+    result: list[str] = []
+    for value in values:
+        profile = _canonical_profile(value)
+        if profile and profile not in result:
+            result.append(profile)
+    return result
+
+
+def _canonical_profile_mapping(values: object) -> dict[str, Any]:
+    if not isinstance(values, dict):
+        return {}
+    result: dict[str, Any] = {}
+    for key, value in values.items():
+        profile = _canonical_profile(key)
+        if profile and profile != key:
+            result.setdefault(profile, value)
+    for key, value in values.items():
+        profile = _canonical_profile(key)
+        if profile:
+            result[profile] = value
+    return result
 
 
 class LaboratoryStore:
@@ -87,6 +120,7 @@ class LaboratoryStore:
                     intent TEXT,
                     cognitive_skills_json TEXT NOT NULL DEFAULT '[]',
                     evidence_metrics_json TEXT NOT NULL DEFAULT '{}',
+                    audit_metadata_json TEXT NOT NULL DEFAULT '{}',
                     duration_ms INTEGER,
                     error TEXT,
                     created_at TEXT NOT NULL,
@@ -103,6 +137,7 @@ class LaboratoryStore:
                     source TEXT NOT NULL,
                     page_type TEXT NOT NULL,
                     similarity REAL,
+                    evidence_tier TEXT,
                     retrieval_weight REAL,
                     weighted_score REAL
                 );
@@ -269,10 +304,17 @@ class LaboratoryStore:
             self._ensure_column(
                 connection,
                 "laboratory_run_items",
+                "audit_metadata_json",
+                "TEXT NOT NULL DEFAULT '{}'",
+            )
+            self._ensure_column(
+                connection,
+                "laboratory_run_items",
                 "retry_count",
                 "INTEGER NOT NULL DEFAULT 0",
             )
             self._ensure_column(connection, "laboratory_run_items", "retry_after", "TEXT")
+            self._ensure_column(connection, "laboratory_item_sources", "evidence_tier", "TEXT")
             now = _now()
             defaults = source_calibration()
             connection.execute(
@@ -370,6 +412,20 @@ class LaboratoryStore:
         calibration_snapshot: dict[str, dict[str, float]] | None = None,
         control_run_id: str | None = None,
     ) -> dict[str, Any]:
+        canonical_profiles = _canonical_profiles(profiles)
+        invalid_profiles = [
+            str(profile)
+            for profile in profiles
+            if normalize_profile_id(profile, default="") not in CANONICAL_PERSPECTIVE_IDS
+        ]
+        if invalid_profiles:
+            raise ValueError(
+                f"Unknown laboratory profiles: {', '.join(invalid_profiles)}"
+            )
+        if not canonical_profiles:
+            raise ValueError("At least one laboratory profile is required")
+
+        profiles = canonical_profiles
         run_id = str(uuid.uuid4())
         created_at = _now()
         total_items = len(case_set.cases) * len(profiles) * repetitions
@@ -469,6 +525,10 @@ class LaboratoryStore:
                 item.pop("calibration_snapshot_json", "{}"),
                 {},
             )
+            item["calibration_snapshot"] = _canonical_profile_mapping(
+                item["calibration_snapshot"]
+            )
+            item["profile"] = _canonical_profile(item["profile"])
             item["status"] = "running"
             item["started_at"] = started_at
             self._bump_revision(connection)
@@ -538,6 +598,7 @@ class LaboratoryStore:
         intent: str,
         cognitive_skills: list[dict[str, Any]],
         evidence_metrics: dict[str, Any],
+        audit_metadata: dict[str, Any],
         sources: list[dict[str, Any]],
         metrics: dict[str, dict[str, Any]],
         duration_ms: int,
@@ -552,11 +613,13 @@ class LaboratoryStore:
             ).fetchone()
             if not item:
                 raise ValueError("Laboratory item not found")
+            profile = _canonical_profile(item["profile"])
             connection.execute(
                 """
                 UPDATE laboratory_run_items
                 SET status = 'completed', answer_text = ?, intent = ?,
                     cognitive_skills_json = ?, evidence_metrics_json = ?,
+                    audit_metadata_json = ?,
                     duration_ms = ?, error = NULL, error_category = NULL,
                     retry_after = NULL, completed_at = ?
                 WHERE id = ?
@@ -566,6 +629,7 @@ class LaboratoryStore:
                     intent,
                     _json(cognitive_skills),
                     _json(evidence_metrics),
+                    _json(audit_metadata),
                     duration_ms,
                     completed_at,
                     item_id,
@@ -580,8 +644,8 @@ class LaboratoryStore:
                     """
                     INSERT INTO laboratory_item_sources (
                         item_id, position, title, source, page_type, similarity,
-                        retrieval_weight, weighted_score
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                        evidence_tier, retrieval_weight, weighted_score
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         item_id,
@@ -590,6 +654,7 @@ class LaboratoryStore:
                         str(source.get("source", "")),
                         str(source.get("page_type", "")),
                         source.get("similarity"),
+                        str(source.get("evidence_tier", "")),
                         source.get("retrieval_weight"),
                         source.get("weighted_score"),
                     ),
@@ -610,7 +675,7 @@ class LaboratoryStore:
                         item["run_id"],
                         item_id,
                         item["case_id"],
-                        item["profile"],
+                        profile,
                         name,
                         metric.get("value"),
                         metric["status"],
@@ -709,7 +774,10 @@ class LaboratoryStore:
                 """,
                 (run_id,),
             ).fetchall()
-        return [dict(row) for row in rows]
+        items = [dict(row) for row in rows]
+        for item in items:
+            item["profile"] = _canonical_profile(item["profile"])
+        return items
 
     def replace_relational_metrics(self, run_id: str, metrics: list[dict[str, Any]]) -> None:
         created_at = _now()
@@ -732,7 +800,11 @@ class LaboratoryStore:
                     (
                         run_id,
                         metric.get("case_id"),
-                        metric.get("profile"),
+                        (
+                            _canonical_profile(metric.get("profile"))
+                            if metric.get("profile") is not None
+                            else None
+                        ),
                         metric["metric_name"],
                         metric.get("value"),
                         metric["status"],
@@ -905,11 +977,15 @@ class LaboratoryStore:
             return result
 
     def _serialize_run(self, run: dict[str, Any]) -> dict[str, Any]:
-        run["profiles"] = _decode(run.pop("profiles_json"), [])
+        run["profiles"] = _canonical_profiles(
+            _decode(run.pop("profiles_json"), [])
+        )
         run["aggregate"] = _decode(run.pop("aggregate_json"), {})
-        run["calibration_snapshot"] = _decode(
-            run.pop("calibration_snapshot_json", "{}"),
-            {},
+        run["calibration_snapshot"] = _canonical_profile_mapping(
+            _decode(
+                run.pop("calibration_snapshot_json", "{}"),
+                {},
+            )
         )
         run["is_baseline"] = bool(run["is_baseline"])
         progress_count = int(run["completed_items"]) + int(run["failed_items"])
@@ -917,11 +993,13 @@ class LaboratoryStore:
         return run
 
     def _serialize_item(self, connection: sqlite3.Connection, item: dict[str, Any]) -> dict[str, Any]:
+        item["profile"] = _canonical_profile(item["profile"])
         item["cognitive_skills"] = _decode(item.pop("cognitive_skills_json"), [])
         item["evidence_metrics"] = _decode(item.pop("evidence_metrics_json"), {})
+        item["audit_metadata"] = _decode(item.pop("audit_metadata_json", "{}"), {})
         sources = connection.execute(
             """
-            SELECT position, title, source, page_type, similarity,
+            SELECT position, title, source, page_type, similarity, evidence_tier,
                    retrieval_weight, weighted_score
             FROM laboratory_item_sources
             WHERE item_id = ?
@@ -992,6 +1070,7 @@ class LaboratoryStore:
             ).fetchone()
             if not item:
                 return False
+            profile = _canonical_profile(item["profile"])
             connection.execute(
                 """
                 INSERT INTO laboratory_human_reviews (
@@ -1024,7 +1103,7 @@ class LaboratoryStore:
                         item["run_id"],
                         item_id,
                         item["case_id"],
-                        item["profile"],
+                        profile,
                         metric_name,
                         value,
                         f"Human review by {reviewer}",
@@ -1117,7 +1196,9 @@ class LaboratoryStore:
 
     @staticmethod
     def _serialize_calibration_version(row: dict[str, Any]) -> dict[str, Any]:
-        row["calibration"] = _decode(row.pop("calibration_json"), {})
+        row["calibration"] = _canonical_profile_mapping(
+            _decode(row.pop("calibration_json"), {})
+        )
         return row
 
     def create_calibration_version(
@@ -1391,11 +1472,16 @@ class LaboratoryStore:
 
     @staticmethod
     def _serialize_proposal(row: dict[str, Any]) -> dict[str, Any]:
-        row["targeted_perspectives"] = _decode(
-            row.pop("targeted_perspectives_json"),
-            [],
+        row["targeted_perspectives"] = _canonical_profiles(
+            _decode(
+                row.pop("targeted_perspectives_json"),
+                [],
+            )
         )
         row["changes"] = _decode(row.pop("changes_json"), [])
+        for change in row["changes"]:
+            if isinstance(change, dict) and "profile" in change:
+                change["profile"] = _canonical_profile(change["profile"])
         row["guardrails"] = _decode(row.pop("guardrails_json"), {})
         return row
 
@@ -1502,9 +1588,11 @@ class LaboratoryStore:
 
     @staticmethod
     def _serialize_recommendation(row: dict[str, Any]) -> dict[str, Any]:
-        row["affected_perspectives"] = _decode(
-            row.pop("affected_perspectives_json"),
-            [],
+        row["affected_perspectives"] = _canonical_profiles(
+            _decode(
+                row.pop("affected_perspectives_json"),
+                [],
+            )
         )
         row["metric_comparison"] = _decode(row.pop("metric_comparison_json"), {})
         row["guardrails"] = _decode(row.pop("guardrails_json"), {})
@@ -1672,7 +1760,8 @@ class LaboratoryStore:
         with self._connect() as connection:
             rows = connection.execute(
                 """
-                SELECT profile, metric_name, AVG(value) AS mean_value
+                SELECT profile, metric_name, AVG(value) AS mean_value,
+                       COUNT(value) AS sample_count
                 FROM laboratory_metric_scores
                 WHERE run_id = ? AND profile IS NOT NULL AND value IS NOT NULL
                   AND status IN ('measured', 'provisional', 'human-reviewed')
@@ -1680,12 +1769,27 @@ class LaboratoryStore:
                 """,
                 (run_id,),
             ).fetchall()
-        result: dict[str, dict[str, float]] = {}
+        totals: dict[str, dict[str, tuple[float, int]]] = {}
         for row in rows:
-            result.setdefault(str(row["profile"]), {})[str(row["metric_name"])] = round(
-                float(row["mean_value"]),
-                3,
+            profile = _canonical_profile(row["profile"])
+            metric_name = str(row["metric_name"])
+            sample_count = int(row["sample_count"])
+            weighted_total = float(row["mean_value"]) * sample_count
+            previous_total, previous_count = totals.setdefault(profile, {}).get(
+                metric_name,
+                (0.0, 0),
             )
+            totals[profile][metric_name] = (
+                previous_total + weighted_total,
+                previous_count + sample_count,
+            )
+        result: dict[str, dict[str, float]] = {}
+        for profile, metrics in totals.items():
+            result[profile] = {
+                metric_name: round(total / count, 3)
+                for metric_name, (total, count) in metrics.items()
+                if count
+            }
         return result
 
     def snapshot(self, *, schedule_date: str | None = None) -> dict[str, Any]:

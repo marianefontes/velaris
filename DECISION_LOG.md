@@ -32,7 +32,7 @@ Toda decisão de Risco ≥ Medium (ver `RISK_MODEL.md`) ou que afete espelhament
 
 ## 2026-06-07 — Estratégia de perspectivas (D1–D5)
 
-- **Decisão:** `designer`→Product Designer (D1) + dimensão de pesquisa (D2); `pm`→Design System Manager (D3); **manter chaves internas** (D4); criar workspaces a11y/maintainer (D5).
+- **Decisão vigente em 2026-06-07:** usar oito IDs canônicos profissionais. `designer` permanece Designer, `product_designer` é uma perspectiva independente de interface, experiência e pesquisa, e `design_system_manager` absorve estratégia, governança, adoção e roadmap. `pm` e `writer` existem somente como aliases de entrada para `design_system_manager` e `tech_writer`.
 - **Motivo:** Atender o pedido de evolução das perspectivas mantendo segurança de dados persistidos.
 - **Evidência:** `ProfileId` em `beatrice.ts:199`; espelhamento em `lenses.ts`/`LENS_INSTRUMENTATION`/`evals`/`ALLOWED_LABORATORY_PROFILES`. UX Researcher inexistente; blueprint §2.1 o adiou.
 - **Risco:** D5 = Low (aditivo). D1–D3 = Medium quando executados (Fase 5), graças a D4 (sem rename de chave → sem migração).
@@ -51,7 +51,7 @@ Toda decisão de Risco ≥ Medium (ver `RISK_MODEL.md`) ou que afete espelhament
 
 ## 2026-06-07 — Fase 3 (performance do streaming do chat)
 
-- **Decisão:** Atacar o gargalo O(n²) no caminho de streaming da Beatrice com 3 mudanças + 1 correção de dívida:
+- **Decisão:** Atacar o gargalo O(n²) no caminho de streaming do Abraxos com 3 mudanças + 1 correção de dívida:
   1. `MarkdownRenderer` → parsing movido para `useMemo(parseMarkdown, [text])` + `React.memo`. Re-parseava o texto inteiro a cada render; agora parseia só quando `text` muda.
   2. `ChatMessage` → `React.memo` **+ lift do `useWorkspace()` para props** (`content`/`settings` vêm de `ChatStream`). Sem o lift o memo seria inócuo: o `value` do `WorkspaceContext` troca de identidade a cada frame e contexto fura `React.memo`. Agora mensagens estáticas pulam o re-render; só a bolha ativa atualiza.
   3. `useChatStream` → append do streaming agora é batched por `requestAnimationFrame` com janela de ~40ms (coalesce de deltas), em vez de `setMessages` por token. Cancelamento do frame pendente em todos os caminhos de saída (erro/catch/fim/finally).

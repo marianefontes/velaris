@@ -68,14 +68,14 @@ Abaixo do banner, quando relevante, logs colapsáveis:
 
 ## 5. Uso das perspectivas existentes (anti-genérico)
 
-As perspectivas são as 7 da Beatrice (ver `PERSPECTIVES.md`): designer, dev, qa, writer, a11y, maintainer, pm.
+As perspectivas profissionais são as 8 do Abraxos (ver `PERSPECTIVES.md`): dev, designer, product_designer, qa, tech_writer, a11y, maintainer e design_system_manager.
 
 Regras:
 - **Não forçar as 7 em toda resposta.** Citar só as que mudam a conclusão.
 - Cada perspectiva citada **deve disparar seu `disagreement_bias`** — se duas concordariam palavra por palavra, citar só uma.
 - Perspectiva sem ângulo próprio = ruído. Cortar.
 - Exemplo bom: "QA: falta rollback no item X. Maintainer: isso cria precedente de exceção." — dois ângulos distintos.
-- Exemplo ruim: "Designer: ficou bom. Dev: ficou bom. PM: ficou bom." — genérico, cortar.
+- Exemplo ruim: "Designer: ficou bom. Developer: ficou bom. Product Designer: ficou bom." Genérico, cortar.
 
 ---
 

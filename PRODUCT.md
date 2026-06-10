@@ -1,10 +1,11 @@
 # Product
 
-## Beatrice Capability Architecture
+## Abraxos Capability Architecture
 
-The canonical public taxonomy for automatic Beatrice skills, actionable Oracle
+The canonical public taxonomy for automatic Abraxos skills, actionable Oracle
 commands, aliases, RAG evidence and auditability is documented in
 [`docs/beatrice-capability-architecture.md`](docs/beatrice-capability-architecture.md).
+The document path remains unchanged for technical compatibility.
 
 ## Register
 
@@ -21,7 +22,7 @@ trade-offs, and trace recommendations back to documented evidence.
 ## Product Purpose
 
 Aetheris turns fragmented design-system documentation into an explainable
-decision-support system. Beatrice combines retrieval, source attribution,
+decision-support system. Abraxos combines retrieval, source attribution,
 confidence calibration, and UX-oriented reasoning so that teams can move from
 "what exists" to "why this is the right choice here." Success means users can
 reach grounded decisions faster without surrendering judgment to the AI.

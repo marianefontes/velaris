@@ -1,6 +1,7 @@
 # Linha do Tempo — Desenvolvimento do Aetheris e Treinamento do Oráculo
 
 > Narrativa detalhada do processo de construção do Aetheris Design System e do desenvolvimento da Beatrice, o Oráculo Inteligente com IA Explicável.  
+> Nota de identidade: desde 10 de junho de 2026, o agente visível chama-se Abraxos. Beatrice permanece neste documento apenas como nome histórico das fases descritas.
 > **Autora:** Mariane B. S. Fontes  
 > **Projeto:** TCC — Design System com IA Explicável para Apoio à Gestão Ágil de Projetos  
 > **Período documentado:** Março 2026 – atual

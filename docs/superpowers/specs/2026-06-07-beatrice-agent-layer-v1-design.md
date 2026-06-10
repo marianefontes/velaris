@@ -1,13 +1,13 @@
 # Beatrice Agent Layer v1
 
 **Data:** 2026-06-07
-**Status:** Aprovado para planejamento de implementação
-**Escopo:** Primeira camada agentic governada da Beatrice
+**Status:** Concluído e documentado para o TCC
+**Escopo:** Camada agentic governada inicial da Beatrice
 
 ## 1. Objetivo
 
 Evoluir a Beatrice de um copiloto conversacional especializado em design
-systems para uma primeira versão de agente especializado, com:
+systems para uma camada agentic governada inicial, com:
 
 - planejamento baseado em regras;
 - ferramentas internas com schemas e políticas explícitas;
@@ -21,7 +21,7 @@ systems para uma primeira versão de agente especializado, com:
 
 Esta versão é um pipeline governado com etapas determinísticas e uma etapa
 generativa controlada. Ela não é um loop autônomo aberto e não deve ser
-apresentada como agente enterprise.
+apresentada como agente autônomo enterprise.
 
 ## 2. Princípios obrigatórios
 
@@ -1049,7 +1049,8 @@ Trilha de execução indisponível para esta resposta
 | Integração de store | `AgentStoreIntegrationTests` | `unittest` + SQLite temporário |
 | Contratos de tools | `AgentToolContractTests` | `unittest` + retriever fixture |
 | Runtime e SSE | `AgentSSEContractTests` | `unittest` + FastAPI test client |
-| UI de audit metadata | `ExecutionTraceUITests` | Vitest + React Testing Library |
+| UI de Execution Trace | `ExecutionTrace` | Vitest + React Testing Library |
+| Merge de audit metadata | `mergeAuditMetadata` | Vitest |
 | Fluxos agentic | `AgentFlowEndToEndTests` | `unittest` + fakes controlados |
 | Contrato estático de segurança | `test_agent_layer_contracts.py` | script Python |
 
@@ -1245,14 +1246,15 @@ Expectativas:
 
 ## 21. Comandos de teste
 
-Scripts propostos em `package.json`:
+Scripts implementados em `package.json`:
 
 ```json
 {
   "scripts": {
-    "test:agent": "python3 -m unittest discover -s tests/agent -p 'test_*.py'",
+    "test:agent": "python3 -W error::ResourceWarning -m unittest discover -s tests/agent -p 'test_*.py' -v",
+    "test:agent-smoke": "python3 -W error::ResourceWarning -m unittest tests.agent.test_sse.AgentSSEContractTests.test_primary_workflow_chat_smoke -v",
     "test:agent-contracts": "python3 scripts/test_agent_layer_contracts.py",
-    "test:agent-ui": "vitest run src/beatrice",
+    "test:agent-ui": "vitest run",
     "test:agent-all": "npm run test:agent && npm run test:agent-contracts && npm run test:agent-ui"
   }
 }
@@ -1262,6 +1264,7 @@ Comandos:
 
 ```bash
 npm run test:agent
+npm run test:agent-smoke
 npm run test:agent-contracts
 npm run test:agent-ui
 npm run test:agent-all
@@ -1277,8 +1280,8 @@ AETHERIS_SKIP_RAG_STARTUP=1
 AGENT_DB_PATH=<temporary path>
 ```
 
-Vitest e React Testing Library serão adicionados como dev dependencies para os
-testes de comportamento da UI.
+Vitest, jsdom e React Testing Library foram adicionados como dev dependencies
+para os testes de comportamento da UI.
 
 ## 22. Teste manual
 
@@ -1470,3 +1473,418 @@ registro auditável. Ainda faltam:
 16. Não existe chain-of-thought.
 17. O drawer apresenta audit metadata sem competir com a resposta.
 18. Todas as suítes e gates finais passam.
+
+## 28. Registro de implementação
+
+Implementação concluída em 7 de junho de 2026.
+
+### 28.1 Entregas
+
+- pacote `agent/` com planner, policies, registry, executor, tools e runtime;
+- SQLite local para `decisions`, `session_memory`, `project_memory` e
+  `agent_runs`;
+- endpoints para criar, consultar, confirmar e rejeitar decisions;
+- SSE aditivo com metadata inicial, deltas e audit metadata final;
+- Execution Trace baseada somente em `audit_metadata.steps`;
+- drawer de audit metadata com tools, fontes, limitações e decisão;
+- remoção da timeline fixa e dos transformers que a sintetizavam;
+- testes unitários, integração, tools, SSE, frontend e contrato estático.
+
+### 28.2 Resultado dos gates
+
+| Gate | Resultado |
+|---|---|
+| `npm run build` | aprovado |
+| `npm run test:rag` | 11 de 11 casos aprovados com BGE-M3 |
+| `npm run test:beatrice` | aprovado |
+| `npm run test:perspectives` | aprovado |
+| `npm run test:reasoning-ui` | aprovado |
+| `npm run test:agent-all` | 38 testes Python e 8 testes frontend aprovados |
+| `npm run test:agent-smoke` | 7 workflows aprovados no endpoint de chat |
+| `npm audit --omit=dev` | zero vulnerabilidades de produção |
+
+### 28.3 Limite do smoke
+
+O ambiente de implementação não possuía `GROQ_API_KEY`. Por isso, o smoke dos
+sete workflows validou o endpoint, o planner, as policies, as tools, o SSE e o
+audit metadata com um composer fixture. A composição externa real permanece
+como verificação operacional de deploy.
+
+## 29. Validação objetiva para o TCC
+
+Os exemplos desta seção foram capturados em 7 de junho de 2026 pelo comando:
+
+```bash
+npm run validate:agent-examples
+```
+
+O validador usa uma base SQLite temporária, o retrieval fixture versionado da
+suíte agentic e um composer determinístico. Ele não realiza chamada externa ao
+Groq. IDs e timestamps abaixo pertencem a uma execução real do runtime.
+
+### 29.1 Exemplo completo de `audit_metadata`
+
+Fluxo: `component_decision`.
+
+```json
+{
+  "request_id": "req_ae4db5b2a50349ef",
+  "intent": "component_guidance",
+  "workflow": "component_decision",
+  "tools_used": [
+    {
+      "name": "search_component",
+      "permission": "read_only",
+      "status": "completed",
+      "details": null
+    },
+    {
+      "name": "search_pattern",
+      "permission": "read_only",
+      "status": "completed",
+      "details": null
+    }
+  ],
+  "steps": [
+    {
+      "id": "request_received",
+      "label": "Request received",
+      "status": "completed",
+      "details": null,
+      "timestamp": "2026-06-07T01:09:12.516+00:00"
+    },
+    {
+      "id": "intent_detected",
+      "label": "Intent detected",
+      "status": "completed",
+      "details": "component_guidance",
+      "timestamp": "2026-06-07T01:09:12.516+00:00"
+    },
+    {
+      "id": "workflow_selected",
+      "label": "Workflow selected",
+      "status": "completed",
+      "details": "component_decision",
+      "timestamp": "2026-06-07T01:09:12.516+00:00"
+    },
+    {
+      "id": "tools_selected",
+      "label": "Tools selected",
+      "status": "completed",
+      "details": "search_component, search_pattern",
+      "timestamp": "2026-06-07T01:09:12.516+00:00"
+    },
+    {
+      "id": "policy_checked",
+      "label": "Policy checked",
+      "status": "completed",
+      "details": "Tool permissions and scope approved.",
+      "timestamp": "2026-06-07T01:09:12.517+00:00"
+    },
+    {
+      "id": "retrieval_executed",
+      "label": "Retrieval executed",
+      "status": "completed",
+      "details": "2 evidence item(s) recovered.",
+      "timestamp": "2026-06-07T01:09:12.517+00:00"
+    },
+    {
+      "id": "sources_selected",
+      "label": "Sources selected",
+      "status": "completed",
+      "details": "2 source excerpt(s) selected.",
+      "timestamp": "2026-06-07T01:09:12.517+00:00"
+    },
+    {
+      "id": "evidence_scored",
+      "label": "Evidence scored",
+      "status": "completed",
+      "details": "strong; top similarity 0.820",
+      "timestamp": "2026-06-07T01:09:12.517+00:00"
+    },
+    {
+      "id": "tool_results_built",
+      "label": "Tool results built",
+      "status": "completed",
+      "details": "2 tool result(s) structured.",
+      "timestamp": "2026-06-07T01:09:12.517+00:00"
+    },
+    {
+      "id": "llm_composition_started",
+      "label": "LLM composition started",
+      "status": "completed",
+      "details": "Structured composition completed.",
+      "timestamp": "2026-06-07T01:09:12.518+00:00"
+    },
+    {
+      "id": "response_completed",
+      "label": "Response completed",
+      "status": "completed",
+      "details": null,
+      "timestamp": "2026-06-07T01:09:12.518+00:00"
+    },
+    {
+      "id": "decision_draft_created",
+      "label": "Decision draft created",
+      "status": "completed",
+      "details": "dec_a71a0a5cee324757",
+      "timestamp": "2026-06-07T01:09:12.519+00:00"
+    },
+    {
+      "id": "memory_updated",
+      "label": "Memory updated",
+      "status": "completed",
+      "details": "Session session_tcc_validation; project project_tcc_validation.",
+      "timestamp": "2026-06-07T01:09:12.521+00:00"
+    }
+  ],
+  "sources": [
+    {
+      "title": "Dialog",
+      "source": "ComponentsPage",
+      "page_type": "component",
+      "excerpt": "Dialog | Use for blocking decisions that require explicit confirmation. | Avoid for passive feedback.",
+      "similarity": 0.82,
+      "retrieval_weight": 1.1,
+      "weighted_score": 0.902
+    },
+    {
+      "title": "Destructive action confirmation",
+      "source": "PatternsPage",
+      "page_type": "pattern",
+      "excerpt": "Pattern | Prefer explicit consequence text and a clear cancel action. | Risk: ambiguous destructive labels.",
+      "similarity": 0.77,
+      "retrieval_weight": 1.0,
+      "weighted_score": 0.77
+    }
+  ],
+  "evidence_similarity": 0.82,
+  "evidence_tier": "strong",
+  "limitations": [],
+  "decision_id": "dec_a71a0a5cee324757",
+  "decision_status": "draft",
+  "execution_status": "completed"
+}
+```
+
+### 29.2 Exemplo de `agent_run` persistido
+
+Leitura realizada por `AgentStore.get_run()` na base SQLite temporária:
+
+```json
+{
+  "request_id": "req_ae4db5b2a50349ef",
+  "session_id": "session_tcc_validation",
+  "project_id": "project_tcc_validation",
+  "user_query": "Qual componente usar para confirmação?",
+  "profile": "designer",
+  "intent": "component_guidance",
+  "workflow": "component_decision",
+  "plan": {
+    "intent": "component_guidance",
+    "workflow": "component_decision",
+    "tools": ["search_component", "search_pattern"],
+    "steps": [
+      "detect_intent",
+      "select_workflow",
+      "select_tools",
+      "check_policies",
+      "execute_tools",
+      "score_evidence",
+      "build_tool_results",
+      "compose_response"
+    ],
+    "needs_confirmation": false,
+    "creates_decision_draft": true
+  },
+  "tools_used": [
+    {
+      "name": "search_component",
+      "permission": "read_only",
+      "status": "completed"
+    },
+    {
+      "name": "search_pattern",
+      "permission": "read_only",
+      "status": "completed"
+    }
+  ],
+  "top_similarity": 0.82,
+  "evidence_tier": "strong",
+  "limitations": [],
+  "decision_id": "dec_a71a0a5cee324757",
+  "model": "composer-fixture",
+  "status": "completed",
+  "created_at": "2026-06-07T01:09:12+00:00",
+  "completed_at": "2026-06-07T01:09:12+00:00",
+  "duration_ms": 0
+}
+```
+
+O registro persistido também contém os arrays completos `steps` e `sources`
+mostrados no `audit_metadata`. O comando de validação imprime a serialização
+integral retornada pelo store.
+
+### 29.3 Decision criada como draft e confirmada
+
+Estado inicial persistido:
+
+```json
+{
+  "decision_id": "dec_a71a0a5cee324757",
+  "request_id": "req_ae4db5b2a50349ef",
+  "workflow": "component_decision",
+  "recommendation": "Use Dialog para uma decisão bloqueante que exige confirmação explícita.",
+  "top_similarity": 0.82,
+  "evidence_tier": "strong",
+  "status": "draft",
+  "created_by": "beatrice",
+  "confirmed_by_user": false
+}
+```
+
+Estado depois de `update_decision_status(decision_id, "confirmed")`:
+
+```json
+{
+  "decision_id": "dec_a71a0a5cee324757",
+  "status": "confirmed",
+  "created_by": "beatrice",
+  "confirmed_by_user": true
+}
+```
+
+### 29.4 `out_of_scope` bloqueado antes do LLM
+
+Entrada:
+
+```text
+Qual é a previsão do tempo?
+```
+
+Resultado:
+
+```json
+{
+  "workflow": "out_of_scope",
+  "tools_used": [],
+  "steps": [
+    {
+      "id": "policy_checked",
+      "status": "completed",
+      "details": "Request blocked by scope policy."
+    },
+    {
+      "id": "out_of_scope_blocked",
+      "status": "blocked"
+    }
+  ],
+  "sources": [],
+  "evidence_tier": "insufficient",
+  "limitations": [
+    "The request is outside Beatrice's design-system scope."
+  ],
+  "execution_status": "blocked",
+  "should_compose": false,
+  "llm_composition_step_present": false
+}
+```
+
+Não existe chamada ao composer nesse caminho.
+
+### 29.5 Execution Trace renderizada
+
+A UI recebeu diretamente o array `audit_metadata.steps` do exemplo
+`component_decision` e o projetou nesta ordem:
+
+```text
+Request received                 Concluído
+Intent detected                  Concluído  component_guidance
+Workflow selected                Concluído  component_decision
+Tools selected                   Concluído  search_component, search_pattern
+Policy checked                   Concluído  Tool permissions and scope approved.
+Retrieval executed               Concluído  2 evidence item(s) recovered.
+Sources selected                 Concluído  2 source excerpt(s) selected.
+Evidence scored                  Concluído  strong; top similarity 0.820
+Tool results built               Concluído  2 tool result(s) structured.
+LLM composition started          Concluído  Structured composition completed.
+Response completed               Concluído
+Decision draft created           Concluído  dec_a71a0a5cee324757
+Memory updated                   Concluído  session e projeto atualizados
+```
+
+O frontend não acrescentou steps, não completou lacunas e não inferiu eventos.
+
+### 29.6 Erro registrado no `audit_metadata`
+
+Falha simulada pelo retriever fixture:
+
+```json
+{
+  "workflow": "component_decision",
+  "tools_used": [],
+  "steps": [
+    {
+      "id": "tool_execution_failed",
+      "label": "Tool execution failed",
+      "status": "failed",
+      "details": "search_component: retrieval unavailable"
+    }
+  ],
+  "sources": [],
+  "evidence_similarity": 0.0,
+  "evidence_tier": "insufficient",
+  "limitations": [
+    "Tool execution failed for search_component."
+  ],
+  "decision_id": null,
+  "decision_status": null,
+  "execution_status": "failed"
+}
+```
+
+Nenhuma recommendation, source ou decision foi inventada.
+
+### 29.7 Limite operacional do LLM
+
+A execução validou:
+
+```json
+{
+  "selected_tools_before_composition": [
+    "search_component",
+    "search_pattern"
+  ],
+  "tool_results_built_before_composition": true,
+  "structured_context_contains_tool_results": true,
+  "structured_context_contains_executable_registry": false
+}
+```
+
+O LLM:
+
+1. não seleciona tools;
+2. não recebe o registry executável;
+3. não executa ações;
+4. recebe apenas resultados estruturados e memórias permitidas;
+5. compõe a resposta final depois das tools;
+6. não fornece ou expõe chain-of-thought.
+
+### 29.8 Limitações restantes
+
+- a classificação por regras pode errar consultas ambíguas;
+- a qualidade depende da cobertura e atualização do corpus;
+- o SQLite é local e adequado ao escopo single-instance desta fase;
+- o evento SSE final ainda não possui retomada automática;
+- a composição externa real depende de `GROQ_API_KEY`;
+- não há multi-tenancy;
+- não há ACL enterprise;
+- não há integrações externas;
+- não há loops autônomos;
+- não há agent builder nesta fase.
+
+## 30. Encerramento da v1
+
+A Agent Layer v1 está fechada para o TCC como camada agentic governada inicial.
+Ela adiciona planejamento controlado, tools governadas, persistência local e
+trilha operacional auditável. Ela não constitui um agente autônomo enterprise.

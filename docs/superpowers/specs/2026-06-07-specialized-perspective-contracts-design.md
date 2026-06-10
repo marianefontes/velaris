@@ -31,16 +31,24 @@ perspective-specific response structure.
 The validator does not infer hidden reasoning or score correctness. It scans
 the completed response for required observable signals and returns:
 
-- active contract ID and version;
+- `profile_contract_applied`;
+- `profile_contract_id`;
+- `required_signals_found`;
+- `required_signals_missing`;
+- `perspective_quality_score`;
 - validation status;
-- matched signal groups;
-- warning records for missing groups.
+- `profile_contract_warnings` records for missing groups.
+
+`perspective_quality_score` is the ratio of required signal groups found to the
+total required by the active contract. It measures observable contract
+coverage, not factual correctness or answer confidence.
 
 ## Streaming And Persistence
 
-The chat endpoint continues to emit intent, sources, skills and engine metadata
-before response text. It accumulates the generated text and emits a final SSE
-event containing `audit_metadata` before `[DONE]`.
+The chat endpoint emits intent, sources and engine metadata before response
+text. It accumulates the generated text and emits a final SSE event containing
+`audit_metadata` and only the cognitive skills with observable application
+before `[DONE]`.
 
 Perspective trials consume the same endpoint and therefore receive the same
 contract. The regular chat stores `audit_metadata` on the assistant message.
@@ -110,7 +118,9 @@ accidental execution or duplicate submission.
 
 Selected cognitive skills must materially affect at least one recommendation,
 risk, guardrail, implementation detail or validation criterion. Merely naming
-the skill does not satisfy the orchestration contract.
+the skill does not satisfy the orchestration contract. Skills are not announced
+inside the generated answer. The runtime filters selected skills after
+generation and discloses only those with observable application signals.
 
 ## Evidence Contract
 
@@ -128,10 +138,14 @@ Add deterministic tests for:
 
 - contract selection for `dev`, `a11y` and unsupported profiles;
 - prompt injection in ordinary chat and command contexts;
-- Developer validation groups: API or props, state flow, edge cases and
-  technical accessibility;
+- Developer validation groups: API or props, state flow, edge cases,
+  integration or reuse and technical accessibility;
 - Accessibility validation groups: focus, keyboard, semantics or ARIA,
   assistive technology, accessible states and error prevention;
+- explicit evidence similarity, evidence tier and limitation signals;
+- post-response skill filtering;
+- a cross-perspective destructive-action comparison with a textual similarity
+  threshold and distinct required structures;
 - final SSE audit metadata behavior through isolated helpers;
 - evidence tier serialization;
 - the destructive-action eval expectations for both perspectives;

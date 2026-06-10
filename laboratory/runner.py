@@ -108,6 +108,7 @@ class LaboratoryRunner:
                             intent=generated.get("intent", ""),
                             cognitive_skills=generated.get("cognitive_skills", []),
                             evidence_metrics=evidence_metrics,
+                            audit_metadata=generated.get("audit_metadata", {}),
                             sources=generated.get("sources", []),
                             metrics=metrics,
                             duration_ms=duration_ms,

@@ -14,7 +14,7 @@
 │  src/                                           │
 │  ├── App.tsx + routes.tsx  → roteamento         │
 │  ├── components/           → páginas e layout   │
-│  ├── beatrice/             → módulo Beatrice    │
+│  ├── beatrice/             → módulo Abraxos     │
 │  ├── i18n/                 → internacionalização│
 │  ├── hooks/ services/ types/ data/              │
 │  └── index.css             → estilos globais    │
@@ -44,14 +44,14 @@
 | Sub-página carregada por hub | `src/components/` | `PatternsPage.tsx` |
 | Componente de layout global | `src/components/` | `AppShell.tsx`, `AppTopBar.tsx` |
 | Sub-componente de feature específica | `src/components/<feature>/` | `comparison/EvaluationMatrix.tsx` |
-| Página do módulo Beatrice | `src/beatrice/pages/` | `PerspectivesPage.tsx` |
-| Componente visual Beatrice | `src/beatrice/components/<grupo>/` | `chat/ChatInput.tsx` |
+| Página do módulo Abraxos | `src/beatrice/pages/` | `PerspectivesPage.tsx` |
+| Componente visual Abraxos | `src/beatrice/components/<grupo>/` | `chat/ChatInput.tsx` |
 | Lógica de domínio puro (sem React) | `src/beatrice/domain/<domínio>/` | `perspective/models.ts` |
-| Hook customizado Beatrice | `src/beatrice/hooks/` | `usePersonaContext.ts` |
-| Serviço Beatrice | `src/beatrice/services/` | `reasoning.service.ts` |
+| Hook customizado Abraxos | `src/beatrice/hooks/` | `usePersonaContext.ts` |
+| Serviço Abraxos | `src/beatrice/services/` | `reasoning.service.ts` |
 | Provider React (contexto) | `src/beatrice/providers/` | `PersonaProvider.tsx` |
-| Hook de produto (não Beatrice) | `src/hooks/` | `useDashboardData.ts` |
-| Serviço de produto (não Beatrice) | `src/services/` | `dashboardService.ts` |
+| Hook de produto (fora do módulo Abraxos) | `src/hooks/` | `useDashboardData.ts` |
+| Serviço de produto (fora do módulo Abraxos) | `src/services/` | `dashboardService.ts` |
 | Tipos TypeScript de produto | `src/types/` | `dashboard.ts` |
 | Dados mock | `src/data/` | `mockDashboard.ts` |
 | Traduções | `src/i18n/translations.ts` | — |
@@ -72,7 +72,7 @@ App.tsx
 **Regras:**
 - `src/components/` NÃO deve importar de `src/beatrice/domain/` diretamente — usar hooks ou serviços como intermediários
 - `src/beatrice/domain/` NÃO pode importar nada de React ou de outros módulos além de TypeScript puro
-- `src/beatrice/providers/` são o único ponto de entrada para contextos compartilhados entre páginas Beatrice
+- `src/beatrice/providers/` são o único ponto de entrada para contextos compartilhados entre páginas do Abraxos
 - Páginas primárias (`components/`) podem importar componentes de `beatrice/components/` — isso é intencional
 
 ### Sub-módulos de `beatrice/components/`
@@ -128,7 +128,11 @@ Não é código de produção — é a lógica de raciocínio **do agente de IA*
 | `orchestration/` | Python: orquestrador de raciocínio e pesos de estratégia |
 | `overrides/` | Regras de override do agente (markdown) |
 
-### `prompts/` — Biblioteca de prompts do Beatrice
+### `prompts/` — Biblioteca de prompts do Abraxos
+
+O diretório técnico `src/beatrice/`, os nomes de tipos e as chaves persistidas
+mantêm a nomenclatura anterior por compatibilidade. A identidade pública é
+Abraxos.
 
 | Sub-pasta | Conteúdo |
 |-----------|---------|
@@ -144,7 +148,7 @@ Não é código de produção — é a lógica de raciocínio **do agente de IA*
 | Módulo | Responsabilidade |
 |--------|-----------------|
 | `laboratory/runner.py` | Orquestra execução de casos de estudo |
-| `laboratory/calibration.py` | Calibração automática do Beatrice |
+| `laboratory/calibration.py` | Calibração automática do Abraxos |
 | `laboratory/store.py` | Acesso ao SQLite do laboratório |
 | `research/study_store.py` | Dados de participantes de estudos |
 
@@ -176,7 +180,7 @@ Não é código de produção — é a lógica de raciocínio **do agente de IA*
 | `bg-surface-container-highest` | `#262528` — overlays, tooltips |
 | `bg-surface-bright` | `#2c2c2f` — hover states, destaques |
 
-### Tokens de sombra cognitiva (usar para componentes Beatrice)
+### Tokens de sombra cognitiva (usar para componentes do Abraxos)
 
 | Token | Contexto |
 |-------|---------|
