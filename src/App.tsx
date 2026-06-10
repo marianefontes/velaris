@@ -1,7 +1,9 @@
 import { Suspense, lazy } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { AbraxosAssistantProvider } from "./beatrice/providers/AbraxosAssistantProvider";
 import { PersonaProvider } from "./beatrice/providers/PersonaProvider";
 import { AppShell } from "./components/AppShell";
+import { LoadingState } from "./components/ui/VisualPrimitives";
 import { useI18n } from "./i18n/I18nProvider";
 
 // ─── 9 primary product surfaces ───────────────────────────────────────────
@@ -46,16 +48,11 @@ function RouteFallback() {
   const { t } = useI18n();
 
   return (
-    <div className="flex min-h-[40vh] items-center justify-center">
-      <div className="glass-panel rounded-2xl px-6 py-4 text-center shadow-glow">
-        <div className="mb-2 flex items-center justify-center gap-2">
-          <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
-          <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-400">
-            {t("shell.loadingEyebrow")}
-          </span>
-        </div>
-        <p className="text-sm text-slate-300">{t("shell.loadingText")}</p>
-      </div>
+    <div className="mx-auto flex min-h-[40vh] w-full max-w-[1280px] items-center justify-center px-5">
+      <LoadingState
+        title={t("shell.loadingEyebrow")}
+        description={t("shell.loadingText")}
+      />
     </div>
   );
 }
@@ -80,6 +77,7 @@ function App() {
 
   return (
     <PersonaProvider locale={locale}>
+      <AbraxosAssistantProvider>
       <AppShell>
         <Suspense fallback={<RouteFallback />}>
           <Routes>
@@ -122,6 +120,7 @@ function App() {
           </Routes>
         </Suspense>
       </AppShell>
+      </AbraxosAssistantProvider>
     </PersonaProvider>
   );
 }

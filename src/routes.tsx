@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react";
+import type { TranslationKey } from "./i18n/translations";
 import {
   Activity,
   BarChart3,
@@ -14,8 +15,8 @@ import {
 export interface AppRouteItem {
   path: string;
   label: string;
-  labelKey: string;
-  badgeKey: string;
+  labelKey: TranslationKey;
+  badgeKey: TranslationKey;
   icon: LucideIcon;
 }
 
