@@ -25,6 +25,16 @@ services:
         sync: false
       - key: RESEARCH_ADMIN_KEY
         generateValue: true
+      # CORS: "*" keeps the public prototype open. Set to the frontend origin
+      # (e.g. https://aetheris-app.onrender.com) to lock it down later.
+      - key: ALLOWED_ORIGINS
+        value: "*"
+      # Persist the vector index and the BGE-M3 download on the mounted disk so
+      # the corpus bootstrap and model download happen once, not per restart.
+      - key: CHROMA_DB_PATH
+        value: /var/data/chroma_db
+      - key: HF_HOME
+        value: /var/data/hf_cache
       - key: STUDY_DB_PATH
         value: /var/data/aetheris-study.sqlite3
       - key: LABORATORY_DB_PATH

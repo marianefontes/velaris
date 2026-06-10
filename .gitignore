@@ -12,6 +12,7 @@ docs/
 .env.local
 .env.*.local
 data/aetheris-laboratory.sqlite3*
+data/aetheris-agent.sqlite3*
 
 # ||| macOS
 .DS_Store
