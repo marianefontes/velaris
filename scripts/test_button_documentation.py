@@ -104,19 +104,17 @@ def assert_button_workbench(page: Page) -> None:
     assert copied == invalid_snippet
 
     do_rules = [
-        "Use Button para ações explícitas como salvar, confirmar, enviar, gerar ou avançar.",
         "Use apenas uma ação primária por região visual para manter a hierarquia clara.",
         "Use loading quando a ação disparar uma operação assíncrona.",
         "Use positive para confirmar conclusão, aprovação, restauração ou uma ação benéfica inequívoca.",
         "Use negative apenas para ações críticas, como excluir, cancelar definitivamente ou remover dados.",
-        "Mantenha o texto do botão curto, direto e orientado à ação.",
+        "Mantenha o rótulo textual, curto e orientado à ação; preserve indicador de foco visível para quem navega por teclado ou tecnologia assistiva.",
     ]
     dont_rules = [
         "Não use Button para navegação textual simples; use Link quando a ação for apenas navegar.",
         "Não coloque múltiplos botões primary competindo na mesma área.",
         "Não use disabled sem explicar por que a ação está indisponível.",
-        "Não use positive como decoração ou para ações neutras.",
-        "Não use negative para ações comuns ou facilmente reversíveis.",
+        "Não use intents positive ou negative como decoração visual; a aparência deve corresponder à consequência real, e negative exige confirmação quando a ação for difícil de reverter.",
         "Não altere estilos manualmente fora dos tokens do design system.",
     ]
     for rule in do_rules + dont_rules:

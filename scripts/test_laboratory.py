@@ -1,4 +1,5 @@
 import asyncio
+import sqlite3
 import tempfile
 from pathlib import Path
 import sys
@@ -61,11 +62,13 @@ def test_store_lifecycle() -> None:
             intent="token_lookup",
             cognitive_skills=[],
             evidence_metrics={"confidence": 0.8},
+            audit_metadata={},
             sources=[{
                 "title": "Tokens",
                 "source": "Token System",
                 "page_type": "token",
                 "similarity": 0.8,
+                "evidence_tier": "strong",
                 "retrieval_weight": 1.0,
                 "weighted_score": 0.8,
             }],
@@ -81,9 +84,57 @@ def test_store_lifecycle() -> None:
         detail = store.get_run(run["id"])
         assert detail and detail["completed_items"] == 1
         assert detail["items"][0]["sources"]
+        assert detail["items"][0]["sources"][0]["evidence_tier"] == "strong"
         assert store.request_cancel(run["id"])
         finalized = store.finalize_run(run["id"])
         assert finalized and finalized["status"] == "cancelled"
+
+
+def test_legacy_profile_compatibility() -> None:
+    case_set = load_case_set("beatrice-core-v1")
+    with tempfile.TemporaryDirectory() as directory:
+        path = Path(directory) / "legacy-profiles.sqlite3"
+        store = LaboratoryStore(path)
+        store.initialize()
+        run = store.create_run(
+            case_set=case_set,
+            version_label="legacy-profile-test",
+            profiles=["pm", "writer"],
+            repetitions=1,
+            model="test-model",
+            prompt_fingerprint="prompt-test",
+        )
+        assert run["profiles"] == ["design_system_manager", "tech_writer"]
+
+        with sqlite3.connect(path) as connection:
+            connection.execute(
+                "UPDATE laboratory_runs SET profiles_json = ? WHERE id = ?",
+                ('["pm", "writer"]', run["id"]),
+            )
+            connection.execute(
+                """
+                UPDATE laboratory_run_items
+                SET profile = CASE profile
+                    WHEN 'design_system_manager' THEN 'pm'
+                    WHEN 'tech_writer' THEN 'writer'
+                    ELSE profile
+                END
+                WHERE run_id = ?
+                """,
+                (run["id"],),
+            )
+
+        historical = store.get_run(run["id"])
+        assert historical
+        assert historical["profiles"] == ["design_system_manager", "tech_writer"]
+        assert {
+            item["profile"] for item in historical["items"]
+        } == {"design_system_manager", "tech_writer"}
+
+        store.start_run(run["id"])
+        next_item = store.next_queued_item(run["id"])
+        assert next_item
+        assert next_item["profile"] in {"design_system_manager", "tech_writer"}
 
 
 def test_relational_metrics() -> None:
@@ -225,6 +276,7 @@ if __name__ == "__main__":
     test_case_set()
     test_metrics()
     test_store_lifecycle()
+    test_legacy_profile_compatibility()
     test_relational_metrics()
     test_runner()
     test_runner_retries_rate_limit()

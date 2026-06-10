@@ -8,8 +8,8 @@ SCREENSHOT_DIR = Path("/tmp")
 
 
 def metric_value(page: Page, label: str) -> str:
-    label_node = page.get_by_text(label, exact=True).first
-    return label_node.locator("xpath=..").locator("p").first.inner_text()
+    metric = page.locator(".foundation-metric").filter(has_text=label).first
+    return metric.locator(".foundation-metric-value").inner_text()
 
 
 def assert_taxonomy(page: Page) -> None:
@@ -18,17 +18,16 @@ def assert_taxonomy(page: Page) -> None:
 
     body_text = page.locator("body").inner_text()
     assert "v3" not in body_text.lower()
-    assert page.get_by_role("heading", name="Design Tokens", exact=True).count() == 1
+    assert page.get_by_role("heading", name="Tokens de Design", exact=True).count() == 1
 
     expected_metrics = {
-        "Total": "88",
-        "Cor": "52",
-        "Sistema": "36",
-        "Primitivos": "32",
-        "Semânticos": "52",
-        "XAI": "4",
-        "Cores únicas": "44",
-        "Aliases": "16",
+        "Documentados": "122",
+        "Base preservada": "37",
+        "Semânticos de interface": "62",
+        "Contratos XAI": "9",
+        "Cores únicas": "57",
+        "Aliases": "19",
+        "Componentes": "25",
     }
     for label, expected in expected_metrics.items():
         assert metric_value(page, label) == expected, (label, metric_value(page, label))
@@ -37,7 +36,7 @@ def assert_taxonomy(page: Page) -> None:
         "primary-50",
         "primary-700",
         "surface-lowest",
-        "--aetheris-color-primary",
+        "--velaris-color-primary",
         "display-xl",
         "space-10",
         "shadow-glow",
@@ -54,14 +53,20 @@ def assert_taxonomy(page: Page) -> None:
         "target-size-min",
         "xai-source-bg",
         "heading-md",
+        "technical.command",
+        "technical.entity",
+        "technical.foreground",
     ]
     for token in preserved_tokens + new_tokens:
         assert page.get_by_text(token, exact=True).count() >= 1, token
 
     assert page.get_by_role(
+        "heading", name="Technical Color System", exact=True
+    ).count() == 1
+    assert page.get_by_role(
         "heading", name="Aliases e contratos semânticos", exact=True
     ).count() == 1
-    assert page.get_by_text("xai-confidence-high", exact=True).count() == 1
+    assert page.get_by_text("xai-confidence-high", exact=True).count() >= 1
     assert page.get_by_role(
         "heading", name="Cobertura por componente", exact=True
     ).count() == 1

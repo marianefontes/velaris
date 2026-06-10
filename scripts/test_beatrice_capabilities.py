@@ -1,4 +1,4 @@
-"""Regression checks for Beatrice's two-type public capability architecture."""
+"""Regression checks for Abraxos public capability architecture."""
 
 from pathlib import Path
 import re
@@ -158,7 +158,7 @@ def test_public_picker_and_documentation() -> None:
     assert '"organizational-memory"' not in investigations.group(1)
 
     docs = (ROOT / "docs/beatrice-capability-architecture.md").read_text(encoding="utf-8")
-    assert "Habilidades da Beatrice" in docs
+    assert "Habilidades do Abraxos" in docs
     assert "Comandos do Oráculo" in docs
     assert "Ativação automática" in docs
     assert "/memory" in docs
@@ -182,4 +182,4 @@ if __name__ == "__main__":
     test_engine_registry_and_aliases()
     test_operational_commands_and_legacy_normalization()
     test_public_picker_and_documentation()
-    print("Beatrice capability architecture checks passed.")
+    print("Abraxos capability architecture checks passed.")

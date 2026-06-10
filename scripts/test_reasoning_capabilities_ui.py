@@ -1,9 +1,13 @@
-"""Playwright smoke test for the public Beatrice capability documentation."""
+"""Playwright smoke test for the public Abraxos reasoning documentation."""
+
+from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
 
 BASE_URL = "http://127.0.0.1:5173"
+OUTPUT_DIR = Path("/tmp/aetheris-reasoning-weaver")
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
 with sync_playwright() as playwright:
@@ -14,9 +18,9 @@ with sync_playwright() as playwright:
 
     page.goto(f"{BASE_URL}/reasoning?focus=skills")
     page.wait_for_load_state("networkidle")
-    assert page.get_by_text("Habilidades da Beatrice", exact=True).first.is_visible()
+    assert page.get_by_text("Habilidades do Abraxos", exact=True).first.is_visible()
     assert page.get_by_text("Ativação automática", exact=True).first.is_visible()
-    assert page.get_by_text("A Beatrice ativa estas habilidades automaticamente", exact=False).is_visible()
+    assert page.get_by_text("Abraxos ativa estas habilidades automaticamente", exact=False).is_visible()
     assert page.get_by_text("Component Fit Analysis", exact=True).is_visible()
     assert page.get_by_text("Component Misuse Detection", exact=True).is_visible()
     assert page.get_by_text("Accessibility & Interaction Guardrail", exact=True).is_visible()
@@ -27,7 +31,7 @@ with sync_playwright() as playwright:
     page.wait_for_load_state("networkidle")
     assert page.get_by_text("Comandos do Oráculo", exact=True).first.is_visible()
     assert page.get_by_text("Ações e modos acionáveis", exact=True).first.is_visible()
-    assert page.get_by_text("Como acionar um comando", exact=True).is_visible()
+    assert page.get_by_text("Como ativar um comando", exact=True).is_visible()
     for command in ("/enforce", "/migrate", "/capture", "/memory", "/decision", "/perspectives", "/audit"):
         assert page.get_by_text(command, exact=True).first.is_visible()
     assert page.get_by_text("Ação operacional", exact=True).first.is_visible()
@@ -61,13 +65,39 @@ with sync_playwright() as playwright:
     page.wait_for_load_state("networkidle")
     assert page.get_by_text("Comandos do Oráculo", exact=True).first.is_visible()
 
+    page.goto(f"{BASE_URL}/reasoning?focus=weaver")
+    page.wait_for_load_state("networkidle")
+    assert page.get_by_text("A Tecelã de Evidências", exact=True).is_visible()
+    assert page.get_by_text("Camada de Orquestração de Evidências", exact=True).is_visible()
+    assert page.get_by_text("Interpreta a intenção", exact=True).is_visible()
+    assert page.get_by_text("Estrutura o contexto", exact=True).is_visible()
+    assert page.get_by_text("Avalia a força da base", exact=True).is_visible()
+    assert page.get_by_text("Entrega o fio para Abraxos", exact=True).is_visible()
+    assert page.get_by_text("organiza e qualifica", exact=True).is_visible()
+    assert page.get_by_text("raciocina e recomenda", exact=True).is_visible()
+    assert page.get_by_text(
+        "A Tecelã não recupera conhecimento. A Tecelã organiza o conhecimento disponível.",
+        exact=True,
+    ).is_visible()
+    assert page.get_by_text(
+        "A Tecelã costura a base da resposta. O Abraxos interpreta essa base. O Pipeline comprova o percurso.",
+        exact=True,
+    ).is_visible()
+    page.screenshot(path=OUTPUT_DIR / "desktop.png", full_page=True)
+
+    first_tab = page.get_by_role("tab", name="Visão geral Cognição do Abraxos")
+    first_tab.focus()
+    first_tab.press("ArrowRight")
+    assert page.get_by_role("tab", name="Tecelã de Evidências orquestração de evidências").get_attribute("aria-selected") == "true"
+
     page.set_viewport_size({"width": 390, "height": 844})
-    page.goto(f"{BASE_URL}/reasoning?focus=skills")
+    page.goto(f"{BASE_URL}/reasoning?focus=weaver")
     page.wait_for_load_state("networkidle")
     has_horizontal_overflow = page.evaluate(
         "document.documentElement.scrollWidth > document.documentElement.clientWidth"
     )
     assert not has_horizontal_overflow
+    page.screenshot(path=OUTPUT_DIR / "mobile.png", full_page=True)
 
     assert not console_errors, f"browser console errors: {console_errors}"
     browser.close()

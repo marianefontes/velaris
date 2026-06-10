@@ -174,13 +174,14 @@ def test_daily_funnel() -> None:
 
             async def generate(item: dict) -> dict:
                 profile_terms = {
-                    "designer": "hierarquia",
                     "dev": "contrato",
-                    "pm": "workflow",
+                    "designer": "hierarquia",
+                    "product_designer": "usabilidade validacao",
                     "qa": "teste",
-                    "writer": "terminologia",
+                    "tech_writer": "terminologia",
                     "a11y": "foco teclado",
-                    "maintainer": "governança",
+                    "maintainer": "manutencao acoplamento",
+                    "design_system_manager": "governanca roadmap",
                 }
                 return {
                     "answer_text": (

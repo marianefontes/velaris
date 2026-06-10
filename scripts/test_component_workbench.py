@@ -100,10 +100,20 @@ def assert_component_sync(page: Page, component_id: str, title: str, states: lis
     editor = page.get_by_label("Editar code snippet do componente")
     do_guidance = page.locator('[data-usage-guidance="do"]')
     dont_guidance = page.locator('[data-usage-guidance="dont"]')
+    about_card = page.locator(f'[data-component-about="{component_id}"]')
+    controls = page.locator(f'[data-component-controls="{component_id}"]')
+    guidance = page.locator(f'[data-component-guidance="{component_id}"]')
     assert preview.count() == 1
     assert editor.count() == 1
-    assert do_guidance.locator("li").count() >= 3
-    assert dont_guidance.locator("li").count() >= 3
+    assert about_card.count() == 1
+    assert controls.count() == 1
+    assert guidance.count() == 1
+    assert guidance.locator("[data-accessibility-criterion]").count() >= 5
+    assert 3 <= about_card.locator("[data-about-feature]").count() <= 4
+    assert 4 <= about_card.locator("[data-common-use]").count() <= 6
+    assert len(about_card.locator("p").first.inner_text()) > 80
+    assert do_guidance.locator("li").count() == 5
+    assert dont_guidance.locator("li").count() == 5
     first_do = do_guidance.locator("li").first.inner_text()
     first_dont = dont_guidance.locator("li").first.inner_text()
     assert len(first_do) > 25
@@ -124,6 +134,7 @@ def assert_component_sync(page: Page, component_id: str, title: str, states: lis
     page.get_by_role("button", name=f"Intents: {intents[0]}").click()
     initial_snippet = editor.input_value()
     initial_intent_description = preview.locator("[data-intent-explanation] p").nth(1).inner_text()
+    initial_recommendation = guidance.locator(".component-ai-recommendation").inner_text()
     target_state = states[-1]
     target_intent = intents[-1]
     page.get_by_role("button", name=f"States: {target_state}").click()
@@ -135,12 +146,14 @@ def assert_component_sync(page: Page, component_id: str, title: str, states: lis
     assert intent_card.count() == 1
     expect(intent_card.get_by_text(f"Intent: {target_intent}", exact=True)).to_be_visible()
     assert intent_card.locator("p").nth(1).inner_text() != initial_intent_description, component_id
+    assert guidance.locator(".component-ai-recommendation").inner_text() != initial_recommendation, component_id
     assert "Descreve a finalidade que este componente atende" not in intent_card.inner_text()
     assert page.get_by_role("button", name=f"States: {target_state}").get_attribute("aria-pressed") == "true"
     assert page.get_by_role("button", name=f"Intents: {target_intent}").get_attribute("aria-pressed") == "true"
 
     configured_snippet = editor.input_value()
     assert configured_snippet != initial_snippet
+    assert page.locator(f'[data-component-snippet="{component_id}"] .component-code-highlight').count() == 1
 
     page.get_by_role("button", name=f"States: {states[0]}").click()
     page.get_by_role("button", name=f"Intents: {intents[0]}").click()

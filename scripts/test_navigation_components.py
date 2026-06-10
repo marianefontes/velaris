@@ -21,7 +21,7 @@ def main() -> None:
         expect_path(page, "/main")
 
         primary_links = page.locator("header nav a")
-        assert primary_links.count() == 8
+        assert primary_links.count() == 9
         primary_labels = primary_links.all_inner_texts()
         assert primary_labels == [
             "INÍCIO",
@@ -30,6 +30,7 @@ def main() -> None:
             "RACIOCÍNIO",
             "PERSPECTIVAS",
             "ARQUITETURA",
+            "LABORATÓRIO",
             "AVALIAÇÃO",
             "RESULTADOS",
         ], primary_labels
@@ -43,7 +44,7 @@ def main() -> None:
         assert page.locator('header nav a[href="/main"]').count() == 1
         assert "bg-primary" in page.locator('header nav a[href="/main"]').get_attribute("class")
 
-        page.get_by_role("link", name="Chat da Beatrice").click()
+        page.get_by_role("link", name="Consultar Abraxos").click()
         page.wait_for_load_state("networkidle")
         expect_path(page, "/oracle")
         assert page.locator('header nav a[class*="bg-primary"]').count() == 0
@@ -52,7 +53,7 @@ def main() -> None:
         page.goto(f"{APP_BASE}/foundations")
         page.wait_for_load_state("networkidle")
         assert page.get_by_role("heading", name="Workbench de Componentes").count() == 0
-        assert page.get_by_role("button", name="Diretrizes Pilares e princípios").count() == 1
+        assert page.get_by_role("tab", name="Diretrizes Pilares e princípios").count() == 1
 
         page.goto(f"{APP_BASE}/components")
         page.wait_for_load_state("networkidle")
@@ -100,6 +101,7 @@ def main() -> None:
             "/foundations",
             "/components",
             "/architecture",
+            "/laboratory",
             "/evaluation",
             "/results",
         ]:

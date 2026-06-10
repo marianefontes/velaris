@@ -13,10 +13,14 @@ VIEWPORTS = {
 }
 
 EXPECTED_H1 = {
-    "pt-BR": "Transforme documentação de design system em decisões explicáveis.",
-    "pt-PT": "Transforme documentação de design system em decisões explicáveis.",
-    "en-US": "Turn design system documentation into explainable decisions.",
+    "pt-BR": "Conhecimento que se conecta. Decisões que fazem sentido.",
+    "pt-PT": "Conhecimento que se conecta. Decisões que fazem sentido.",
+    "en-US": "Knowledge that connects. Decisions that make sense.",
 }
+
+
+def normalized_text(locator):
+    return " ".join(locator.inner_text().split())
 
 
 with sync_playwright() as playwright:
@@ -29,13 +33,15 @@ with sync_playwright() as playwright:
         page.goto("http://127.0.0.1:5173/main")
         page.wait_for_load_state("networkidle")
 
-        assert page.locator("h1").inner_text() == EXPECTED_H1["pt-BR"]
-        assert page.get_by_role("heading", name="Como a Beatrice responde").is_visible()
-        assert page.locator('section[aria-labelledby="beatrice-response-flow-title"] li').count() == 5
+        assert normalized_text(page.locator("h1")) == EXPECTED_H1["pt-BR"]
+        assert page.get_by_role("heading", name="Como Abraxos responde").is_visible()
+        assert page.locator('section[aria-labelledby="abraxos-response-flow-title"] li').count() == 5
         assert page.get_by_text("ÚLTIMAS CONSULTAS").count() == 0
-        assert page.get_by_role("list", name="Exemplos de perguntas").locator("li").count() == 4
-        assert page.get_by_role("link", name="Perguntar à Beatrice").first.get_attribute("href") == "/oracle"
-        assert page.get_by_role("link", name="Entender o funcionamento").get_attribute("href") == "/reasoning"
+        assert page.get_by_role("textbox", name="Consultar Abraxos").is_visible()
+        assert page.get_by_role("button", name="Ver outras sugestões").is_visible()
+        assert page.get_by_role("link", name="Consultar Abraxos").is_visible()
+        assert page.locator('[data-testid="start-here-section"] a').count() == 4
+        assert page.get_by_role("link", name="Entender decisões", exact=False).get_attribute("href") == "/reasoning"
 
         dimensions = page.evaluate(
             """() => ({
@@ -51,44 +57,35 @@ with sync_playwright() as playwright:
         page.screenshot(path=OUTPUT_DIR / f"{name}.png", full_page=True)
 
         if name == "desktop":
-            alignment = page.evaluate(
+            visual = page.evaluate(
                 """() => {
-                    const rail = document.querySelector('[data-testid="home-context-rail"]');
-                    const start = document.querySelector('[data-testid="start-here-section"]');
-                    const flow = document.querySelector('[aria-labelledby="beatrice-response-flow-title"]');
-                    const flowTitle = document.querySelector('#beatrice-response-flow-title');
-                    const startTitle = document.querySelector('#start-here-title');
+                    const flow = document.querySelector('[aria-labelledby="abraxos-response-flow-title"]');
+                    const cta = [...document.querySelectorAll("a")].find(
+                        (item) => item.textContent?.trim() === "Consultar Abraxos"
+                    );
+                    const style = cta ? getComputedStyle(cta) : null;
 
                     return {
-                        bottomDifference: Math.abs(
-                            (rail?.getBoundingClientRect().bottom ?? 0) -
-                            (start?.getBoundingClientRect().bottom ?? 0)
-                        ),
                         flowBackground: flow ? getComputedStyle(flow).backgroundColor : "",
-                        flowTitleSize: flowTitle ? parseFloat(getComputedStyle(flowTitle).fontSize) : 0,
-                        startTitleSize: startTitle ? parseFloat(getComputedStyle(startTitle).fontSize) : 0,
+                        ctaBackground: style?.backgroundColor ?? "",
+                        ctaBorder: style?.borderColor ?? "",
+                        ctaColor: style?.color ?? "",
                     };
                 }"""
             )
-            assert alignment["bottomDifference"] <= 2, alignment
-            assert alignment["startTitleSize"] > alignment["flowTitleSize"], alignment
+            assert visual["flowBackground"] not in {"", "rgba(0, 0, 0, 0)"}, visual
+            assert visual["ctaBackground"] not in {"", "rgba(0, 0, 0, 0)"}, visual
+            assert visual["ctaBorder"] not in {"", "rgba(0, 0, 0, 0)"}, visual
+            assert visual["ctaColor"] != "", visual
 
-            expected_focus = {"Perguntar à Beatrice", "Entender o funcionamento"}
-            observed_focus = set()
+            oracle_cta = page.get_by_role("link", name="Consultar Abraxos")
+            assert oracle_cta.get_attribute("href") == "/oracle"
+            oracle_cta.focus()
+            assert oracle_cta.evaluate("(element) => element.matches(':focus-visible')")
 
-            for _ in range(30):
-                page.keyboard.press("Tab")
-                focused = page.evaluate(
-                    """() => ({
-                        text: (document.activeElement?.textContent ?? "").replace(/\\s+/g, " ").trim(),
-                        visible: document.activeElement?.matches(":focus-visible") ?? false,
-                    })"""
-                )
-                if focused["text"] in expected_focus:
-                    assert focused["visible"]
-                    observed_focus.add(focused["text"])
-
-            assert observed_focus == expected_focus, observed_focus
+            decision_link = page.get_by_role("link", name="Entender decisões", exact=False)
+            decision_link.focus()
+            assert decision_link.evaluate("(element) => element.matches(':focus-visible')")
 
         print(name, page.locator("body").evaluate("(body) => body.scrollHeight"), dimensions)
         page.close()
@@ -102,22 +99,27 @@ with sync_playwright() as playwright:
         )
         locale_page.reload()
         locale_page.wait_for_load_state("networkidle")
-        assert locale_page.locator("h1").inner_text() == expected_h1
+        assert normalized_text(locale_page.locator("h1")) == expected_h1
 
     locale_page.close()
 
     route_page = browser.new_page(viewport=VIEWPORTS["desktop"])
     route_page.goto("http://127.0.0.1:5173/main")
     route_page.wait_for_load_state("networkidle")
-    route_page.get_by_role("link", name="Entender o funcionamento").click()
+    route_page.get_by_role("link", name="Entender decisões", exact=False).click()
     route_page.wait_for_url("**/reasoning")
     assert route_page.url.endswith("/reasoning")
 
     route_page.goto("http://127.0.0.1:5173/main")
     route_page.wait_for_load_state("networkidle")
-    route_page.get_by_role("link", name="Perguntar à Beatrice").first.click()
+    route_page.get_by_role("textbox", name="Consultar Abraxos").fill("Qual componente usar para tabela?")
+    route_page.get_by_role("button", name="Enviar pergunta").click()
     route_page.wait_for_url("**/oracle")
     assert route_page.url.endswith("/oracle")
+    active_oracle_cta = route_page.get_by_role("link", name="Consultar Abraxos")
+    assert active_oracle_cta.get_attribute("aria-current") == "page"
+    assert "oracle-cta-active" in (active_oracle_cta.get_attribute("class") or "")
+    route_page.screenshot(path=OUTPUT_DIR / "oracle-active.png", full_page=True)
 
     route_page.close()
     browser.close()
