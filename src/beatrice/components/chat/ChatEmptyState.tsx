@@ -1,58 +1,39 @@
 import { useI18n } from "../../../i18n/I18nProvider";
 import { usePersonaContext } from "../../hooks/usePersonaContext";
+import { useWorkspaceMessages } from "../../providers/WorkspaceProvider";
 
 export function ChatEmptyState() {
   const { t } = useI18n();
   const { activePersonaContext: strategy } = usePersonaContext();
+  const { messages } = useWorkspaceMessages();
   const Icon = strategy.icon;
   const operationalProfile = strategy.operationalProfile;
 
+  if (messages.length > 1) return null;
+
   return (
-    <div className="flex flex-col items-center justify-center px-4 pb-4 pt-10 text-center">
-
-      {/* ── Oracle symbolic presence ──────────────────────────────────────
-          The 30% cognitive layer: ambient glow + layered rings + icon.
-          Keeps the clean bounding box from the architectural version,
-          adds depth without noise.
-      ──────────────────────────────────────────────────────────────────── */}
-      <div className="relative mb-7 flex items-center justify-center">
-
-        {/* Ambient radial atmosphere — furthest layer, very soft */}
+    <div className="flex flex-col items-center justify-center px-3 pb-2 pt-4 text-center sm:pt-6">
+      <div className="relative mb-5 hidden items-center justify-center sm:flex">
         <div
-          className={`pointer-events-none absolute inset-0 scale-[3.2] rounded-full opacity-30 blur-3xl ${strategy.theme.accentBg}`}
+          className={`pointer-events-none absolute inset-0 scale-[2.4] rounded-full opacity-20 blur-3xl ${strategy.theme.accentBg}`}
         />
-
-        {/* Outer symbolic ring — subtle spatial marker */}
         <div
-          className={`pointer-events-none absolute -inset-[10px] rounded-[30px] border ${strategy.theme.accentBorder} opacity-20`}
+          className={`pointer-events-none absolute -inset-[6px] rounded-[22px] border ${strategy.theme.accentBorder} opacity-20`}
         />
-
-        {/* Secondary ring — creates depth layering */}
         <div
-          className={`pointer-events-none absolute -inset-[4px] rounded-[26px] border ${strategy.theme.accentBorder} opacity-12`}
-        />
-
-        {/* Icon container — the focal symbol */}
-        <div
-          className={`relative flex h-[72px] w-[72px] items-center justify-center rounded-[24px] border oracle-icon-shell ${strategy.theme.accentBorder} ${strategy.theme.accentBg}`}
+          className={`relative flex h-14 w-14 items-center justify-center rounded-[18px] border ${strategy.theme.accentBorder} ${strategy.theme.accentBg}`}
         >
-          <Icon className={`h-9 w-9 ${strategy.theme.accentText}`} />
+          <Icon aria-hidden="true" className={`h-7 w-7 ${strategy.theme.accentText}`} />
         </div>
       </div>
 
-      {/* Session identity */}
-      <h2 className="text-[1.65rem] font-black tracking-tight text-white leading-tight">
+      <h2 className="text-xl font-bold leading-tight tracking-tight text-white sm:text-2xl">
         {strategy.sessionTitle}
       </h2>
-      <p className={`mt-2 text-xs font-semibold tracking-wide ${strategy.theme.accentText}`}>
-        {operationalProfile.fullName} · {operationalProfile.title}
+      <p className={`mt-2 hidden text-xs font-medium sm:block ${strategy.theme.accentText}`}>
+        {t("beatricePersona.beatricePerspective")} · {operationalProfile.title}
       </p>
-
-      {/* Cognitive rhythm divider */}
-      <div className="cognitive-divider mt-5 mb-5" />
-
-      {/* Primary pain / context description */}
-      <p className="max-w-md text-sm leading-[1.75] text-slate-400">
+      <p className="mt-2 line-clamp-1 max-w-[60ch] text-xs leading-5 text-slate-400 sm:mt-4 sm:line-clamp-none sm:text-sm sm:leading-6">
         {operationalProfile.primaryPain || t("chat.description")}
       </p>
     </div>

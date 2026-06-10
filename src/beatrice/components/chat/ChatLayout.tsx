@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { usePersonaContext } from "../../hooks/usePersonaContext";
-import { useWorkspace } from "../../providers/WorkspaceProvider";
+import { useWorkspacePreferences } from "../../providers/WorkspaceProvider";
 
 export function ChatLayout({
   artifacts,
@@ -16,25 +16,25 @@ export function ChatLayout({
   toolbar: ReactNode;
 }) {
   const { activePersonaContext: strategy } = usePersonaContext();
-  const { settings } = useWorkspace();
+  const { settings } = useWorkspacePreferences();
   const density = {
     compact: {
       shell: "gap-5",
       stream: "px-5 py-6 sm:px-6",
       inner: "gap-5",
-      composer: "px-5 py-4 sm:px-6",
+      composer: "px-5 py-3 sm:px-6",
     },
     comfortable: {
       shell: "gap-6",
       stream: "px-5 py-7 sm:px-8 sm:py-8",
       inner: "gap-6",
-      composer: "px-5 py-5 sm:px-8",
+      composer: "px-5 py-3.5 sm:px-8",
     },
     dense: {
       shell: "gap-4",
       stream: "px-4 py-4 sm:px-5",
       inner: "gap-4",
-      composer: "px-4 py-3 sm:px-5",
+      composer: "px-4 py-2.5 sm:px-5",
     },
   }[settings.density];
   const blur = {
@@ -44,30 +44,25 @@ export function ChatLayout({
   }[settings.blurIntensity];
 
   return (
-    <div className={`grid min-h-[calc(100vh-9rem)] ${density.shell} xl:grid-cols-[1fr_18rem]`}>
-      {/* ── Oracle shell ──────────────────────────────────────────────────────
-          Primary section: architectural container (border-radius, blur, border)
-          with a persona-aware backdrop gradient as the identity accent layer.
-      ───────────────────────────────────────────────────────────────────────── */}
+    <div className={`beatrice-chat grid min-h-0 flex-1 ${density.shell} min-[1360px]:grid-cols-[minmax(0,1fr)_14rem]`}>
       <section
-        className={`relative flex min-h-[calc(100vh-9rem)] flex-col overflow-hidden rounded-[28px] border ${blur} ${strategy.theme.shell}`}
+        aria-labelledby="beatrice-chat-title"
+        className={`beatrice-chat-shell relative flex min-w-0 flex-col overflow-hidden rounded-[22px] border sm:rounded-[28px] ${blur} ${strategy.theme.shell}`}
         style={{ isolation: "isolate" }}
       >
-        {/* Backdrop gradient — persona-aware cognitive atmosphere, top-anchored */}
-        <div className={`pointer-events-none absolute inset-x-0 top-0 h-48 ${strategy.theme.backdrop}`} />
+        <div className={`pointer-events-none absolute inset-x-0 top-0 h-36 opacity-70 ${strategy.theme.backdrop}`} />
 
-        {/* Ambient floor glow — subtle depth from base, unifies the shell */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-background/40 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background/30 to-transparent" />
 
         {overlay}
         {toolbar}
 
-        <div className="flex flex-1 flex-col overflow-hidden">
-          <div className={`beatrice-scrollbar flex-1 overflow-y-auto ${density.stream}`}>
-            <div className={`mx-auto flex max-w-4xl flex-col ${density.inner}`}>{stream}</div>
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <div className={`beatrice-scrollbar min-h-0 flex-1 overscroll-contain overflow-y-auto ${density.stream}`}>
+            <div className={`mx-auto flex w-full max-w-[54rem] flex-col ${density.inner}`}>{stream}</div>
           </div>
-          <div className={`border-t border-white/[0.08] bg-background/65 ${density.composer} ${blur}`}>
-            <div className="mx-auto max-w-3xl">{composer}</div>
+          <div className={`beatrice-composer shrink-0 border-t border-white/[0.07] bg-background/80 ${density.composer} ${blur}`}>
+            <div className="mx-auto w-full max-w-[50rem]">{composer}</div>
           </div>
         </div>
       </section>

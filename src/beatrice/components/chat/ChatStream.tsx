@@ -1,16 +1,32 @@
-import { useWorkspace } from "../../providers/WorkspaceProvider";
+import {
+  useWorkspaceMessages,
+  useWorkspacePreferences,
+} from "../../providers/WorkspaceProvider";
+import { useAuditTrail } from "../../hooks/useAuditTrail";
 import { ChatMessage } from "./ChatMessage";
 
 export function ChatStream() {
-  const { bottomRef, content, messages, settings } = useWorkspace();
+  const { bottomRef, messages } = useWorkspaceMessages();
+  const { content, settings } = useWorkspacePreferences();
+  const { labels, openMessage, updateDecisionStatus, updatingDecisionId } = useAuditTrail();
+  const visibleMessages = messages.filter((message) => !message.id.startsWith("assistant-persona-"));
 
   return (
-    <div className="flex flex-col gap-6 pt-2">
-      {messages.map((message) => (
-        <ChatMessage key={message.id} message={message} content={content} settings={settings} />
+    <div className="flex flex-col gap-7 pt-1">
+      {visibleMessages.map((message) => (
+        <ChatMessage
+          key={message.id}
+          message={message}
+          content={content}
+          settings={settings}
+          onOpenAudit={() => openMessage(message.id)}
+          onUpdateDecision={updateDecisionStatus}
+          decisionUpdating={updatingDecisionId === message.decisionId}
+          evidenceLabel={labels.evidence}
+          viewAllLabel={labels.viewAll}
+        />
       ))}
-      <div ref={bottomRef} />
+      <div ref={bottomRef} aria-hidden="true" />
     </div>
   );
 }
-

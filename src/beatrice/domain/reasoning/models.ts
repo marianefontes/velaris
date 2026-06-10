@@ -8,6 +8,5 @@ export const PAGE_AUTHORITY: Record<string, ReasoningAuthority> = {
   xai_component: { label: "XAI specification", weight: "medium" },
   pattern: { label: "Interaction pattern", weight: "medium" },
   foundation: { label: "Visual foundation", weight: "medium" },
-  reasoning: { label: "Reasoning trace", weight: "low" },
+  reasoning: { label: "Execution trace", weight: "low" },
 };
-

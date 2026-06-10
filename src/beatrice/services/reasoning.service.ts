@@ -1,4 +1,4 @@
-import { buildEvidence, computeConfidence, reasoningStepsForEntry } from "../domain/reasoning";
+import { buildEvidence, computeConfidence } from "../domain/reasoning";
 import { intentColor, intentLabel } from "../domain/decision";
 
 export const reasoningService = {
@@ -6,6 +6,4 @@ export const reasoningService = {
   computeConfidence,
   intentColor,
   intentLabel,
-  reasoningStepsForEntry,
 };
-
