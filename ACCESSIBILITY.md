@@ -1,7 +1,7 @@
 # ACCESSIBILITY.md — Contrato de Acessibilidade
 
 > Regras de a11y para o agente ao criar/editar UI no AETHERIS. Memória operacional.
-> A própria Beatrice tem uma lente `a11y` (Iris Holloway) — este doc operacionaliza os mesmos princípios para o código.
+> O próprio Abraxos tem a perspectiva profissional `a11y`, Accessibility Specialist. Este documento operacionaliza os mesmos princípios para o código.
 > Atualizado: 2026-06-07.
 
 ---
