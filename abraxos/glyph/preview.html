@@ -1,0 +1,32 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Abraxos — Glifo L0 · Teste de redução</title>
+<style>
+  body { background:#0e0e10; color:#deccfd; font:14px/1.6 Inter, system-ui, sans-serif; padding:48px; }
+  h1 { font-size:16px; letter-spacing:.2em; text-transform:uppercase; color:#c2a0fc; }
+  table { border-collapse:collapse; margin-top:24px; }
+  td, th { padding:18px 28px; text-align:center; border:1px solid #262528; }
+  th { color:#adaaad; font-weight:500; font-size:12px; letter-spacing:.1em; }
+  .glyph { color:#c2a0fc; }
+  img { display:block; margin:0 auto; }
+  .on-immersive { background:#09090d; }
+  .favicon-sim { background:#09090d; border-radius:4px; padding:4px; display:inline-block; }
+</style>
+<h1>Abraxos — Glifo L0 · três pesos · teste 16px</h1>
+<table>
+  <tr><th></th><th>Leve</th><th>Regular</th><th>Pesado</th></tr>
+  <tr class="glyph"><th>64px</th>
+    <td><img src="abraxos-glyph-light.svg" width="64" height="64"></td>
+    <td><img src="abraxos-glyph-regular.svg" width="64" height="64"></td>
+    <td><img src="abraxos-glyph-bold.svg" width="64" height="64"></td></tr>
+  <tr class="glyph"><th>32px</th>
+    <td><img src="abraxos-glyph-light.svg" width="32" height="32"></td>
+    <td><img src="abraxos-glyph-regular.svg" width="32" height="32"></td>
+    <td><img src="abraxos-glyph-bold.svg" width="32" height="32"></td></tr>
+  <tr class="glyph on-immersive"><th>16px (favicon)</th>
+    <td><img src="abraxos-glyph-light.svg" width="16" height="16"></td>
+    <td><img src="abraxos-glyph-regular.svg" width="16" height="16"></td>
+    <td><span class="favicon-sim"><img src="abraxos-glyph-bold.svg" width="16" height="16"></span></td></tr>
+</table>
+<p style="max-width:60ch;color:#adaaad">Critério de aprovação: no peso <b>pesado a 16px</b>, a curva "S" e o nó-olho
+devem permanecer legíveis. Leve e regular não precisam passar no teste de 16px — seus contextos são maiores.</p>

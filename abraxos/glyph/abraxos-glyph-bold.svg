@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Abraxos L0 glyph — peso PESADO. Favicon/16px: traço grosso, um único nó (o olho), sem dissolução. -->
+  <path d="M44 13 C 23 9, 17 26, 32 32 C 47 38, 43 55, 25 52" stroke="currentColor" stroke-width="11" stroke-linecap="round"/>
+  <!-- olho -->
+  <circle cx="46.5" cy="13" r="6.5" fill="currentColor"/>
+</svg>
