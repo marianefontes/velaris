@@ -3,6 +3,7 @@
 // Persists per-lens calibration to localStorage and exposes a typed reader.
 
 import type { ProfileId } from "../../types/beatrice";
+import { legacyProfileIdsFor } from "./profileIds";
 
 export type CalibrationDepth = "low" | "medium" | "high";
 
@@ -14,14 +15,21 @@ export interface Calibration {
 
 const CALIBRATION_KEY_PREFIX = "beatrice.calibration";
 
-function calibrationKey(profileId: ProfileId): string {
+function calibrationKey(profileId: string): string {
   return `${CALIBRATION_KEY_PREFIX}.${profileId}`;
 }
 
 export function readCalibration(profileId: ProfileId): Calibration | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = window.localStorage.getItem(calibrationKey(profileId));
+    const canonicalKey = calibrationKey(profileId);
+    let raw = window.localStorage.getItem(canonicalKey);
+    const legacyKeys = legacyProfileIdsFor(profileId).map(calibrationKey);
+    let legacyKey: string | null = null;
+    if (!raw) {
+      legacyKey = legacyKeys.find((key) => window.localStorage.getItem(key)) ?? null;
+      raw = legacyKey ? window.localStorage.getItem(legacyKey) : null;
+    }
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<Calibration & { riskSensitivity?: number }>;
     const depth = parsed.depth;
@@ -35,11 +43,16 @@ export function readCalibration(profileId: ProfileId): Calibration | null {
           ? parsed.riskSensitivity
           : null;
     if (tech === null || risk === null) return null;
-    return {
+    const calibration = {
       depth,
       technicality: clamp01(tech),
       risk_sensitivity: clamp01(risk),
     };
+    if (legacyKey || legacyKeys.some((key) => window.localStorage.getItem(key))) {
+      window.localStorage.setItem(canonicalKey, JSON.stringify(calibration));
+      legacyKeys.forEach((key) => window.localStorage.removeItem(key));
+    }
+    return calibration;
   } catch {
     return null;
   }

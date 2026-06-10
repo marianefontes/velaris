@@ -20,13 +20,14 @@ from .store import LaboratoryStore
 
 
 AUTOMATED_PROFILES = (
-    "designer",
     "dev",
-    "pm",
+    "designer",
+    "product_designer",
     "qa",
-    "writer",
+    "tech_writer",
     "a11y",
     "maintainer",
+    "design_system_manager",
 )
 
 
