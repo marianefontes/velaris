@@ -122,14 +122,14 @@ texts     = [c["text"] for c in to_index]
 ids       = [c["id"]   for c in to_index]
 metadatas = [
     {
-        "source":          c["source"],
-        "page_type":       c["page_type"],
-        "title":           c["title"],
-        "status":          c["status"],
-        "when_to_use":     c["when_to_use"][:500]     if c["when_to_use"]     else "",
-        "when_not_to_use": c["when_not_to_use"][:500] if c["when_not_to_use"] else "",
-        "aetheris_insight":c["aetheris_insight"][:500] if c["aetheris_insight"] else "",
-        "char_count":      c["char_count"],
+        "source":         c["source"],
+        "page_type":      c["page_type"],
+        "title":          c["title"],
+        "component_id":   c.get("component_id", ""),
+        "status":         c["status"],
+        "section":        c.get("section", ""),
+        "schema_version": c.get("schema_version", ""),
+        "char_count":     c["char_count"],
     }
     for c in to_index
 ]

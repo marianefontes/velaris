@@ -25,6 +25,16 @@ CAPABILITY_REGISTRY = BASE_DIR / "src" / "beatrice" / "domain" / "governance" / 
 OUTPUT_DIR = Path(__file__).parent                 # /AETHERIS/rag/
 PRODUCT_NAME = "Aetheris"
 
+if str(BASE_DIR) not in sys.path:
+    sys.path.insert(0, str(BASE_DIR))
+
+from component_metadata import (  # noqa: E402
+    component_catalog,
+    component_document_text,
+    localized_rules,
+    localized_text,
+)
+
 # ─── Helpers ─────────────────────────────────────────────────────────────────
 
 def read_tsx(filename: str) -> str:
@@ -105,95 +115,6 @@ def extract_objects_from_array(source: str, array_name: str) -> list[str]:
     return []
 
 
-def extract_component_usage_guidance() -> dict[str, dict[str, list[str]]]:
-    """componentUsageGuidance.ts → regras Do/Don't em português por component id."""
-    src = read_tsx("componentUsageGuidance.ts")
-    if not src:
-        return {}
-
-    entry_pattern = re.compile(
-        r'^\s*(?:"([^"]+)"|([a-z][a-z0-9-]*))\s*:\s*guidance\s*\(',
-        re.MULTILINE,
-    )
-    result: dict[str, dict[str, list[str]]] = {}
-
-    for match in entry_pattern.finditer(src):
-        component_id = match.group(1) or match.group(2)
-        call_start = match.end() - 1
-        depth = 0
-        in_string = False
-        escaped = False
-        call_end = None
-
-        for index in range(call_start, len(src)):
-            char = src[index]
-            if in_string:
-                if escaped:
-                    escaped = False
-                elif char == "\\":
-                    escaped = True
-                elif char == '"':
-                    in_string = False
-                continue
-            if char == '"':
-                in_string = True
-            elif char == "(":
-                depth += 1
-            elif char == ")":
-                depth -= 1
-                if depth == 0:
-                    call_end = index
-                    break
-
-        if call_end is None:
-            continue
-
-        call_text = src[call_start + 1:call_end]
-        arrays: list[str] = []
-        array_depth = 0
-        array_start = None
-        in_string = False
-        escaped = False
-
-        for index, char in enumerate(call_text):
-            if in_string:
-                if escaped:
-                    escaped = False
-                elif char == "\\":
-                    escaped = True
-                elif char == '"':
-                    in_string = False
-                continue
-            if char == '"':
-                in_string = True
-            elif char == "[":
-                if array_depth == 0:
-                    array_start = index
-                array_depth += 1
-            elif char == "]":
-                array_depth -= 1
-                if array_depth == 0 and array_start is not None:
-                    arrays.append(call_text[array_start:index + 1])
-                    array_start = None
-
-        if len(arrays) < 2:
-            continue
-
-        def strings(array_text: str) -> list[str]:
-            values = re.findall(r'"((?:[^"\\]|\\.)*)"', array_text)
-            return [
-                value.replace('\\"', '"').replace("\\n", "\n").replace("\\t", "\t")
-                for value in values
-            ]
-
-        result[component_id] = {
-            "do": strings(arrays[0]),
-            "dont": strings(arrays[1]),
-        }
-
-    return result
-
-
 def make_id(source_file: str, title: str) -> str:
     slug = re.sub(r'[^a-z0-9]+', '_', title.lower()).strip('_')
     base = source_file.replace(".tsx", "").lower()
@@ -241,48 +162,121 @@ def build_chunk(source_file: str, page_type: str, title: str, fields: dict) -> d
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def extract_components(chunks: list):
-    """ComponentsPage.tsx → COMPONENT_CATALOG[]"""
-    src = read_tsx("ComponentsPage.tsx")
-    if not src:
-        return
-    usage_guidance = extract_component_usage_guidance()
-
-    section_names = {
-        "actions": "Ações e Controles",
-        "forms": "Inputs e Formulários",
-        "structure": "Navegação e Estrutura",
-        "feedback": "Feedback e Estados",
-        "intelligence": "Inteligência, XAI e Auditabilidade",
-    }
-
-    for item_obj in extract_objects_from_array(src, "COMPONENT_CATALOG"):
-        component_id = extract_string_field(item_obj, "id")
-        title = extract_string_field(item_obj, "title")
-        if not title:
-            continue
-        section_id = extract_string_field(item_obj, "section")
+    """data/component-metadata.json → canonical component chunks."""
+    catalog = component_catalog()
+    for component in catalog.components:
         page_type = (
             "xai_component"
-            if component_id in {"confidence-badge", "source-attribution", "audit-panel"}
+            if component.component_id in {
+                "confidence-badge",
+                "source-attribution",
+                "audit-panel",
+            }
             else "component"
         )
-        component_guidance = usage_guidance.get(component_id, {})
-        do_rules = component_guidance.get("do", [])
-        dont_rules = component_guidance.get("dont", [])
         fields = {
-            "status":           extract_string_field(item_obj, "status"),
-            "description":      extract_string_field(item_obj, "description"),
-            "logic":            extract_string_field(item_obj, "logic"),
-            "structure":        extract_string_field(item_obj, "structure"),
-            "when_to_use":      " ".join(do_rules) or extract_string_field(item_obj, "whenToUse"),
-            "when_not_to_use":  " ".join(dont_rules) or extract_string_field(item_obj, "whenNotToUse"),
-            "trade_offs":       extract_string_field(item_obj, "tradeOffs"),
-            "accessibility":    extract_string_field(item_obj, "accessibility"),
-            "rag_relation":     extract_string_field(item_obj, "ragRelation"),
-            "aetheris_insight": extract_string_field(item_obj, "insight"),
-            "context_of_use":   f"Section: {section_names.get(section_id, section_id)}",
+            "status": component.status,
+            "description": localized_text(component.description),
+            "logic": localized_text(component.logic),
+            "structure": localized_text(component.structure),
+            "when_to_use": " ".join(localized_rules(component.when_to_use) or []),
+            "when_not_to_use": " ".join(
+                localized_rules(component.when_not_to_use) or []
+            ),
+            "trade_offs": localized_text(component.trade_offs),
+            "accessibility": localized_text(
+                component.accessibility.summary
+                if component.accessibility else None
+            ),
+            "rag_relation": localized_text(component.rag_relation),
+            "aetheris_insight": localized_text(component.aetheris_insight),
+            "context_of_use": f"Section: {component.section}",
         }
-        chunks.append(build_chunk("ComponentsPage.tsx", page_type, title, fields))
+        chunk = build_chunk(
+            "data/component-metadata.json",
+            page_type,
+            component.name,
+            fields,
+        )
+        chunk.update({
+            "component_id": component.component_id,
+            "section": component.section,
+            "schema_version": catalog.schema_version,
+            "about": component.about.model_dump(mode="json"),
+            "about_features": [
+                feature.model_dump(mode="json")
+                for feature in component.about_features
+            ],
+            "common_uses": [
+                use.model_dump(mode="json")
+                for use in component.common_uses
+            ],
+            "intent": (
+                component.intent.model_dump(mode="json")
+                if component.intent else None
+            ),
+            "intents": [
+                intent.model_dump(mode="json")
+                for intent in component.intents or []
+            ] if component.intents is not None else None,
+            "variants": [
+                variant.model_dump(mode="json")
+                for variant in component.variants or []
+            ] if component.variants is not None else None,
+            "states": [
+                state.model_dump(mode="json")
+                for state in component.states or []
+            ] if component.states is not None else None,
+            "do": [
+                rule.model_dump(mode="json")
+                for rule in component.do or []
+            ] if component.do is not None else None,
+            "dont": [
+                rule.model_dump(mode="json")
+                for rule in component.dont or []
+            ] if component.dont is not None else None,
+            "accessibility_metadata": (
+                component.accessibility.model_dump(mode="json")
+                if component.accessibility else None
+            ),
+            "edge_cases": (
+                [rule.model_dump(mode="json") for rule in component.edge_cases]
+                if component.edge_cases is not None else None
+            ),
+            "content_guidelines": (
+                [
+                    rule.model_dump(mode="json")
+                    for rule in component.content_guidelines
+                ]
+                if component.content_guidelines is not None else None
+            ),
+            "governance_notes": (
+                [
+                    rule.model_dump(mode="json")
+                    for rule in component.governance_notes
+                ]
+                if component.governance_notes is not None else None
+            ),
+            "related_components": component.related_components,
+            "examples": (
+                [
+                    example.model_dump(mode="json")
+                    for example in component.examples
+                ]
+                if component.examples is not None else None
+            ),
+            "anti_patterns": (
+                [
+                    rule.model_dump(mode="json")
+                    for rule in component.anti_patterns
+                ]
+                if component.anti_patterns is not None else None
+            ),
+            "provenance": component.provenance,
+            "text": component_document_text(component),
+        })
+        chunk["char_count"] = len(chunk["text"])
+        chunks.append(chunk)
 
 
 def extract_patterns(chunks: list):

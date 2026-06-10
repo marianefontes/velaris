@@ -7,325 +7,325 @@
 ---
 
 ## [COMPONENT] Button
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 1585
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 3266
 
 **Structure:** Rótulo curto, alvo mínimo de 44px e ícone opcional.
 **Logic:** Use uma ação primária por região focal e rebaixe escolhas concorrentes.
-**Context Of Use:** Section: Ações e Controles
-**When To Use:** Use Button para ações explícitas como salvar, confirmar, enviar, gerar ou avançar. Use apenas uma ação primária por região visual para manter a hierarquia clara. Use loading quando a ação disparar uma operação assíncrona. Use positive para confirmar conclusão, aprovação, restauração ou uma ação benéfica inequívoca. Use negative apenas para ações críticas, como excluir, cancelar definitivamente ou remover dados. Mantenha o texto do botão curto, direto e orientado à ação.
-**When Not To Use:** Não use Button para navegação textual simples; use Link quando a ação for apenas navegar. Não coloque múltiplos botões primary competindo na mesma área. Não use disabled sem explicar por que a ação está indisponível. Não use positive como decoração ou para ações neutras. Não use negative para ações comuns ou facilmente reversíveis. Não altere estilos manualmente fora dos tokens do design system.
+**Context Of Use:** Section: action
+**When To Use:** Use apenas uma ação primária por região visual para manter a hierarquia clara. Use loading quando a ação disparar uma operação assíncrona. Use positive para confirmar conclusão, aprovação, restauração ou uma ação benéfica inequívoca. Use negative apenas para ações críticas, como excluir, cancelar definitivamente ou remover dados. Mantenha o texto do botão curto, direto e orientado à ação.
+**When Not To Use:** Não use Button para navegação textual simples; use Link quando a ação for apenas navegar. Não coloque múltiplos botões primary competindo na mesma área. Não use disabled sem explicar por que a ação está indisponível. Não use intents positive ou negative como decoração; a aparência deve corresponder à consequência real. Não altere estilos manualmente fora dos tokens do design system.
 **Trade Offs:** Excesso de botões primários dilui a hierarquia e aumenta hesitação.
 **Aetheris Insight:** Uma ação primária deve tornar a decisão mais óbvia, não apenas mais colorida.
 
 ---
 
 ## [COMPONENT] Toggle/Switch
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 1334
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 3265
 
 **Structure:** Trilho, indicador móvel, rótulo persistente e estado textual quando necessário.
 **Logic:** Off e On definem o valor. Focus demonstra foco de teclado sem alterar esse valor. Preference aplica uma escolha pessoal, Visibility mostra ou oculta conteúdo e Mode alterna o comportamento operacional.
-**Context Of Use:** Section: Ações e Controles
-**When To Use:** Use Switch para configurações binárias que entram em vigor imediatamente. Escreva o rótulo como a condição controlada, por exemplo, “Reduzir animações”. Mostre o estado atual por posição, contraste e texto quando a consequência não for óbvia.
-**When Not To Use:** Não use Switch quando a alteração depender de um botão Salvar ou Confirmar. Não use Switch para escolher entre três ou mais alternativas; use Radio ou Select. Não use rótulos vagos como “Ativar” sem indicar o que será ativado.
+**Context Of Use:** Section: action
+**When To Use:** Use Switch para configurações binárias que entram em vigor imediatamente. Escreva o rótulo como a condição controlada, por exemplo, “Reduzir animações”. Mostre o estado atual por posição, contraste e texto quando a consequência não for óbvia. Posicione o Switch próximo da configuração ou conteúdo que ele altera. Confirme persistência ou falha sem reverter o estado silenciosamente.
+**When Not To Use:** Não use Switch quando a alteração depender de um botão Salvar ou Confirmar. Não use Switch para escolher entre três ou mais alternativas; use Radio ou Select. Não use rótulos vagos como “Ativar” sem indicar o que será ativado. Não use Switch para uma mudança destrutiva sem uma etapa de confirmação adequada. Não mantenha o estado otimista quando a atualização falhar; explique e restaure o valor anterior.
 **Trade Offs:** Sem rótulo explícito, o usuário pode não entender o que o estado controla.
 **Aetheris Insight:** O estado deve ser compreensível antes e depois da interação.
 
 ---
 
 ## [COMPONENT] Checkbox
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 1181
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 3085
 
 **Structure:** Caixa, indicador de seleção, rótulo clicável e apoio opcional.
 **Logic:** Cada opção deve continuar válida mesmo quando as demais não são selecionadas.
-**Context Of Use:** Section: Ações e Controles
-**When To Use:** Use Checkbox quando cada opção puder ser selecionada de forma independente. Amplie a área clicável incluindo o rótulo e preserve um alvo mínimo de 44px. Use indeterminate apenas para representar seleção parcial em grupos hierárquicos.
-**When Not To Use:** Não use Checkbox para opções mutuamente exclusivas; use Radio Button. Não use Checkbox para uma configuração com efeito imediato quando Switch comunicar melhor a mudança. Não pré-selecione consentimento ou aceite obrigatório em nome do usuário.
+**Context Of Use:** Section: action
+**When To Use:** Use Checkbox quando cada opção puder ser selecionada de forma independente. Amplie a área clicável incluindo o rótulo e preserve um alvo mínimo de 44px. Use indeterminate apenas para representar seleção parcial em grupos hierárquicos. Explique como o estado indeterminate se relaciona com os itens filhos do grupo. Mantenha consentimentos desmarcados até uma ação explícita do usuário.
+**When Not To Use:** Não use Checkbox para opções mutuamente exclusivas; use Radio Button. Não use Checkbox para uma configuração com efeito imediato quando Switch comunicar melhor a mudança. Não pré-selecione consentimento ou aceite obrigatório em nome do usuário. Não trate indeterminate como uma terceira resposta persistente. Não esconda se a seleção é obrigatória ou opcional.
 **Trade Offs:** Listas longas sem agrupamento elevam custo de leitura e comparação.
 **Aetheris Insight:** Checkbox representa inclusão independente, não mudança de modo.
 
 ---
 
 ## [COMPONENT] Radio Button
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 1109
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 3023
 
 **Structure:** Grupo nomeado, círculos de seleção e rótulos completos.
 **Logic:** Expor todas as opções reduz memória de trabalho e facilita comparação direta.
-**Context Of Use:** Section: Ações e Controles
-**When To Use:** Use Radio Button para duas a cinco alternativas mutuamente exclusivas. Mantenha todas as opções visíveis quando a comparação entre elas ajudar a decisão. Agrupe opções relacionadas com legend e navegação por setas.
-**When Not To Use:** Não use Radio Button para seleção múltipla. Não apresente uma lista extensa que torne a página difícil de percorrer; use Select. Não deixe o grupo sem contexto ou pergunta que explique a escolha.
+**Context Of Use:** Section: action
+**When To Use:** Use Radio Button para duas a cinco alternativas mutuamente exclusivas. Mantenha todas as opções visíveis quando a comparação entre elas ajudar a decisão. Agrupe opções relacionadas com legend e navegação por setas. Defina uma opção inicial apenas quando ela for segura, reversível e realmente recomendada. Escreva rótulos paralelos para que as diferenças entre alternativas sejam fáceis de comparar.
+**When Not To Use:** Não use Radio Button para seleção múltipla. Não apresente uma lista extensa que torne a página difícil de percorrer; use Select. Não deixe o grupo sem contexto ou pergunta que explique a escolha. Não pré-selecione uma alternativa que implique consentimento, custo ou risco. Não use Radio Button para uma configuração binária com efeito imediato; prefira Switch.
 **Trade Offs:** Muitas opções ocupam espaço e tornam o grupo difícil de escanear.
 **Aetheris Insight:** Se as alternativas precisam ser comparadas, mantenha-as visíveis.
 
 ---
 
 ## [COMPONENT] Selectable Chip / Badge
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 1174
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 3132
 
 **Structure:** Pílula compacta com rótulo, ícone opcional e indicador de seleção.
 **Logic:** Chips funcionam melhor com rótulos curtos, conjunto pequeno e estado selecionado evidente.
-**Context Of Use:** Section: Ações e Controles
-**When To Use:** Use chips selecionáveis para filtros rápidos, tags ou atributos curtos. Mantenha o estado selecionado evidente por preenchimento, borda e aria-pressed. Limite o conjunto para que todas as opções continuem fáceis de escanear.
-**When Not To Use:** Não use Chip como ação primária ou substituto de Button. Não misture badges informativos e chips interativos com aparência idêntica. Não use rótulos longos nem dezenas de chips em uma única linha.
+**Context Of Use:** Section: action
+**When To Use:** Use chips selecionáveis para filtros rápidos, tags ou atributos curtos. Mantenha o estado selecionado evidente por preenchimento, borda e aria-pressed. Limite o conjunto para que todas as opções continuem fáceis de escanear. Permita quebra de linha e remoção previsível quando vários chips estiverem selecionados. Forneça um rótulo para o grupo quando os chips representarem uma pergunta ou filtro comum.
+**When Not To Use:** Não use Chip como ação primária ou substituto de Button. Não misture badges informativos e chips interativos com aparência idêntica. Não use rótulos longos nem dezenas de chips em uma única linha. Não dependa apenas da cor para diferenciar chips selecionados e não selecionados. Não use uma nuvem extensa de chips quando busca ou Select oferecer melhor descoberta.
 **Trade Offs:** Muitos chips criam ruído e quebram a hierarquia da página.
 **Aetheris Insight:** Chip é uma escolha compacta; badge passivo não deve parecer clicável.
 
 ---
 
 ## [COMPONENT] Input / Text Input
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 1115
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 2845
 
 **Structure:** Label, controle, apoio, indicador opcional e mensagem de erro.
 **Logic:** O rótulo define o dado esperado; placeholder oferece exemplo, nunca substitui instrução.
-**Context Of Use:** Section: Inputs e Formulários
-**When To Use:** Use Text Input para valores curtos que cabem em uma linha. Mantenha label persistente e use placeholder apenas como exemplo. Escolha type, inputMode e autocomplete de acordo com o dado solicitado.
-**When Not To Use:** Não use Input para descrições extensas; use Text Area. Não substitua o label por placeholder, pois ele desaparece durante a digitação. Não apresente erro sem explicar como o valor pode ser corrigido.
+**Context Of Use:** Section: input
+**When To Use:** Use Text Input para valores curtos que cabem em uma linha. Mantenha label persistente e use placeholder apenas como exemplo. Escolha type, inputMode e autocomplete de acordo com o dado solicitado. Apresente helper text antes da validação quando formato ou restrição puderem evitar erro. Preserve o valor informado quando a validação ou o envio falhar.
+**When Not To Use:** Não use Input para descrições extensas; use Text Area. Não substitua o label por placeholder, pois ele desaparece durante a digitação. Não apresente erro sem explicar como o valor pode ser corrigido. Não valide cada caractere de forma agressiva quando o valor ainda estiver incompleto. Não peça dois conceitos diferentes no mesmo campo.
 **Trade Offs:** Validação tardia pode obrigar o usuário a reconstruir todo o contexto.
 **Aetheris Insight:** O campo deve explicar o formato antes de apontar o erro.
 
 ---
 
 ## [COMPONENT] Text Area
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 1110
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 2875
 
 **Structure:** Label, área redimensionável, apoio e contador opcional.
 **Logic:** A altura inicial comunica a profundidade esperada da resposta.
-**Context Of Use:** Section: Inputs e Formulários
-**When To Use:** Use Text Area para descrições, justificativas, comentários e prompts extensos. Dimensione a altura inicial de acordo com a profundidade esperada da resposta. Ofereça contador ou limite apenas quando ele afetar a tarefa.
-**When Not To Use:** Não use Text Area para valores curtos ou dados estruturados. Não bloqueie redimensionamento quando o usuário puder precisar de mais espaço. Não use um campo muito alto sem necessidade, pois ele domina a página.
+**Context Of Use:** Section: input
+**When To Use:** Use Text Area para descrições, justificativas, comentários e prompts extensos. Dimensione a altura inicial de acordo com a profundidade esperada da resposta. Ofereça contador ou limite apenas quando ele afetar a tarefa. Mantenha label e instruções visíveis durante toda a edição. Preserve rascunhos quando envio, conexão ou validação falharem.
+**When Not To Use:** Não use Text Area para valores curtos ou dados estruturados. Não bloqueie redimensionamento quando o usuário puder precisar de mais espaço. Não use um campo muito alto sem necessidade, pois ele domina a página. Não dependa de placeholder para explicar o objetivo do texto. Não corte conteúdo silenciosamente quando houver limite de caracteres.
 **Trade Offs:** Campos muito altos dominam a página; campos baixos escondem a expectativa.
 **Aetheris Insight:** O tamanho inicial do campo é parte da instrução.
 
 ---
 
 ## [COMPONENT] Select/Dropdown
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 1133
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 3006
 
 **Structure:** Label, trigger, valor atual, lista e indicadores de seleção.
 **Logic:** Economiza espaço, mas transfere a comparação para um painel temporário.
-**Context Of Use:** Section: Inputs e Formulários
-**When To Use:** Use Select para escolha única em listas médias ou longas com opções conhecidas. Mostre o valor selecionado no trigger e preserve busca quando a lista for extensa. Ordene as opções por frequência, lógica ou sequência reconhecível.
-**When Not To Use:** Não use Select para duas opções simples que cabem em Radio Button. Não esconda alternativas importantes que precisam ser comparadas lado a lado. Não use uma opção desabilitada como substituto de label ou instrução.
+**Context Of Use:** Section: input
+**When To Use:** Use Select para escolha única em listas médias ou longas com opções conhecidas. Mostre o valor selecionado no trigger e preserve busca quando a lista for extensa. Ordene as opções por frequência, lógica ou sequência reconhecível. Mostre um estado inicial claro quando nenhuma opção estiver selecionada. Preserve navegação por teclado, typeahead e foco previsível na lista.
+**When Not To Use:** Não use Select para duas opções simples que cabem em Radio Button. Não esconda alternativas importantes que precisam ser comparadas lado a lado. Não use uma opção desabilitada como substituto de label ou instrução. Não esconda o motivo de uma opção indisponível. Não misture ações, navegação e valores selecionáveis na mesma lista.
 **Trade Offs:** Esconder opções reduz descoberta e torna comparação mais lenta.
 **Aetheris Insight:** Use Select para escala, não para esconder decisões importantes.
 
 ---
 
 ## [COMPONENT] Date Picker
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 1143
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 2924
 
 **Structure:** Campo formatado, botão de calendário, grade mensal e navegação temporal.
 **Logic:** Entrada digitável acelera especialistas; calendário apoia descoberta e contexto.
-**Context Of Use:** Section: Inputs e Formulários
-**When To Use:** Use Date Picker quando calendário, disponibilidade ou intervalo ajudarem a escolha. Permita entrada digitada para usuários que já conhecem a data. Comunique formato, limites e datas indisponíveis antes da confirmação.
-**When Not To Use:** Não force navegação mensal para datas muito distantes. Não use apenas um calendário visual sem suporte completo a teclado. Não aceite uma data inválida sem indicar o formato ou limite correto.
+**Context Of Use:** Section: input
+**When To Use:** Use Date Picker quando calendário, disponibilidade ou intervalo ajudarem a escolha. Permita entrada digitada para usuários que já conhecem a data. Comunique formato, limites e datas indisponíveis antes da confirmação. Respeite locale, fuso horário e convenções de formato do contexto. Preserve valores digitados válidos ao alternar entre campo e calendário.
+**When Not To Use:** Não force navegação mensal para datas muito distantes. Não use apenas um calendário visual sem suporte completo a teclado. Não aceite uma data inválida sem indicar o formato ou limite correto. Não normalize uma data ambígua sem informar o valor interpretado. Não aceite um intervalo cuja data final anteceda a inicial sem explicar o erro.
 **Trade Offs:** Calendários complexos penalizam teclado e telas pequenas sem uma entrada direta.
 **Aetheris Insight:** Calendário e texto devem ser caminhos complementares.
 
 ---
 
 ## [COMPONENT] Form Field
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 1171
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 3106
 
 **Structure:** Label, controle filho, texto de apoio, erro e indicador de obrigatoriedade.
 **Logic:** Centralizar o contrato evita que cada formulário reconstrua acessibilidade e espaçamento.
-**Context Of Use:** Section: Inputs e Formulários
-**When To Use:** Use Form Field para manter label, controle, ajuda e validação como uma unidade. Associe hint e erro ao controle com ids estáveis e aria-describedby. Reserve espaço para mensagens quando mudanças de layout prejudicarem a leitura.
-**When Not To Use:** Não duplique labels ou mensagens já fornecidas pelo controle filho. Não comunique erro apenas pela cor da borda. Não use Form Field para conteúdo somente leitura sem comportamento de formulário.
+**Context Of Use:** Section: input
+**When To Use:** Use Form Field para manter label, controle, ajuda e validação como uma unidade. Associe hint e erro ao controle com ids estáveis e aria-describedby. Reserve espaço para mensagens quando mudanças de layout prejudicarem a leitura. Comunique obrigatoriedade e opcionalidade de forma consistente antes do controle. Após envio inválido, leve foco ao resumo ou primeiro campo com erro de forma previsível.
+**When Not To Use:** Não duplique labels ou mensagens já fornecidas pelo controle filho. Não comunique erro apenas pela cor da borda. Não use Form Field para conteúdo somente leitura sem comportamento de formulário. Não apresente erro antes que o usuário tenha oportunidade razoável de preencher o campo. Não apague valores válidos ou inválidos quando o formulário falhar.
 **Trade Offs:** Abstração rígida pode limitar layouts especiais; preserve slots claros.
 **Aetheris Insight:** A validação pertence ao campo como conjunto, não apenas ao input.
 
 ---
 
 ## [COMPONENT] Link
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 1149
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 3099
 
 **Structure:** Texto descritivo, indicador opcional de destino externo e foco visível.
 **Logic:** Destino é navegação; mudança no estado atual é ação e deve usar Button.
-**Context Of Use:** Section: Navegação e Estrutura
-**When To Use:** Use Link quando o resultado da interação for navegar para outro destino. Escreva um rótulo que descreva o destino mesmo fora do parágrafo. Sinalize download, nova janela ou destino externo quando isso afetar a expectativa.
-**When Not To Use:** Não use Link para enviar formulários ou alterar apenas o estado local. Não use textos genéricos como “clique aqui” ou “saiba mais” sem contexto. Não remova sublinhado ou foco sem oferecer outra indicação clara de interatividade.
+**Context Of Use:** Section: navigation
+**When To Use:** Use Link quando o resultado da interação for navegar para outro destino. Escreva um rótulo que descreva o destino mesmo fora do parágrafo. Sinalize download, nova janela ou destino externo quando isso afetar a expectativa. Mantenha o destino válido e previsível mesmo quando o texto aparecer fora do contexto original. Use alvo confortável em links isolados ou usados como ação recorrente em touch.
+**When Not To Use:** Não use Link para enviar formulários ou alterar apenas o estado local. Não use textos genéricos como “clique aqui” ou “saiba mais” sem contexto. Não remova sublinhado ou foco sem oferecer outra indicação clara de interatividade. Não abra nova janela sem sinalizar essa mudança no rótulo ou contexto próximo. Não simule disabled removendo href; explique indisponibilidade com outro padrão.
 **Trade Offs:** Links genéricos como 'saiba mais' perdem contexto fora do parágrafo.
 **Aetheris Insight:** O rótulo do link deve continuar fazendo sentido isoladamente.
 
 ---
 
 ## [COMPONENT] Tabs
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 1051
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 2827
 
 **Structure:** Tablist, tabs, indicador ativo e painéis associados.
 **Logic:** Cada aba representa uma visão irmã, não uma etapa sequencial.
-**Context Of Use:** Section: Navegação e Estrutura
-**When To Use:** Use Tabs para alternar entre duas a seis visões irmãs no mesmo contexto. Mantenha rótulos curtos e coloque primeiro a aba mais útil ou frequente. Implemente tablist, aria-selected, painéis associados e navegação por setas.
-**When Not To Use:** Não use Tabs para etapas sequenciais; use um fluxo passo a passo. Não use Tabs como navegação global do produto. Não esconda conteúdo que precisa ser comparado simultaneamente.
+**Context Of Use:** Section: navigation
+**When To Use:** Use Tabs para alternar entre duas a seis visões irmãs no mesmo contexto. Mantenha rótulos curtos e coloque primeiro a aba mais útil ou frequente. Implemente tablist, aria-selected, painéis associados e navegação por setas. Preserve a aba ativa e o foco quando o conteúdo for atualizado ou reordenado. Atualize o painel associado sem mover foco inesperadamente.
+**When Not To Use:** Não use Tabs para etapas sequenciais; use um fluxo passo a passo. Não use Tabs como navegação global do produto. Não esconda conteúdo que precisa ser comparado simultaneamente. Não comprima rótulos até ficarem ilegíveis; ofereça rolagem ou outra estrutura. Não mantenha conteúdo de painéis ocultos exposto à ordem de foco.
 **Trade Offs:** Muitas abas escondem conteúdo e prejudicam responsividade.
 **Aetheris Insight:** Abas trocam perspectiva; etapas avançam processo.
 
 ---
 
 ## [COMPONENT] Card
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 1033
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 2968
 
 **Structure:** Container, título, metadados, corpo e ações opcionais.
 **Logic:** A borda visual deve refletir uma fronteira semântica real.
-**Context Of Use:** Section: Navegação e Estrutura
-**When To Use:** Use Card para agrupar conteúdo e ações pertencentes à mesma entidade. Mantenha título, metadados e ações em uma hierarquia previsível. Torne o card inteiro clicável apenas quando houver um único destino inequívoco.
-**When Not To Use:** Não envolva toda seção em Card apenas para criar bordas. Não aninhe cards dentro de cards. Não misture várias ações concorrentes sem indicar qual é a principal.
+**Context Of Use:** Section: layout
+**When To Use:** Use Card para agrupar conteúdo e ações pertencentes à mesma entidade. Mantenha título, metadados e ações em uma hierarquia previsível. Torne o card inteiro clicável apenas quando houver um único destino inequívoco. Agrupe ações relacionadas à mesma entidade sem competir com o conteúdo principal. Permita que títulos, metadados e ações reorganizem sem truncar conteúdo essencial.
+**When Not To Use:** Não envolva toda seção em Card apenas para criar bordas. Não aninhe cards dentro de cards. Não misture várias ações concorrentes sem indicar qual é a principal. Não faça o card parecer clicável quando apenas controles internos são interativos. Não remova headings necessários para identificar a entidade na ordem de leitura.
 **Trade Offs:** Card excessivo fragmenta a leitura e cria falsa prioridade.
 **Aetheris Insight:** Um card deve responder: o que pertence junto aqui?
 
 ---
 
 ## [COMPONENT] Modal/Dialog
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 1174
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 3133
 
 **Structure:** Backdrop, dialog nomeado, conteúdo, ação primária, cancelamento e fechar.
 **Logic:** A interrupção só se justifica quando concluir ou cancelar é necessário antes de continuar.
-**Context Of Use:** Section: Navegação e Estrutura
-**When To Use:** Use Dialog para decisões curtas que precisam ser concluídas ou canceladas antes de continuar. Forneça título claro, ação principal, cancelamento e fechamento previsível. Prenda o foco, aceite Escape e restaure o foco ao elemento de origem.
-**When Not To Use:** Não use Dialog para conteúdo longo, navegação ou tarefas com várias etapas. Não empilhe modais nem abra um segundo dialog sobre o primeiro. Não feche automaticamente enquanto o usuário estiver corrigindo um erro.
+**Context Of Use:** Section: overlay
+**When To Use:** Use Dialog para decisões curtas que precisam ser concluídas ou canceladas antes de continuar. Forneça título claro, ação principal, cancelamento e fechamento previsível. Prenda o foco, aceite Escape e restaure o foco ao elemento de origem. Mantenha conteúdo e ações curtos o bastante para preservar a decisão focal. Mostre erros dentro do Dialog sem fechar ou apagar o trabalho do usuário.
+**When Not To Use:** Não use Dialog para conteúdo longo, navegação ou tarefas com várias etapas. Não empilhe modais nem abra um segundo dialog sobre o primeiro. Não feche automaticamente enquanto o usuário estiver corrigindo um erro. Não use Dialog para informação não crítica que pode aparecer no fluxo da página. Não perca a relação com o trigger ao fechar, cancelar ou concluir a ação.
 **Trade Offs:** Interrupções frequentes destroem fluxo e acumulam problemas de foco.
 **Aetheris Insight:** Modal é custo cognitivo deliberado, não atalho de layout.
 
 ---
 
 ## [COMPONENT] Table/Data Table
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 1189
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 3174
 
 **Structure:** Caption, cabeçalhos, corpo, ordenação e ações de linha opcionais.
 **Logic:** Tabela é ideal quando cruzar valores por cabeçalho é a tarefa principal.
-**Context Of Use:** Section: Navegação e Estrutura
-**When To Use:** Use Data Table quando comparar valores por linha e coluna for a tarefa principal. Mantenha cabeçalhos visíveis, alinhamento consistente e ordenação explícita. Priorize colunas no mobile e ofereça uma alternativa para dados menos importantes.
-**When Not To Use:** Não use Table para narrativas ou poucos pares de rótulo e valor. Não transforme cada célula em uma ação concorrente. Não remova caption, cabeçalhos ou semântica para reproduzir um layout visual.
+**Context Of Use:** Section: data_display
+**When To Use:** Use Data Table quando comparar valores por linha e coluna for a tarefa principal. Mantenha cabeçalhos visíveis, alinhamento consistente e ordenação explícita. Priorize colunas no mobile e ofereça uma alternativa para dados menos importantes. Comunique ordenação, seleção e escopo de linhas com texto e semântica programática. Ofereça rolagem controlada ou visualização alternativa sem criar overflow na página.
+**When Not To Use:** Não use Table para narrativas ou poucos pares de rótulo e valor. Não transforme cada célula em uma ação concorrente. Não remova caption, cabeçalhos ou semântica para reproduzir um layout visual. Não trunque identificadores ou valores críticos sem uma forma acessível de leitura completa. Não comunique status de linhas apenas por cor ou posição.
 **Trade Offs:** Densidade alta melhora comparação, mas exige hierarquia e responsividade cuidadosas.
 **Aetheris Insight:** Se a relação entre coluna e linha importa, preserve a semântica de tabela.
 
 ---
 
 ## [COMPONENT] Alert
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 1114
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 3013
 
 **Structure:** Ícone semântico, título, mensagem e ação ou dismiss opcional.
 **Logic:** A severidade deve refletir consequência real, não preferência visual.
-**Context Of Use:** Section: Feedback e Estados
-**When To Use:** Use Alert para feedback importante que deve permanecer visível no contexto. Escolha severidade pela consequência real e inclua texto além da cor. Inclua uma ação apenas quando ela ajudar a resolver ou compreender a mensagem.
-**When Not To Use:** Não use role alert para mensagens informativas sem urgência. Não exiba vários alertas concorrentes sem consolidar prioridades. Não use Alert para confirmações transitórias que cabem em Toast.
+**Context Of Use:** Section: feedback
+**When To Use:** Use Alert para feedback importante que deve permanecer visível no contexto. Escolha severidade pela consequência real e inclua texto além da cor. Inclua uma ação apenas quando ela ajudar a resolver ou compreender a mensagem. Posicione a mensagem próxima da condição ou tarefa que ela explica. Permita dispensar apenas mensagens que continuem recuperáveis ou deixem de ser relevantes.
+**When Not To Use:** Não use role alert para mensagens informativas sem urgência. Não exiba vários alertas concorrentes sem consolidar prioridades. Não use Alert para confirmações transitórias que cabem em Toast. Não repita a mesma mensagem em alertas globais e locais ao mesmo tempo. Não use títulos vagos que obriguem o usuário a interpretar a consequência.
 **Trade Offs:** Alertas demais causam cegueira e reduzem o valor da hierarquia semântica.
 **Aetheris Insight:** A interrupção visual deve ser proporcional ao custo de ignorar a mensagem.
 
 ---
 
 ## [COMPONENT] Toast/Notification
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 1138
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 3023
 
 **Structure:** Container flutuante, mensagem, ícone e ação curta opcional.
 **Logic:** A mensagem deve ser curta, autossuficiente e dispensável após poucos segundos.
-**Context Of Use:** Section: Feedback e Estados
-**When To Use:** Use Toast para confirmar uma mudança recente sem interromper o fluxo. Mantenha a mensagem curta e use live region compatível com a urgência. Pause o tempo ou mantenha o toast visível quando houver uma ação como Desfazer.
-**When Not To Use:** Não use Toast para erros que exigem correção imediata. Não coloque conteúdo longo ou várias ações dentro da notificação. Não dependa apenas de auto-dismiss para informação que o usuário precisará consultar.
+**Context Of Use:** Section: feedback
+**When To Use:** Use Toast para confirmar uma mudança recente sem interromper o fluxo. Mantenha a mensagem curta e use live region compatível com a urgência. Pause o tempo ou mantenha o toast visível quando houver uma ação como Desfazer. Anuncie cada atualização uma única vez e sem interromper a leitura atual. Limite a quantidade visível e consolide notificações repetidas.
+**When Not To Use:** Não use Toast para erros que exigem correção imediata. Não coloque conteúdo longo ou várias ações dentro da notificação. Não dependa apenas de auto-dismiss para informação que o usuário precisará consultar. Não desapareça antes que a mensagem ou ação possa ser percebida e operada. Não mova foco para o Toast quando ele apenas confirma uma atualização.
 **Trade Offs:** Auto-dismiss pode ocultar informação antes da leitura, especialmente com ações.
 **Aetheris Insight:** Se a pessoa precisa agir, provavelmente não é um toast.
 
 ---
 
 ## [COMPONENT] Skeleton Loader
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 1143
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 3005
 
 **Structure:** Blocos neutros com dimensões próximas do conteúdo final e animação moderada.
 **Logic:** Imitar a forma final reduz mudança de layout e melhora percepção de velocidade.
-**Context Of Use:** Section: Feedback e Estados
-**When To Use:** Use Skeleton quando a geometria final do conteúdo for previsível. Faça os blocos provisórios refletirem a estrutura que será carregada. Marque a região como busy e respeite prefers-reduced-motion.
-**When Not To Use:** Não use Skeleton para operações instantâneas ou duração totalmente desconhecida. Não simule uma estrutura diferente do conteúdo final. Não mantenha animação depois que o conteúdo estiver disponível.
+**Context Of Use:** Section: feedback
+**When To Use:** Use Skeleton quando a geometria final do conteúdo for previsível. Faça os blocos provisórios refletirem a estrutura que será carregada. Marque a região como busy e respeite prefers-reduced-motion. Anuncie o carregamento na região de conteúdo, mantendo os blocos visuais decorativos ocultos. Reserve dimensões próximas do conteúdo final para evitar mudança de layout.
+**When Not To Use:** Não use Skeleton para operações instantâneas ou duração totalmente desconhecida. Não simule uma estrutura diferente do conteúdo final. Não mantenha animação depois que o conteúdo estiver disponível. Não anuncie cada linha ou bloco do Skeleton separadamente. Não mantenha o Skeleton indefinidamente quando houver erro ou estado vazio conhecido.
 **Trade Offs:** Skeleton incorreto cria expectativa falsa e pode aumentar instabilidade percebida.
 **Aetheris Insight:** O skeleton deve prometer a mesma forma que o conteúdo entregará.
 
 ---
 
 ## [COMPONENT] Explanation Bubble / Tooltip
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 1148
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 2993
 
 **Structure:** Trigger nomeado, bolha curta, seta opcional e posicionamento adaptativo.
 **Logic:** A explicação complementa o conteúdo visível; informação essencial não pode depender dela.
-**Context Of Use:** Section: Feedback e Estados
-**When To Use:** Use Tooltip para definições curtas, atalhos ou explicações complementares. Abra por hover e foco e conecte o conteúdo com aria-describedby. Mantenha o texto breve e permita fechamento quando ele permanecer aberto.
-**When Not To Use:** Não esconda instruções essenciais apenas dentro do Tooltip. Não coloque formulários, links complexos ou conteúdo longo na bolha. Não dependa exclusivamente de hover, pois ele não existe em toque.
+**Context Of Use:** Section: feedback
+**When To Use:** Use Tooltip para definições curtas, atalhos ou explicações complementares. Abra por hover e foco e conecte o conteúdo com aria-describedby. Mantenha o texto breve e permita fechamento quando ele permanecer aberto. Posicione o Tooltip sem cobrir o trigger ou impedir a próxima interação. Permita fechar com Escape quando o conteúdo permanecer aberto.
+**When Not To Use:** Não esconda instruções essenciais apenas dentro do Tooltip. Não coloque formulários, links complexos ou conteúdo longo na bolha. Não dependa exclusivamente de hover, pois ele não existe em toque. Não use Tooltip como substituto do nome acessível de um controle. Não esconda ajuda essencial em um controle disabled que não recebe foco.
 **Trade Offs:** Hover exclusivo falha em toque, teclado e tecnologias assistivas.
 **Aetheris Insight:** Tooltip esclarece; não deve esconder a instrução necessária.
 
 ---
 
 ## [XAI_COMPONENT] Confidence Badge
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 1160
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 3083
 
 **Structure:** Percentual ou faixa, rótulo semântico e acesso à explicação da calibração.
 **Logic:** Confiança deriva da qualidade da evidência, não do tom assertivo da resposta.
-**Context Of Use:** Section: Feedback e Estados
-**When To Use:** Use Confidence Badge apenas quando houver um método definido de calibração. Apresente faixa ou linguagem de incerteza junto ao valor. Ofereça acesso à explicação sobre origem, escala e limitações da confiança.
-**When Not To Use:** Não apresente percentual como probabilidade objetiva de verdade. Não use confiança para substituir inspeção de fonte ou julgamento humano. Não dependa apenas de verde, amarelo e vermelho para comunicar a faixa.
+**Context Of Use:** Section: feedback
+**When To Use:** Use Confidence Badge apenas quando houver um método definido de calibração. Apresente faixa ou linguagem de incerteza junto ao valor. Ofereça acesso à explicação sobre origem, escala e limitações da confiança. Mostre quando o valor foi atualizado e qual evidência sustenta a calibração. Mantenha faixas e linguagem consistentes em todas as superfícies do produto.
+**When Not To Use:** Não apresente percentual como probabilidade objetiva de verdade. Não use confiança para substituir inspeção de fonte ou julgamento humano. Não dependa apenas de verde, amarelo e vermelho para comunicar a faixa. Não compare valores calculados por escalas ou métodos incompatíveis. Não use casas decimais que sugiram precisão maior que a evidência disponível.
 **Trade Offs:** Percentual isolado pode ser interpretado como probabilidade objetiva de verdade.
 **Aetheris Insight:** Confiança útil explica tanto força quanto limite da evidência.
 
 ---
 
 ## [COMPONENT] Command Palette / Barra de Comandos
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 1202
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 3071
 
 **Structure:** Dialog, input de busca, grupos, resultados, atalhos e estado vazio.
 **Logic:** A consulta reduz o espaço de opções e combina descoberta com produtividade.
-**Context Of Use:** Section: Inteligência, XAI e Auditabilidade
-**When To Use:** Use Command Palette em produtos densos com muitos destinos ou ações recorrentes. Suporte busca por nomes, sinônimos, grupos e atalhos de teclado. Mantenha seleção ativa, resultado vazio e execução acessíveis por teclado.
-**When Not To Use:** Não use Command Palette como substituto da navegação principal. Não esconda nela ações essenciais que não aparecem em nenhum outro lugar. Não mostre resultados sem contexto suficiente para distinguir comandos parecidos.
+**Context Of Use:** Section: navigation
+**When To Use:** Use Command Palette em produtos densos com muitos destinos ou ações recorrentes. Suporte busca por nomes, sinônimos, grupos e atalhos de teclado. Mantenha seleção ativa, resultado vazio e execução acessíveis por teclado. Agrupe resultados por destino, ação ou entidade para reduzir ambiguidade. Preserve consulta, seleção e mensagem de erro quando uma execução falhar.
+**When Not To Use:** Não use Command Palette como substituto da navegação principal. Não esconda nela ações essenciais que não aparecem em nenhum outro lugar. Não mostre resultados sem contexto suficiente para distinguir comandos parecidos. Não execute ações destrutivas diretamente sem confirmação proporcional ao risco. Não atribua atalhos conflitantes ou difíceis de descobrir.
 **Trade Offs:** Descoberta depende de nomes, sinônimos e ranking coerentes.
 **Aetheris Insight:** A paleta acelera quem sabe o que busca e ensina quem ainda explora.
 
 ---
 
 ## [XAI_COMPONENT] Source Attribution
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 1149
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 2966
 
 **Structure:** Fonte, trecho, relevância, metadados e ação para inspecionar contexto.
 **Logic:** Rastreabilidade transforma resposta fluente em conhecimento verificável.
-**Context Of Use:** Section: Inteligência, XAI e Auditabilidade
-**When To Use:** Use Source Attribution para conectar uma afirmação à origem que a sustenta. Mostre título, trecho, relevância e ação para inspecionar o contexto completo. Use disclosure progressivo para equilibrar rastreabilidade e densidade.
-**When Not To Use:** Não cite uma fonte que não sustenta diretamente a afirmação. Não use atribuição como decoração ou selo genérico de confiança. Não esconda origem e trecho atrás de rótulos vagos ou links sem contexto.
+**Context Of Use:** Section: content
+**When To Use:** Use Source Attribution para conectar uma afirmação à origem que a sustenta. Mostre título, trecho, relevância e ação para inspecionar o contexto completo. Use disclosure progressivo para equilibrar rastreabilidade e densidade. Exponha autoria, data, seção e versão quando esses dados afetarem a verificação. Ordene fontes por relevância e preserve acesso às alternativas.
+**When Not To Use:** Não cite uma fonte que não sustenta diretamente a afirmação. Não use atribuição como decoração ou selo genérico de confiança. Não esconda origem e trecho atrás de rótulos vagos ou links sem contexto. Não use URL crua como único nome de uma fonte. Não restrinja inspeção de fonte a hover ou tooltip nativo.
 **Trade Offs:** Exibir todas as fontes de uma vez aumenta densidade; use disclosure progressivo.
 **Aetheris Insight:** Fonte não é rodapé; é parte da resposta.
 
 ---
 
 ## [XAI_COMPONENT] Audit Panel
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 1192
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 3079
 
 **Structure:** Linha do tempo, eventos, entradas, saídas, status e artefatos exportáveis.
 **Logic:** Detalhes de processo ficam disponíveis sob demanda sem competir com a resposta principal.
-**Context Of Use:** Section: Inteligência, XAI e Auditabilidade
-**When To Use:** Use Audit Panel para revisão, governança e investigação de decisões. Organize eventos em sequência com entradas, saídas, status e responsáveis. Permita expandir detalhes sem competir com a resposta principal.
-**When Not To Use:** Não mantenha o painel aberto por padrão em toda interação simples. Não exponha logs técnicos sem tradução para o público da interface. Não omita conflitos, falhas ou etapas incompletas da trilha.
+**Context Of Use:** Section: data_display
+**When To Use:** Use Audit Panel para revisão, governança e investigação de decisões. Organize eventos em sequência com entradas, saídas, status e responsáveis. Permita expandir detalhes sem competir com a resposta principal. Registre status, tempo e resultado de cada etapa com vocabulário consistente. Proteja dados sensíveis e revele apenas o necessário para auditoria do produto.
+**When Not To Use:** Não mantenha o painel aberto por padrão em toda interação simples. Não exponha logs técnicos sem tradução para o público da interface. Não omita conflitos, falhas ou etapas incompletas da trilha. Não exponha chain of thought ou raciocínio privado como se fosse trilha de auditoria. Não confunda logs operacionais com evidência que sustenta a decisão.
 **Trade Offs:** Detalhe técnico excessivo pode confundir usuários sem contexto operacional.
 **Aetheris Insight:** Auditabilidade deve estar disponível, não necessariamente ocupar o primeiro plano.
 
 ---
 
 ## [COMPONENT] Typography
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 1152
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 3026
 
 **Structure:** Tokens de display, heading, body, label e code com regras de uso.
 **Logic:** Escala e peso devem refletir a prioridade epistemológica do conteúdo.
-**Context Of Use:** Section: Inteligência, XAI e Auditabilidade
-**When To Use:** Use tokens tipográficos para comunicar hierarquia, leitura e metadados de forma consistente. Preserve ordem semântica de headings independentemente do tamanho visual. Mantenha tamanho, line-height e comprimento de linha adequados ao conteúdo.
-**When Not To Use:** Não crie hierarquia apenas com tamanho ou peso sem semântica. Não introduza valores arbitrários fora da escala tipográfica. Não use caixa alta extensa em textos de leitura contínua.
+**Context Of Use:** Section: content
+**When To Use:** Use tokens tipográficos para comunicar hierarquia, leitura e metadados de forma consistente. Preserve ordem semântica de headings independentemente do tamanho visual. Mantenha tamanho, line-height e comprimento de linha adequados ao conteúdo. Use famílias e recursos tipográficos que preservem caracteres, idioma e leitura correta. Garanta zoom, reflow e quebra de linha sem perda de conteúdo.
+**When Not To Use:** Não crie hierarquia apenas com tamanho ou peso sem semântica. Não introduza valores arbitrários fora da escala tipográfica. Não use caixa alta extensa em textos de leitura contínua. Não reduza metadados essenciais a tamanhos ou contrastes difíceis de ler. Não force truncamento quando o conteúdo completo for necessário para a tarefa.
 **Trade Offs:** Muitas variações enfraquecem consistência e tornam a leitura imprevisível.
 **Aetheris Insight:** Tipografia torna a ordem do raciocínio visível.
 
 ---
 
 ## [COMPONENT] Icon
-**Source:** `ComponentsPage.tsx`  **Status:** Stable  **Chars:** 1118
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 2937
 
 **Structure:** Glyph vetorial, tamanho por token, stroke consistente e label quando necessário.
 **Logic:** Ícones apoiam reconhecimento, mas rótulos sustentam compreensão.
-**Context Of Use:** Section: Inteligência, XAI e Auditabilidade
-**When To Use:** Use Icon para reforçar uma ação, status ou categoria já compreensível. Oculte ícones decorativos e forneça nome acessível aos interativos. Mantenha tamanho, stroke e alinhamento consistentes com os tokens.
-**When Not To Use:** Não use um ícone ambíguo como única explicação de uma ação. Não misture estilos preenchidos e lineares sem significado semântico. Não reduza o alvo clicável ao tamanho visual do glyph.
+**Context Of Use:** Section: content
+**When To Use:** Use Icon para reforçar uma ação, status ou categoria já compreensível. Oculte ícones decorativos e forneça nome acessível aos interativos. Mantenha tamanho, stroke e alinhamento consistentes com os tokens. Ajuste alinhamento óptico e área de respiro sem alterar o grid do componente. Use a mesma metáfora para a mesma ação ou estado em todo o produto.
+**When Not To Use:** Não use um ícone ambíguo como única explicação de uma ação. Não misture estilos preenchidos e lineares sem significado semântico. Não reduza o alvo clicável ao tamanho visual do glyph. Não dependa da cor do ícone como única forma de comunicar estado. Não anime ícones decorativos sem uma função de estado ou feedback.
 **Trade Offs:** Bibliotecas extensas geram sinônimos visuais e escolhas inconsistentes.
 **Aetheris Insight:** Consistência do símbolo vale mais que originalidade isolada.
 
@@ -634,61 +634,61 @@
 
 ---
 
-## [TOKEN] --aetheris-color-primary
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 228
+## [TOKEN] --velaris-color-primary
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 227
 
 **Structure:** semantic-color / color / semantic
 **Logic:** Primary semantic action and focus color. Resolves to primary-200.
 **Context Of Use:** Button, Link, focus
-**When To Use:** Use the --aetheris-color-primary contract wherever the documented component context applies.
+**When To Use:** Use the --velaris-color-primary contract wherever the documented component context applies.
 **When Not To Use:** Do not replace this contract with an unrelated raw value or one-off state token.
 **Aetheris Insight:** Canonical tokens centralize values while semantic layers preserve explicit usage intent.
 
 ---
 
-## [TOKEN] --aetheris-color-secondary
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 216
+## [TOKEN] --velaris-color-secondary
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 215
 
 **Structure:** semantic-color / color / semantic
 **Logic:** Secondary semantic accent. Resolves to primary-300.
 **Context Of Use:** Badge, source, icon
-**When To Use:** Use the --aetheris-color-secondary contract wherever the documented component context applies.
+**When To Use:** Use the --velaris-color-secondary contract wherever the documented component context applies.
 **When Not To Use:** Do not replace this contract with an unrelated raw value or one-off state token.
 **Aetheris Insight:** Canonical tokens centralize values while semantic layers preserve explicit usage intent.
 
 ---
 
-## [TOKEN] --aetheris-color-success
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 218
+## [TOKEN] --velaris-color-success
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 217
 
 **Structure:** semantic-color / color / semantic
 **Logic:** Successful completion and positive evidence.
 **Context Of Use:** Alert, Toast, Confidence Badge
-**When To Use:** Use the --aetheris-color-success contract wherever the documented component context applies.
+**When To Use:** Use the --velaris-color-success contract wherever the documented component context applies.
 **When Not To Use:** Do not replace this contract with an unrelated raw value or one-off state token.
 **Aetheris Insight:** Canonical tokens centralize values while semantic layers preserve explicit usage intent.
 
 ---
 
-## [TOKEN] --aetheris-color-warning
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 216
+## [TOKEN] --velaris-color-warning
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 215
 
 **Structure:** semantic-color / color / semantic
 **Logic:** Caution, partial evidence, and medium confidence.
 **Context Of Use:** Alert, Confidence Badge
-**When To Use:** Use the --aetheris-color-warning contract wherever the documented component context applies.
+**When To Use:** Use the --velaris-color-warning contract wherever the documented component context applies.
 **When Not To Use:** Do not replace this contract with an unrelated raw value or one-off state token.
 **Aetheris Insight:** Canonical tokens centralize values while semantic layers preserve explicit usage intent.
 
 ---
 
-## [TOKEN] --aetheris-color-error
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 212
+## [TOKEN] --velaris-color-error
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 211
 
 **Structure:** semantic-color / color / semantic
 **Logic:** Error, destructive action, and conflict.
 **Context Of Use:** Form Field, Alert, Audit Panel
-**When To Use:** Use the --aetheris-color-error contract wherever the documented component context applies.
+**When To Use:** Use the --velaris-color-error contract wherever the documented component context applies.
 **When Not To Use:** Do not replace this contract with an unrelated raw value or one-off state token.
 **Aetheris Insight:** Canonical tokens centralize values while semantic layers preserve explicit usage intent.
 
@@ -839,10 +839,10 @@
 ---
 
 ## [TOKEN] shadow-glow
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 220
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 219
 
 **Structure:** radius-shadow / system / primitive
-**Logic:** Specialized Aetheris ambient emphasis.
+**Logic:** Specialized Velaris ambient emphasis.
 **Context Of Use:** Identity, XAI focal points
 **When To Use:** Use the shadow-glow contract wherever the documented component context applies.
 **When Not To Use:** Do not replace this contract with an unrelated raw value or one-off state token.
@@ -1563,9 +1563,9 @@
 ---
 
 ## [TOKEN_ALIAS] feedback-success-text
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 196
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 195
 
-**Structure:** feedback-success-text → --aetheris-color-success
+**Structure:** feedback-success-text → --velaris-color-success
 **Logic:** Success foreground resolves to the semantic success color.
 **Context Of Use:** Feedback semantic contract
 **When To Use:** Reference feedback-success-text when the usage intent differs from its canonical target.
@@ -1576,9 +1576,9 @@
 ---
 
 ## [TOKEN_ALIAS] feedback-success-icon
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 190
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 189
 
-**Structure:** feedback-success-icon → --aetheris-color-success
+**Structure:** feedback-success-icon → --velaris-color-success
 **Logic:** Success icon resolves to the semantic success color.
 **Context Of Use:** Feedback semantic contract
 **When To Use:** Reference feedback-success-icon when the usage intent differs from its canonical target.
@@ -1589,9 +1589,9 @@
 ---
 
 ## [TOKEN_ALIAS] feedback-warning-text
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 196
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 195
 
-**Structure:** feedback-warning-text → --aetheris-color-warning
+**Structure:** feedback-warning-text → --velaris-color-warning
 **Logic:** Warning foreground resolves to the semantic warning color.
 **Context Of Use:** Feedback semantic contract
 **When To Use:** Reference feedback-warning-text when the usage intent differs from its canonical target.
@@ -1602,9 +1602,9 @@
 ---
 
 ## [TOKEN_ALIAS] feedback-warning-icon
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 190
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 189
 
-**Structure:** feedback-warning-icon → --aetheris-color-warning
+**Structure:** feedback-warning-icon → --velaris-color-warning
 **Logic:** Warning icon resolves to the semantic warning color.
 **Context Of Use:** Feedback semantic contract
 **When To Use:** Reference feedback-warning-icon when the usage intent differs from its canonical target.
@@ -1628,9 +1628,9 @@
 ---
 
 ## [TOKEN_ALIAS] xai-confidence-high
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 182
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 181
 
-**Structure:** xai-confidence-high → --aetheris-color-success
+**Structure:** xai-confidence-high → --velaris-color-success
 **Logic:** High calibrated confidence reuses semantic success.
 **Context Of Use:** XAI semantic contract
 **When To Use:** Reference xai-confidence-high when the usage intent differs from its canonical target.
@@ -1641,9 +1641,9 @@
 ---
 
 ## [TOKEN_ALIAS] xai-confidence-medium
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 190
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 189
 
-**Structure:** xai-confidence-medium → --aetheris-color-warning
+**Structure:** xai-confidence-medium → --velaris-color-warning
 **Logic:** Medium confidence communicates caution without a new hue.
 **Context Of Use:** XAI semantic contract
 **When To Use:** Reference xai-confidence-medium when the usage intent differs from its canonical target.
@@ -1654,9 +1654,9 @@
 ---
 
 ## [TOKEN_ALIAS] xai-confidence-low
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 176
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 175
 
-**Structure:** xai-confidence-low → --aetheris-color-error
+**Structure:** xai-confidence-low → --velaris-color-error
 **Logic:** Low confidence reuses the semantic error signal.
 **Context Of Use:** XAI semantic contract
 **When To Use:** Reference xai-confidence-low when the usage intent differs from its canonical target.
@@ -1667,9 +1667,9 @@
 ---
 
 ## [TOKEN_ALIAS] xai-audit-complete
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 170
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 169
 
-**Structure:** xai-audit-complete → --aetheris-color-success
+**Structure:** xai-audit-complete → --velaris-color-success
 **Logic:** Completed audits reuse semantic success.
 **Context Of Use:** XAI semantic contract
 **When To Use:** Reference xai-audit-complete when the usage intent differs from its canonical target.
@@ -1680,9 +1680,9 @@
 ---
 
 ## [TOKEN_ALIAS] xai-audit-conflict
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 178
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 177
 
-**Structure:** xai-audit-conflict → --aetheris-color-error
+**Structure:** xai-audit-conflict → --velaris-color-error
 **Logic:** Policy or evidence conflicts reuse semantic error.
 **Context Of Use:** XAI semantic contract
 **When To Use:** Reference xai-audit-conflict when the usage intent differs from its canonical target.
@@ -1742,7 +1742,7 @@
 ## [DESIGN_DECISION] List vs. Bento
 **Source:** `DesignDecisionsPage.tsx`  **Status:** Stable  **Chars:** 500
 
-**Logic:** List layout excels for scannable, sequential data with consistent row density. Bento grid excels for heterogeneous content where size encodes priority — larger cells signal higher importance. Use List when users compare items row by row. Use Bento when visual hierarchy and content variety matter more than strict alignment. Trade-off: Bento requires more design effort per item; List is faster to implement but less expressive.
+**Logic:** List layout excels for scannable, sequential data with consistent row density. Bento grid excels for heterogeneous content where size encodes priority : larger cells signal higher importance. Use List when users compare items row by row. Use Bento when visual hierarchy and content variety matter more than strict alignment. Trade-off: Bento requires more design effort per item; List is faster to implement but less expressive.
 **Context Of Use:** Rule 12
 
 ---
@@ -1750,13 +1750,13 @@
 ## [DESIGN_DECISION] Haptic Feedback
 **Source:** `DesignDecisionsPage.tsx`  **Status:** Stable  **Chars:** 542
 
-**Logic:** Haptic feedback confirms high-stakes or irreversible actions on mobile — deletes, confirmations and state toggles. Reserve for moments where tactile confirmation reduces user anxiety about permanence. When to use: destructive actions, form submissions, binary state changes. When not to use: passive events, informational toasts, decorative interactions. Trade-off: overuse degrades trust and drains battery; underuse leaves users uncertain after consequential actions.
+**Logic:** Haptic feedback confirms high-stakes or irreversible actions on mobile : deletes, confirmations and state toggles. Reserve for moments where tactile confirmation reduces user anxiety about permanence. When to use: destructive actions, form submissions, binary state changes. When not to use: passive events, informational toasts, decorative interactions. Trade-off: overuse degrades trust and drains battery; underuse leaves users uncertain after consequential actions.
 **Context Of Use:** Rule 15
 
 ---
 
 ## [ACCESSIBILITY] Contraste e legibilidade
-**Source:** `FoundationsPage.tsx`  **Status:** Stable  **Chars:** 1192
+**Source:** `FoundationsPage.tsx`  **Status:** Stable  **Chars:** 1190
 
 **Structure:** Transversal accessibility contract
 **Logic:** Manter contraste AA como base; distinguir text-primary, text-secondary, text-muted e text-disabled; validar texto sobre glass surfaces; combinar feedback com texto e ícone
@@ -1816,7 +1816,7 @@
 ---
 
 ## [ACCESSIBILITY] Feedback não apenas por cor
-**Source:** `FoundationsPage.tsx`  **Status:** Stable  **Chars:** 1159
+**Source:** `FoundationsPage.tsx`  **Status:** Stable  **Chars:** 1157
 
 **Structure:** Transversal accessibility contract
 **Logic:** Combinar success, warning, error e info com rótulo ou ícone; nomear o nível de confiança; identificar a origem da evidência; indicar conflitos e lacunas de auditoria
@@ -1912,12 +1912,12 @@
 ---
 
 ## [AUTOMATIC_SKILL] Governance Readiness Check
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 797
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 796
 
 **Structure:** Ativação automática
 **Logic:** Avalia se uma proposta está pronta para entrar, evoluir ou divergir do design system.
 **Context Of Use:** O usuário propõe uma nova variação, padrão, token ou mudança com impacto de governança.
-**When To Use:** Essa variação está pronta para entrar no Aetheris?
+**When To Use:** Essa variação está pronta para entrar no Velaris?
 **Trade Offs:** Design-to-Code Contract Check, Cross-System Impact Analysis, Design System Risk Assessment
 **Aetheris Insight:** O motivo de ativação e as condições de aprovação ficam registrados.
 
@@ -1972,12 +1972,12 @@
 ---
 
 ## [AUTOMATIC_SKILL] Cross-System Impact Analysis
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 774
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 773
 
 **Structure:** Ativação automática
 **Logic:** Mapeia efeitos indiretos entre componentes, tokens, documentação, fluxos e governança.
 **Context Of Use:** Uma mudança local pode se propagar por várias entidades ou camadas do sistema.
-**When To Use:** Como a mudança no token de focus se propaga pelo Aetheris?
+**When To Use:** Como a mudança no token de focus se propaga pelo Velaris?
 **Trade Offs:** Token Impact Analysis, Governance Readiness Check, Design System Risk Assessment
 **Aetheris Insight:** Indica quais relações foram observadas e quais impactos são inferências.
 
@@ -1996,11 +1996,11 @@
 ---
 
 ## [ORACLE_COMMAND] Enforce
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 703
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 702
 
 **Structure:** Ação operacional
 **Logic:** Valida JSX/TSX, contrato de componente, tokens, acessibilidade e violações de uso.
-**Context Of Use:** Quando o usuário quer verificar se um trecho de código respeita o Aetheris.
+**Context Of Use:** Quando o usuário quer verificar se um trecho de código respeita o Velaris.
 **When To Use:** /enforce <Button color="red">Delete</Button>
 **Trade Offs:** Design-to-Code Contract Check, Accessibility & Interaction Guardrail
 **Aetheris Insight:** Relaciona cada violação ao código observado, à evidência e à confiança.
@@ -2020,7 +2020,7 @@
 ---
 
 ## [ORACLE_COMMAND] Capture
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 699
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 698
 
 **Structure:** Ação operacional
 **Logic:** Converte discussões e decisões informais em conhecimento bruto estruturado.
@@ -2032,11 +2032,11 @@
 ---
 
 ## [ORACLE_COMMAND] Organizational Memory
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 773
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 772
 
 **Structure:** Modo investigativo
 **Logic:** Recupera decisões, padrões recorrentes, usos anteriores e conhecimento institucional.
-**Context Of Use:** Quando o usuário precisa saber o que o Aetheris já decidiu ou aprendeu sobre um tema.
+**Context Of Use:** Quando o usuário precisa saber o que o Velaris já decidiu ou aprendeu sobre um tema.
 **When To Use:** /memory O que já foi decidido sobre modais em ações destrutivas?
 **Trade Offs:** Pattern & State Exploration, Governance Readiness Check
 **Aetheris Insight:** O alias, o engine canônico, as fontes e o contrato de resposta ficam registrados.
@@ -2116,7 +2116,7 @@
 ---
 
 ## [ORACLE_COMMAND] Feedback Review
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 724
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 723
 
 **Structure:** Ação operacional
 **Logic:** Analisa feedbacks, outcomes e padrões de uso sem prometer treinamento automático.

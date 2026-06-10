@@ -7,6 +7,7 @@ SOURCE_LABELS: dict[str, str] = {
     "xai_component": "XAI Component Registry",
     "pattern": "Pattern Library",
     "token": "Token System",
+    "token_alias": "Token System",
     "design_decision": "Decision Memory",
     "guideline": "Guideline System",
     "foundation": "Foundations",
@@ -20,6 +21,7 @@ ENTITY_KIND_LABELS: dict[str, str] = {
     "xai_component": "explainability component",
     "pattern": "pattern",
     "token": "token group",
+    "token_alias": "semantic token alias",
     "design_decision": "design decision",
     "guideline": "guideline",
     "foundation": "foundation",
@@ -67,11 +69,51 @@ def serialize_sources(chunks: list[dict[str, Any]]) -> list[dict[str, Any]]:
             "title": chunk.get("title", ""),
             "source": semantic_source_label(page_type),
             "similarity": chunk.get("similarity", 1.0),
+            "evidence_tier": evidence_strength(chunk.get("similarity")),
             "page_type": page_type,
             "retrieval_weight": chunk.get("retrieval_weight", 1.0),
             "weighted_score": chunk.get("weighted_score", chunk.get("similarity", 1.0)),
         })
     return sources
+
+
+def build_perspective_evidence_block(chunks: list[dict[str, Any]]) -> str:
+    if not chunks:
+        return """
+# Evidence Disclosure For The Active Perspective Contract
+
+No source was retrieved. The mandatory evidence section must state that the
+official Aetheris evidence is insufficient and must not invent a component,
+API, similarity, tier or source.
+""".strip()
+
+    rows = []
+    for chunk in chunks:
+        similarity = chunk.get("similarity")
+        similarity_label = (
+            f"{round(float(similarity) * 100)}%"
+            if isinstance(similarity, (int, float))
+            else "not available"
+        )
+        rows.append(
+            "- "
+            f"{chunk.get('title', '')} | "
+            f"{semantic_source_label(chunk.get('page_type', ''))} | "
+            f"evidence similarity {similarity_label} | "
+            f"evidence tier {evidence_strength(similarity)}"
+        )
+
+    return f"""
+# Evidence Disclosure For The Active Perspective Contract
+
+Use only these values in the mandatory evidence section:
+{chr(10).join(rows)}
+
+Evidence similarity is retrieval relevance, not answer confidence. State at
+least one limitation. If the records do not explicitly define exact props,
+label the component API as proposed and not verified as the official Aetheris
+API.
+""".strip()
 
 
 def build_dialogue_context(messages: list[dict[str, Any]]) -> str:
@@ -113,6 +155,11 @@ Aetheris domain, avoid invention and use the out-of-scope policy when needed.
     for index, chunk in enumerate(chunks, start=1):
         page_type = chunk.get("page_type", "")
         similarity = chunk.get("similarity")
+        similarity_label = (
+            f"{round(float(similarity) * 100)}%"
+            if isinstance(similarity, (int, float))
+            else "not available"
+        )
         fields = "\n".join(f"- {field}" for field in split_semantic_fields(chunk.get("text", "")))
         records.append(f"""
 ## Semantic Record {index}
@@ -121,6 +168,7 @@ entity: {chunk.get("title", "")}
 semantic_area: {semantic_source_label(page_type)}
 entity_kind: {semantic_entity_kind(page_type)}
 evidence_strength: {evidence_strength(similarity)}
+evidence_similarity: {similarity_label}
 content:
 {fields}
 """.strip())
