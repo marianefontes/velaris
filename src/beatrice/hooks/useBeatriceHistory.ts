@@ -14,6 +14,7 @@ import {
   readBeatriceHistory,
   writeBeatriceHistory,
 } from "../storage/beatriceStorage";
+import { removeOfflineMessages } from "../stores/workspace.store";
 
 interface UseBeatriceHistoryParams {
   initialMessages: ChatMessage[];
@@ -108,7 +109,7 @@ export function generateConversationTitle(prompt: string) {
   const labels = [...new Set([...matchedDomains, ...fallbackWords])];
 
   if (labels.length === 0) {
-    return "Beatrice Conversation";
+    return "Abraxos Conversation";
   }
 
   const needsGuidance = words.some((word) => ["use", "usar", "should", "devo", "recommend", "recomendar"].includes(word));
@@ -260,6 +261,26 @@ export function useBeatriceHistory(params: UseBeatriceHistoryParams) {
     });
   }, [conversationParams]);
 
+  const importHandoffConversation = useCallback((
+    messages: ChatMessage[],
+    history: HistoryEntry[],
+  ) => {
+    setSnapshot((current) => {
+      const conversation = applyConversationMetadata({
+        ...makeConversation(conversationParams),
+        messages: cloneMessages(messages),
+        history: history.map((entry) => ({ ...entry })),
+      });
+      const preserved = current.conversations.filter((item) => item.history.length > 0);
+
+      return {
+        version: 1,
+        activeConversationId: conversation.id,
+        conversations: sortConversations([conversation, ...preserved]),
+      };
+    });
+  }, [conversationParams]);
+
   const openConversation = useCallback((conversationId: string) => {
     setSnapshot((current) => {
       if (!current.conversations.some((conversation) => conversation.id === conversationId)) return current;
@@ -322,6 +343,21 @@ export function useBeatriceHistory(params: UseBeatriceHistoryParams) {
     });
   }, [conversationParams]);
 
+  const clearOfflineMessages = useCallback(() => {
+    setSnapshot((current) => {
+      let changed = false;
+      const conversations = current.conversations.map((conversation) => {
+        const messages = removeOfflineMessages(conversation.messages);
+        if (messages.length === conversation.messages.length) {
+          return conversation;
+        }
+        changed = true;
+        return { ...conversation, messages };
+      });
+      return changed ? { ...current, conversations } : current;
+    });
+  }, []);
+
   const exportConversations = useCallback(() => {
     const exportedAt = new Date().toISOString();
     downloadJsonFile(`aetheris-beatrice-history-${exportedAt.slice(0, 10)}.json`, {
@@ -347,8 +383,10 @@ export function useBeatriceHistory(params: UseBeatriceHistoryParams) {
     activeConversation,
     activeConversationId: snapshot.activeConversationId,
     clearConversations,
+    clearOfflineMessages,
     conversations: snapshot.conversations,
     createConversation,
+    importHandoffConversation,
     deleteConversation,
     exportConversations,
     history: activeConversation?.history ?? [],

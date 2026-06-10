@@ -4,7 +4,6 @@ import { useReasoning } from "../../hooks/useReasoning";
 import { ConfidenceBreakdown } from "./ConfidenceBreakdown";
 import { EvidencePanel } from "./EvidencePanel";
 import { OutcomePrediction } from "./OutcomePrediction";
-import { ReasoningTimeline } from "./ReasoningTimeline";
 import { TradeoffPanel } from "./TradeoffPanel";
 
 export function DecisionCard({
@@ -40,7 +39,6 @@ export function DecisionCard({
       {expanded && (
         <div className="border-t border-white/8 px-5 pb-5 pt-4">
           <p className="mb-4 text-xs font-medium leading-5 text-slate-300">&ldquo;{entry.userQuery}&rdquo;</p>
-          <ReasoningTimeline entry={entry} labels={labels} />
           <ConfidenceBreakdown entry={entry} labels={labels} />
           <EvidencePanel entry={entry} labels={labels} />
           <TradeoffPanel entry={entry} labels={labels} />

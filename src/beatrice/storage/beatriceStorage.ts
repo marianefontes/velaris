@@ -7,6 +7,7 @@ import type {
   LocaleAware,
   ProfileId,
 } from "../types/beatrice";
+import { profileIdOrDefault } from "../domain/perspective/profileIds";
 
 export const BEATRICE_HISTORY_STORAGE_KEY = "aetheris_beatrice_history";
 export const BEATRICE_SETTINGS_STORAGE_KEY = "aetheris_beatrice_settings";
@@ -15,7 +16,7 @@ export const defaultBeatriceSettings: BeatriceSettings = {
   streaming: true,
   autoScroll: true,
   showSources: true,
-  showConfidence: true,
+  showEvidenceSimilarity: true,
   density: "comfortable",
   blurIntensity: "medium",
   verbosity: "balanced",
@@ -72,7 +73,10 @@ export function normalizeBeatriceSettings(value: unknown): BeatriceSettings {
     streaming: booleanValue(source.streaming, defaultBeatriceSettings.streaming),
     autoScroll: booleanValue(source.autoScroll, defaultBeatriceSettings.autoScroll),
     showSources: booleanValue(source.showSources, defaultBeatriceSettings.showSources),
-    showConfidence: booleanValue(source.showConfidence, defaultBeatriceSettings.showConfidence),
+    showEvidenceSimilarity: booleanValue(
+      source.showEvidenceSimilarity,
+      booleanValue(source.showConfidence, defaultBeatriceSettings.showEvidenceSimilarity),
+    ),
     density: enumValue(source.density, ["compact", "comfortable", "dense"] as const, defaultBeatriceSettings.density),
     blurIntensity: enumValue(source.blurIntensity, ["low", "medium", "high"] as const, defaultBeatriceSettings.blurIntensity),
     verbosity: enumValue(source.verbosity, ["concise", "balanced", "detailed"] as const, defaultBeatriceSettings.verbosity),
@@ -150,7 +154,7 @@ function normalizeConversation(value: unknown, index: number): BeatriceConversat
     messages,
     history,
     settings: normalizeBeatriceSettings(value.settings),
-    profileId: stringValue(value.profileId, "general") as ProfileId,
+    profileId: profileIdOrDefault(value.profileId),
     locale: stringValue(value.locale, "pt-BR") as LocaleAware["locale"],
     isTitleCustom: booleanValue(value.isTitleCustom, false),
   };
@@ -179,6 +183,41 @@ export function readBeatriceHistory(): BeatriceHistorySnapshot {
 
 export function writeBeatriceHistory(snapshot: BeatriceHistorySnapshot) {
   writeJson(BEATRICE_HISTORY_STORAGE_KEY, snapshot);
+}
+
+// ── Ask prefill ──────────────────────────────────────────────────────────
+// The home hero search hands its question to the chat composer through
+// sessionStorage so /oracle can pick it up after navigation.
+
+export const BEATRICE_ASK_PREFILL_KEY = "aetheris_beatrice_ask_prefill";
+
+export function writeAskPrefill(question: string) {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(BEATRICE_ASK_PREFILL_KEY, question);
+  } catch {
+    // sessionStorage may be unavailable in private browsing.
+  }
+}
+
+// One-shot, but stable within the same render pass: StrictMode double-invokes
+// state initializers, so the consumed value is cached until the microtask ends.
+let pendingAskPrefill: string | null = null;
+
+export function consumeAskPrefill(): string {
+  if (typeof window === "undefined") return "";
+  if (pendingAskPrefill === null) {
+    try {
+      pendingAskPrefill = window.sessionStorage.getItem(BEATRICE_ASK_PREFILL_KEY) ?? "";
+      window.sessionStorage.removeItem(BEATRICE_ASK_PREFILL_KEY);
+    } catch {
+      pendingAskPrefill = "";
+    }
+    queueMicrotask(() => {
+      pendingAskPrefill = null;
+    });
+  }
+  return pendingAskPrefill;
 }
 
 export function downloadJsonFile(filename: string, data: unknown) {

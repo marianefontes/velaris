@@ -1,5 +1,6 @@
 import { Accessibility, Layers3, MessageSquareMore, Palette, Sparkles, Waypoints } from "lucide-react";
 import type { Locale } from "../../i18n/translations";
+import { toDisplayTitle } from "../domain/displayTitle";
 import type { ChatContent, PersonaStrategy, PromptStats, SuggestedPrompt } from "../types/beatrice";
 
 export function getChatContent(locale: Locale): ChatContent {
@@ -25,12 +26,12 @@ export function getChatContent(locale: Locale): ChatContent {
             "Great question. This is one of the most important spatial choices in interface design because it affects focus, continuity and cognitive load.",
           responseCards: [
             {
-              title: "Side Drawer — use when",
+              title: "Side Drawer : use when",
               text: "The form is contextually related to the current view and the user needs to keep referencing content behind it. It preserves spatial continuity.",
               accent: "primary",
             },
             {
-              title: "Modal Overlay — use when",
+              title: "Modal Overlay : use when",
               text: "The action needs full focus: confirmations, creation flows, critical alerts or moments where the background should temporarily disappear.",
               accent: "secondary",
             },
@@ -104,14 +105,14 @@ export function getChatContent(locale: Locale): ChatContent {
           : "Ótima pergunta. Essa é uma das escolhas espaciais mais importantes no design de interfaces porque afeta foco, continuidade e carga cognitiva.",
         responseCards: [
           {
-            title: "Side Drawer — usar quando",
+            title: "Side Drawer : usar quando",
             text: isPtPt
               ? "O formulário está relacionado com a vista atual e a pessoa precisa de continuar a consultar o conteúdo por trás. Preserva continuidade espacial."
               : "O formulário está contextualizado com a tela atual e a pessoa precisa continuar consultando o conteúdo por trás. Isso preserva continuidade espacial.",
             accent: "primary",
           },
           {
-            title: "Modal Overlay — usar quando",
+            title: "Modal Overlay : usar quando",
             text: "A ação precisa de foco total: confirmações, fluxos de criação, alertas críticos ou momentos em que o fundo deve desaparecer temporariamente.",
             accent: "secondary",
           },
@@ -195,11 +196,14 @@ export function getPersonaChatContent(content: ChatContent, strategy: PersonaStr
   ];
   const promptIcons = [strategy.icon, MessageSquareMore, Layers3, Waypoints];
 
-  const suggestedPrompts: SuggestedPrompt[] = strategy.examples.slice(0, 4).map((body, index) => ({
-    title: promptTitles[index] ?? strategy.workspaceTone,
-    body,
-    icon: promptIcons[index] ?? strategy.icon,
-  }));
+  const suggestedPrompts: SuggestedPrompt[] = strategy.examples.slice(0, 4).map((body, index) => {
+    const rawTitle = promptTitles[index] ?? strategy.workspaceTone;
+    return {
+      title: toDisplayTitle(rawTitle, locale),
+      body,
+      icon: promptIcons[index] ?? strategy.icon,
+    };
+  });
 
   const primaryInsight = strategy.insights[0];
   const secondaryInsight = strategy.insights[1] ?? strategy.insights[0];
@@ -239,7 +243,7 @@ export function getPersonaChatContent(content: ChatContent, strategy: PersonaStr
       `${labels.retrievalWeighting}: ${Object.entries(strategy.retrievalWeighting).map(([key, value]) => `${key} ${value.toFixed(2)}`).join(" · ")}`,
       ...content.activeContext.slice(0, 1),
     ],
-    recentTopics: strategy.examples.slice(0, 3),
+    recentTopics: strategy.examples.slice(0, 3).map((topic) => toDisplayTitle(topic, locale)),
     coreRule: strategy.operationalMode,
   };
 }

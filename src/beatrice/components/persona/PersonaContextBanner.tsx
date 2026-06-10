@@ -11,17 +11,17 @@ export function PersonaContextBanner({ variant = "compact" }: { variant?: "compa
       <section className="rounded-2xl border border-white/10 bg-white/[0.025] px-4 py-3 backdrop-blur-2xl">
         <div className="grid gap-3 lg:grid-cols-[1fr_18rem] lg:items-center">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">{strategy.workspaceTone}</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">{strategy.workspaceTone}</p>
             <p className="mt-1 text-sm font-semibold text-slate-200">
-              {operationalProfile.fullName} · {operationalProfile.title}
+              {t("beatricePersona.beatricePerspective")} · {operationalProfile.title}
             </p>
             <p className="mt-2 max-w-2xl text-xs leading-5 text-slate-500">{operationalProfile.communicationStyle}</p>
           </div>
           <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
             {operationalProfile.prioritizedMetrics.slice(0, 3).map((metric) => (
               <div key={metric} className="rounded-xl border border-white/8 bg-surface-container/35 px-3 py-2">
-                <p className="text-[9px] font-bold uppercase tracking-widest text-slate-600">{t("beatricePersona.metric")}</p>
-                <p className="mt-1 text-[10px] text-slate-300">{metric}</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">{t("beatricePersona.metric")}</p>
+                <p className="mt-1 text-[11px] text-slate-300">{metric}</p>
               </div>
             ))}
           </div>
@@ -31,9 +31,14 @@ export function PersonaContextBanner({ variant = "compact" }: { variant?: "compa
   }
 
   return (
-    <div className="mb-2 rounded-xl border border-white/10 bg-white/[0.025] px-3 py-2">
-      <p className="text-[9px] font-bold uppercase tracking-widest text-primary">{strategy.label} · {t("beatricePersona.workspace")}</p>
-      <p className="mt-1 text-[10px] leading-4 text-slate-400">{operationalProfile.fullName} · {operationalProfile.mainFocus}</p>
+    <div className="mb-2 flex min-h-8 min-w-0 items-center gap-2 rounded-xl border border-white/[0.07] bg-white/[0.018] px-3 py-1.5">
+      <p className="shrink-0 text-[11px] font-semibold text-primary/80">
+        {strategy.label} · {t("beatricePersona.workspace")}
+      </p>
+      <span aria-hidden="true" className="hidden h-3 w-px shrink-0 bg-white/10 sm:block" />
+      <p className="hidden min-w-0 truncate text-[11px] leading-4 text-slate-400 sm:block">
+        {t("beatricePersona.beatricePerspective")} · {operationalProfile.mainFocus}
+      </p>
     </div>
   );
 }

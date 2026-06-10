@@ -1,16 +1,22 @@
 import type { ReactNode } from "react";
+import { useI18n } from "../../../i18n/I18nProvider";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 
 function BeforeBlock({ code }: { code: string }) {
+  const { t } = useI18n();
+
   return (
     <div className="my-2 overflow-hidden rounded-xl border border-red-500/20 bg-red-950/25">
-      <p className="border-b border-red-500/15 px-3 py-1.5 text-[9px] font-bold text-red-400">BEFORE</p>
+      <p className="border-b border-red-500/15 px-3 py-1.5 text-[9px] font-bold uppercase text-red-400">
+        {t("beatrice.chat.before")}
+      </p>
       <pre className="overflow-x-auto p-3 text-[11px] leading-5 text-slate-300">{code}</pre>
     </div>
   );
 }
 
 export function CommandMarkdownRenderer({ text }: { text: string }) {
+  const { t } = useI18n();
   const parts = text.split(/(```(?:tsx?|jsx?|)\n[\s\S]*?```)/g);
   const nodes: ReactNode[] = [];
   let pendingBeforeCode: string | null = null;
@@ -45,7 +51,9 @@ export function CommandMarkdownRenderer({ text }: { text: string }) {
         <div key={`diff-${index}`} className="my-3 grid grid-cols-2 gap-2">
           <BeforeBlock code={before} />
           <div className="my-2 overflow-hidden rounded-xl border border-green-500/20 bg-green-950/25">
-            <p className="border-b border-green-500/15 px-3 py-1.5 text-[9px] font-bold text-green-400">AFTER</p>
+            <p className="border-b border-green-500/15 px-3 py-1.5 text-[9px] font-bold uppercase text-green-400">
+              {t("beatrice.chat.after")}
+            </p>
             <pre className="overflow-x-auto p-3 text-[11px] leading-5 text-slate-300">{code}</pre>
           </div>
         </div>,
@@ -67,4 +75,3 @@ export function CommandMarkdownRenderer({ text }: { text: string }) {
   if (pendingBeforeCode !== null) nodes.push(<BeforeBlock key="lone-before-final" code={pendingBeforeCode} />);
   return <div className="flex flex-col gap-0.5">{nodes}</div>;
 }
-

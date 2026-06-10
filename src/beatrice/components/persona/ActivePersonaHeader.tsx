@@ -25,7 +25,7 @@ export function ActivePersonaHeader() {
           {strategy.sessionTitle}
         </h1>
         <p className="mt-3 text-sm font-semibold text-primary">
-          {operationalProfile.fullName} · {operationalProfile.title}
+          {t("beatricePersona.beatricePerspective")} · {operationalProfile.title}
         </p>
         <p className="mt-3 max-w-2xl text-sm leading-7 text-on-surface-variant">{operationalProfile.primaryResponsibility}</p>
         <p className="mt-2 max-w-2xl text-xs leading-6 text-slate-500">{operationalProfile.operationalEnvironment}</p>

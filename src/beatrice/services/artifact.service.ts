@@ -23,8 +23,8 @@ export function exportAuditTrailMd(entries: AuditEntry[], locale: Locale): void 
     year: "numeric",
   });
   const heading = isEn
-    ? `# Decision Audit Trail — Beatrice\n\n> Generator: Aetheris Oracle · ${dateStr}\n> Entries: ${entries.length}\n`
-    : `# Trilha de Decisão — Beatrice\n\n> Gerado por: Oráculo Aetheris · ${dateStr}\n> Entradas: ${entries.length}\n`;
+    ? `# Decision Audit Trail : Abraxos\n\n> Generator: Velaris Oracle · ${dateStr}\n> Entries: ${entries.length}\n`
+    : `# Trilha de Decisão : Abraxos\n\n> Gerado por: Oráculo Velaris · ${dateStr}\n> Entradas: ${entries.length}\n`;
 
   const body = entries.map((entry) => {
     const confidence = entry.confidence;
@@ -32,7 +32,7 @@ export function exportAuditTrailMd(entries: AuditEntry[], locale: Locale): void 
     const sourceLines = entry.evidence
       .map(
         (evidence) =>
-          `  - [${evidence.weight.toUpperCase()}] ${evidence.source} — "${evidence.title}" (${Math.round(evidence.similarity * 100)}%) · ${evidence.authorityLabel}`,
+          `  - [${evidence.weight.toUpperCase()}] ${evidence.source} : "${evidence.title}" (${Math.round(evidence.similarity * 100)}%) · ${evidence.authorityLabel}`,
       )
       .join("\n");
     const gainLines = tradeOffs.gains.map((gain) => `  + ${gain}`).join("\n");
@@ -41,7 +41,7 @@ export function exportAuditTrailMd(entries: AuditEntry[], locale: Locale): void 
 
     return [
       "\n---\n",
-      `## ${entry.decisionId} — ${intentLabel(entry.intent, locale)}`,
+      `## ${entry.decisionId} : ${intentLabel(entry.intent, locale)}`,
       `**Status:** ${entry.lifecycle.status.toUpperCase()}  `,
       `**Created:** ${entry.lifecycle.createdAt}  `,
       `**Review by:** ${entry.lifecycle.reviewDate}`,
@@ -77,7 +77,7 @@ export function exportAuditTrailMd(entries: AuditEntry[], locale: Locale): void 
 
 export function exportAuditTrailJson(entries: AuditEntry[], locale: Locale): void {
   const payload = {
-    generator: "Beatrice — Aetheris Oracle",
+    generator: "Abraxos : Velaris Oracle",
     version: "3.0.0",
     locale,
     exportedAt: new Date().toISOString(),
@@ -101,4 +101,3 @@ export function exportAuditTrailJson(entries: AuditEntry[], locale: Locale): voi
     "application/json;charset=utf-8",
   );
 }
-

@@ -1,5 +1,13 @@
 import type { Locale } from "../../i18n/translations";
-import { getPersonaOptions, getPersonaStrategy, isProfileId, localizePersonaStrategy, resolvePersonaForRequest, togglePersona } from "../domain/perspective";
+import {
+  getPersonaOptions,
+  getPersonaStrategy,
+  isProfileId,
+  localizePersonaStrategy,
+  normalizeProfileId,
+  resolvePersonaForRequest,
+  togglePersona,
+} from "../domain/perspective";
 import type { ProfileId } from "../types/beatrice";
 
 function getLocalizedPersonaStrategy(profileId: ProfileId, locale?: Locale) {
@@ -16,6 +24,7 @@ export const personaService = {
   getPersonaOptions: getLocalizedPersonaOptions,
   getPersonaStrategy: getLocalizedPersonaStrategy,
   isProfileId,
+  normalizeProfileId,
   resolvePersonaForRequest,
   togglePersona,
 };

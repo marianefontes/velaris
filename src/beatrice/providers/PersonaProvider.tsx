@@ -32,8 +32,12 @@ export function PersonaProvider({
     if (typeof window === "undefined") return initialProfileId;
 
     const storedProfileId = window.localStorage.getItem(PERSONA_SESSION_KEY);
-    if (storedProfileId && personaService.isProfileId(storedProfileId) && storedProfileId !== "general") {
-      return storedProfileId;
+    const normalizedProfileId = personaService.normalizeProfileId(storedProfileId);
+    if (normalizedProfileId && normalizedProfileId !== "general") {
+      if (storedProfileId !== normalizedProfileId) {
+        window.localStorage.setItem(PERSONA_SESSION_KEY, normalizedProfileId);
+      }
+      return normalizedProfileId;
     }
 
     return initialProfileId === "general" ? "designer" : initialProfileId;

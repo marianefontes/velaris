@@ -1,13 +1,17 @@
 import { Layers3 } from "lucide-react";
+import { useI18n } from "../../../i18n/I18nProvider";
 import { usePersonaContext } from "../../hooks/usePersonaContext";
 
 export function PersonaComponentFocus() {
+  const { t } = useI18n();
   const { activePersonaContext: strategy } = usePersonaContext();
 
   return (
     <section className="rounded-2xl border border-white/10 bg-white/[0.025] p-4 backdrop-blur-2xl">
       <div className="mb-4 flex items-center justify-between gap-3">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-primary">highlighted components</p>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-primary">
+          {t("beatrice.contextual.highlightedComponents")}
+        </p>
         <Layers3 className="h-4 w-4 text-primary" />
       </div>
       <div className="space-y-2.5">

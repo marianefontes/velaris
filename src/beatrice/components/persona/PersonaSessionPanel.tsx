@@ -16,7 +16,7 @@ export function PersonaSessionPanel() {
         </div>
         <div className="min-w-0">
           <p className="truncate text-xs font-black text-white">{strategy.label}</p>
-          <p className="mt-0.5 truncate text-[10px] text-slate-500">{operationalProfile.fullName}</p>
+          <p className="mt-0.5 truncate text-[10px] text-slate-500">{operationalProfile.specialty}</p>
         </div>
       </div>
 

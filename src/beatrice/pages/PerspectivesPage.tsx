@@ -1,28 +1,30 @@
-// ||| Phase R · /perspectives — Adaptive Cognition Layer
+// ||| Phase R · /perspectives : Adaptive Cognition Layer
 // Replaces the legacy persona gallery with a reasoning-calibration page.
 // Anti-patterns enforced: no avatars, no profile cards, no demographic blurbs,
 // no playful onboarding. Type-led, list-based, instrument-shaped.
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
-import {
-  PolarAngleAxis,
-  PolarGrid,
-  PolarRadiusAxis,
-  Radar,
-  RadarChart,
-  ResponsiveContainer,
-} from "recharts";
+import { useSearchParams } from "react-router-dom";
 import { Archive, ChevronDown, Layers, ListOrdered, Play, ScanLine, SlidersHorizontal, Sparkles, Square, Telescope, Trash2, Waypoints } from "lucide-react";
 import { useI18n } from "../../i18n/I18nProvider";
+import type { TranslationKey } from "../../i18n/translations";
+import { PageHero, PageShell } from "../../components/ui/VisualPrimitives";
 import { readCalibration, writeCalibration } from "../domain/perspective/calibration";
 import type { Calibration as DomainCalibration } from "../domain/perspective/calibration";
+import { legacyProfileIdsFor, normalizeProfileId } from "../domain/perspective/profileIds";
 import { usePersonaContext } from "../hooks/usePersonaContext";
 import { runPerspectiveTrial } from "../services/perspectiveTrial.service";
 import type { PersonaStrategy, ProfileId } from "../types/beatrice";
 
+const CognitiveRadarChart = lazy(() =>
+  import("../components/perspective/CognitiveRadarChart").then((module) => ({
+    default: module.CognitiveRadarChart,
+  })),
+);
+
 // ──────────────────────────────────────────────────────────────────────────
-// Calibration — shared with the chat orchestrator via the perspective domain.
+// Calibration : shared with the chat orchestrator via the perspective domain.
 // The page exposes UI knobs; the chat client reads the same storage to send
 // calibration overrides in every /api/chat payload.
 // ──────────────────────────────────────────────────────────────────────────
@@ -58,7 +60,7 @@ function persistCalibration(profileId: ProfileId, calibration: Calibration) {
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// Lens default instrumentation — mirrors prompts/cognitive_profiles.py.
+// Lens default instrumentation : mirrors prompts/cognitive_profiles.py.
 // Values are the page-side representation of the same lens calibration the
 // backend uses. When the backend serves /api/perspectives this is the
 // authoritative source; until then, the page mirrors the same numbers.
@@ -87,7 +89,14 @@ const LENS_INSTRUMENTATION: Record<ProfileId, LensInstrumentation> = {
     technicality: 0.35,
     riskSensitivity: 0.55,
     trustStyle: "qualitative",
-    informationHierarchy: ["visual observation", "behavioral impact", "interaction risk", "component recommendation"],
+    informationHierarchy: ["composition diagnosis", "hierarchy and tokens", "visual states", "design recommendation"],
+  },
+  product_designer: {
+    depth: "medium",
+    technicality: 0.4,
+    riskSensitivity: 0.65,
+    trustStyle: "qualitative",
+    informationHierarchy: ["experience diagnosis", "interface and flow quality", "evidence and assumptions", "alternatives and validation"],
   },
   dev: {
     depth: "high",
@@ -96,12 +105,12 @@ const LENS_INSTRUMENTATION: Record<ProfileId, LensInstrumentation> = {
     trustStyle: "quantified",
     informationHierarchy: ["architecture diagnosis", "contract impact", "implementation path", "UX consequence"],
   },
-  pm: {
+  design_system_manager: {
     depth: "medium",
     technicality: 0.3,
     riskSensitivity: 0.5,
     trustStyle: "comparative",
-    informationHierarchy: ["business context", "workflow behavior", "organizational risk", "UI recommendation"],
+    informationHierarchy: ["strategic value", "adoption and impact", "governance criteria", "roadmap recommendation"],
   },
   qa: {
     depth: "high",
@@ -110,7 +119,7 @@ const LENS_INSTRUMENTATION: Record<ProfileId, LensInstrumentation> = {
     trustStyle: "quantified",
     informationHierarchy: ["primary risk", "warning", "validation coverage", "release-safe solution"],
   },
-  writer: {
+  tech_writer: {
     depth: "high",
     technicality: 0.45,
     riskSensitivity: 0.4,
@@ -129,12 +138,12 @@ const LENS_INSTRUMENTATION: Record<ProfileId, LensInstrumentation> = {
     technicality: 0.55,
     riskSensitivity: 0.8,
     trustStyle: "comparative",
-    informationHierarchy: ["system trajectory", "precedent risk", "drift signal", "governance recommendation"],
+    informationHierarchy: ["maintenance risk", "coupling and duplication", "simplification path", "evolution cost"],
   },
 };
 
 // ──────────────────────────────────────────────────────────────────────────
-// Trial persistence — keep the user's most recent live runs per active lens.
+// Trial persistence : keep the user's most recent live runs per active lens.
 // Storage shape per profileId: array of PersistedTrial (max 8, FIFO eviction).
 // ──────────────────────────────────────────────────────────────────────────
 
@@ -158,19 +167,43 @@ function trialsStorageKey(profileId: ProfileId): string {
 function loadTrials(profileId: ProfileId): PersistedTrial[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = window.localStorage.getItem(trialsStorageKey(profileId));
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (entry): entry is PersistedTrial =>
-        entry &&
-        typeof entry.id === "string" &&
-        typeof entry.query === "string" &&
-        typeof entry.savedAt === "number" &&
-        typeof entry.primaryId === "string" &&
-        typeof entry.primaryText === "string",
-    );
+    const canonicalKey = trialsStorageKey(profileId);
+    const legacyKeys = legacyProfileIdsFor(profileId)
+      .map((legacyId) => `${TRIALS_KEY_PREFIX}.${legacyId}`);
+    const storedValues = [
+      window.localStorage.getItem(canonicalKey),
+      ...legacyKeys.map((key) => window.localStorage.getItem(key)),
+    ].filter((raw): raw is string => Boolean(raw));
+    if (storedValues.length === 0) return [];
+    const parsed = storedValues.flatMap((raw) => {
+      const value = JSON.parse(raw);
+      return Array.isArray(value) ? value : [];
+    });
+    const trials = parsed.flatMap((entry): PersistedTrial[] => {
+      if (
+        !entry ||
+        typeof entry.id !== "string" ||
+        typeof entry.query !== "string" ||
+        typeof entry.savedAt !== "number" ||
+        typeof entry.primaryText !== "string"
+      ) {
+        return [];
+      }
+      const primaryId = normalizeProfileId(entry.primaryId);
+      const comparisonId = entry.comparisonId === null ? null : normalizeProfileId(entry.comparisonId);
+      if (!primaryId || primaryId === "general" || (entry.comparisonId !== null && !comparisonId)) return [];
+      return [{
+        ...entry,
+        primaryId,
+        comparisonId,
+        comparisonText: typeof entry.comparisonText === "string" ? entry.comparisonText : null,
+      }];
+    });
+    if (legacyKeys.some((key) => window.localStorage.getItem(key))) {
+      window.localStorage.setItem(canonicalKey, JSON.stringify(trials));
+      legacyKeys.forEach((key) => window.localStorage.removeItem(key));
+    }
+    return trials;
   } catch {
     return [];
   }
@@ -181,9 +214,9 @@ function saveTrials(profileId: ProfileId, trials: PersistedTrial[]) {
   window.localStorage.setItem(trialsStorageKey(profileId), JSON.stringify(trials));
 }
 
-// Worked example: same query, different perspective framing — § 8 of the blueprint.
+// Worked example: same query, different perspective framing, § 8 of the blueprint.
 // Texts kept English in source; the page renders them as illustrative system telemetry.
-// They are not user-facing copy — they are demonstration of model behavior, signed by
+// They are not user-facing copy. They are demonstration of model behavior, signed by
 // the lens that produced them. Live trials replace them whenever the user submits a query.
 const ADAPTATION_EXAMPLES: Partial<Record<ProfileId, string>> = {
   dev: `[Architectural framing]
@@ -196,22 +229,22 @@ and lifecycle.
 
 [Migration cost]
 If checkout uses SideDrawer earlier, switching introduces inconsistent
-dismissal semantics — high downstream cost.
+dismissal semantics, with high downstream cost.
 
 [Recommendation]
 SideDrawer. Reuse the established contract.`,
   designer: `[Visual observation]
-Modal interrupts. SideDrawer slides — the rest of the canvas stays as
+Modal interrupts. SideDrawer slides. The rest of the canvas stays as
 peripheral context, which on a small viewport competes with the task.
 
 [Cognitive flow]
 Confirmation narrows attention. SideDrawer residual context distracts.
 
 [Hierarchy implication]
-Modal compresses the scan path to a single block — matches confirmation intent.
+Modal compresses the scan path to a single block and matches confirmation intent.
 
 [Recommendation]
-Modal — calm single-focus layout, no secondary CTAs.`,
+Modal. Calm single-focus layout, no secondary CTAs.`,
   a11y: `[Primary concern]
 Focus management at confirmation. Both work; contracts differ.
 
@@ -221,7 +254,7 @@ Focus management at confirmation. Both work; contracts differ.
 - Canonical AT announcement on open
 
 [SideDrawer]
-- Focus trap is implementer's responsibility — frequent failure point
+- Focus trap is implementer's responsibility and a frequent failure point
 - Off-canvas content may remain in AT tree
 - Risk: double announcement of underlying page
 
@@ -234,8 +267,16 @@ Modal. Safer contract for AT users at the confirmation step.`,
 // ──────────────────────────────────────────────────────────────────────────
 
 export function PerspectivesPage() {
+  const [searchParams] = useSearchParams();
   const { profileId, setProfileId, options, activePersonaContext: activeLens } = usePersonaContext();
   const defaults = LENS_INSTRUMENTATION[profileId];
+
+  useEffect(() => {
+    const requestedProfile = normalizeProfileId(searchParams.get("profile"));
+    if (requestedProfile && requestedProfile !== "general" && requestedProfile !== profileId) {
+      setProfileId(requestedProfile);
+    }
+  }, [profileId, searchParams, setProfileId]);
 
   const [calibration, setCalibration] = useState<Calibration>(() => {
     return (
@@ -265,10 +306,10 @@ export function PerspectivesPage() {
   const [comparisonId, setComparisonId] = useState<ProfileId | null>(null);
   const [technicalOpen, setTechnicalOpen] = useState(false);
 
-  // Filter to operational lenses (exclude 'general' from selectable list — that's the fallback).
+  // Filter to operational lenses (exclude 'general' from selectable list : that's the fallback).
   const lenses = useMemo(() => options.filter((option) => option.id !== "general"), [options]);
 
-  // ── Trial persistence — list reloads when the active lens changes
+  // ── Trial persistence : list reloads when the active lens changes
   const [trials, setTrials] = useState<PersistedTrial[]>(() => loadTrials(profileId));
   const [trialToResume, setTrialToResume] = useState<PersistedTrial | null>(null);
 
@@ -310,17 +351,17 @@ export function PerspectivesPage() {
   }, []);
 
   return (
-    <div className="mx-auto w-full max-w-[1200px] px-6 py-10 text-slate-200 lg:px-10">
-      {/* ZONE 1 — Minimal hero */}
+    <PageShell>
+      {/* ZONE 1 : Minimal hero */}
       <HeroZone />
 
-      {/* ZONE 2 — Adaptive intelligence preamble */}
+      {/* ZONE 2 : Adaptive intelligence preamble */}
       <PreambleZone />
 
-      {/* ZONE 3 — Active lens indicator + Calibrate CTA */}
+      {/* ZONE 3 : Active lens indicator + Calibrate CTA */}
       <ActiveLensIndicator lens={activeLens} calibration={calibration} />
 
-      {/* ZONE 4 — Lens selector (LIST, no avatars) */}
+      {/* ZONE 4 : Lens selector (LIST, no avatars) */}
       <LensSelectorZone
         lenses={lenses}
         activeId={profileId}
@@ -329,7 +370,7 @@ export function PerspectivesPage() {
         onCompare={(id) => setComparisonId((current) => (current === id ? null : id))}
       />
 
-      {/* ZONE 5 — Cognitive profile visualization (radar) */}
+      {/* ZONE 5 : Cognitive profile visualization (radar) */}
       <CognitiveRadarZone
         primaryLabel={shortLabel(activeLens.label)}
         primaryAccent={hexForId(profileId)}
@@ -338,7 +379,7 @@ export function PerspectivesPage() {
         comparisonCalibration={comparisonId ? LENS_INSTRUMENTATION[comparisonId] : null}
       />
 
-      {/* ZONE 6 — Reasoning adaptation preview (worked example or live trial) */}
+      {/* ZONE 6 : Reasoning adaptation preview (worked example or live trial) */}
       <AdaptationPreviewZone
         primaryId={profileId}
         primaryLabel={shortLabel(activeLens.label)}
@@ -350,7 +391,7 @@ export function PerspectivesPage() {
         onResumed={() => setTrialToResume(null)}
       />
 
-      {/* ZONE 6b — Trial history (per active lens) */}
+      {/* ZONE 6b : Trial history (per active lens) */}
       <TrialHistoryZone
         trials={trials}
         lenses={lenses}
@@ -359,16 +400,16 @@ export function PerspectivesPage() {
         onClear={handleTrialClear}
       />
 
-      {/* ZONE 7 — Information hierarchy diagram */}
+      {/* ZONE 7 : Information hierarchy diagram */}
       <InformationHierarchyZone hierarchy={defaults.informationHierarchy} accent={hexForId(profileId)} />
 
-      {/* ZONE 8 — Perspective-specific signals */}
+      {/* ZONE 8 : Perspective-specific signals */}
       <SignalsZone lens={activeLens} />
 
-      {/* ZONE 9 — Trust calibration visualization */}
+      {/* ZONE 9 : Trust calibration visualization */}
       <TrustCalibrationZone activeStyle={defaults.trustStyle} />
 
-      {/* Calibrate panel — opens via ActiveLensIndicator CTA */}
+      {/* Calibrate panel : opens via ActiveLensIndicator CTA */}
       <CalibratePanel
         calibration={calibration}
         defaults={{
@@ -380,7 +421,7 @@ export function PerspectivesPage() {
         accent={hexForId(profileId)}
       />
 
-      {/* ZONE 10 — How Beatrice adapts (technical block, collapsed by default) */}
+      {/* ZONE 10 : How Beatrice adapts (technical block, collapsed by default) */}
       <TechnicalDisclosure
         open={technicalOpen}
         onToggle={() => setTechnicalOpen((value) => !value)}
@@ -389,32 +430,36 @@ export function PerspectivesPage() {
         calibration={calibration}
         defaults={defaults}
       />
-    </div>
+    </PageShell>
   );
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// ZONE 1 — Hero
+// ZONE 1 : Hero
 // ──────────────────────────────────────────────────────────────────────────
 
 function HeroZone() {
   const { t } = useI18n();
   return (
-    <header className="mb-10 border-b border-white/8 pb-10">
-      <div className="mb-4 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.28em] text-slate-500">
-        <Telescope className="h-3.5 w-3.5" aria-hidden />
-        {t("perspectives.hero.eyebrow")}
-      </div>
-      <h1 className="font-serif text-3xl leading-[1.15] tracking-tight text-white sm:text-4xl">
-        {t("perspectives.hero.titlePrefix")}{" "}
-        <em className="not-italic text-primary">{t("perspectives.hero.titleEm")}</em>.
-      </h1>
-    </header>
+    <PageHero
+      eyebrow={
+        <>
+          <Telescope className="h-3.5 w-3.5" aria-hidden />
+          {t("perspectives.hero.eyebrow")}
+        </>
+      }
+      title={
+        <>
+          {t("perspectives.hero.titlePrefix")}{" "}
+          <em className="not-italic text-primary">{t("perspectives.hero.titleEm")}</em>.
+        </>
+      }
+    />
   );
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// ZONE 2 — Preamble
+// ZONE 2 : Preamble
 // ──────────────────────────────────────────────────────────────────────────
 
 function PreambleZone() {
@@ -428,7 +473,7 @@ function PreambleZone() {
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// ZONE 3 — Active lens indicator
+// ZONE 3 : Active lens indicator
 // ──────────────────────────────────────────────────────────────────────────
 
 function ActiveLensIndicator({ lens, calibration }: { lens: PersonaStrategy; calibration: Calibration }) {
@@ -453,7 +498,7 @@ function ActiveLensIndicator({ lens, calibration }: { lens: PersonaStrategy; cal
         <span className={`truncate text-sm font-semibold ${lens.theme.accentText}`}>
           {shortLabel(lens.label)}
         </span>
-        <span className="hidden truncate text-xs text-slate-500 lg:block">— {lens.role}</span>
+        <span className="hidden truncate text-xs text-slate-500 lg:block">: {lens.role}</span>
         {customised ? (
           <span className="ml-2 hidden rounded-full border border-white/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-slate-300 sm:inline">
             {t("perspectives.activeLens.calibratedBadge")}
@@ -472,7 +517,7 @@ function ActiveLensIndicator({ lens, calibration }: { lens: PersonaStrategy; cal
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// ZONE 4 — Lens selector (LIST, not grid)
+// ZONE 4 : Lens selector (LIST, not grid)
 // ──────────────────────────────────────────────────────────────────────────
 
 function LensSelectorZone({
@@ -495,23 +540,24 @@ function LensSelectorZone({
       title={t("perspectives.selector.title")}
       caption={t("perspectives.selector.caption")}
     >
-      <ul
+      <div
         role="radiogroup"
         aria-label={t("perspectives.selector.ariaLabel")}
+        data-abraxos-focus="perspective-lens"
         className="divide-y divide-white/8 overflow-hidden rounded-2xl border border-white/8 bg-white/[0.02]"
       >
         {lenses.map((lens) => {
           const isActive = lens.id === activeId;
           const isCompared = lens.id === comparisonId;
           return (
-            <li key={lens.id}>
+            <div key={lens.id}>
               <div className="flex items-stretch">
                 <button
                   type="button"
                   role="radio"
                   aria-checked={isActive}
                   onClick={() => onSelect(lens.id)}
-                  className={`group flex flex-1 items-center gap-4 px-5 py-4 text-left transition-colors ${
+                  className={`focus-ring group flex flex-1 items-center gap-4 px-5 py-4 text-left transition-colors ${
                     isActive ? `${lens.theme.accentBg}` : "hover:bg-white/[0.03]"
                   }`}
                 >
@@ -536,7 +582,7 @@ function LensSelectorZone({
                   disabled={lens.id === activeId}
                   aria-pressed={isCompared}
                   aria-label={t("perspectives.selector.pinAria").replace("{label}", shortLabel(lens.label))}
-                  className={`shrink-0 border-l border-white/8 px-4 text-[10px] font-bold uppercase tracking-widest transition-colors ${
+                  className={`focus-ring min-h-11 shrink-0 border-l border-white/8 px-4 text-[10px] font-bold uppercase tracking-widest transition-colors ${
                     isCompared
                       ? "bg-white/[0.06] text-white"
                       : "text-slate-500 hover:bg-white/[0.04] hover:text-slate-200 disabled:cursor-not-allowed disabled:opacity-30"
@@ -545,16 +591,16 @@ function LensSelectorZone({
                   {isCompared ? t("perspectives.selector.pinned") : t("perspectives.selector.compare")}
                 </button>
               </div>
-            </li>
+            </div>
           );
         })}
-      </ul>
+      </div>
     </ZoneShell>
   );
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// ZONE 5 — Cognitive radar visualization
+// ZONE 5 : Cognitive radar visualization
 // ──────────────────────────────────────────────────────────────────────────
 
 function CognitiveRadarZone({
@@ -616,39 +662,18 @@ function CognitiveRadarZone({
     >
       <div className="grid gap-8 rounded-2xl border border-white/8 bg-white/[0.02] p-6 lg:grid-cols-[1fr_320px]">
         <div className="aspect-square w-full max-w-[480px] sm:aspect-[5/4]">
-          <ResponsiveContainer width="100%" height="100%">
-            <RadarChart data={radarData} outerRadius="78%">
-              <PolarGrid stroke="rgba(255,255,255,0.08)" />
-              <PolarAngleAxis
-                dataKey="axis"
-                tick={{ fill: "#94a3b8", fontSize: 11, fontWeight: 600 }}
-              />
-              <PolarRadiusAxis tick={false} axisLine={false} domain={[0, 1]} />
-              {comparisonCalibration ? (
-                <Radar
-                  name={comparisonLens ? shortLabel(comparisonLens.label) : ""}
-                  dataKey="comparison"
-                  stroke="rgba(255,255,255,0.45)"
-                  fill="rgba(255,255,255,0.06)"
-                  fillOpacity={1}
-                  strokeWidth={1.5}
-                  isAnimationActive={false}
-                />
-              ) : null}
-              <Radar
-                name={primaryLabel}
-                dataKey="primary"
-                stroke={primaryAccent}
-                fill={primaryAccent}
-                fillOpacity={0.22}
-                strokeWidth={2}
-                isAnimationActive={false}
-              />
-            </RadarChart>
-          </ResponsiveContainer>
+          <Suspense fallback={<div className="h-full w-full animate-pulse rounded-2xl bg-white/[0.03]" />}>
+            <CognitiveRadarChart
+              data={radarData}
+              primaryLabel={primaryLabel}
+              primaryAccent={primaryAccent}
+              comparisonLabel={comparisonLens ? shortLabel(comparisonLens.label) : ""}
+              showComparison={Boolean(comparisonCalibration)}
+            />
+          </Suspense>
         </div>
 
-        {/* AT-friendly table fallback — same values, accessible to screen readers. */}
+        {/* AT-friendly table fallback : same values, accessible to screen readers. */}
         <table className="hidden text-xs lg:block">
           <caption className="sr-only">
             {comparisonLens
@@ -682,7 +707,7 @@ function CognitiveRadarZone({
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// ZONE 6 — Reasoning adaptation preview (worked example, side-by-side)
+// ZONE 6 : Reasoning adaptation preview (worked example, side-by-side)
 // ──────────────────────────────────────────────────────────────────────────
 
 function AdaptationPreviewZone({
@@ -746,7 +771,7 @@ function AdaptationPreviewZone({
       .catch((error) => {
         if (controller.signal.aborted) return;
         setPrimaryStatus("error");
-        finalPrimary = `⚠️ ${friendlyError(error, t)}`;
+        finalPrimary = `${friendlyError(error, t)}`;
         setPrimaryText(finalPrimary);
       });
 
@@ -764,7 +789,7 @@ function AdaptationPreviewZone({
           .catch((error) => {
             if (controller.signal.aborted) return;
             setComparisonStatus("error");
-            finalComparison = `⚠️ ${friendlyError(error, t)}`;
+            finalComparison = `${friendlyError(error, t)}`;
             setComparisonText(finalComparison);
           })
       : Promise.resolve();
@@ -772,7 +797,7 @@ function AdaptationPreviewZone({
     await Promise.all([primaryRun, comparisonRun]);
 
     // Persist if the primary actually produced text (avoid storing aborted nothings).
-    if (!controller.signal.aborted && finalPrimary && !finalPrimary.startsWith("⚠️")) {
+    if (!controller.signal.aborted && finalPrimary && !finalPrimary.startsWith("")) {
       persistRef.current({
         id: `trial-${Date.now()}`,
         query,
@@ -839,7 +864,7 @@ function AdaptationPreviewZone({
           event.preventDefault();
           if (!isStreaming) void runTrial();
         }}
-        className="mb-4 flex items-stretch gap-2 rounded-2xl border border-white/10 bg-black/30 p-2"
+        className="mb-4 flex min-w-0 items-stretch gap-2 rounded-2xl border border-white/10 bg-black/30 p-2"
       >
         <label htmlFor="trial-query" className="sr-only">
           {t("perspectives.adaptation.inputAriaLabel")}
@@ -851,13 +876,13 @@ function AdaptationPreviewZone({
           onChange={(event) => setTrialQuery(event.target.value)}
           placeholder={t("perspectives.adaptation.inputPlaceholder")}
           disabled={isStreaming}
-          className="flex-1 bg-transparent px-3 py-2 font-mono text-xs text-slate-200 placeholder:text-slate-600 focus:outline-none disabled:opacity-50"
+          className="focus-ring min-h-11 min-w-0 flex-1 rounded-lg bg-transparent px-3 py-2 font-mono text-xs text-slate-200 placeholder:text-slate-600 disabled:opacity-50"
         />
         {isStreaming ? (
           <button
             type="button"
             onClick={stopTrial}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-white/15 bg-white/[0.04] px-3.5 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-200 transition-colors hover:border-white/30"
+            className="focus-ring inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl border border-white/15 bg-white/[0.04] px-3.5 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-200 transition-colors hover:border-white/30"
           >
             <Square className="h-3 w-3" aria-hidden />
             {t("perspectives.adaptation.stop")}
@@ -866,7 +891,7 @@ function AdaptationPreviewZone({
           <button
             type="submit"
             disabled={!trialQuery.trim()}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/15 px-3.5 py-2 text-[10px] font-bold uppercase tracking-widest text-primary transition-colors hover:bg-primary/25 disabled:cursor-not-allowed disabled:opacity-30"
+            className="focus-ring inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/15 px-3.5 py-2 text-[10px] font-bold uppercase tracking-widest text-primary transition-colors hover:bg-primary/25 disabled:cursor-not-allowed disabled:opacity-30"
           >
             <Play className="h-3 w-3" aria-hidden />
             {t("perspectives.adaptation.runLive")}
@@ -1036,7 +1061,7 @@ function LiveLensColumn({
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// ZONE 6b — Saved trials history
+// ZONE 6b : Saved trials history
 // ──────────────────────────────────────────────────────────────────────────
 
 function TrialHistoryZone({
@@ -1148,7 +1173,7 @@ function statusToneClass(status: TrialStatus): string {
   }
 }
 
-function friendlyError(error: unknown, t: (key: string) => string): string {
+function friendlyError(error: unknown, t: (key: TranslationKey) => string): string {
   if (error instanceof Error) {
     if (error.message.startsWith("backend_error:")) {
       return `${t("perspectives.adaptation.errorPrefix")} (${error.message.split(":").slice(1).join(":")})`;
@@ -1159,7 +1184,7 @@ function friendlyError(error: unknown, t: (key: string) => string): string {
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// ZONE 7 — Information hierarchy diagram
+// ZONE 7 : Information hierarchy diagram
 // ──────────────────────────────────────────────────────────────────────────
 
 function InformationHierarchyZone({ hierarchy, accent }: { hierarchy: string[]; accent: string }) {
@@ -1196,7 +1221,7 @@ function InformationHierarchyZone({ hierarchy, accent }: { hierarchy: string[]; 
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// ZONE 8 — Perspective signals
+// ZONE 8 : Perspective signals
 // ──────────────────────────────────────────────────────────────────────────
 
 function SignalsZone({ lens }: { lens: PersonaStrategy }) {
@@ -1261,7 +1286,7 @@ function SignalPanel({ title, children }: { title: string; children: ReactNode }
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// ZONE 9 — Trust calibration visualization
+// ZONE 9 : Trust calibration visualization
 // ──────────────────────────────────────────────────────────────────────────
 
 function TrustCalibrationZone({ activeStyle }: { activeStyle: TrustStyle }) {
@@ -1305,7 +1330,7 @@ function TrustCalibrationZone({ activeStyle }: { activeStyle: TrustStyle }) {
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// Calibrate panel — the user-tunable knobs
+// Calibrate panel : the user-tunable knobs
 // ──────────────────────────────────────────────────────────────────────────
 
 function CalibratePanel({
@@ -1339,7 +1364,7 @@ function CalibratePanel({
       icon={<SlidersHorizontal className="h-3.5 w-3.5" aria-hidden />}
     >
       <div className="grid gap-6 rounded-2xl border border-white/8 bg-white/[0.02] p-6 lg:grid-cols-3">
-        {/* Depth — radio group */}
+        {/* Depth : radio group */}
         <fieldset className="space-y-3">
           <legend className="mb-2 text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">
             {t("perspectives.calibrate.fieldDepth")}
@@ -1370,17 +1395,21 @@ function CalibratePanel({
           ))}
         </fieldset>
 
-        {/* Technicality — slider */}
+        {/* Technicality : slider */}
         <div>
           <div className="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">
-            <span>{t("perspectives.calibrate.fieldTechnicality")}</span>
+            <label id="technicality-label" htmlFor="technicality-slider">
+              {t("perspectives.calibrate.fieldTechnicality")}
+            </label>
             <span className="font-mono text-slate-300">{Math.round(calibration.technicality * 100)}%</span>
           </div>
           <input
+            id="technicality-slider"
             type="range"
             min={0}
             max={100}
             value={Math.round(calibration.technicality * 100)}
+            aria-labelledby="technicality-label"
             aria-valuetext={`${intensity(calibration.technicality)} ${t("perspectives.calibrate.fieldTechnicality")}`}
             onChange={(event) =>
               onChange({ ...calibration, technicality: Number(event.target.value) / 100 })
@@ -1391,17 +1420,21 @@ function CalibratePanel({
           <p className="mt-2 text-[11px] leading-relaxed text-slate-500">{t("perspectives.calibrate.technicalityCaption")}</p>
         </div>
 
-        {/* Risk sensitivity — slider */}
+        {/* Risk sensitivity : slider */}
         <div>
           <div className="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">
-            <span>{t("perspectives.calibrate.fieldRisk")}</span>
+            <label id="risk-sensitivity-label" htmlFor="risk-sensitivity-slider">
+              {t("perspectives.calibrate.fieldRisk")}
+            </label>
             <span className="font-mono text-slate-300">{Math.round(calibration.riskSensitivity * 100)}%</span>
           </div>
           <input
+            id="risk-sensitivity-slider"
             type="range"
             min={0}
             max={100}
             value={Math.round(calibration.riskSensitivity * 100)}
+            aria-labelledby="risk-sensitivity-label"
             aria-valuetext={`${intensity(calibration.riskSensitivity)} ${t("perspectives.calibrate.fieldRisk")}`}
             onChange={(event) =>
               onChange({ ...calibration, riskSensitivity: Number(event.target.value) / 100 })
@@ -1440,7 +1473,7 @@ function capitalize<T extends string>(value: T): Capitalize<T> {
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// ZONE 10 — Technical disclosure ("How Beatrice adapts")
+// ZONE 10: Technical disclosure about how Abraxos adapts
 // ──────────────────────────────────────────────────────────────────────────
 
 function TechnicalDisclosure({
@@ -1595,17 +1628,18 @@ function semanticIntensity(value: number): "low" | "medium" | "high" {
   return "high";
 }
 
-// Accent hex map — must stay in sync with theme accentClass for each lens.
+// Accent hex map : must stay in sync with theme accentClass for each lens.
 function hexForId(id: ProfileId): string {
   const map: Record<ProfileId, string> = {
     general: "#a999c6",
     dev: "#60a5fa",
     designer: "#c4b5fd",
-    pm: "#fcd34d",
+    product_designer: "#e879f9",
     qa: "#86efac",
-    writer: "#7dd3fc",
+    tech_writer: "#7dd3fc",
     a11y: "#67e8f9",
     maintainer: "#fda4af",
+    design_system_manager: "#fcd34d",
   };
   return map[id];
 }
@@ -1616,11 +1650,12 @@ function classForId(id: ProfileId, kind: "border" | "bg"): string {
     general: { border: "border-primary/20", bg: "bg-primary/[0.04]" },
     dev: { border: "border-blue-400/20", bg: "bg-blue-400/[0.04]" },
     designer: { border: "border-violet-300/20", bg: "bg-violet-300/[0.04]" },
-    pm: { border: "border-amber-300/20", bg: "bg-amber-300/[0.04]" },
+    product_designer: { border: "border-fuchsia-300/20", bg: "bg-fuchsia-300/[0.04]" },
     qa: { border: "border-green-300/20", bg: "bg-green-300/[0.04]" },
-    writer: { border: "border-sky-300/20", bg: "bg-sky-300/[0.04]" },
+    tech_writer: { border: "border-sky-300/20", bg: "bg-sky-300/[0.04]" },
     a11y: { border: "border-cyan-300/20", bg: "bg-cyan-300/[0.04]" },
     maintainer: { border: "border-rose-300/20", bg: "bg-rose-300/[0.04]" },
+    design_system_manager: { border: "border-amber-300/20", bg: "bg-amber-300/[0.04]" },
   };
   return map[id][kind];
 }

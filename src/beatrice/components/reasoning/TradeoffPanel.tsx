@@ -5,7 +5,7 @@ export function TradeoffPanel({ entry, labels }: { entry: AuditEntry; labels: Au
   const panels: Array<{ key: keyof TradeOff; icon: string; label: string; className: string }> = [
     { key: "gains", icon: "+", label: labels.gains, className: "border-green-400/15 bg-green-400/5 text-green-400" },
     { key: "losses", icon: "-", label: labels.losses, className: "border-red-400/15 bg-red-400/5 text-red-400" },
-    { key: "risks", icon: "!", label: labels.risks, className: "border-amber-400/15 bg-amber-400/5 text-amber-400" },
+    { key: "risks", icon: "!", label: labels.risks, className: "border-warning/15 bg-warning/5 text-warning" },
   ];
 
   return (

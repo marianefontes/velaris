@@ -36,7 +36,7 @@ function inlineFormat(raw: string): ReactNode[] {
 }
 
 // Pure line-based parser. Extracted from the component so it can run inside a
-// useMemo keyed on `text` — during streaming the active message re-renders on
+// useMemo keyed on `text` : during streaming the active message re-renders on
 // every flushed frame, and re-parsing the whole (growing) string each time was
 // the O(n²) hotspot. Memoization + React.memo below collapse that cost.
 function parseMarkdown(text: string): ReactNode[] {
@@ -53,7 +53,7 @@ function parseMarkdown(text: string): ReactNode[] {
     elements.push(
       <ul key={`ul-${key}`} className="mb-3 flex flex-col gap-1 pl-4">
         {listItems.map((item, index) => (
-          <li key={index} className="flex gap-2 text-xs leading-6 text-on-surface">
+          <li key={index} className="flex gap-2 text-sm leading-6 text-on-surface">
             <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-primary" />
             <span>{inlineFormat(item)}</span>
           </li>
@@ -68,7 +68,7 @@ function parseMarkdown(text: string): ReactNode[] {
     elements.push(
       <ol key={`ol-${key}`} className="mb-3 flex flex-col gap-1 pl-4">
         {orderedItems.map((item, index) => (
-          <li key={index} className="flex gap-2 text-xs leading-6 text-on-surface">
+          <li key={index} className="flex gap-2 text-sm leading-6 text-on-surface">
             <span className="mt-0.5 shrink-0 font-bold text-primary">{index + 1}.</span>
             <span>{inlineFormat(item)}</span>
           </li>
@@ -177,16 +177,16 @@ function parseMarkdown(text: string): ReactNode[] {
         </p>,
       );
     } else if (trimmed.startsWith("## ")) {
-      elements.push(<p key={index} className="mb-2 text-sm font-black text-on-surface">{trimmed.slice(3)}</p>);
+      elements.push(<p key={index} className="mb-2 text-base font-semibold text-on-surface">{trimmed.slice(3)}</p>);
     } else {
-      elements.push(<p key={index} className="text-sm leading-7 text-on-surface">{inlineFormat(trimmed)}</p>);
+      elements.push(<p key={index} className="text-[15px] leading-7 text-on-surface">{inlineFormat(trimmed)}</p>);
     }
   });
 
   flushBlocks("end");
   flushTable("end");
   // Unterminated fence (common mid-stream): a closed block always resets
-  // codeBuffer to [], so a non-empty buffer here means the fence never closed —
+  // codeBuffer to [], so a non-empty buffer here means the fence never closed :
   // render what streamed so far.
   if (codeBuffer.length > 0) {
     elements.push(

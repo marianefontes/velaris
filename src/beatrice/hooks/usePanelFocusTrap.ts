@@ -22,6 +22,10 @@ export function usePanelFocusTrap(isOpen: boolean, panelRef: RefObject<HTMLEleme
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      const modalStack = Array.from(document.querySelectorAll<HTMLElement>('[aria-modal="true"]'));
+      const topmostModal = modalStack[modalStack.length - 1];
+      if (topmostModal && topmostModal !== panelRef.current) return;
+
       if (event.key === "Escape") {
         event.preventDefault();
         onClose();

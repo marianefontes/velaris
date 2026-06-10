@@ -10,7 +10,7 @@
 // - It does not need the BeatriceSettings response-preferences layer
 
 import { readCalibration } from "../domain/perspective/calibration";
-import type { ProfileId, StreamChunk } from "../types/beatrice";
+import type { ProfileId, ResponseAuditMetadata, StreamChunk } from "../types/beatrice";
 
 const ORACLE_API = import.meta.env.VITE_ORACLE_API_URL ?? "/api/chat";
 
@@ -20,17 +20,19 @@ export interface TrialChatOptions {
   signal?: AbortSignal;
   onDelta?: (textSoFar: string) => void;
   onSources?: (sources: StreamChunk["sources"], intent: StreamChunk["intent"]) => void;
+  onAuditMetadata?: (auditMetadata: ResponseAuditMetadata) => void;
 }
 
 export interface TrialChatResult {
   text: string;
   sources?: StreamChunk["sources"];
   intent?: StreamChunk["intent"];
+  auditMetadata?: ResponseAuditMetadata;
 }
 
 /** Run one streaming chat request for a perspective trial. Throws on network / API failure. */
 export async function runPerspectiveTrial(options: TrialChatOptions): Promise<TrialChatResult> {
-  const { query, profileId, signal, onDelta, onSources } = options;
+  const { query, profileId, signal, onDelta, onSources, onAuditMetadata } = options;
   const calibration = readCalibration(profileId);
 
   const response = await fetch(ORACLE_API, {
@@ -85,6 +87,10 @@ export async function runPerspectiveTrial(options: TrialChatOptions): Promise<Tr
         result.sources = parsed.sources;
         result.intent = parsed.intent;
         onSources?.(parsed.sources, parsed.intent);
+      }
+      if (parsed.audit_metadata !== undefined) {
+        result.auditMetadata = parsed.audit_metadata;
+        onAuditMetadata?.(parsed.audit_metadata);
       }
       if (parsed.delta) {
         text += parsed.delta;

@@ -11,14 +11,14 @@ export function EvidencePanel({ entry, labels }: { entry: AuditEntry; labels: Au
               evidence.weight === "high"
                 ? "bg-green-400/15 text-green-400"
                 : evidence.weight === "medium"
-                ? "bg-amber-400/15 text-amber-400"
+                ? "bg-warning/15 text-warning"
                 : "bg-slate-400/15 text-slate-500"
             }`}>
               {evidence.weight}
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-[10px] font-semibold text-slate-300">
-                {evidence.source} — &ldquo;{evidence.title}&rdquo;
+                {evidence.source} : &ldquo;{evidence.title}&rdquo;
               </p>
               <p className="text-[9px] text-slate-600">{evidence.authorityLabel}</p>
             </div>

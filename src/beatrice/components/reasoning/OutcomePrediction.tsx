@@ -8,7 +8,7 @@ export function OutcomePrediction({ entry, labels }: { entry: AuditEntry; labels
         <p className="mt-0.5 text-[10px] text-slate-500">
           {labels.created}: <span className="text-slate-300">{entry.lifecycle.createdAt}</span>
           {" · "}
-          {labels.review}: <span className="text-amber-400/80">{entry.lifecycle.reviewDate}</span>
+          {labels.review}: <span className="text-warning/80">{entry.lifecycle.reviewDate}</span>
         </p>
       </div>
       {entry.relatedDecisions.length > 0 && (

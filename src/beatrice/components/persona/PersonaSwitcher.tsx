@@ -1,7 +1,9 @@
 import { usePersonaContext } from "../../hooks/usePersonaContext";
+import { useI18n } from "../../../i18n/I18nProvider";
 
 export function PersonaSwitcher({ variant = "compact" }: { variant?: "compact" | "workspace" }) {
   const { activePersonaContext: strategy, options, profileId, setProfileId } = usePersonaContext();
+  const { t } = useI18n();
 
   if (variant === "workspace") {
     const ActiveIcon = strategy.icon;
@@ -21,7 +23,7 @@ export function PersonaSwitcher({ variant = "compact" }: { variant?: "compact" |
           <p className="text-[11px] leading-5 text-slate-500">{strategy.operationalMode}</p>
         </div>
 
-        <div className="space-y-1" aria-label="Persona mode selector">
+        <div className="space-y-1" aria-label={t("beatricePersona.perspectiveSelector")}>
           {options.map((profile) => {
             const Icon = profile.icon;
             const active = profileId === profile.id;

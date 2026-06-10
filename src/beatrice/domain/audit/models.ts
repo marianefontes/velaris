@@ -8,8 +8,8 @@ export function getAuditLabels(locale: Locale): AuditLabels {
     title: isEn ? "Decision Audit Trail" : "Trilha de Decisão",
     entries: isEn ? "entries" : "entradas",
     empty: isEn
-      ? "No decisions recorded yet. Ask Beatrice something to start the trail."
-      : "Nenhuma decisão registrada ainda. Pergunte à Beatrice para iniciar a trilha.",
+      ? "No decisions recorded yet. Ask Abraxos something to start the trail."
+      : "Nenhuma decisão registrada ainda. Consulte Abraxos para iniciar a trilha.",
     exportMd: isEn ? "Export .md" : "Exportar .md",
     exportJson: isEn ? "Export .json" : "Exportar .json",
     close: isEn ? "Close" : "Fechar",
