@@ -164,7 +164,7 @@ export function AppTopBar({
           <span className="hidden md:inline">{t("shell.beatriceChat")}</span>
         </Link>
 
-        {/* Persona / account */}
+        {/* Persona perspective switcher */}
         <PersonaProfileMenu />
       </div>
 

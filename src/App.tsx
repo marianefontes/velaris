@@ -43,6 +43,15 @@ const StudyPage = lazy(() =>
 const ResearchAdminPage = lazy(() =>
   import("./components/ResearchAdminPage").then((module) => ({ default: module.ResearchAdminPage })),
 );
+const KnowledgeHealthPage = lazy(() =>
+  import("./components/KnowledgeHealthPage").then((module) => ({ default: module.KnowledgeHealthPage })),
+);
+const IntelligenceLabPage = lazy(() =>
+  import("./components/IntelligenceLabPage").then((module) => ({ default: module.IntelligenceLabPage })),
+);
+const GovernancePage = lazy(() =>
+  import("./components/GovernancePage").then((module) => ({ default: module.GovernancePage })),
+);
 
 function RouteFallback() {
   const { t } = useI18n();
@@ -94,6 +103,9 @@ function App() {
             <Route path="/evaluation" element={<EvaluationPage />} />
             <Route path="/results" element={<StudyResultsPage />} />
             <Route path="/laboratory" element={<LaboratoryPage />} />
+            <Route path="/knowledge-health" element={<KnowledgeHealthPage />} />
+            <Route path="/intelligence-lab" element={<IntelligenceLabPage />} />
+            <Route path="/governance" element={<GovernancePage />} />
             <Route path="/study/:token" element={<StudyPage />} />
             <Route path="/research" element={<ResearchAdminPage />} />
 
@@ -112,6 +124,7 @@ function App() {
             <Route path="/design-decisions" element={<Navigate to="/foundations" replace />} />
             <Route path="/guidelines" element={<Navigate to="/foundations?focus=manifesto" replace />} />
             <Route path="/persona" element={<Navigate to="/perspectives" replace />} />
+            <Route path="/cognition" element={<Navigate to="/perspectives?focus=cognition" replace />} />
             <Route path="/developers" element={<Navigate to="/architecture" replace />} />
             <Route path="/dev-integration" element={<Navigate to="/architecture" replace />} />
             <Route path="/system-evaluation" element={<Navigate to="/evaluation" replace />} />
