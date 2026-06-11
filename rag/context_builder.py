@@ -31,16 +31,16 @@ ENTITY_KIND_LABELS: dict[str, str] = {
 }
 
 CATALOG_OPENINGS: dict[str, str] = {
-    "components": "O Aetheris possui atualmente {count} componentes oficiais.",
-    "patterns": "O Aetheris possui atualmente {count} padrões oficiais.",
-    "tokens": "O Aetheris possui atualmente {count} grupos de tokens oficiais.",
-    "decisions": "A memória de decisão do Aetheris registra {count} decisões.",
-    "all": "O registry semântico do Aetheris contém {count} entidades oficiais neste recorte.",
+    "components": "O Velaris possui atualmente {count} componentes oficiais.",
+    "patterns": "O Velaris possui atualmente {count} padrões oficiais.",
+    "tokens": "O Velaris possui atualmente {count} grupos de tokens oficiais.",
+    "decisions": "A memória de decisão do Velaris registra {count} decisões.",
+    "all": "O registry semântico do Velaris contém {count} entidades oficiais neste recorte.",
 }
 
 
 def semantic_source_label(page_type: str) -> str:
-    return SOURCE_LABELS.get(page_type, "Aetheris Registry")
+    return SOURCE_LABELS.get(page_type, "Velaris Registry")
 
 
 def semantic_entity_kind(page_type: str) -> str:
@@ -83,7 +83,7 @@ def build_perspective_evidence_block(chunks: list[dict[str, Any]]) -> str:
 # Evidence Disclosure For The Active Perspective Contract
 
 No source was retrieved. The mandatory evidence section must state that the
-official Aetheris evidence is insufficient and must not invent a component,
+official Velaris evidence is insufficient and must not invent a component,
 API, similarity, tier or source.
 """.strip()
 
@@ -111,7 +111,7 @@ Use only these values in the mandatory evidence section:
 
 Evidence similarity is retrieval relevance, not answer confidence. State at
 least one limitation. If the records do not explicitly define exact props,
-label the component API as proposed and not verified as the official Aetheris
+label the component API as proposed and not verified as the official Velaris
 API.
 """.strip()
 
@@ -139,10 +139,10 @@ def build_rag_context(
 ) -> str:
     if not chunks:
         return """
-# Aetheris Semantic Evidence
+# Velaris Semantic Evidence
 
 No official semantic evidence was recovered for this request. Stay inside the
-Aetheris domain, avoid invention and use the out-of-scope policy when needed.
+Velaris domain, avoid invention and use the out-of-scope policy when needed.
 """.strip()
 
     mode = "full_catalog" if catalog_mode else "semantic_retrieval"
@@ -174,7 +174,7 @@ content:
 """.strip())
 
     return f"""
-# Aetheris Semantic Evidence
+# Velaris Semantic Evidence
 
 retrieval_mode: {mode}
 intent: {intent}
@@ -182,7 +182,7 @@ catalog_scope: {catalog_entity}
 entity_count: {len(chunks)}{opening}
 user_query: {query}
 
-Use these records as official Aetheris evidence. Transform them into a clear
+Use these records as official Velaris evidence. Transform them into a clear
 answer without exposing record numbers, metadata, files, routes or retrieval
 mechanics.
 

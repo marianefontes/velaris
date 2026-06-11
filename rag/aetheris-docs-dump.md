@@ -1,13 +1,13 @@
 # Aetheris Design System — Corpus Dump (TSX Source)
 
-> **Total chunks:** 182
-> **Extractor:** v2.2.0-capability-registry (React/TypeScript source)
+> **Total chunks:** 308
+> **Extractor:** v3.0.0-intelligence-layer (React/TypeScript source)
 > **Embedding model:** BAAI/bge-m3
 
 ---
 
 ## [COMPONENT] Button
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 3266
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5762
 
 **Structure:** Rótulo curto, alvo mínimo de 44px e ícone opcional.
 **Logic:** Use uma ação primária por região focal e rebaixe escolhas concorrentes.
@@ -20,7 +20,7 @@
 ---
 
 ## [COMPONENT] Toggle/Switch
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 3265
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5925
 
 **Structure:** Trilho, indicador móvel, rótulo persistente e estado textual quando necessário.
 **Logic:** Off e On definem o valor. Focus demonstra foco de teclado sem alterar esse valor. Preference aplica uma escolha pessoal, Visibility mostra ou oculta conteúdo e Mode alterna o comportamento operacional.
@@ -33,7 +33,7 @@
 ---
 
 ## [COMPONENT] Checkbox
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 3085
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5647
 
 **Structure:** Caixa, indicador de seleção, rótulo clicável e apoio opcional.
 **Logic:** Cada opção deve continuar válida mesmo quando as demais não são selecionadas.
@@ -46,7 +46,7 @@
 ---
 
 ## [COMPONENT] Radio Button
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 3023
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5753
 
 **Structure:** Grupo nomeado, círculos de seleção e rótulos completos.
 **Logic:** Expor todas as opções reduz memória de trabalho e facilita comparação direta.
@@ -59,7 +59,7 @@
 ---
 
 ## [COMPONENT] Selectable Chip / Badge
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 3132
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5859
 
 **Structure:** Pílula compacta com rótulo, ícone opcional e indicador de seleção.
 **Logic:** Chips funcionam melhor com rótulos curtos, conjunto pequeno e estado selecionado evidente.
@@ -72,7 +72,7 @@
 ---
 
 ## [COMPONENT] Input / Text Input
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 2845
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5549
 
 **Structure:** Label, controle, apoio, indicador opcional e mensagem de erro.
 **Logic:** O rótulo define o dado esperado; placeholder oferece exemplo, nunca substitui instrução.
@@ -85,7 +85,7 @@
 ---
 
 ## [COMPONENT] Text Area
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 2875
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5382
 
 **Structure:** Label, área redimensionável, apoio e contador opcional.
 **Logic:** A altura inicial comunica a profundidade esperada da resposta.
@@ -98,7 +98,7 @@
 ---
 
 ## [COMPONENT] Select/Dropdown
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 3006
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5642
 
 **Structure:** Label, trigger, valor atual, lista e indicadores de seleção.
 **Logic:** Economiza espaço, mas transfere a comparação para um painel temporário.
@@ -111,7 +111,7 @@
 ---
 
 ## [COMPONENT] Date Picker
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 2924
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5649
 
 **Structure:** Campo formatado, botão de calendário, grade mensal e navegação temporal.
 **Logic:** Entrada digitável acelera especialistas; calendário apoia descoberta e contexto.
@@ -124,7 +124,7 @@
 ---
 
 ## [COMPONENT] Form Field
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 3106
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5606
 
 **Structure:** Label, controle filho, texto de apoio, erro e indicador de obrigatoriedade.
 **Logic:** Centralizar o contrato evita que cada formulário reconstrua acessibilidade e espaçamento.
@@ -137,7 +137,7 @@
 ---
 
 ## [COMPONENT] Link
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 3099
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5474
 
 **Structure:** Texto descritivo, indicador opcional de destino externo e foco visível.
 **Logic:** Destino é navegação; mudança no estado atual é ação e deve usar Button.
@@ -150,7 +150,7 @@
 ---
 
 ## [COMPONENT] Tabs
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 2827
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5223
 
 **Structure:** Tablist, tabs, indicador ativo e painéis associados.
 **Logic:** Cada aba representa uma visão irmã, não uma etapa sequencial.
@@ -163,7 +163,7 @@
 ---
 
 ## [COMPONENT] Card
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 2968
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5843
 
 **Structure:** Container, título, metadados, corpo e ações opcionais.
 **Logic:** A borda visual deve refletir uma fronteira semântica real.
@@ -176,7 +176,7 @@
 ---
 
 ## [COMPONENT] Modal/Dialog
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 3133
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5820
 
 **Structure:** Backdrop, dialog nomeado, conteúdo, ação primária, cancelamento e fechar.
 **Logic:** A interrupção só se justifica quando concluir ou cancelar é necessário antes de continuar.
@@ -189,7 +189,7 @@
 ---
 
 ## [COMPONENT] Table/Data Table
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 3174
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5826
 
 **Structure:** Caption, cabeçalhos, corpo, ordenação e ações de linha opcionais.
 **Logic:** Tabela é ideal quando cruzar valores por cabeçalho é a tarefa principal.
@@ -202,7 +202,7 @@
 ---
 
 ## [COMPONENT] Alert
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 3013
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5429
 
 **Structure:** Ícone semântico, título, mensagem e ação ou dismiss opcional.
 **Logic:** A severidade deve refletir consequência real, não preferência visual.
@@ -215,7 +215,7 @@
 ---
 
 ## [COMPONENT] Toast/Notification
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 3023
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5697
 
 **Structure:** Container flutuante, mensagem, ícone e ação curta opcional.
 **Logic:** A mensagem deve ser curta, autossuficiente e dispensável após poucos segundos.
@@ -228,7 +228,7 @@
 ---
 
 ## [COMPONENT] Skeleton Loader
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 3005
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5601
 
 **Structure:** Blocos neutros com dimensões próximas do conteúdo final e animação moderada.
 **Logic:** Imitar a forma final reduz mudança de layout e melhora percepção de velocidade.
@@ -241,7 +241,7 @@
 ---
 
 ## [COMPONENT] Explanation Bubble / Tooltip
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 2993
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5644
 
 **Structure:** Trigger nomeado, bolha curta, seta opcional e posicionamento adaptativo.
 **Logic:** A explicação complementa o conteúdo visível; informação essencial não pode depender dela.
@@ -254,7 +254,7 @@
 ---
 
 ## [XAI_COMPONENT] Confidence Badge
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 3083
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5674
 
 **Structure:** Percentual ou faixa, rótulo semântico e acesso à explicação da calibração.
 **Logic:** Confiança deriva da qualidade da evidência, não do tom assertivo da resposta.
@@ -267,7 +267,7 @@
 ---
 
 ## [COMPONENT] Command Palette / Barra de Comandos
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 3071
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5944
 
 **Structure:** Dialog, input de busca, grupos, resultados, atalhos e estado vazio.
 **Logic:** A consulta reduz o espaço de opções e combina descoberta com produtividade.
@@ -280,7 +280,7 @@
 ---
 
 ## [XAI_COMPONENT] Source Attribution
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 2966
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5357
 
 **Structure:** Fonte, trecho, relevância, metadados e ação para inspecionar contexto.
 **Logic:** Rastreabilidade transforma resposta fluente em conhecimento verificável.
@@ -293,7 +293,7 @@
 ---
 
 ## [XAI_COMPONENT] Audit Panel
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 3079
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5507
 
 **Structure:** Linha do tempo, eventos, entradas, saídas, status e artefatos exportáveis.
 **Logic:** Detalhes de processo ficam disponíveis sob demanda sem competir com a resposta principal.
@@ -306,7 +306,7 @@
 ---
 
 ## [COMPONENT] Typography
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 3026
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5320
 
 **Structure:** Tokens de display, heading, body, label e code com regras de uso.
 **Logic:** Escala e peso devem refletir a prioridade epistemológica do conteúdo.
@@ -319,7 +319,7 @@
 ---
 
 ## [COMPONENT] Icon
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 2937
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5083
 
 **Structure:** Glyph vetorial, tamanho por token, stroke consistente e label quando necessário.
 **Logic:** Ícones apoiam reconhecimento, mas rótulos sustentam compreensão.
@@ -332,7 +332,7 @@
 ---
 
 ## [PATTERN] Dashboard
-**Source:** `PatternsPage.tsx`  **Status:** Stable  **Chars:** 541
+**Source:** `PatternsPage.tsx`  **Status:** Stable  **Chars:** 540
 
 **Structure:** Centralized telemetry hub with high-density data visualization and contextual action bars.
 **Logic:** Aggregation of disparate data sources into a unified cognitive plane.
@@ -343,7 +343,7 @@
 ---
 
 ## [PATTERN] Multi-step Form
-**Source:** `PatternsPage.tsx`  **Status:** Stable  **Chars:** 676
+**Source:** `PatternsPage.tsx`  **Status:** Stable  **Chars:** 675
 
 **Structure:** Input fields fragmented into thematic logical blocks, each scoped to a single decision or data group, with persistent progress indication.
 **Logic:** Reduces overwhelm by sequencing decisions and maintaining momentum through completion.
@@ -354,7 +354,7 @@
 ---
 
 ## [PATTERN] Onboarding
-**Source:** `PatternsPage.tsx`  **Status:** Stable  **Chars:** 682
+**Source:** `PatternsPage.tsx`  **Status:** Stable  **Chars:** 681
 
 **Structure:** Progressive disclosure sequence that introduces key features through contextual education without interrupting the primary workflow.
 **Context Of Use:** First-run experiences, post-signup activation, feature discovery after major updates and role-based capability reveals.
@@ -365,7 +365,7 @@
 ---
 
 ## [PATTERN] Data Explorer
-**Source:** `PatternsPage.tsx`  **Status:** Stable  **Chars:** 679
+**Source:** `PatternsPage.tsx`  **Status:** Stable  **Chars:** 678
 
 **Structure:** Dynamic filtering interface with faceted search, drill-down capabilities and cross-dimensional analysis controls over large datasets.
 **Logic:** Hypothesis-driven exploration where users define queries and the system surfaces relevant subsets.
@@ -376,7 +376,7 @@
 ---
 
 ## [PATTERN] Empty States
-**Source:** `PatternsPage.tsx`  **Status:** Stable  **Chars:** 755
+**Source:** `PatternsPage.tsx`  **Status:** Stable  **Chars:** 754
 
 **Structure:** Intentional placeholder view combining explanation, hierarchy and one primary action scoped to the empty container.
 **Logic:** Transforms absence into guidance, turning the first interaction with a feature into a conversion moment.
@@ -388,7 +388,7 @@
 ---
 
 ## [PATTERN] Settings & Config
-**Source:** `PatternsPage.tsx`  **Status:** Stable  **Chars:** 452
+**Source:** `PatternsPage.tsx`  **Status:** Stable  **Chars:** 451
 
 **Logic:** Hierarchical nesting of system variables and user preferences.
 **Context Of Use:** Global application control, preferences, permissions and environment-level tuning.
@@ -398,7 +398,7 @@
 ---
 
 ## [PATTERN] Command Center
-**Source:** `PatternsPage.tsx`  **Status:** Stable  **Chars:** 391
+**Source:** `PatternsPage.tsx`  **Status:** Stable  **Chars:** 390
 
 **Structure:** Single-input, modal-driven command surface backed by keyboard shortcuts and semantic matching.
 **Trade Offs:** Fastest pattern for experts, but almost invisible to new users without clear onboarding or discoverability cues.
@@ -407,7 +407,7 @@
 ---
 
 ## [PATTERN] Focus Mode
-**Source:** `PatternsPage.tsx`  **Status:** Stable  **Chars:** 778
+**Source:** `PatternsPage.tsx`  **Status:** Stable  **Chars:** 777
 
 **Structure:** A modal or full-screen overlay that isolates a single artifact by collapsing sidebars, notifications and peripheral navigation.
 **Logic:** Eliminates context switching cost and lowers the cognitive price of sustaining attention on one objective.
@@ -419,7 +419,7 @@
 ---
 
 ## [PATTERN] Collaboration
-**Source:** `PatternsPage.tsx`  **Status:** Stable  **Chars:** 749
+**Source:** `PatternsPage.tsx`  **Status:** Stable  **Chars:** 748
 
 **Structure:** Real-time presence indicators, conflict-resolution UI and co-editing primitives layered onto an existing single-user interface.
 **Logic:** Operational transformation or CRDT-based synchronization turns presence into first-class interface data.
@@ -431,7 +431,7 @@
 ---
 
 ## [PATTERN] Timeline
-**Source:** `PatternsPage.tsx`  **Status:** Stable  **Chars:** 728
+**Source:** `PatternsPage.tsx`  **Status:** Stable  **Chars:** 727
 
 **Structure:** Chronological log of state mutations, user actions or system events with actor identity, timestamps and restore affordances.
 **Logic:** Treats every meaningful change as an immutable event, turning time into a navigable axis.
@@ -443,7 +443,7 @@
 ---
 
 ## [PATTERN] Entity Picker
-**Source:** `PatternsPage.tsx`  **Status:** Stable  **Chars:** 731
+**Source:** `PatternsPage.tsx`  **Status:** Stable  **Chars:** 730
 
 **Structure:** Inline or popover search-driven selector for relational entities with type-ahead, multi-select and preview chips.
 **Logic:** Creates typed references instead of duplicating data, preserving authority in the source context.
@@ -455,7 +455,7 @@
 ---
 
 ## [TOKEN] primary-50
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 189
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 188
 
 **Structure:** primary / color / primitive
 **Logic:** Lightest brand tint for subtle emphasis.
@@ -467,7 +467,7 @@
 ---
 
 ## [TOKEN] primary-100
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 185
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 184
 
 **Structure:** primary / color / primitive
 **Logic:** Soft brand tint for quiet selected surfaces.
@@ -479,7 +479,7 @@
 ---
 
 ## [TOKEN] primary-200
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 182
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 181
 
 **Structure:** primary / color / primitive
 **Logic:** Core light accent and focus foundation.
@@ -491,7 +491,7 @@
 ---
 
 ## [TOKEN] primary-300
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 193
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 192
 
 **Structure:** primary / color / primitive
 **Logic:** Secondary brand accent and source emphasis.
@@ -503,7 +503,7 @@
 ---
 
 ## [TOKEN] primary-400
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 187
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 186
 
 **Structure:** primary / color / primitive
 **Logic:** Mid accent for stronger interactive emphasis.
@@ -515,7 +515,7 @@
 ---
 
 ## [TOKEN] primary-500
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 187
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 186
 
 **Structure:** primary / color / primitive
 **Logic:** Saturated accent for dense visual states.
@@ -527,7 +527,7 @@
 ---
 
 ## [TOKEN] primary-600
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 193
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 192
 
 **Structure:** primary / color / primitive
 **Logic:** Deep accent for pressed and layered states.
@@ -539,7 +539,7 @@
 ---
 
 ## [TOKEN] primary-700
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 191
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 190
 
 **Structure:** primary / color / primitive
 **Logic:** Deepest brand tone for translucent selection.
@@ -551,7 +551,7 @@
 ---
 
 ## [TOKEN] surface-lowest
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 185
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 184
 
 **Structure:** surface / color / primitive
 **Logic:** Lowest depth and maximum visual separation.
@@ -563,7 +563,7 @@
 ---
 
 ## [TOKEN] background
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 173
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 172
 
 **Structure:** surface / color / primitive
 **Logic:** Application canvas in dark mode.
@@ -575,7 +575,7 @@
 ---
 
 ## [TOKEN] surface-container-low
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 183
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 182
 
 **Structure:** surface / color / primitive
 **Logic:** Low-elevation content region.
@@ -587,7 +587,7 @@
 ---
 
 ## [TOKEN] surface-container
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 168
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 167
 
 **Structure:** surface / color / primitive
 **Logic:** Default container surface.
@@ -599,7 +599,7 @@
 ---
 
 ## [TOKEN] surface-container-high
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 184
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 183
 
 **Structure:** surface / color / primitive
 **Logic:** Elevated container and dialog base.
@@ -611,7 +611,7 @@
 ---
 
 ## [TOKEN] surface-container-highest
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 203
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 202
 
 **Structure:** surface / color / primitive
 **Logic:** Highest opaque surface and popover base.
@@ -623,7 +623,7 @@
 ---
 
 ## [TOKEN] surface-bright
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 183
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 182
 
 **Structure:** surface / color / primitive
 **Logic:** Brightest dark surface for placeholders.
@@ -635,7 +635,7 @@
 ---
 
 ## [TOKEN] --velaris-color-primary
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 227
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 226
 
 **Structure:** semantic-color / color / semantic
 **Logic:** Primary semantic action and focus color. Resolves to primary-200.
@@ -647,7 +647,7 @@
 ---
 
 ## [TOKEN] --velaris-color-secondary
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 215
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 214
 
 **Structure:** semantic-color / color / semantic
 **Logic:** Secondary semantic accent. Resolves to primary-300.
@@ -659,7 +659,7 @@
 ---
 
 ## [TOKEN] --velaris-color-success
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 217
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 216
 
 **Structure:** semantic-color / color / semantic
 **Logic:** Successful completion and positive evidence.
@@ -671,7 +671,7 @@
 ---
 
 ## [TOKEN] --velaris-color-warning
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 215
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 214
 
 **Structure:** semantic-color / color / semantic
 **Logic:** Caution, partial evidence, and medium confidence.
@@ -683,7 +683,7 @@
 ---
 
 ## [TOKEN] --velaris-color-error
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 211
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 210
 
 **Structure:** semantic-color / color / semantic
 **Logic:** Error, destructive action, and conflict.
@@ -695,7 +695,7 @@
 ---
 
 ## [TOKEN] display-xl
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 210
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 209
 
 **Structure:** typography / system / primitive
 **Logic:** Hero headlines and identity surfaces.
@@ -707,7 +707,7 @@
 ---
 
 ## [TOKEN] heading-lg
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 212
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 211
 
 **Structure:** typography / system / primitive
 **Logic:** Major sections and content anchors.
@@ -719,7 +719,7 @@
 ---
 
 ## [TOKEN] body-md
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 200
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 199
 
 **Structure:** typography / system / primitive
 **Logic:** Readable interface copy with balanced rhythm.
@@ -731,7 +731,7 @@
 ---
 
 ## [TOKEN] label-sm
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 222
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 221
 
 **Structure:** typography / system / primitive
 **Logic:** Metadata, compact navigation, and chips.
@@ -743,7 +743,7 @@
 ---
 
 ## [TOKEN] space-1
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 183
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 182
 
 **Structure:** spacing / system / primitive
 **Logic:** Micro alignment and icon breathing room.
@@ -755,7 +755,7 @@
 ---
 
 ## [TOKEN] space-2
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 172
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 171
 
 **Structure:** spacing / system / primitive
 **Logic:** Compact group spacing and chips.
@@ -767,7 +767,7 @@
 ---
 
 ## [TOKEN] space-4
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 172
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 171
 
 **Structure:** spacing / system / primitive
 **Logic:** Default card padding and form rhythm.
@@ -779,7 +779,7 @@
 ---
 
 ## [TOKEN] space-6
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 170
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 169
 
 **Structure:** spacing / system / primitive
 **Logic:** Section blocks and content density.
@@ -791,7 +791,7 @@
 ---
 
 ## [TOKEN] space-10
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 170
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 169
 
 **Structure:** spacing / system / primitive
 **Logic:** Hero spacing and layout separation.
@@ -803,7 +803,7 @@
 ---
 
 ## [TOKEN] radius-sm
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 174
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 173
 
 **Structure:** radius-shadow / system / primitive
 **Logic:** Inputs, pills, and compact cards.
@@ -815,7 +815,7 @@
 ---
 
 ## [TOKEN] radius-md
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 173
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 172
 
 **Structure:** radius-shadow / system / primitive
 **Logic:** Standard panels and control groups.
@@ -827,7 +827,7 @@
 ---
 
 ## [TOKEN] radius-xl
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 178
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 177
 
 **Structure:** radius-shadow / system / primitive
 **Logic:** Hero cards and immersive surfaces.
@@ -839,7 +839,7 @@
 ---
 
 ## [TOKEN] shadow-glow
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 219
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 218
 
 **Structure:** radius-shadow / system / primitive
 **Logic:** Specialized Velaris ambient emphasis.
@@ -851,7 +851,7 @@
 ---
 
 ## [TOKEN] motion-fast
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 183
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 182
 
 **Structure:** motion / system / primitive
 **Logic:** Micro interactions and control feedback.
@@ -863,7 +863,7 @@
 ---
 
 ## [TOKEN] motion-base
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 189
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 188
 
 **Structure:** motion / system / primitive
 **Logic:** Default transitions for cards and layout shifts.
@@ -875,7 +875,7 @@
 ---
 
 ## [TOKEN] motion-slow
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 181
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 180
 
 **Structure:** motion / system / primitive
 **Logic:** Meaningful emphasis and staged reveals.
@@ -887,7 +887,7 @@
 ---
 
 ## [TOKEN] easing-signature
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 210
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 209
 
 **Structure:** motion / system / primitive
 **Logic:** Smooth movement without abrupt stops.
@@ -899,7 +899,7 @@
 ---
 
 ## [TOKEN] text-primary
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 195
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 194
 
 **Structure:** text / color / semantic
 **Logic:** Highest-priority readable text on dark surfaces.
@@ -911,7 +911,7 @@
 ---
 
 ## [TOKEN] text-secondary
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 186
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 185
 
 **Structure:** text / color / semantic
 **Logic:** Supporting copy with reduced emphasis.
@@ -923,7 +923,7 @@
 ---
 
 ## [TOKEN] text-muted
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 180
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 179
 
 **Structure:** text / color / semantic
 **Logic:** Quiet metadata and low-priority labels.
@@ -935,7 +935,7 @@
 ---
 
 ## [TOKEN] text-disabled
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 202
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 201
 
 **Structure:** text / color / semantic
 **Logic:** Unavailable text while preserving legibility.
@@ -947,7 +947,7 @@
 ---
 
 ## [TOKEN] text-inverse
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 193
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 192
 
 **Structure:** text / color / semantic
 **Logic:** Text placed on light primary surfaces.
@@ -959,7 +959,7 @@
 ---
 
 ## [TOKEN] border-subtle
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 189
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 188
 
 **Structure:** border / color / semantic
 **Logic:** Quiet structural separation.
@@ -971,7 +971,7 @@
 ---
 
 ## [TOKEN] border-default
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 200
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 199
 
 **Structure:** border / color / semantic
 **Logic:** Default control and container boundary.
@@ -983,7 +983,7 @@
 ---
 
 ## [TOKEN] border-strong
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 188
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 187
 
 **Structure:** border / color / semantic
 **Logic:** High-emphasis structural boundary.
@@ -995,7 +995,7 @@
 ---
 
 ## [TOKEN] border-focus
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 199
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 198
 
 **Structure:** border / color / semantic
 **Logic:** Focused or selected boundary. Resolves to primary-200.
@@ -1007,7 +1007,7 @@
 ---
 
 ## [TOKEN] state-hover-bg
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 204
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 203
 
 **Structure:** interaction / color / semantic
 **Logic:** Subtle hover fill on dark surfaces.
@@ -1019,7 +1019,7 @@
 ---
 
 ## [TOKEN] state-hover-border
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 213
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 212
 
 **Structure:** interaction / color / semantic
 **Logic:** Hover boundary with restrained brand emphasis.
@@ -1031,7 +1031,7 @@
 ---
 
 ## [TOKEN] state-pressed-bg
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 208
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 207
 
 **Structure:** interaction / color / semantic
 **Logic:** Pressed feedback for immediate controls.
@@ -1043,7 +1043,7 @@
 ---
 
 ## [TOKEN] state-selected-bg
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 210
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 209
 
 **Structure:** interaction / color / semantic
 **Logic:** Selected surface derived from primary-700.
@@ -1055,7 +1055,7 @@
 ---
 
 ## [TOKEN] state-disabled-bg
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 214
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 213
 
 **Structure:** interaction / color / semantic
 **Logic:** Disabled fill that remains distinguishable.
@@ -1067,7 +1067,7 @@
 ---
 
 ## [TOKEN] focus-ring
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 228
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 227
 
 **Structure:** interaction / system / semantic
 **Logic:** Keyboard focus contract derived from primary-200.
@@ -1079,7 +1079,7 @@
 ---
 
 ## [TOKEN] feedback-info-bg
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 203
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 202
 
 **Structure:** feedback / color / semantic
 **Logic:** Neutral explanatory feedback surface.
@@ -1091,7 +1091,7 @@
 ---
 
 ## [TOKEN] feedback-info-border
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 199
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 198
 
 **Structure:** feedback / color / semantic
 **Logic:** Boundary for informational feedback.
@@ -1103,7 +1103,7 @@
 ---
 
 ## [TOKEN] feedback-success-bg
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 202
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 201
 
 **Structure:** feedback / color / semantic
 **Logic:** Successful completion surface.
@@ -1115,7 +1115,7 @@
 ---
 
 ## [TOKEN] feedback-success-border
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 197
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 196
 
 **Structure:** feedback / color / semantic
 **Logic:** Boundary for successful feedback.
@@ -1127,7 +1127,7 @@
 ---
 
 ## [TOKEN] feedback-warning-bg
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 207
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 206
 
 **Structure:** feedback / color / semantic
 **Logic:** Caution and partial-evidence surface.
@@ -1139,7 +1139,7 @@
 ---
 
 ## [TOKEN] feedback-warning-border
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 202
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 201
 
 **Structure:** feedback / color / semantic
 **Logic:** Boundary for cautionary feedback.
@@ -1151,7 +1151,7 @@
 ---
 
 ## [TOKEN] feedback-error-bg
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 206
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 205
 
 **Structure:** feedback / color / semantic
 **Logic:** Error and blocking feedback surface.
@@ -1163,7 +1163,7 @@
 ---
 
 ## [TOKEN] feedback-error-border
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 216
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 215
 
 **Structure:** feedback / color / semantic
 **Logic:** Boundary for error and conflict feedback.
@@ -1175,7 +1175,7 @@
 ---
 
 ## [TOKEN] feedback-info-icon
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 205
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 204
 
 **Structure:** feedback / color / semantic
 **Logic:** Informational icon and foreground. Resolves to primary-200.
@@ -1187,7 +1187,7 @@
 ---
 
 ## [TOKEN] feedback-error-icon
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 221
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 220
 
 **Structure:** feedback / color / semantic
 **Logic:** Error icon and foreground. Resolves to the semantic error color.
@@ -1199,7 +1199,7 @@
 ---
 
 ## [TOKEN] surface-overlay
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 222
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 221
 
 **Structure:** special-surface / color / semantic
 **Logic:** Opaque overlay surface above the application canvas.
@@ -1211,7 +1211,7 @@
 ---
 
 ## [TOKEN] surface-skeleton
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 212
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 211
 
 **Structure:** special-surface / color / semantic
 **Logic:** Loading placeholder derived from surface-bright.
@@ -1223,7 +1223,7 @@
 ---
 
 ## [TOKEN] surface-row-selected
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 213
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 212
 
 **Structure:** special-surface / color / semantic
 **Logic:** Selected data row derived from primary-700.
@@ -1235,7 +1235,7 @@
 ---
 
 ## [TOKEN] overlay-backdrop
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 218
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 217
 
 **Structure:** special-surface / color / semantic
 **Logic:** Backdrop that isolates modal and command contexts.
@@ -1247,7 +1247,7 @@
 ---
 
 ## [TOKEN] shadow-sm
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 206
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 205
 
 **Structure:** elevation / system / semantic
 **Logic:** Subtle elevation for cards and compact overlays.
@@ -1259,7 +1259,7 @@
 ---
 
 ## [TOKEN] shadow-md
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 203
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 202
 
 **Structure:** elevation / system / semantic
 **Logic:** Default floating-surface elevation.
@@ -1271,7 +1271,7 @@
 ---
 
 ## [TOKEN] shadow-lg
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 197
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 196
 
 **Structure:** elevation / system / semantic
 **Logic:** Strong isolation for blocking surfaces.
@@ -1283,7 +1283,7 @@
 ---
 
 ## [TOKEN] z-tooltip
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 163
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 162
 
 **Structure:** layering / system / semantic
 **Logic:** Tooltip and explanation bubble layer.
@@ -1295,7 +1295,7 @@
 ---
 
 ## [TOKEN] z-toast
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 164
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 163
 
 **Structure:** layering / system / semantic
 **Logic:** Transient notification layer.
@@ -1307,7 +1307,7 @@
 ---
 
 ## [TOKEN] z-modal
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 151
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 150
 
 **Structure:** layering / system / semantic
 **Logic:** Blocking dialog layer.
@@ -1319,7 +1319,7 @@
 ---
 
 ## [TOKEN] z-command
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 163
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 162
 
 **Structure:** layering / system / semantic
 **Logic:** Global command surface layer.
@@ -1331,7 +1331,7 @@
 ---
 
 ## [TOKEN] control-height-sm
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 192
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 191
 
 **Structure:** dimension / system / semantic
 **Logic:** Compact control height for dense contexts.
@@ -1343,7 +1343,7 @@
 ---
 
 ## [TOKEN] control-height-md
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 185
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 184
 
 **Structure:** dimension / system / semantic
 **Logic:** Default accessible control height.
@@ -1355,7 +1355,7 @@
 ---
 
 ## [TOKEN] control-height-lg
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 203
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 202
 
 **Structure:** dimension / system / semantic
 **Logic:** Prominent control height for primary tasks.
@@ -1367,7 +1367,7 @@
 ---
 
 ## [TOKEN] target-size-min
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 199
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 198
 
 **Structure:** dimension / system / semantic
 **Logic:** Minimum interactive target for accessibility.
@@ -1379,7 +1379,7 @@
 ---
 
 ## [TOKEN] icon-size-sm
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 187
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 186
 
 **Structure:** dimension / system / semantic
 **Logic:** Compact icon size for metadata and controls.
@@ -1391,7 +1391,7 @@
 ---
 
 ## [TOKEN] icon-size-md
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 173
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 172
 
 **Structure:** dimension / system / semantic
 **Logic:** Default interface icon size.
@@ -1403,7 +1403,7 @@
 ---
 
 ## [TOKEN] icon-size-lg
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 200
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 199
 
 **Structure:** dimension / system / semantic
 **Logic:** Prominent icon size for feedback and navigation.
@@ -1415,7 +1415,7 @@
 ---
 
 ## [TOKEN] heading-md
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 220
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 219
 
 **Structure:** typography / system / semantic
 **Logic:** Panel and component documentation heading.
@@ -1427,7 +1427,7 @@
 ---
 
 ## [TOKEN] body-sm
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 198
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 197
 
 **Structure:** typography / system / semantic
 **Logic:** Compact explanatory and form copy.
@@ -1439,7 +1439,7 @@
 ---
 
 ## [TOKEN] caption
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 195
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 194
 
 **Structure:** typography / system / semantic
 **Logic:** Metadata, timestamps, and provenance.
@@ -1451,7 +1451,7 @@
 ---
 
 ## [TOKEN] code-sm
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 210
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 209
 
 **Structure:** typography / system / semantic
 **Logic:** Readable snippets and technical evidence.
@@ -1463,7 +1463,7 @@
 ---
 
 ## [TOKEN] xai-source-bg
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 203
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 202
 
 **Structure:** xai / color / xai
 **Logic:** Grounded source and provenance surface.
@@ -1475,7 +1475,7 @@
 ---
 
 ## [TOKEN] xai-source-border
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 192
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 191
 
 **Structure:** xai / color / xai
 **Logic:** Inspectable source boundary. Resolves to primary-300.
@@ -1487,7 +1487,7 @@
 ---
 
 ## [TOKEN] xai-evidence-highlight
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 224
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 223
 
 **Structure:** xai / color / xai
 **Logic:** Evidence emphasis derived from primary-200 with opacity.
@@ -1499,19 +1499,199 @@
 ---
 
 ## [TOKEN] xai-audit-running
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 184
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 186
 
 **Structure:** xai / color / xai
 **Logic:** Audit process currently executing.
-**Context Of Use:** Audit Panel, Chat da Beatrice
+**Context Of Use:** Audit Panel, Consulta ao Abraxos
 **When To Use:** Use the xai-audit-running contract wherever the documented component context applies.
 **When Not To Use:** Do not replace this contract with an unrelated raw value or one-off state token.
 **Aetheris Insight:** Canonical tokens centralize values while semantic layers preserve explicit usage intent.
 
 ---
 
+## [TOKEN] technical.foreground
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 285
+
+**Structure:** technical / color / semantic
+**Logic:** Default monospace foreground for technical surfaces. Lavender base, easier on the eyes than saturated IDE defaults.
+**Context Of Use:** Code block, trace panel, inline code
+**When To Use:** Use the technical.foreground contract wherever the documented component context applies.
+**When Not To Use:** Do not replace this contract with an unrelated raw value or one-off state token.
+**Aetheris Insight:** Canonical tokens centralize values while semantic layers preserve explicit usage intent.
+
+---
+
+## [TOKEN] technical.keyword
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 247
+
+**Structure:** technical / color / semantic
+**Logic:** Reserved words, pipeline stages, and language keywords in technical surfaces.
+**Context Of Use:** Code Snippet, Execution Trace, Pipeline
+**When To Use:** Use the technical.keyword contract wherever the documented component context applies.
+**When Not To Use:** Do not replace this contract with an unrelated raw value or one-off state token.
+**Aetheris Insight:** Canonical tokens centralize values while semantic layers preserve explicit usage intent.
+
+---
+
+## [TOKEN] technical.type
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 237
+
+**Structure:** technical / color / semantic
+**Logic:** Types, classes, entities, enums, and schema metadata such as page_type.
+**Context Of Use:** Developers, Corpus table, API Explorer
+**When To Use:** Use the technical.type contract wherever the documented component context applies.
+**When Not To Use:** Do not replace this contract with an unrelated raw value or one-off state token.
+**Aetheris Insight:** Canonical tokens centralize values while semantic layers preserve explicit usage intent.
+
+---
+
+## [TOKEN] technical.entity
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 236
+
+**Structure:** technical / color / semantic
+**Logic:** Reserved alias for domain entities. Currently resolves to technical.type.
+**Context Of Use:** Future: interfaces, domain models
+**When To Use:** Use the technical.entity contract wherever the documented component context applies.
+**When Not To Use:** Do not replace this contract with an unrelated raw value or one-off state token.
+**Aetheris Insight:** Canonical tokens centralize values while semantic layers preserve explicit usage intent.
+
+---
+
+## [TOKEN] technical.string
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 214
+
+**Structure:** technical / color / semantic
+**Logic:** Text literals, configuration values, and quoted labels.
+**Context Of Use:** Code Snippet, Dev Integration
+**When To Use:** Use the technical.string contract wherever the documented component context applies.
+**When Not To Use:** Do not replace this contract with an unrelated raw value or one-off state token.
+**Aetheris Insight:** Canonical tokens centralize values while semantic layers preserve explicit usage intent.
+
+---
+
+## [TOKEN] technical.property
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 249
+
+**Structure:** technical / color / semantic
+**Logic:** Properties, module names, and file paths. Resolves to technical.foreground.
+**Context Of Use:** Architecture tiers, RAG pipeline, Snippets
+**When To Use:** Use the technical.property contract wherever the documented component context applies.
+**When Not To Use:** Do not replace this contract with an unrelated raw value or one-off state token.
+**Aetheris Insight:** Canonical tokens centralize values while semantic layers preserve explicit usage intent.
+
+---
+
+## [TOKEN] technical.number
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 227
+
+**Structure:** technical / color / semantic
+**Logic:** Numeric data, metrics, targets, versions, and coverage values.
+**Context Of Use:** Evaluation META, Laboratory metrics
+**When To Use:** Use the technical.number contract wherever the documented component context applies.
+**When Not To Use:** Do not replace this contract with an unrelated raw value or one-off state token.
+**Aetheris Insight:** Canonical tokens centralize values while semantic layers preserve explicit usage intent.
+
+---
+
+## [TOKEN] technical.command
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 226
+
+**Structure:** technical / color / semantic
+**Logic:** Functions, executable shell commands, and runnable actions.
+**Context Of Use:** Developers, Dev Integration, Scripts
+**When To Use:** Use the technical.command contract wherever the documented component context applies.
+**When Not To Use:** Do not replace this contract with an unrelated raw value or one-off state token.
+**Aetheris Insight:** Canonical tokens centralize values while semantic layers preserve explicit usage intent.
+
+---
+
+## [TOKEN] technical.operator
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 217
+
+**Structure:** technical / color / semantic
+**Logic:** Operators, separators, and structural punctuation in code.
+**Context Of Use:** Code Snippet, Markdown code
+**When To Use:** Use the technical.operator contract wherever the documented component context applies.
+**When Not To Use:** Do not replace this contract with an unrelated raw value or one-off state token.
+**Aetheris Insight:** Canonical tokens centralize values while semantic layers preserve explicit usage intent.
+
+---
+
+## [TOKEN] technical.comment
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 229
+
+**Structure:** technical / color / semantic
+**Logic:** Secondary hints, trailing notes, and low-priority technical metadata.
+**Context Of Use:** Execution Trace, inline hints
+**When To Use:** Use the technical.comment contract wherever the documented component context applies.
+**When Not To Use:** Do not replace this contract with an unrelated raw value or one-off state token.
+**Aetheris Insight:** Canonical tokens centralize values while semantic layers preserve explicit usage intent.
+
+---
+
+## [TOKEN] technical.accent
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 221
+
+**Structure:** technical / color / semantic
+**Logic:** Focused technical highlight that is not branding or feedback.
+**Context Of Use:** Baseline tags, technical links
+**When To Use:** Use the technical.accent contract wherever the documented component context applies.
+**When Not To Use:** Do not replace this contract with an unrelated raw value or one-off state token.
+**Aetheris Insight:** Canonical tokens centralize values while semantic layers preserve explicit usage intent.
+
+---
+
+## [TOKEN] technical.surface
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 225
+
+**Structure:** technical / color / semantic
+**Logic:** Background for monospace blocks and engineering panels.
+**Context Of Use:** Code block, trace panel
+**When To Use:** Use the technical.surface contract wherever the documented component context applies.
+**When Not To Use:** Do not replace this contract with an unrelated raw value or one-off state token.
+**Aetheris Insight:** Canonical tokens centralize values while semantic layers preserve explicit usage intent.
+
+---
+
+## [TOKEN] technical.surface-border
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 213
+
+**Structure:** technical / color / semantic
+**Logic:** Structural border for technical blocks.
+**Context Of Use:** Code block, API panel
+**When To Use:** Use the technical.surface-border contract wherever the documented component context applies.
+**When Not To Use:** Do not replace this contract with an unrelated raw value or one-off state token.
+**Aetheris Insight:** Canonical tokens centralize values while semantic layers preserve explicit usage intent.
+
+---
+
+## [TOKEN] technical.chip-bg
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 203
+
+**Structure:** technical / color / semantic
+**Logic:** Inline technical chip background.
+**Context Of Use:** Path chip, artefact chip
+**When To Use:** Use the technical.chip-bg contract wherever the documented component context applies.
+**When Not To Use:** Do not replace this contract with an unrelated raw value or one-off state token.
+**Aetheris Insight:** Canonical tokens centralize values while semantic layers preserve explicit usage intent.
+
+---
+
+## [TOKEN] technical.chip-border
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 203
+
+**Structure:** technical / color / semantic
+**Logic:** Inline technical chip border.
+**Context Of Use:** Path chip, artefact chip
+**When To Use:** Use the technical.chip-border contract wherever the documented component context applies.
+**When Not To Use:** Do not replace this contract with an unrelated raw value or one-off state token.
+**Aetheris Insight:** Canonical tokens centralize values while semantic layers preserve explicit usage intent.
+
+---
+
 ## [TOKEN_ALIAS] state-selected-border
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 181
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 180
 
 **Structure:** state-selected-border → border-focus
 **Logic:** Selected controls reuse the focus boundary contract.
@@ -1524,7 +1704,7 @@
 ---
 
 ## [TOKEN_ALIAS] state-disabled-text
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 196
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 195
 
 **Structure:** state-disabled-text → text-disabled
 **Logic:** Disabled foreground is governed by the text contract.
@@ -1537,7 +1717,7 @@
 ---
 
 ## [TOKEN_ALIAS] state-disabled-border
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 204
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 203
 
 **Structure:** state-disabled-border → border-subtle
 **Logic:** Disabled boundaries remain quiet without a duplicate value.
@@ -1550,7 +1730,7 @@
 ---
 
 ## [TOKEN_ALIAS] feedback-info-text
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 183
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 182
 
 **Structure:** feedback-info-text → feedback-info-icon
 **Logic:** Info text and icon share the same foreground contract.
@@ -1563,7 +1743,7 @@
 ---
 
 ## [TOKEN_ALIAS] feedback-success-text
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 195
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 194
 
 **Structure:** feedback-success-text → --velaris-color-success
 **Logic:** Success foreground resolves to the semantic success color.
@@ -1576,7 +1756,7 @@
 ---
 
 ## [TOKEN_ALIAS] feedback-success-icon
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 189
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 188
 
 **Structure:** feedback-success-icon → --velaris-color-success
 **Logic:** Success icon resolves to the semantic success color.
@@ -1589,7 +1769,7 @@
 ---
 
 ## [TOKEN_ALIAS] feedback-warning-text
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 195
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 194
 
 **Structure:** feedback-warning-text → --velaris-color-warning
 **Logic:** Warning foreground resolves to the semantic warning color.
@@ -1602,7 +1782,7 @@
 ---
 
 ## [TOKEN_ALIAS] feedback-warning-icon
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 189
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 188
 
 **Structure:** feedback-warning-icon → --velaris-color-warning
 **Logic:** Warning icon resolves to the semantic warning color.
@@ -1615,7 +1795,7 @@
 ---
 
 ## [TOKEN_ALIAS] feedback-error-text
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 181
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 180
 
 **Structure:** feedback-error-text → feedback-error-icon
 **Logic:** Error text and icon share one foreground contract.
@@ -1628,7 +1808,7 @@
 ---
 
 ## [TOKEN_ALIAS] xai-confidence-high
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 181
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 180
 
 **Structure:** xai-confidence-high → --velaris-color-success
 **Logic:** High calibrated confidence reuses semantic success.
@@ -1641,7 +1821,7 @@
 ---
 
 ## [TOKEN_ALIAS] xai-confidence-medium
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 189
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 188
 
 **Structure:** xai-confidence-medium → --velaris-color-warning
 **Logic:** Medium confidence communicates caution without a new hue.
@@ -1654,7 +1834,7 @@
 ---
 
 ## [TOKEN_ALIAS] xai-confidence-low
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 175
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 174
 
 **Structure:** xai-confidence-low → --velaris-color-error
 **Logic:** Low confidence reuses the semantic error signal.
@@ -1667,7 +1847,7 @@
 ---
 
 ## [TOKEN_ALIAS] xai-audit-complete
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 169
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 168
 
 **Structure:** xai-audit-complete → --velaris-color-success
 **Logic:** Completed audits reuse semantic success.
@@ -1680,7 +1860,7 @@
 ---
 
 ## [TOKEN_ALIAS] xai-audit-conflict
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 177
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 176
 
 **Structure:** xai-audit-conflict → --velaris-color-error
 **Logic:** Policy or evidence conflicts reuse semantic error.
@@ -1693,7 +1873,7 @@
 ---
 
 ## [TOKEN_ALIAS] surface-dialog
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 188
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 187
 
 **Structure:** surface-dialog → surface-container-high
 **Logic:** Dialog is a semantic usage contract over the high container.
@@ -1706,7 +1886,7 @@
 ---
 
 ## [TOKEN_ALIAS] surface-popover
-**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 196
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 195
 
 **Structure:** surface-popover → surface-container-highest
 **Logic:** Popover is a semantic usage contract over the highest container.
@@ -1718,8 +1898,47 @@
 
 ---
 
+## [TOKEN_ALIAS] technical.path
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 171
+
+**Structure:** technical.path → technical.property
+**Logic:** File and module paths reuse the property role.
+**Context Of Use:** Technical semantic contract
+**When To Use:** Reference technical.path when the usage intent differs from its canonical target.
+**When Not To Use:** Do not duplicate the resolved value as a new canonical token.
+**Trade Offs:** The alias adds semantic vocabulary without increasing the canonical value inventory.
+**Aetheris Insight:** Aliases keep component intent explicit while preventing unnecessary value duplication.
+
+---
+
+## [TOKEN_ALIAS] technical.metadata
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 171
+
+**Structure:** technical.metadata → technical.type
+**Logic:** Schema metadata and enums reuse the type role.
+**Context Of Use:** Technical semantic contract
+**When To Use:** Reference technical.metadata when the usage intent differs from its canonical target.
+**When Not To Use:** Do not duplicate the resolved value as a new canonical token.
+**Trade Offs:** The alias adds semantic vocabulary without increasing the canonical value inventory.
+**Aetheris Insight:** Aliases keep component intent explicit while preventing unnecessary value duplication.
+
+---
+
+## [TOKEN_ALIAS] technical.link
+**Source:** `TokensPage.tsx`  **Status:** Stable  **Chars:** 175
+
+**Structure:** technical.link → technical.accent
+**Logic:** Technical documentation links reuse the accent role.
+**Context Of Use:** Technical semantic contract
+**When To Use:** Reference technical.link when the usage intent differs from its canonical target.
+**When Not To Use:** Do not duplicate the resolved value as a new canonical token.
+**Trade Offs:** The alias adds semantic vocabulary without increasing the canonical value inventory.
+**Aetheris Insight:** Aliases keep component intent explicit while preventing unnecessary value duplication.
+
+---
+
 ## [DESIGN_DECISION] Side Drawer vs Modal Overlay
-**Source:** `DesignDecisionsPage.tsx`  **Status:** Stable  **Chars:** 620
+**Source:** `DesignDecisionsPage.tsx`  **Status:** Stable  **Chars:** 619
 
 **Structure:** Decision tree based on user focus requirements
 **Logic:** Spatial continuity vs. attention isolation trade-off.
@@ -1732,7 +1951,7 @@
 ---
 
 ## [DESIGN_DECISION] Primary vs. Secondary Button Logic
-**Source:** `DesignDecisionsPage.tsx`  **Status:** Stable  **Chars:** 205
+**Source:** `DesignDecisionsPage.tsx`  **Status:** Stable  **Chars:** 204
 
 **Logic:** When to use the signature gradient versus restrained secondary treatments for terminal actions.
 **Context Of Use:** Rule 08: Action Hierarchy
@@ -1740,7 +1959,7 @@
 ---
 
 ## [DESIGN_DECISION] List vs. Bento
-**Source:** `DesignDecisionsPage.tsx`  **Status:** Stable  **Chars:** 500
+**Source:** `DesignDecisionsPage.tsx`  **Status:** Stable  **Chars:** 499
 
 **Logic:** List layout excels for scannable, sequential data with consistent row density. Bento grid excels for heterogeneous content where size encodes priority : larger cells signal higher importance. Use List when users compare items row by row. Use Bento when visual hierarchy and content variety matter more than strict alignment. Trade-off: Bento requires more design effort per item; List is faster to implement but less expressive.
 **Context Of Use:** Rule 12
@@ -1748,15 +1967,71 @@
 ---
 
 ## [DESIGN_DECISION] Haptic Feedback
-**Source:** `DesignDecisionsPage.tsx`  **Status:** Stable  **Chars:** 542
+**Source:** `DesignDecisionsPage.tsx`  **Status:** Stable  **Chars:** 541
 
 **Logic:** Haptic feedback confirms high-stakes or irreversible actions on mobile : deletes, confirmations and state toggles. Reserve for moments where tactile confirmation reduces user anxiety about permanence. When to use: destructive actions, form submissions, binary state changes. When not to use: passive events, informational toasts, decorative interactions. Trade-off: overuse degrades trust and drains battery; underuse leaves users uncertain after consequential actions.
 **Context Of Use:** Rule 15
 
 ---
 
+## [GUIDELINE] Velaris Guideline Architecture
+**Source:** `GuidelinesPage.tsx`  **Status:** Stable  **Chars:** 336
+
+**Logic:** Formal guideline architecture for the Velaris design system.
+**Context Of Use:** Foundations hub, governance analysis, principle conflict mode.
+
+---
+
+## [GUIDELINE] Clarity & Hierarchy
+**Source:** `GuidelinesPage.tsx`  **Status:** Stable  **Chars:** 236
+
+**Logic:** Make the primary message unmistakable before users parse supporting detail.
+**Context Of Use:** Design principles, governance and explainable recommendations.
+
+---
+
+## [GUIDELINE] Cognitive Empathy
+**Source:** `GuidelinesPage.tsx`  **Status:** Stable  **Chars:** 240
+
+**Logic:** Design around the user's mental model instead of the system's internal structure.
+**Context Of Use:** Design principles, governance and explainable recommendations.
+
+---
+
+## [GUIDELINE] Feedback & Trust
+**Source:** `GuidelinesPage.tsx`  **Status:** Stable  **Chars:** 242
+
+**Logic:** Fast, contextual feedback builds confidence and keeps intent connected to response.
+**Context Of Use:** Design principles, governance and explainable recommendations.
+
+---
+
+## [GUIDELINE] Language & Tone
+**Source:** `GuidelinesPage.tsx`  **Status:** Stable  **Chars:** 216
+
+**Logic:** Language should be direct, human and sensitive to context.
+**Context Of Use:** Design principles, governance and explainable recommendations.
+
+---
+
+## [GUIDELINE] Inclusion & Resilience
+**Source:** `GuidelinesPage.tsx`  **Status:** Stable  **Chars:** 244
+
+**Logic:** Accessible, forgiving systems should support broad human needs from the start.
+**Context Of Use:** Design principles, governance and explainable recommendations.
+
+---
+
+## [GUIDELINE] Systems & Performance
+**Source:** `GuidelinesPage.tsx`  **Status:** Stable  **Chars:** 241
+
+**Logic:** Consistency, motion and performance make the product feel learnable and alive.
+**Context Of Use:** Design principles, governance and explainable recommendations.
+
+---
+
 ## [ACCESSIBILITY] Contraste e legibilidade
-**Source:** `FoundationsPage.tsx`  **Status:** Stable  **Chars:** 1190
+**Source:** `FoundationsPage.tsx`  **Status:** Stable  **Chars:** 1186
 
 **Structure:** Transversal accessibility contract
 **Logic:** Manter contraste AA como base; distinguir text-primary, text-secondary, text-muted e text-disabled; validar texto sobre glass surfaces; combinar feedback com texto e ícone
@@ -1768,7 +2043,7 @@
 ---
 
 ## [ACCESSIBILITY] Foco e navegação por teclado
-**Source:** `FoundationsPage.tsx`  **Status:** Stable  **Chars:** 1177
+**Source:** `FoundationsPage.tsx`  **Status:** Stable  **Chars:** 1176
 
 **Structure:** Transversal accessibility contract
 **Logic:** Tornar todo controle alcançável por teclado; aplicar focus-ring e border-focus de forma consistente; alinhar a ordem de tabulação à estrutura visual; restaurar o foco após overlays
@@ -1780,7 +2055,7 @@
 ---
 
 ## [ACCESSIBILITY] Alvo mínimo e densidade
-**Source:** `FoundationsPage.tsx`  **Status:** Stable  **Chars:** 1108
+**Source:** `FoundationsPage.tsx`  **Status:** Stable  **Chars:** 1104
 
 **Structure:** Transversal accessibility contract
 **Logic:** Usar target-size-min; manter 44px em controles principais; ampliar a área clicável de ícones compactos; separar ações adjacentes; testar densidade em telas menores
@@ -1792,7 +2067,7 @@
 ---
 
 ## [ACCESSIBILITY] Estados acessíveis
-**Source:** `FoundationsPage.tsx`  **Status:** Stable  **Chars:** 1126
+**Source:** `FoundationsPage.tsx`  **Status:** Stable  **Chars:** 1125
 
 **Structure:** Transversal accessibility contract
 **Logic:** Documentar hover, focus, pressed, selected, disabled, loading, error, expanded e collapsed; evitar mudanças apenas por opacidade; expor aria attributes quando aplicável
@@ -1804,7 +2079,7 @@
 ---
 
 ## [ACCESSIBILITY] Leitores de tela e semântica
-**Source:** `FoundationsPage.tsx`  **Status:** Stable  **Chars:** 1111
+**Source:** `FoundationsPage.tsx`  **Status:** Stable  **Chars:** 1109
 
 **Structure:** Transversal accessibility contract
 **Logic:** Usar labels visíveis; associar aria-describedby e mensagens de erro; aplicar aria-expanded e aria-invalid; nomear botões de ícone; usar role apenas quando necessário
@@ -1816,7 +2091,7 @@
 ---
 
 ## [ACCESSIBILITY] Feedback não apenas por cor
-**Source:** `FoundationsPage.tsx`  **Status:** Stable  **Chars:** 1157
+**Source:** `FoundationsPage.tsx`  **Status:** Stable  **Chars:** 1156
 
 **Structure:** Transversal accessibility contract
 **Logic:** Combinar success, warning, error e info com rótulo ou ícone; nomear o nível de confiança; identificar a origem da evidência; indicar conflitos e lacunas de auditoria
@@ -1828,7 +2103,7 @@
 ---
 
 ## [ACCESSIBILITY] Movimento seguro
-**Source:** `FoundationsPage.tsx`  **Status:** Stable  **Chars:** 1104
+**Source:** `FoundationsPage.tsx`  **Status:** Stable  **Chars:** 1100
 
 **Structure:** Transversal accessibility contract
 **Logic:** Usar transições curtas; respeitar prefers-reduced-motion; evitar animações bloqueantes; preservar foco durante mudanças; usar motion para explicar continuidade espacial
@@ -1840,7 +2115,7 @@
 ---
 
 ## [ACCESSIBILITY] Checklist de prontidão acessível
-**Source:** `FoundationsPage.tsx`  **Status:** Stable  **Chars:** 1494
+**Source:** `FoundationsPage.tsx`  **Status:** Stable  **Chars:** 1493
 
 **Structure:** 10 verificações de prontidão acessível
 **Logic:** 1. Possui foco visível. 2. Pode ser usado por teclado. 3. Tem label ou nome acessível. 4. Não comunica estado apenas por cor. 5. Mantém contraste adequado em dark mode. 6. Expõe estados disabled, loading, error e selected quando aplicável. 7. Usa tokens semânticos de texto, borda, foco e feedback. 8. Respeita alvo mínimo de interação. 9. Possui documentação de acessibilidade. 10. Possui exemplo de uso correto e incorreto.
@@ -1851,20 +2126,135 @@
 
 ---
 
+## [REASONING] Abraxos Explainable Reasoning
+**Source:** `ReasoningPage.tsx`  **Status:** Stable  **Chars:** 350
+
+**Logic:** Central surface for Abraxos cognitive architecture documentation.
+**Context Of Use:** Users learning how Abraxos reasons differently from a generic LLM.
+
+---
+
+## [REASONING] Cognitive Flow — Question ingestion
+**Source:** `ReasoningPage.tsx`  **Status:** Stable  **Chars:** 172
+
+**Logic:** User query enters the Abraxos pipeline.
+**Context Of Use:** Beatrice/Abraxos XAI reasoning pipeline.
+
+---
+
+## [REASONING] Cognitive Flow — Intent classification
+**Source:** `ReasoningPage.tsx`  **Status:** Stable  **Chars:** 183
+
+**Logic:** Abraxos classifies retrieval and response intent.
+**Context Of Use:** Beatrice/Abraxos XAI reasoning pipeline.
+
+---
+
+## [REASONING] Cognitive Flow — Skill activation
+**Source:** `ReasoningPage.tsx`  **Status:** Stable  **Chars:** 181
+
+**Logic:** Automatic cognitive skills activate based on context.
+**Context Of Use:** Beatrice/Abraxos XAI reasoning pipeline.
+
+---
+
+## [REASONING] Cognitive Flow — Retrieval
+**Source:** `ReasoningPage.tsx`  **Status:** Stable  **Chars:** 149
+
+**Logic:** Pipeline step: retrieval
+**Context Of Use:** Beatrice/Abraxos XAI reasoning pipeline.
+
+---
+
+## [REASONING] Cognitive Flow — Attribution
+**Source:** `ReasoningPage.tsx`  **Status:** Stable  **Chars:** 155
+
+**Logic:** Pipeline step: attribution
+**Context Of Use:** Beatrice/Abraxos XAI reasoning pipeline.
+
+---
+
+## [REASONING] Cognitive Flow — Calibration
+**Source:** `ReasoningPage.tsx`  **Status:** Stable  **Chars:** 155
+
+**Logic:** Pipeline step: calibration
+**Context Of Use:** Beatrice/Abraxos XAI reasoning pipeline.
+
+---
+
+## [REASONING] Cognitive Flow — Synthesis
+**Source:** `ReasoningPage.tsx`  **Status:** Stable  **Chars:** 149
+
+**Logic:** Pipeline step: synthesis
+**Context Of Use:** Beatrice/Abraxos XAI reasoning pipeline.
+
+---
+
+## [REASONING] Cognitive Flow — Answer
+**Source:** `ReasoningPage.tsx`  **Status:** Stable  **Chars:** 140
+
+**Logic:** Pipeline step: answer
+**Context Of Use:** Beatrice/Abraxos XAI reasoning pipeline.
+
+---
+
+## [REASONING] Reasoning Section — Overview
+**Source:** `ReasoningPage.tsx`  **Status:** Stable  **Chars:** 147
+
+**Logic:** Abraxos cognition — how questions become explainable answers.
+
+---
+
+## [REASONING] Reasoning Section — Evidence Weaver
+**Source:** `ReasoningPage.tsx`  **Status:** Stable  **Chars:** 169
+
+**Logic:** Evidence orchestration layer organizing intent, entities, sources and catalog.
+
+---
+
+## [REASONING] Reasoning Section — Abraxos Skills
+**Source:** `ReasoningPage.tsx`  **Status:** Stable  **Chars:** 154
+
+**Logic:** Twelve automatic skills activated without manual slash commands.
+
+---
+
+## [REASONING] Reasoning Section — Oracle Commands
+**Source:** `ReasoningPage.tsx`  **Status:** Stable  **Chars:** 162
+
+**Logic:** Nineteen user-triggered operational and investigative slash commands.
+
+---
+
+## [REASONING] Reasoning Section — Verifiable Pipeline
+**Source:** `ReasoningPage.tsx`  **Status:** Stable  **Chars:** 167
+
+**Logic:** Nine verifiable stages from query ingestion to confidence calibration.
+
+---
+
+## [REASONING] Evidence Weaver
+**Source:** `src/i18n/pages/reasoningPage.ts`  **Status:** Stable  **Chars:** 372
+
+**Logic:** Evidence orchestration before LLM composition.
+**Aetheris Insight:** The Weaver organizes available knowledge; Abraxos interprets it; the Pipeline proves the path.
+
+---
+
 ## [AUTOMATIC_SKILL] Component Fit Analysis
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 813
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 810
 
 **Structure:** Ativação automática
 **Logic:** Analisa se um componente é adequado para o contexto descrito pelo usuário.
 **Context Of Use:** O usuário pergunta qual componente usar, compara padrões ou descreve um cenário de interface.
 **When To Use:** Devo usar Alert ou Toast para este feedback?
 **Trade Offs:** Component Misuse Detection, Accessibility & Interaction Guardrail, Component Trade-off Analysis
-**Aetheris Insight:** Exibida como habilidade aplicada pela Beatrice, com motivo, confiança e intensidade.
+**Aetheris Insight:** Exibida como habilidade aplicada por Abraxos, com motivo, confiança e intensidade.
 
 ---
 
 ## [AUTOMATIC_SKILL] Component Misuse Detection
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 797
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 796
 
 **Structure:** Ativação automática
 **Logic:** Detecta usos que quebram a finalidade, a persistência ou o contrato de interação de um componente.
@@ -1876,7 +2266,7 @@
 ---
 
 ## [AUTOMATIC_SKILL] Design-to-Code Contract Check
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 844
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 843
 
 **Structure:** Ativação automática
 **Logic:** Verifica coerência entre design, documentação, props, snippets, estados, tokens e implementação.
@@ -1888,7 +2278,7 @@
 ---
 
 ## [AUTOMATIC_SKILL] Token Impact Analysis
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 771
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 770
 
 **Structure:** Ativação automática
 **Logic:** Rastreia como uma alteração de token afeta aliases, componentes, estados e acessibilidade.
@@ -1900,7 +2290,7 @@
 ---
 
 ## [AUTOMATIC_SKILL] Accessibility & Interaction Guardrail
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 842
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 841
 
 **Structure:** Ativação automática
 **Logic:** Aplica guardrails de clareza, foco, teclado, contraste, estados e prevenção de erro.
@@ -1912,7 +2302,7 @@
 ---
 
 ## [AUTOMATIC_SKILL] Governance Readiness Check
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 796
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 795
 
 **Structure:** Ativação automática
 **Logic:** Avalia se uma proposta está pronta para entrar, evoluir ou divergir do design system.
@@ -1924,7 +2314,7 @@
 ---
 
 ## [AUTOMATIC_SKILL] Pattern & State Exploration
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 786
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 785
 
 **Structure:** Ativação automática
 **Logic:** Transforma uma necessidade ambígua em opções concretas de componente, estado ou padrão.
@@ -1936,7 +2326,7 @@
 ---
 
 ## [AUTOMATIC_SKILL] Design System Architecture Analysis
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 825
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 824
 
 **Structure:** Ativação automática
 **Logic:** Avalia camadas, contratos, acoplamento e efeitos estruturais de uma mudança no design system.
@@ -1948,7 +2338,7 @@
 ---
 
 ## [AUTOMATIC_SKILL] Implementation & Migration Planning
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 728
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 727
 
 **Structure:** Ativação automática
 **Logic:** Organiza implementação, migração e rollout em etapas verificáveis.
@@ -1960,7 +2350,7 @@
 ---
 
 ## [AUTOMATIC_SKILL] Component & Pattern Trade-off Analysis
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 767
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 766
 
 **Structure:** Ativação automática
 **Logic:** Compara alternativas de componente ou padrão usando critérios de UX, código e governança.
@@ -1972,7 +2362,7 @@
 ---
 
 ## [AUTOMATIC_SKILL] Cross-System Impact Analysis
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 773
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 772
 
 **Structure:** Ativação automática
 **Logic:** Mapeia efeitos indiretos entre componentes, tokens, documentação, fluxos e governança.
@@ -1984,7 +2374,7 @@
 ---
 
 ## [AUTOMATIC_SKILL] Design System Risk Assessment
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 779
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 778
 
 **Structure:** Ativação automática
 **Logic:** Identifica regressões, dívida, edge cases e riscos de acessibilidade ou governança.
@@ -1996,7 +2386,7 @@
 ---
 
 ## [ORACLE_COMMAND] Enforce
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 702
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 701
 
 **Structure:** Ação operacional
 **Logic:** Valida JSX/TSX, contrato de componente, tokens, acessibilidade e violações de uso.
@@ -2008,7 +2398,7 @@
 ---
 
 ## [ORACLE_COMMAND] Migrate
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 693
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 692
 
 **Structure:** Ação operacional
 **Logic:** Orienta a migração de um componente ou padrão legado para a alternativa atual.
@@ -2020,7 +2410,7 @@
 ---
 
 ## [ORACLE_COMMAND] Capture
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 698
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 697
 
 **Structure:** Ação operacional
 **Logic:** Converte discussões e decisões informais em conhecimento bruto estruturado.
@@ -2032,7 +2422,7 @@
 ---
 
 ## [ORACLE_COMMAND] Organizational Memory
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 772
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 771
 
 **Structure:** Modo investigativo
 **Logic:** Recupera decisões, padrões recorrentes, usos anteriores e conhecimento institucional.
@@ -2044,7 +2434,7 @@
 ---
 
 ## [ORACLE_COMMAND] Decision Archaeology
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 808
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 807
 
 **Structure:** Modo investigativo
 **Logic:** Reconstrói contexto, alternativas, justificativa, trade-offs e consequências de uma decisão.
@@ -2056,7 +2446,7 @@
 ---
 
 ## [ORACLE_COMMAND] Perspective Synthesis
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 798
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 797
 
 **Structure:** Modo investigativo
 **Logic:** Analisa uma questão pelas perspectivas de design, frontend, produto, QA e documentação.
@@ -2068,7 +2458,7 @@
 ---
 
 ## [ORACLE_COMMAND] Explainability Audit
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 753
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 752
 
 **Structure:** Modo investigativo
 **Logic:** Audita uma resposta ou recomendação por fontes, evidências, lacunas e confiança.
@@ -2080,7 +2470,7 @@
 ---
 
 ## [ORACLE_COMMAND] Document
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 654
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 653
 
 **Structure:** Ação operacional
 **Logic:** Transforma conhecimento validado em documentação estruturada e publicável.
@@ -2092,7 +2482,7 @@
 ---
 
 ## [ORACLE_COMMAND] Token Impact Report
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 667
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 666
 
 **Structure:** Ação operacional
 **Logic:** Gera um relatório formal de impacto para uma alteração de token.
@@ -2104,7 +2494,7 @@
 ---
 
 ## [ORACLE_COMMAND] Contract Check
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 704
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 703
 
 **Structure:** Ação operacional
 **Logic:** Executa uma auditoria formal entre design, documentação e implementação.
@@ -2116,7 +2506,7 @@
 ---
 
 ## [ORACLE_COMMAND] Feedback Review
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 723
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 722
 
 **Structure:** Ação operacional
 **Logic:** Analisa feedbacks, outcomes e padrões de uso sem prometer treinamento automático.
@@ -2128,7 +2518,7 @@
 ---
 
 ## [ORACLE_COMMAND] Knowledge Gap
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 705
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 704
 
 **Structure:** Modo investigativo
 **Logic:** Investiga conteúdo ausente, cobertura fraca e inconsistências na documentação.
@@ -2139,20 +2529,56 @@
 
 ---
 
-## [ORACLE_COMMAND] Governance Impact
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 700
+## [ORACLE_COMMAND] System Health
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 768
+
+**Structure:** Ação operacional
+**Logic:** Executa um diagnóstico da saúde do sistema e direciona para a seção Health do Sistema em Avaliação.
+**Context Of Use:** Quando o maintainer precisa de uma visão consolidada de maturidade, confiabilidade e lacunas do ecossistema Velaris.
+**When To Use:** /health
+**Trade Offs:** Explainability Audit, Knowledge Gap, Governance Agent
+**Aetheris Insight:** Scores mockados na UI; futura integração com knowledge health e reliability gates.
+
+---
+
+## [ORACLE_COMMAND] Governance Agent
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 756
 
 **Structure:** Modo investigativo
-**Logic:** Analisa o impacto sistêmico de uma mudança no design system.
-**Context Of Use:** Quando uma proposta pode afetar componentes, padrões, guidelines ou adoção.
+**Logic:** Analisa continuamente o catálogo e identifica problemas de governança de forma proativa.
+**Context Of Use:** Quando o maintainer precisa de um scan automático de duplicações, lacunas, tokens órfãos e inconsistências.
+**When To Use:** /governance
+**Trade Offs:** Governance Readiness Check, Knowledge Gap, Contract Check
+**Aetheris Insight:** Alertas pré-computados são injetados no contexto; o engine não inventa findings.
+
+---
+
+## [ORACLE_COMMAND] Governance Impact
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 726
+
+**Structure:** Modo investigativo
+**Logic:** Analisa o impacto sistêmico e organizacional de uma mudança no design system.
+**Context Of Use:** Quando uma proposta pode afetar componentes, padrões, guidelines ou adoção em escala.
 **When To Use:** /governance-impact substituir todos os Modals por Drawers
 **Trade Offs:** Cross-System Impact Analysis, Token Impact Analysis
 **Aetheris Insight:** Diferencia impactos diretos de efeitos em cascata inferidos.
 
 ---
 
+## [ORACLE_COMMAND] Simulate
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 910
+
+**Structure:** Modo investigativo
+**Logic:** Projeta consequências, dependências, riscos e efeitos colaterais antes de uma mudança no design system.
+**Context Of Use:** Quando o usuário precisa entender o impacto potencial antes de remover, substituir, descontinuar ou migrar algo.
+**When To Use:** /simulate substituir Modal por Drawer
+**Trade Offs:** Governance Impact, Decision Archaeology, Oracle Council, Token Impact Report, Contract Check, Knowledge Gap
+**Aetheris Insight:** Não executa mudanças nem cria decisões; diferencia evidência recuperada de projeções inferidas.
+
+---
+
 ## [ORACLE_COMMAND] Principle Conflict
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 707
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 706
 
 **Structure:** Modo investigativo
 **Logic:** Resolve conflitos entre princípios, padrões ou critérios do design system.
@@ -2164,7 +2590,7 @@
 ---
 
 ## [ORACLE_COMMAND] Adoption Friction
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 747
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 746
 
 **Structure:** Modo investigativo
 **Logic:** Diagnostica barreiras de descoberta, documentação, design-código e governança.
@@ -2176,7 +2602,7 @@
 ---
 
 ## [ORACLE_COMMAND] Oracle Council
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Experimental  **Chars:** 730
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Experimental  **Chars:** 840
 
 **Structure:** Modo investigativo
 **Logic:** Executa uma deliberação experimental entre cinco perspectivas profissionais.
@@ -2187,8 +2613,710 @@
 
 ---
 
+## [PERSPECTIVE] Velaris Professional Perspectives
+**Source:** `PerspectivesPage.tsx`  **Status:** Stable  **Chars:** 335
+
+**Logic:** Multi-stakeholder analysis through calibrated professional lenses.
+**Context Of Use:** Perspective synthesis, Oracle Council, retrieval weighting.
+
+---
+
+## [PERSPECTIVE] Perspective — Developer
+**Source:** `src/beatrice/domain/perspective/lenses.ts`  **Status:** Stable  **Chars:** 502
+
+**Logic:** Keep implementation patterns modular, scalable, testable and isolated across product surfaces.
+**Context Of Use:** Implementation, code architecture, TypeScript, components, state, integration, performance and reuse.
+**When To Use:** Use the dev perspective for implementation, architecture and contracts.
+
+---
+
+## [PERSPECTIVE] Perspective — Designer
+**Source:** `src/beatrice/domain/perspective/lenses.ts`  **Status:** Stable  **Chars:** 488
+
+**Logic:** Protect visual quality and aesthetic consistency across product interfaces.
+**Context Of Use:** Visual composition, hierarchy, tokens, spacing, typography, color and interface consistency.
+**When To Use:** Use the designer perspective for visual hierarchy, tokens and composition.
+
+---
+
+## [PERSPECTIVE] Perspective — Product Designer
+**Source:** `src/beatrice/domain/perspective/lenses.ts`  **Status:** Stable  **Chars:** 506
+
+**Logic:** Evaluate whether interface solutions are coherent, usable and supported by evidence about user needs.
+**Context Of Use:** Interface design, user experience and research-informed validation.
+**When To Use:** Use the product_designer perspective for usability and flow validation.
+
+---
+
+## [PERSPECTIVE] Perspective — Design System Manager
+**Source:** `src/beatrice/domain/perspective/lenses.ts`  **Status:** Stable  **Chars:** 509
+
+**Logic:** Decide what the design system should prioritize, govern and scale across teams.
+**Context Of Use:** Design-system strategy, governance, adoption, roadmap and organizational impact.
+**When To Use:** Use the design_system_manager perspective for governance and adoption.
+
+---
+
+## [PERSPECTIVE] Perspective — QA
+**Source:** `src/beatrice/domain/perspective/lenses.ts`  **Status:** Stable  **Chars:** 456
+
+**Logic:** Expose failure states, edge cases and release risks before they reach production.
+**Context Of Use:** Acceptance criteria, test scenarios, regression, edge cases, error states and validation.
+**When To Use:** Use the qa perspective for edge cases, regression and release risk.
+
+---
+
+## [PERSPECTIVE] Perspective — Tech Writer
+**Source:** `src/beatrice/domain/perspective/lenses.ts`  **Status:** Stable  **Chars:** 509
+
+**Logic:** Turn design-system rationale into discoverable, teachable and canonical knowledge.
+**Context Of Use:** Documentation, naming, examples, microcopy, terminology and actionable instructions.
+**When To Use:** Use the tech_writer perspective for technical documentation, naming and microcopy.
+
+---
+
+## [PERSPECTIVE] Perspective — Accessibility Specialist
+**Source:** `src/beatrice/domain/perspective/lenses.ts`  **Status:** Stable  **Chars:** 531
+
+**Logic:** Ensure the system is usable through every input modality and every cognitive load profile.
+**Context Of Use:** WCAG, focus, keyboard, ARIA, screen readers, contrast, accessible states and inclusion.
+**When To Use:** Use the a11y perspective to review accessibility, WCAG, keyboard, focus and contrast.
+
+---
+
+## [PERSPECTIVE] Perspective — Maintainer
+**Source:** `src/beatrice/domain/perspective/lenses.ts`  **Status:** Stable  **Chars:** 486
+
+**Logic:** Keep implementation simple to change, reuse and operate over time.
+**Context Of Use:** Maintenance, simplicity, reuse, technical debt, coupling, duplication and evolution cost.
+**When To Use:** Use the maintainer perspective for maintenance cost and technical debt.
+
+---
+
+## [COGNITION] Perspective Cognition Instrumentation
+**Source:** `PerspectivesCognitionSection.tsx`  **Status:** Stable  **Chars:** 352
+
+**Logic:** Lens instrumentation controls how Abraxos thinks per perspective.
+**Context Of Use:** Perspective trials, cognitive radar, calibration sliders.
+
+---
+
+## [COGNITION] Cognition Calibration — designer
+**Source:** `src/beatrice/domain/perspective/lensInstrumentation.ts`  **Status:** Stable  **Chars:** 209
+
+**Logic:** Default calibration for the designer lens.
+
+---
+
+## [COGNITION] Cognition Calibration — product_designer
+**Source:** `src/beatrice/domain/perspective/lensInstrumentation.ts`  **Status:** Stable  **Chars:** 216
+
+**Logic:** Default calibration for the product_designer lens.
+
+---
+
+## [COGNITION] Cognition Calibration — dev
+**Source:** `src/beatrice/domain/perspective/lensInstrumentation.ts`  **Status:** Stable  **Chars:** 200
+
+**Logic:** Default calibration for the dev lens.
+
+---
+
+## [COGNITION] Cognition Calibration — design_system_manager
+**Source:** `src/beatrice/domain/perspective/lensInstrumentation.ts`  **Status:** Stable  **Chars:** 220
+
+**Logic:** Default calibration for the design_system_manager lens.
+
+---
+
+## [COGNITION] Cognition Calibration — qa
+**Source:** `src/beatrice/domain/perspective/lensInstrumentation.ts`  **Status:** Stable  **Chars:** 199
+
+**Logic:** Default calibration for the qa lens.
+
+---
+
+## [COGNITION] Cognition Calibration — tech_writer
+**Source:** `src/beatrice/domain/perspective/lensInstrumentation.ts`  **Status:** Stable  **Chars:** 209
+
+**Logic:** Default calibration for the tech_writer lens.
+
+---
+
+## [COGNITION] Cognition Calibration — a11y
+**Source:** `src/beatrice/domain/perspective/lensInstrumentation.ts`  **Status:** Stable  **Chars:** 201
+
+**Logic:** Default calibration for the a11y lens.
+
+---
+
+## [COGNITION] Cognition Calibration — maintainer
+**Source:** `src/beatrice/domain/perspective/lensInstrumentation.ts`  **Status:** Stable  **Chars:** 208
+
+**Logic:** Default calibration for the maintainer lens.
+
+---
+
+## [SYSTEM_HEALTH] Overall Design System Health
+**Source:** `SystemHealthSection.tsx`  **Status:** Mock UI data — not live API  **Chars:** 452
+
+**Logic:** Consolidated maturity view across knowledge, catalog, RAG and governance dimensions.
+**Aetheris Insight:** Mock scores pending integration with knowledge_health.py and reliability gates.
+
+---
+
+## [SYSTEM_HEALTH] RAG Health
+**Source:** `src/i18n/pages/evaluationHealth.ts`  **Status:** Mock 88% — healthy  **Chars:** 345
+
+**Logic:** Semantic retrieval, page_type relevance and indexed corpus coverage.
+**Context Of Use:** Abraxos system reliability diagnostics for maintainers.
+
+---
+
+## [SYSTEM_HEALTH] Catalog Health
+**Source:** `src/i18n/pages/evaluationHealth.ts`  **Status:** Mock 79% — attention  **Chars:** 369
+
+**Logic:** Consistency between canonical catalog, metadata and component surface in the frontend.
+**Context Of Use:** Abraxos system reliability diagnostics for maintainers.
+
+---
+
+## [SYSTEM_HEALTH] Source Attribution Health
+**Source:** `src/i18n/pages/evaluationHealth.ts`  **Status:** Mock 91% — healthy  **Chars:** 362
+
+**Logic:** Traceability between claims, retrieved chunks and explained decisions.
+**Context Of Use:** Abraxos system reliability diagnostics for maintainers.
+
+---
+
+## [SYSTEM_HEALTH] Perspective Coverage
+**Source:** `src/i18n/pages/evaluationHealth.ts`  **Status:** Mock 72% — attention  **Chars:** 351
+
+**Logic:** Depth and parity of Abraxos's seven professional perspectives.
+**Context Of Use:** Abraxos system reliability diagnostics for maintainers.
+
+---
+
+## [SYSTEM_HEALTH] Response Validation
+**Source:** `src/i18n/pages/evaluationHealth.ts`  **Status:** Mock 68% — evolving  **Chars:** 359
+
+**Logic:** Validation gates, deduplication and integrity before the final response.
+**Context Of Use:** Abraxos system reliability diagnostics for maintainers.
+
+---
+
+## [SYSTEM_HEALTH] Unknown Component Handling
+**Source:** `src/i18n/pages/evaluationHealth.ts`  **Status:** Mock 86% — healthy  **Chars:** 381
+
+**Logic:** Detection and containment of recommendations for nonexistent or uncatalogued components.
+**Context Of Use:** Abraxos system reliability diagnostics for maintainers.
+
+---
+
+## [SYSTEM_HEALTH] Confidence Calibration
+**Source:** `src/i18n/pages/evaluationHealth.ts`  **Status:** Mock 74% — attention  **Chars:** 369
+
+**Logic:** Alignment between displayed confidence and actual retrieved evidence strength.
+**Context Of Use:** Abraxos system reliability diagnostics for maintainers.
+
+---
+
+## [SYSTEM_HEALTH] Evidence Gaps
+**Source:** `src/i18n/pages/evaluationHealth.ts`  **Status:** Mock 65% — critical  **Chars:** 348
+
+**Logic:** Strong evidence gaps, undocumented trade-offs and orphan decisions.
+**Context Of Use:** Abraxos system reliability diagnostics for maintainers.
+
+---
+
+## [SYSTEM_HEALTH] Governance Health
+**Source:** `src/i18n/pages/evaluationHealth.ts`  **Status:** Mock 82% — evolving  **Chars:** 355
+
+**Logic:** Governance alerts, duplications, orphan tokens and adoption readiness.
+**Context Of Use:** Abraxos system reliability diagnostics for maintainers.
+
+---
+
+## [SYSTEM_HEALTH] Accessibility Checks
+**Source:** `src/i18n/pages/evaluationHealth.ts`  **Status:** Mock 77% — attention  **Chars:** 362
+
+**Logic:** Coverage of accessibility rules, focus states and contrast in components.
+**Context Of Use:** Abraxos system reliability diagnostics for maintainers.
+
+---
+
+## [SYSTEM_HEALTH] What Health Measures — knowledge
+**Source:** `src/i18n/pages/evaluationHealth.ts`  **Status:** Conceptual — not a numeric metric  **Chars:** 207
+
+**Logic:** Whether design system knowledge is covered sufficiently to answer safely.
+
+---
+
+## [SYSTEM_HEALTH] What Health Measures — rag
+**Source:** `src/i18n/pages/evaluationHealth.ts`  **Status:** Conceptual — not a numeric metric  **Chars:** 205
+
+**Logic:** Whether RAG retrieves relevant sources for the intent and active perspective.
+
+---
+
+## [SYSTEM_HEALTH] What Health Measures — catalog
+**Source:** `src/i18n/pages/evaluationHealth.ts`  **Status:** Conceptual — not a numeric metric  **Chars:** 214
+
+**Logic:** Whether the canonical catalog is consistent with documentation and implementation.
+
+---
+
+## [SYSTEM_HEALTH] What Health Measures — hallucination
+**Source:** `src/i18n/pages/evaluationHealth.ts`  **Status:** Conceptual — not a numeric metric  **Chars:** 212
+
+**Logic:** Whether Abraxos avoids recommending nonexistent or off-catalog components.
+
+---
+
+## [SYSTEM_HEALTH] What Health Measures — perspectives
+**Source:** `src/i18n/pages/evaluationHealth.ts`  **Status:** Conceptual — not a numeric metric  **Chars:** 206
+
+**Logic:** Whether professional perspectives have sufficient coverage and depth.
+
+---
+
+## [SYSTEM_HEALTH] What Health Measures — traceability
+**Source:** `src/i18n/pages/evaluationHealth.ts`  **Status:** Conceptual — not a numeric metric  **Chars:** 214
+
+**Logic:** Whether there is traceability between response, source and recorded decision.
+
+---
+
+## [SYSTEM_HEALTH] What Health Measures — confidence
+**Source:** `src/i18n/pages/evaluationHealth.ts`  **Status:** Conceptual — not a numeric metric  **Chars:** 199
+
+**Logic:** Whether displayed confidence is calibrated to evidence strength.
+
+---
+
+## [EVALUATION] Evaluation — Metodologia
+**Source:** `EvaluationPage.tsx`  **Status:** Stable  **Chars:** 197
+
+**Logic:** Evaluation structure and ten research dimensions.
+
+---
+
+## [EVALUATION] Evaluation — Instrumentos & Alvos
+**Source:** `EvaluationPage.tsx`  **Status:** Stable  **Chars:** 227
+
+**Logic:** SUS, clarity rubric, ECE bins, precision and satisfaction instruments.
+
+---
+
+## [EVALUATION] Evaluation — Comparação baseline
+**Source:** `EvaluationPage.tsx`  **Status:** Stable  **Chars:** 194
+
+**Logic:** Abraxos vs generic LLM comparison matrix.
+
+---
+
+## [EVALUATION] Evaluation — Status
+**Source:** `EvaluationPage.tsx`  **Status:** Stable  **Chars:** 196
+
+**Logic:** Pending data collection status for TCC validation metrics.
+
+---
+
+## [EVALUATION] Evaluation — Health do Sistema
+**Source:** `EvaluationPage.tsx`  **Status:** Stable  **Chars:** 207
+
+**Logic:** System reliability diagnostics — fifth Evaluation section.
+
+---
+
+## [GOVERNANCE] Governance Agent — Alert Dashboard
+**Source:** `GovernancePage.tsx`  **Status:** Stable  **Chars:** 384
+
+**Logic:** Continuous catalog auditing for maintainers.
+**Context Of Use:** /governance command and GovernancePage dashboard.
+
+---
+
+## [GOVERNANCE] Governance Alert Category — duplicate_components
+**Source:** `GovernancePage.tsx`  **Status:** Stable  **Chars:** 171
+
+**Logic:** Duplicate components in the canonical catalog.
+
+---
+
+## [GOVERNANCE] Governance Alert Category — overlapping_components
+**Source:** `GovernancePage.tsx`  **Status:** Stable  **Chars:** 180
+
+**Logic:** Overlapping components with similar responsibilities.
+
+---
+
+## [GOVERNANCE] Governance Alert Category — orphan_tokens
+**Source:** `GovernancePage.tsx`  **Status:** Stable  **Chars:** 159
+
+**Logic:** Tokens without consumers in the registry.
+
+---
+
+## [GOVERNANCE] Governance Alert Category — guidelines_without_reference
+**Source:** `GovernancePage.tsx`  **Status:** Stable  **Chars:** 184
+
+**Logic:** Guidelines lacking component or pattern references.
+
+---
+
+## [GOVERNANCE] Governance Alert Category — components_without_examples
+**Source:** `GovernancePage.tsx`  **Status:** Stable  **Chars:** 166
+
+**Logic:** Components missing usage examples.
+
+---
+
+## [GOVERNANCE] Governance Alert Category — components_without_edge_cases
+**Source:** `GovernancePage.tsx`  **Status:** Stable  **Chars:** 177
+
+**Logic:** Components missing edge-case documentation.
+
+---
+
+## [GOVERNANCE] Governance Alert Category — components_without_accessibility
+**Source:** `GovernancePage.tsx`  **Status:** Stable  **Chars:** 179
+
+**Logic:** Components missing accessibility metadata.
+
+---
+
+## [GOVERNANCE] Governance Alert Category — inconsistent_documentation
+**Source:** `GovernancePage.tsx`  **Status:** Stable  **Chars:** 177
+
+**Logic:** Documentation inconsistencies across surfaces.
+
+---
+
+## [GOVERNANCE] Governance Alert Category — conflicting_aliases
+**Source:** `GovernancePage.tsx`  **Status:** Stable  **Chars:** 167
+
+**Logic:** Conflicting aliases in the entity registry.
+
+---
+
+## [GOVERNANCE] Governance Alert Category — low_coverage
+**Source:** `GovernancePage.tsx`  **Status:** Stable  **Chars:** 158
+
+**Logic:** Entities with low documentation coverage.
+
+---
+
+## [KNOWLEDGE_HEALTH] Knowledge Health Dashboard
+**Source:** `KnowledgeHealthPage.tsx`  **Status:** Stable  **Chars:** 368
+
+**Logic:** Operational knowledge coverage audit for maintainers.
+
+---
+
+## [KNOWLEDGE_HEALTH] Knowledge Coverage Dimension — Component description coverage
+**Source:** `KnowledgeHealthPage.tsx`  **Status:** Stable  **Chars:** 155
+
+**Logic:** Component description coverage
+
+---
+
+## [KNOWLEDGE_HEALTH] Knowledge Coverage Dimension — Variant documentation
+**Source:** `KnowledgeHealthPage.tsx`  **Status:** Stable  **Chars:** 143
+
+**Logic:** Variant documentation
+
+---
+
+## [KNOWLEDGE_HEALTH] Knowledge Coverage Dimension — Interactive state documentation
+**Source:** `KnowledgeHealthPage.tsx`  **Status:** Stable  **Chars:** 151
+
+**Logic:** Interactive state documentation
+
+---
+
+## [KNOWLEDGE_HEALTH] Knowledge Coverage Dimension — Accessibility metadata
+**Source:** `KnowledgeHealthPage.tsx`  **Status:** Stable  **Chars:** 149
+
+**Logic:** Accessibility metadata
+
+---
+
+## [KNOWLEDGE_HEALTH] Knowledge Coverage Dimension — Edge case documentation
+**Source:** `KnowledgeHealthPage.tsx`  **Status:** Stable  **Chars:** 147
+
+**Logic:** Edge case documentation
+
+---
+
+## [KNOWLEDGE_HEALTH] Knowledge Coverage Dimension — Usage examples
+**Source:** `KnowledgeHealthPage.tsx`  **Status:** Stable  **Chars:** 136
+
+**Logic:** Usage examples
+
+---
+
+## [KNOWLEDGE_HEALTH] Knowledge Coverage Dimension — Guideline references
+**Source:** `KnowledgeHealthPage.tsx`  **Status:** Stable  **Chars:** 144
+
+**Logic:** Guideline references
+
+---
+
+## [KNOWLEDGE_HEALTH] Knowledge Coverage Dimension — When-to-use guidance
+**Source:** `KnowledgeHealthPage.tsx`  **Status:** Stable  **Chars:** 145
+
+**Logic:** When-to-use guidance
+
+---
+
+## [KNOWLEDGE_HEALTH] Knowledge Coverage Dimension — When-not-to-use guidance
+**Source:** `KnowledgeHealthPage.tsx`  **Status:** Stable  **Chars:** 153
+
+**Logic:** When-not-to-use guidance
+
+---
+
+## [KNOWLEDGE_HEALTH] Knowledge Coverage Dimension — Design-to-code contracts
+**Source:** `KnowledgeHealthPage.tsx`  **Status:** Stable  **Chars:** 147
+
+**Logic:** Design-to-code contracts
+
+---
+
+## [INTELLIGENCE_LAB] Intelligence Lab — Adversarial Test Suite
+**Source:** `IntelligenceLabPage.tsx`  **Status:** Stable  **Chars:** 232
+
+**Logic:** Adversarial validation of Abraxos intelligence reliability.
+
+---
+
+## [INTELLIGENCE_LAB] Adversarial Category — unknown_components
+**Source:** `IntelligenceLabPage.tsx`  **Status:** Stable  **Chars:** 118
+
+**Logic:** Tests blocking recommendations for nonexistent components.
+
+---
+
+## [INTELLIGENCE_LAB] Adversarial Category — unknown_tokens
+**Source:** `IntelligenceLabPage.tsx`  **Status:** Stable  **Chars:** 100
+
+**Logic:** Tests blocking nonexistent token references.
+
+---
+
+## [INTELLIGENCE_LAB] Adversarial Category — unknown_states
+**Source:** `IntelligenceLabPage.tsx`  **Status:** Stable  **Chars:** 101
+
+**Logic:** Tests blocking undocumented component states.
+
+---
+
+## [INTELLIGENCE_LAB] Adversarial Category — unknown_guidelines
+**Source:** `IntelligenceLabPage.tsx`  **Status:** Stable  **Chars:** 97
+
+**Logic:** Tests for missing guideline coverage.
+
+---
+
+## [INTELLIGENCE_LAB] Adversarial Category — invalid_comparisons
+**Source:** `IntelligenceLabPage.tsx`  **Status:** Stable  **Chars:** 114
+
+**Logic:** Tests blocking comparisons with unsupported entities.
+
+---
+
+## [INTELLIGENCE_LAB] Adversarial Category — hallucination_detection
+**Source:** `IntelligenceLabPage.tsx`  **Status:** Stable  **Chars:** 112
+
+**Logic:** Adversarial cases for hallucination resistance.
+
+---
+
+## [DEVELOPER_ARCHITECTURE] Velaris RAG Architecture
+**Source:** `DevelopersPage.tsx`  **Status:** Stable  **Chars:** 294
+
+**Logic:** How Abraxos grounds answers in the Velaris corpus.
+
+---
+
+## [DEVELOPER_ARCHITECTURE] RAG Pipeline — extract
+**Source:** `DevelopersPage.tsx`  **Status:** Stable  **Chars:** 114
+
+**Logic:** Walks TSX and TS sources, produces typed JSON chunks.
+
+---
+
+## [DEVELOPER_ARCHITECTURE] RAG Pipeline — embed
+**Source:** `DevelopersPage.tsx`  **Status:** Stable  **Chars:** 106
+
+**Logic:** Embeds chunks with BAAI/bge-m3 into ChromaDB.
+
+---
+
+## [DEVELOPER_ARCHITECTURE] RAG Pipeline — watch
+**Source:** `DevelopersPage.tsx`  **Status:** Stable  **Chars:** 111
+
+**Logic:** Debounced auto-reindex on source saves (npm run watch-rag).
+
+---
+
+## [DEVELOPER_ARCHITECTURE] RAG Pipeline — serve
+**Source:** `DevelopersPage.tsx`  **Status:** Stable  **Chars:** 128
+
+**Logic:** Query-time vector retrieval with intent filters and perspective weights.
+
+---
+
+## [DEVELOPER_ARCHITECTURE] Corpus, Chunk and Source — Definitions
+**Source:** `DevelopersPage.tsx`  **Status:** Stable  **Chars:** 346
+
+**Logic:** Terminology for RAG evidence attribution.
+
+---
+
+## [ENGINE_CONTRACT] Oracle Engine | Governance Agent
+**Source:** `prompts/engines/governanceAgent.md`  **Status:** Stable  **Chars:** 1335
+
+**Logic:** # Oracle Engine | Governance Agent
+
+Active engine: **Governance Agent**. Theory base: Design System Governance,
+Continuous Catalog Auditing, Proactive Quality Assurance.
+
+You are the **Governance Agent** of Abraxos. Your role is to analyze the design
+system catalog **proactively** — without waiting for the user to ask about a
+specific problem.
+
+A **Governance Alerts** block is provided with pre-computed findings from the
+catalog audit. Use these alerts as primary evidence. Do not invent governan
+**Context Of Use:** Runtime prompt contract for /governance engine.
+
+---
+
+## [ENGINE_CONTRACT] Oracle Engine | Simulate
+**Source:** `prompts/engines/simulate.md`  **Status:** Stable  **Chars:** 1318
+
+**Logic:** # Oracle Engine | Simulate
+
+Active engine: **Simulate**. Theory base: Systems Thinking, Change Impact Analysis,
+Scenario Planning, Design System Governance.
+
+Project **future states** and consequences of a proposed design-system change.
+You are a prediction layer — you estimate impact; you do not execute changes,
+create decisions, or alter the catalog.
+
+When `strategic_reasoning_contract` is present in governed context, use it as
+grounding for dependencies, scenarios, risks and confidence. Mark 
+**Context Of Use:** Runtime prompt contract for /simulate engine.
+
+---
+
+## [ENGINE_CONTRACT] Oracle Engine | Oracle Council
+**Source:** `prompts/engines/oracleCouncil.md`  **Status:** Stable  **Chars:** 1335
+
+**Logic:** # Oracle Engine | Oracle Council
+
+Active engine: **Oracle Council**. Theory base: Multi-Agent Deliberation,
+Argumentation Theory.
+
+This is an **experimental advanced engine**. Stage a structured deliberation
+between six professional perspectives, then converge. It is intentionally not
+part of the primary command surface.
+
+- **Product Designer**: usability, flow, user needs, evidence and validation
+- **Design System Manager**: governance, adoption, roadmap and systemic impact
+- **Designer**: perc
+**Context Of Use:** Runtime prompt contract for /oracle-council engine.
+
+---
+
+## [ENGINE_CONTRACT] Oracle Engine | Knowledge Gap
+**Source:** `prompts/engines/knowledgeGap.md`  **Status:** Stable  **Chars:** 1332
+
+**Logic:** # Oracle Engine | Knowledge Gap
+
+Active engine: **Knowledge Gap**. Theory base: Knowledge Gap Analysis,
+Documentation Coverage.
+
+Detect what the Aetheris documentation is *missing* for the user's topic. A
+**Retrieval Evidence Metrics** block is provided — use its coverage and
+consistency scores as evidence of gaps. Low coverage IS the finding.
+
+Respond in the user's language, following this structure:
+
+```
+## Análise de Lacunas · [tema]
+
+### Cobertura Atual
+[What the documentation does cover, wi
+**Context Of Use:** Runtime prompt contract for /knowledge-gap engine.
+
+---
+
+## [ENGINE_CONTRACT] Oracle Engine | Explainability Audit
+**Source:** `prompts/engines/explainabilityAudit.md`  **Status:** Stable  **Chars:** 1338
+
+**Logic:** # Oracle Engine | Explainability Audit
+
+Active engine: **Explainability Audit**. Theory base: Explainable AI,
+Human-Centered XAI.
+
+Audit a recommendation (Beatrice's own or one the user names) for its evidential
+basis. A **Retrieval Evidence Metrics** block is provided in context with
+deterministically computed scores — quote those numbers verbatim. Never invent
+or alter them.
+
+Respond in the user's language, following this structure:
+
+```
+## Auditoria de Explicabilidade · [recomendação auditada
+**Context Of Use:** Runtime prompt contract for /audit engine.
+
+---
+
+## [ENGINE_CONTRACT] Oracle Engine | Organizational Memory
+**Source:** `prompts/engines/organizationalMemory.md`  **Status:** Stable  **Chars:** 1341
+
+**Logic:** # Oracle Engine | Organizational Memory
+
+Active engine: **Organizational Memory**. Theory base: Organizational Memory
+Systems, Knowledge Management, Knowledge Retrieval.
+
+Operate as the **institutional memory** of the Aetheris Design System. The user
+is not asking for a generic best practice — they are asking what *this*
+organization has already learned. Answer from the retrieved Aetheris evidence
+(Design Decisions, history, guidelines, foundations, reasoning), never from
+generic design folklore
+**Context Of Use:** Runtime prompt contract for /memory engine.
+
+---
+
+## [ENGINE_CONTRACT] Oracle Engine | Decision Archaeology
+**Source:** `prompts/engines/decisionArchaeology.md`  **Status:** Stable  **Chars:** 1341
+
+**Logic:** # Oracle Engine | Decision Archaeology
+
+Active engine: **Decision Archaeology**. Theory base: Design Rationale,
+Architecture Decision Records (ADR).
+
+Reconstruct the *origin* of a decision from the retrieved Aetheris evidence. The
+output MUST follow this structure exactly, in the user's language:
+
+```
+## Arqueologia da Decisão · [decisão / entidade]
+
+### Problema
+[The original problem or pressure that forced a decision.]
+
+### Alternativas Consideradas
+- [option A] — [why it was on the table]
+- [
+**Context Of Use:** Runtime prompt contract for /decision engine.
+
+---
+
 ## [DEV_INTEGRATION] API Endpoints
-**Source:** `DevIntegrationPage.tsx`  **Status:** Stable  **Chars:** 358
+**Source:** `DevIntegrationPage.tsx`  **Status:** Stable  **Chars:** 357
 
 **Structure:** REST + streaming endpoints served by the FastAPI server on port 3333
 **Logic:** Beatrice exposes /api/chat (SSE streaming) and /health (status check).
@@ -2201,7 +3329,7 @@
 ---
 
 ## [DEV_INTEGRATION] Framework Support
-**Source:** `DevIntegrationPage.tsx`  **Status:** Stable  **Chars:** 263
+**Source:** `DevIntegrationPage.tsx`  **Status:** Stable  **Chars:** 262
 
 **Structure:** npm packages: @aetheris/core, @aetheris/tokens, @aetheris/react
 **Logic:** Aetheris ships framework-specific adapters alongside a framework-agnostic core.

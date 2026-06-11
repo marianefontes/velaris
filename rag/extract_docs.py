@@ -23,7 +23,7 @@ BASE_DIR   = Path(__file__).parent.parent          # /AETHERIS/
 SRC_DIR    = BASE_DIR / "src" / "components"
 CAPABILITY_REGISTRY = BASE_DIR / "src" / "beatrice" / "domain" / "governance" / "capabilities.ts"
 OUTPUT_DIR = Path(__file__).parent                 # /AETHERIS/rag/
-PRODUCT_NAME = "Aetheris"
+PRODUCT_NAME = "Velaris"
 
 if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
@@ -33,6 +33,20 @@ from component_metadata import (  # noqa: E402
     component_document_text,
     localized_rules,
     localized_text,
+)
+from rag.intelligence_extractors import (  # noqa: E402
+    enrich_oracle_command_chunks,
+    extract_cognition,
+    extract_developers_architecture,
+    extract_engine_contracts,
+    extract_evaluation,
+    extract_governance_page,
+    extract_guidelines,
+    extract_intelligence_lab,
+    extract_knowledge_health,
+    extract_perspectives,
+    extract_reasoning,
+    extract_system_health,
 )
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -452,37 +466,6 @@ def extract_design_decisions(chunks: list):
         })
 
 
-def extract_guidelines(chunks: list):
-    """GuidelinesPage.tsx → principios + voz"""
-    src = read_tsx("GuidelinesPage.tsx")
-    if not src:
-        return
-
-    for array_name in ("corePrinciples", "voiceRules", "interactionRules"):
-        for obj in extract_objects_from_array(src, array_name):
-            title = extract_string_field(obj, "title")
-            desc  = extract_string_field(obj, "description") or extract_string_field(obj, "rule")
-            if not title:
-                continue
-            text = f"{PRODUCT_NAME.upper()} GUIDELINE: {title} | {desc}"
-            chunks.append({
-                "id": make_id("GuidelinesPage.tsx", title),
-                "source": "GuidelinesPage.tsx",
-                "page_type": "guideline",
-                "title": title,
-                "status": "Stable",
-                "structure": "",
-                "logic": desc,
-                "context_of_use": f"Array: {array_name}",
-                "when_to_use": "",
-                "when_not_to_use": "",
-                "trade_offs": "",
-                "aetheris_insight": "",
-                "text": text,
-                "char_count": len(text),
-            })
-
-
 def extract_accessibility(chunks: list):
     """FoundationsPage.tsx → accessibility contracts + readiness checklist."""
     src = read_tsx("FoundationsPage.tsx")
@@ -543,109 +526,6 @@ def extract_accessibility(chunks: list):
         )
 
 
-def extract_reasoning(chunks: list):
-    """ReasoningPage.tsx → reasoning steps, confidence metrics, alternatives"""
-    src = read_tsx("ReasoningPage.tsx")
-    if not src:
-        return
-
-    # Only process the en-US section (first occurrence of each array)
-    en_src = src[:src.find("isPtPt")] if "isPtPt" in src else src
-
-    # Reasoning steps — how Beatrice processes a query
-    step_objects = extract_objects_from_array(en_src, "steps")
-    for obj in step_objects:
-        title = extract_string_field(obj, "title")
-        desc  = extract_string_field(obj, "description")
-        if not title or not desc:
-            continue
-        text = (
-            f"{PRODUCT_NAME.upper()} REASONING STEP: {title} | "
-            f"Description: {desc} | "
-            "Context Of Use: Beatrice cognitive pipeline — how evidence and UX "
-            "principles are combined before a recommendation is generated"
-        )
-        chunks.append({
-            "id":               make_id("ReasoningPage.tsx", title),
-            "source":           "ReasoningPage.tsx",
-            "page_type":        "reasoning",
-            "title":            title,
-            "status":           "Stable",
-            "structure":        "",
-            "logic":            desc,
-            "context_of_use":   "Beatrice XAI reasoning pipeline",
-            "when_to_use":      "",
-            "when_not_to_use":  "",
-            "trade_offs":       "",
-            "aetheris_insight": "",
-            "text":             text,
-            "char_count":       len(text),
-        })
-
-    # Confidence metrics — scores that describe recommendation quality
-    metric_objects = extract_objects_from_array(en_src, "metrics")
-    metric_parts = []
-    for obj in metric_objects:
-        label = extract_string_field(obj, "label")
-        if label:
-            metric_parts.append(label)
-    if metric_parts:
-        text = (
-            f"{PRODUCT_NAME.upper()} REASONING: Confidence Metrics | "
-            "Logic: Beatrice scores each recommendation on three dimensions: "
-            + ", ".join(metric_parts) + " | "
-            "Context Of Use: Displayed after each oracle response to calibrate user trust | "
-            "Aetheris Insight: Scores are derived from vector similarity and UX principle alignment"
-        )
-        chunks.append({
-            "id":               "ReasoningPage.tsx :: confidence_metrics",
-            "source":           "ReasoningPage.tsx",
-            "page_type":        "reasoning",
-            "title":            "Confidence Metrics",
-            "status":           "Stable",
-            "structure":        "Three-axis scoring: " + ", ".join(metric_parts),
-            "logic":            "Scores surface how well a recommendation aligns with design system rules and UX principles.",
-            "context_of_use":   "Shown after oracle responses to help users calibrate trust",
-            "when_to_use":      "Reference when evaluating competing recommendations",
-            "when_not_to_use":  "",
-            "trade_offs":       "Scores are proxies — high similarity does not guarantee the correct recommendation for every context.",
-            "aetheris_insight": "Confidence calibration is what distinguishes an oracle from a search engine.",
-            "text":             text,
-            "char_count":       len(text),
-        })
-
-    # Decision alternatives — paths considered and rejected
-    alt_objects = extract_objects_from_array(en_src, "alternatives")
-    alt_parts = []
-    for obj in alt_objects:
-        title  = extract_string_field(obj, "title")
-        result = extract_string_field(obj, "result")
-        if title and result:
-            alt_parts.append(f"{title}: {result}")
-    if alt_parts:
-        text = (
-            f"{PRODUCT_NAME.upper()} REASONING: Decision Alternatives | "
-            "Logic: Beatrice evaluates multiple response strategies before selecting one | "
-            + " | ".join(alt_parts)
-        )
-        chunks.append({
-            "id":               "ReasoningPage.tsx :: decision_alternatives",
-            "source":           "ReasoningPage.tsx",
-            "page_type":        "reasoning",
-            "title":            "Decision Alternatives",
-            "status":           "Stable",
-            "structure":        "Multiple paths evaluated; only the best-fit strategy is returned",
-            "logic":            "Alternative paths are weighted against clarity, rationale depth and trust calibration.",
-            "context_of_use":   "Internal oracle evaluation — surfaces in XAI explanation when requested",
-            "when_to_use":      "Reference when the user asks why a specific response style was chosen",
-            "when_not_to_use":  "",
-            "trade_offs":       "Showing rejected paths increases transparency but adds cognitive load.",
-            "aetheris_insight": "The best oracle response is the one the user can audit, trust, and reuse.",
-            "text":             text,
-            "char_count":       len(text),
-        })
-
-
 def extract_beatrice_capabilities(chunks: list):
     """capabilities.ts → automatic skills and user-triggered Oracle commands."""
     if not CAPABILITY_REGISTRY.exists():
@@ -684,12 +564,30 @@ def extract_beatrice_capabilities(chunks: list):
                 f"Can combine with: {combines_with} | RAG evidence: {rag_evidence} | "
                 f"Auditability: {auditability}"
             )
+            command_slug = capability_id.replace("_", "-")
+            route = ""
+            if command:
+                route_map = {
+                    "/health": "/evaluation?focus=health#health",
+                    "/governance": "/governance",
+                    "/simulate": "/reasoning?focus=commands",
+                    "/oracle-council": "/reasoning?focus=commands",
+                    "/knowledge-gap": "/knowledge-health",
+                    "/perspectives": "/perspectives",
+                }
+                route = route_map.get(command, "/reasoning?focus=commands")
             chunks.append({
                 "id":               make_id("capabilities.ts", capability_id),
                 "source":           "beatrice/domain/governance/capabilities.ts",
                 "page_type":        page_type,
                 "title":            name,
                 "status":           "Experimental" if "experimental: true" in obj else "Stable",
+                "kind":             page_type,
+                "section":          "commands" if page_type == "oracle_command" else "skills",
+                "command":          command,
+                "capability":       capability_id,
+                "route":            route,
+                "tags":             f"{page_type},{capability_id}",
                 "structure":        capability_type,
                 "logic":            description or output,
                 "context_of_use":   activation,
@@ -700,107 +598,6 @@ def extract_beatrice_capabilities(chunks: list):
                 "text":             text,
                 "char_count":       len(text),
             })
-
-
-def extract_persona(chunks: list):
-    """PersonaPage.tsx → goals, frustrations, journey steps, oracle capabilities"""
-    src = read_tsx("PersonaPage.tsx")
-    if not src:
-        return
-
-    # Only process the en-US section (first locale block)
-    en_src = src[:src.find("isPtPt")] if "isPtPt" in src else src
-
-    # Persona goals
-    goal_objects = extract_objects_from_array(en_src, "goals")
-    goal_parts = []
-    for obj in goal_objects:
-        title = extract_string_field(obj, "title")
-        text  = extract_string_field(obj, "text")
-        if title:
-            goal_parts.append(f"{title}: {text}" if text else title)
-    if goal_parts:
-        text = (
-            f"{PRODUCT_NAME.upper()} PERSONA: Francisco Soares — Goals | "
-            "Context Of Use: Primary consumer persona — Product Manager using the design system | "
-            + " | ".join(goal_parts)
-        )
-        chunks.append({
-            "id":               "PersonaPage.tsx :: francisco_goals",
-            "source":           "PersonaPage.tsx",
-            "page_type":        "persona",
-            "title":            "Persona Goals — Francisco Soares",
-            "status":           "Stable",
-            "structure":        "",
-            "logic":            "Goals define what the primary consumer persona needs from Beatrice.",
-            "context_of_use":   "Primary persona: Product Manager, mid-level DS consumer, sprint-pressure context",
-            "when_to_use":      "Reference when designing oracle responses for time-constrained users",
-            "when_not_to_use":  "",
-            "trade_offs":       "",
-            "aetheris_insight": "Francisco wants the right answer in 30 seconds — depth on demand, not by default.",
-            "text":             text,
-            "char_count":       len(text),
-        })
-
-    # Persona frustrations
-    frust_objects = extract_objects_from_array(en_src, "frustrations")
-    frust_parts = []
-    for obj in frust_objects:
-        title = extract_string_field(obj, "title")
-        text  = extract_string_field(obj, "text")
-        if title:
-            frust_parts.append(f"{title}: {text}" if text else title)
-    if frust_parts:
-        text = (
-            f"{PRODUCT_NAME.upper()} PERSONA: Francisco Soares — Frustrations | "
-            "Context Of Use: Pain points that Beatrice is designed to resolve | "
-            + " | ".join(frust_parts)
-        )
-        chunks.append({
-            "id":               "PersonaPage.tsx :: francisco_frustrations",
-            "source":           "PersonaPage.tsx",
-            "page_type":        "persona",
-            "title":            "Persona Frustrations — Francisco Soares",
-            "status":           "Stable",
-            "structure":        "",
-            "logic":            "Documented friction points that the oracle must address.",
-            "context_of_use":   "Guides oracle response design: answers must be fast, scannable and source-backed",
-            "when_to_use":      "Reference when evaluating whether an oracle response resolves the user's real barrier",
-            "when_not_to_use":  "",
-            "trade_offs":       "",
-            "aetheris_insight": "The oracle exists to eliminate the gap between documentation and decision.",
-            "text":             text,
-            "char_count":       len(text),
-        })
-
-    # Oracle capabilities — how Aetheris addresses each pain point
-    cap_objects = extract_objects_from_array(en_src, "oracleCapabilities")
-    for obj in cap_objects:
-        title = extract_string_field(obj, "title")
-        tag   = extract_string_field(obj, "tag")
-        desc  = extract_string_field(obj, "text")
-        if not title:
-            continue
-        text = (
-            f"{PRODUCT_NAME.upper()} PERSONA: Oracle Capability — {title} | "
-            f"Tag: {tag} | Description: {desc}"
-        )
-        chunks.append({
-            "id":               make_id("PersonaPage.tsx", f"capability_{title}"),
-            "source":           "PersonaPage.tsx",
-            "page_type":        "persona",
-            "title":            f"Oracle Capability: {title}",
-            "status":           "Stable",
-            "structure":        tag,
-            "logic":            desc,
-            "context_of_use":   "Maps persona pain point to specific Aetheris component or feature",
-            "when_to_use":      "",
-            "when_not_to_use":  "",
-            "trade_offs":       "",
-            "aetheris_insight": "",
-            "text":             text,
-            "char_count":       len(text),
-        })
 
 
 def extract_dev_integration(chunks: list):
@@ -907,9 +704,18 @@ def main():
 
     print("Extraindo capacidades da Beatrice (capabilities.ts)…")
     extract_beatrice_capabilities(chunks)
+    enrich_oracle_command_chunks(chunks)
 
-    print("Extraindo persona (PersonaPage.tsx)…")
-    extract_persona(chunks)
+    print("Extraindo camada de inteligência (Health, Governança, Perspectivas, Arquitetura)…")
+    extract_perspectives(chunks)
+    extract_cognition(chunks)
+    extract_system_health(chunks)
+    extract_evaluation(chunks)
+    extract_governance_page(chunks)
+    extract_knowledge_health(chunks)
+    extract_intelligence_lab(chunks)
+    extract_developers_architecture(chunks)
+    extract_engine_contracts(chunks)
 
     print("Extraindo integração dev (DevIntegrationPage.tsx)…")
     extract_dev_integration(chunks)
@@ -938,7 +744,8 @@ def main():
             "total_chunks": len(chunks),
             "sources": sources,
             "embedding_model": "BAAI/bge-m3",
-            "extractor_version": "2.2.0-capability-registry",
+            "extractor_version": "3.0.0-intelligence-layer",
+            "product_name": PRODUCT_NAME,
             "note": "Extracted from React/TypeScript source — TSX is the source of truth",
         },
         "chunks": chunks,
@@ -954,7 +761,7 @@ def main():
         "# Aetheris Design System — Corpus Dump (TSX Source)",
         "",
         f"> **Total chunks:** {len(chunks)}",
-        f"> **Extractor:** v2.2.0-capability-registry (React/TypeScript source)",
+        f"> **Extractor:** v3.0.0-intelligence-layer (React/TypeScript source)",
         f"> **Embedding model:** BAAI/bge-m3",
         "",
         "---",

@@ -128,6 +128,11 @@ metadatas = [
         "component_id":   c.get("component_id", ""),
         "status":         c["status"],
         "section":        c.get("section", ""),
+        "kind":           c.get("kind", ""),
+        "command":        c.get("command", ""),
+        "capability":     c.get("capability", ""),
+        "route":          c.get("route", ""),
+        "tags":           c.get("tags", ""),
         "schema_version": c.get("schema_version", ""),
         "char_count":     c["char_count"],
     }
