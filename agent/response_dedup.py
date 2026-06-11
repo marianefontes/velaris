@@ -64,6 +64,36 @@ def _dedupe_paragraph(paragraph: str) -> str:
     return "\n".join(_dedupe_lines(lines))
 
 
+_CATALOG_SECTION_MARKERS = (
+    "when to use",
+    "when not to use",
+    "quando usar",
+    "quando nao usar",
+    "quando não usar",
+)
+
+
+def dedupe_catalog_sections(text: str) -> str:
+    """Remove repeated catalog guidance sections from composed answers."""
+    if not text.strip():
+        return text
+    paragraphs = re.split(r"\n\s*\n", text.strip())
+    kept: list[str] = []
+    seen_sections: set[str] = set()
+    for paragraph in paragraphs:
+        normalized = _normalize_line(paragraph)
+        marker = next(
+            (label for label in _CATALOG_SECTION_MARKERS if label in normalized),
+            None,
+        )
+        if marker is not None:
+            if marker in seen_sections:
+                continue
+            seen_sections.add(marker)
+        kept.append(paragraph)
+    return "\n\n".join(kept)
+
+
 def dedupe_response(text: str) -> str:
     if not text.strip():
         return text
@@ -93,4 +123,4 @@ def dedupe_response(text: str) -> str:
         seen_paragraphs.add(paragraph_key)
         deduped_paragraphs.append(cleaned)
 
-    return "\n\n".join(deduped_paragraphs)
+    return dedupe_catalog_sections("\n\n".join(deduped_paragraphs))

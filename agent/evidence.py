@@ -41,6 +41,45 @@ def evidence_tier(top_similarity: float | None, *, has_results: bool) -> Evidenc
     return "weak"
 
 
+EVIDENCE_BASIS_BY_TIER: dict[str, str] = {
+    "strong": "direct",
+    "partial": "partial",
+    "weak": "inferred",
+    "insufficient": "absent",
+}
+
+EVIDENCE_BASIS_GUIDANCE: dict[str, str] = {
+    "direct": (
+        "Canonical component data or strong retrieved evidence confirms the "
+        "answer. Respond firmly and cite the fields used."
+    ),
+    "partial": (
+        "Useful fields or chunks exist but do not cover every requested "
+        "detail. Respond with the available data and add a short limitation "
+        "section. Never refuse to answer about a documented component."
+    ),
+    "inferred": (
+        "The answer is derived from general design-system or accessibility "
+        "rules without direct component confirmation. Label the inference "
+        "explicitly and keep confidence low."
+    ),
+    "absent": (
+        "There is no sufficient basis to answer without inventing. State the "
+        "boundary and suggest a related question within the design system."
+    ),
+}
+
+
+def evidence_basis(tier: EvidenceTier | str) -> str:
+    """Map a retrieval tier to the governed evidence basis vocabulary.
+
+    The basis distinguishes direct, partial, inferred and absent evidence so
+    the composer and the validator can calibrate firmness without blocking
+    answerable questions about documented components.
+    """
+    return EVIDENCE_BASIS_BY_TIER.get(str(tier), "absent")
+
+
 def _excerpt(text: str, max_length: int = 360) -> str:
     normalized = re.sub(r"\s+", " ", text).strip()
     if len(normalized) <= max_length:

@@ -139,26 +139,90 @@ class AgentStore:
 
                 CREATE INDEX IF NOT EXISTS idx_agent_runs_session
                 ON agent_runs(session_id, created_at DESC);
+
+                CREATE TABLE IF NOT EXISTS decision_counters (
+                    project_id TEXT PRIMARY KEY,
+                    next_seq INTEGER NOT NULL DEFAULT 1
+                );
                 """
             )
+            self._migrate_decisions_schema(connection)
+
+    def _migrate_decisions_schema(self, connection: sqlite3.Connection) -> None:
+        columns = {
+            row[1]
+            for row in connection.execute("PRAGMA table_info(decisions)").fetchall()
+        }
+        migrations = {
+            "decision_code": "TEXT",
+            "title": "TEXT NOT NULL DEFAULT ''",
+            "context": "TEXT NOT NULL DEFAULT ''",
+            "recommended_option": "TEXT NOT NULL DEFAULT ''",
+            "rejected_options_json": "TEXT NOT NULL DEFAULT '[]'",
+            "risks_json": "TEXT NOT NULL DEFAULT '[]'",
+            "affected_entities_json": "TEXT NOT NULL DEFAULT '[]'",
+            "impact_json": "TEXT NOT NULL DEFAULT '{}'",
+            "tradeoff_structured_json": "TEXT NOT NULL DEFAULT '{}'",
+            "author": "TEXT NOT NULL DEFAULT 'beatrice'",
+        }
+        for column, definition in migrations.items():
+            if column not in columns:
+                connection.execute(
+                    f"ALTER TABLE decisions ADD COLUMN {column} {definition}"
+                )
+
+    def _next_decision_code(self, connection: sqlite3.Connection, project_id: str) -> str:
+        row = connection.execute(
+            "SELECT next_seq FROM decision_counters WHERE project_id = ?",
+            (project_id,),
+        ).fetchone()
+        if row is None:
+            connection.execute(
+                "INSERT INTO decision_counters (project_id, next_seq) VALUES (?, 2)",
+                (project_id,),
+            )
+            return "DEC-001"
+        sequence = int(row["next_seq"])
+        connection.execute(
+            "UPDATE decision_counters SET next_seq = ? WHERE project_id = ?",
+            (sequence + 1, project_id),
+        )
+        return f"DEC-{sequence:03d}"
 
     def create_decision(self, payload: CreateDecisionRecordInput) -> dict[str, Any]:
         now = _now()
         decision_id = f"dec_{uuid.uuid4().hex[:16]}"
+        tradeoff_structured = (
+            payload.tradeoff_analysis.model_dump(mode="json")
+            if payload.tradeoff_analysis
+            else {}
+        )
+        impact = (
+            payload.system_impact.model_dump(mode="json")
+            if payload.system_impact
+            else {}
+        )
+        rejected = payload.rejected_options or payload.alternatives_considered
         with self._connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            decision_code = self._next_decision_code(connection, payload.project_id)
             connection.execute(
                 """
                 INSERT INTO decisions (
-                    decision_id, request_id, session_id, project_id, timestamp,
-                    user_query, profile, workflow, recommendation,
-                    alternatives_considered_json, tradeoffs_json,
+                    decision_id, decision_code, request_id, session_id, project_id,
+                    timestamp, user_query, profile, workflow, recommendation,
+                    title, context, recommended_option,
+                    alternatives_considered_json, rejected_options_json,
+                    tradeoffs_json, tradeoff_structured_json,
+                    risks_json, affected_entities_json, impact_json,
                     evidence_sources_json, top_similarity, evidence_tier, model,
-                    status, created_by, confirmed_by_user, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                          'draft', 'beatrice', 0, ?)
+                    status, created_by, author, confirmed_by_user, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                          ?, ?, ?, ?, 'draft', 'beatrice', ?, 0, ?)
                 """,
                 (
                     decision_id,
+                    decision_code,
                     payload.request_id,
                     payload.session_id,
                     payload.project_id,
@@ -167,8 +231,16 @@ class AgentStore:
                     payload.profile,
                     payload.workflow,
                     payload.recommendation,
+                    payload.title,
+                    payload.context,
+                    payload.recommended_option or payload.recommendation[:200],
                     _json(payload.alternatives_considered),
+                    _json(rejected),
                     _json(payload.tradeoffs),
+                    _json(tradeoff_structured),
+                    _json(payload.risks),
+                    _json(payload.affected_entities),
+                    _json(impact),
                     _json([
                         source.model_dump(mode="json")
                         for source in payload.evidence_sources
@@ -176,6 +248,7 @@ class AgentStore:
                     payload.top_similarity,
                     payload.evidence_tier,
                     payload.model,
+                    payload.author,
                     now,
                 ),
             )
@@ -222,6 +295,43 @@ class AgentStore:
                 {where}
                 ORDER BY timestamp DESC
                 LIMIT ? OFFSET ?
+                """,
+                values,
+            ).fetchall()
+        return [self._serialize_decision(row) for row in rows]
+
+    def search_decisions(
+        self,
+        *,
+        project_id: str,
+        terms: list[str],
+        status: str | None = "confirmed",
+        limit: int = 5,
+    ) -> list[dict[str, Any]]:
+        if not terms:
+            return []
+        clauses = ["project_id = ?"]
+        values: list[Any] = [project_id]
+        if status is not None:
+            clauses.append("status = ?")
+            values.append(status)
+        term_clauses: list[str] = []
+        for term in terms[:8]:
+            pattern = f"%{term.lower()}%"
+            term_clauses.append(
+                "(LOWER(user_query) LIKE ? OR LOWER(recommendation) LIKE ? "
+                "OR LOWER(title) LIKE ? OR LOWER(recommended_option) LIKE ?)"
+            )
+            values.extend([pattern, pattern, pattern, pattern])
+        where = f" WHERE {' AND '.join(clauses)} AND ({' OR '.join(term_clauses)})"
+        values.append(max(1, min(limit, 20)))
+        with self._connect() as connection:
+            rows = connection.execute(
+                f"""
+                SELECT * FROM decisions
+                {where}
+                ORDER BY timestamp DESC
+                LIMIT ?
                 """,
                 values,
             ).fetchall()
@@ -501,8 +611,10 @@ class AgentStore:
 
     @staticmethod
     def _serialize_decision(row: sqlite3.Row) -> dict[str, Any]:
+        keys = row.keys()
         return {
             "decision_id": row["decision_id"],
+            "decision_code": row["decision_code"] if "decision_code" in keys else None,
             "request_id": row["request_id"],
             "session_id": row["session_id"],
             "project_id": row["project_id"],
@@ -511,14 +623,31 @@ class AgentStore:
             "profile": row["profile"],
             "workflow": row["workflow"],
             "recommendation": row["recommendation"],
+            "title": row["title"] if "title" in keys else "",
+            "context": row["context"] if "context" in keys else "",
+            "recommended_option": (
+                row["recommended_option"] if "recommended_option" in keys else ""
+            ),
             "alternatives_considered": _decode(row["alternatives_considered_json"], []),
+            "rejected_options": _decode(
+                row["rejected_options_json"], []
+            ) if "rejected_options_json" in keys else [],
             "tradeoffs": _decode(row["tradeoffs_json"], []),
+            "tradeoff_analysis": _decode(
+                row["tradeoff_structured_json"], {}
+            ) if "tradeoff_structured_json" in keys else {},
+            "risks": _decode(row["risks_json"], []) if "risks_json" in keys else [],
+            "affected_entities": _decode(
+                row["affected_entities_json"], []
+            ) if "affected_entities_json" in keys else [],
+            "system_impact": _decode(row["impact_json"], {}) if "impact_json" in keys else {},
             "evidence_sources": _decode(row["evidence_sources_json"], []),
             "top_similarity": float(row["top_similarity"]),
             "evidence_tier": row["evidence_tier"],
             "model": row["model"],
             "status": row["status"],
             "created_by": row["created_by"],
+            "author": row["author"] if "author" in keys else "beatrice",
             "confirmed_by_user": bool(row["confirmed_by_user"]),
             "updated_at": row["updated_at"],
         }

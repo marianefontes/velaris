@@ -154,6 +154,17 @@ COMPONENT_ALIASES: dict[str, tuple[str, ...]] = {
     "icon": ("icon", "icons", "icone", "ícone", "icones", "ícones", "icon button"),
 }
 
+PATTERN_ENTITY_ALIASES: dict[str, tuple[str, ...]] = {
+    "side-drawer": (
+        "drawer",
+        "side drawer",
+        "side-drawer",
+        "gaveta",
+        "gavetas",
+        "painel lateral",
+    ),
+}
+
 
 def component_href(component_id: str) -> str:
     return f"/components?component={component_id}"

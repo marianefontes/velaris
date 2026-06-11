@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from component_metadata import ComponentMetadata
 
-from agent.models import NavigationAction, NavigationConfidence
+from agent.models import ExternalReferenceAction, InternalAlternative, NavigationAction, NavigationConfidence
 from agent.perspective_registry import PerspectiveEntry, PerspectiveMatch, get_perspective_entry
 from agent.route_map import RouteResolution
 
@@ -259,6 +259,59 @@ def single_choice_navigation_actions(
         ),
     ]
     return primary, secondary
+
+
+def navigation_action_for_internal_alternative(
+    alternative: InternalAlternative,
+    *,
+    english: bool = False,
+) -> NavigationAction | None:
+    if alternative.target_type != "component":
+        return None
+    label = (
+        f"Ver {alternative.name}"
+        if not english
+        else f"View {alternative.name}"
+    )
+    return NavigationAction(
+        label=label,
+        href=component_href(alternative.entity_id),
+        target_type="component",
+        source="catalog",
+        confidence="exact",
+        metadata={
+            "component_id": alternative.entity_id,
+            "component_name": alternative.name,
+            "internal": True,
+            "unsupported_alternative": True,
+        },
+    )
+
+
+def navigation_action_for_external_reference(
+    reference: ExternalReferenceAction,
+    *,
+    english: bool = False,
+) -> NavigationAction:
+    return NavigationAction(
+        label=(
+            "Abrir referência externa"
+            if not english
+            else "Open external reference"
+        ),
+        href=reference.url,
+        target_type="concept",
+        source="manual_alias",
+        confidence="exact",
+        metadata={
+            "action_type": "navigate",
+            "internal": False,
+            "external_reference": True,
+            "reference_id": reference.reference_id,
+            "source_type": reference.source_type,
+            "trusted": reference.trusted,
+        },
+    )
 
 
 def serialize_navigation_payload(

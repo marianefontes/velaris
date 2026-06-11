@@ -432,22 +432,10 @@ def deterministic_component_response(
         alternative.name
         for alternative in selection.alternative_components
     ]
-    show_technical = firm != "firm" or not exact_match
-    doc_note_pt = (
-        "Alguns campos complementares ainda não estão documentados no catálogo."
-        if missing else ""
-    )
-    doc_note_en = (
-        "Some complementary fields are not yet documented in the catalog."
-        if missing else ""
-    )
-
     if english:
         reason_parts = [f"Status: {component.status}."]
         if intent_text:
             reason_parts.append(f"Documented intent: {intent_text}.")
-        else:
-            reason_parts.append("Limitation: the canonical intent is not documented.")
         reason_parts.extend(reasons)
         if hedge_en:
             reason_parts.append(hedge_en)
@@ -456,15 +444,6 @@ def deterministic_component_response(
             "Reason\n" + "\n".join(reason_parts),
             "Limits\n" + ("\n".join(limits) if limits else "No documented limits were selected."),
         ]
-        if doc_note_en and show_technical:
-            sections.append(f"Documentation\n{doc_note_en}")
-        if show_technical:
-            sections.append(
-                "Evidence\n"
-                f"Retrieval evidence tier: {recommended.evidence_tier}. "
-                f"Evidence similarity: {recommended.similarity:.3f}. "
-                "Evidence similarity is retrieval relevance, not answer confidence."
-            )
         if alternatives:
             sections.append("Alternatives\n" + ", ".join(alternatives))
         return dedupe_response("\n\n".join(sections))
@@ -472,8 +451,6 @@ def deterministic_component_response(
     reason_parts = [f"Status: {component.status}."]
     if intent_text:
         reason_parts.append(f"Intent documentado: {intent_text}.")
-    else:
-        reason_parts.append("Limitação: o intent canônico não está documentado.")
     reason_parts.extend(reasons)
     if hedge_pt:
         reason_parts.append(hedge_pt)
@@ -482,16 +459,6 @@ def deterministic_component_response(
         "Motivo\n" + "\n".join(reason_parts),
         "Limites\n" + ("\n".join(limits) if limits else "Nenhum limite documentado foi selecionado."),
     ]
-    if doc_note_pt and show_technical:
-        sections.append(f"Documentação\n{doc_note_pt}")
-    if show_technical:
-        sections.append(
-            "Evidência\n"
-            f"Retrieval evidence tier: {recommended.evidence_tier}. "
-            f"Similaridade da evidência: {recommended.similarity:.3f}. "
-            "A similaridade da evidência representa relevância de retrieval, "
-            "não confiança da resposta."
-        )
     if alternatives:
         sections.append("Alternativas\n" + ", ".join(alternatives))
     return dedupe_response("\n\n".join(sections))

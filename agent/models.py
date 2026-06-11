@@ -19,9 +19,13 @@ WorkflowName = Literal[
     "semantic_navigation_query",
     "perspective_lookup",
     "entity_lookup",
+    "unsupported_entity_lookup",
+    "unsupported_entity_recommendation",
+    "unknown_entity_lookup",
     "direct_entity_guidance",
     "single_choice_recommendation",
     "decision_rule_recommendation",
+    "comparison_rule",
     "concept_query",
     "component_decision",
     "pattern_guidance",
@@ -31,7 +35,13 @@ WorkflowName = Literal[
     "xai_explanation",
     "design_audit",
     "compare_options",
+    "decision_analysis",
     "documentation_help",
+    "system_health",
+    "agent_identity",
+    "governance_analysis",
+    "simulation",
+    "multi_agent_reasoning",
     "out_of_scope",
 ]
 OperationalIntent = Literal[
@@ -41,6 +51,9 @@ OperationalIntent = Literal[
     "semantic_navigation_query",
     "perspective_lookup",
     "entity_lookup",
+    "unsupported_entity_lookup",
+    "unsupported_entity_recommendation",
+    "unknown_entity_lookup",
     "direct_entity_guidance",
     "concept_query",
     "component_recommendation",
@@ -55,6 +68,11 @@ OperationalIntent = Literal[
     "help_request",
     "general_design_system",
     "legacy_name_query",
+    "system_health",
+    "agent_identity",
+    "governance_analysis",
+    "simulation",
+    "multi_agent_reasoning",
     "out_of_scope",
 ]
 UserIntent = Literal[
@@ -64,6 +82,9 @@ UserIntent = Literal[
     "semantic_navigation_query",
     "perspective_lookup",
     "entity_lookup",
+    "unsupported_entity_lookup",
+    "unsupported_entity_recommendation",
+    "unknown_entity_lookup",
     "direct_entity_guidance",
     "concept_query",
     "component_recommendation",
@@ -78,12 +99,20 @@ UserIntent = Literal[
     "help_request",
     "general_design_system",
     "legacy_name_query",
+    "system_health",
+    "agent_identity",
+    "governance_analysis",
+    "simulation",
+    "multi_agent_reasoning",
     "out_of_scope",
 ]
 AnswerStrategy = Literal[
     "greeting",
     "navigation_query",
     "entity_lookup",
+    "unsupported_entity_lookup",
+    "unsupported_entity_recommendation",
+    "unknown_entity_lookup",
     "direct_entity_guidance",
     "concept_query",
     "component_recommendation",
@@ -96,7 +125,29 @@ AnswerStrategy = Literal[
     "catalog",
     "documentation_help",
     "legacy_name_query",
+    "system_health",
+    "agent_identity",
+    "governance_analysis",
+    "simulation",
+    "multi_agent_reasoning",
     "out_of_scope",
+]
+EntityCatalogStatus = Literal[
+    "supported",
+    "partial",
+    "unknown",
+]
+EntityKind = Literal[
+    "component",
+    "component_or_pattern",
+    "pattern",
+    "token",
+    "state",
+    "variant",
+    "guideline",
+    "accessibility_rule",
+    "concept",
+    "decision",
 ]
 UserLanguage = Literal["pt-BR", "pt-PT", "en", "unknown"]
 AnswerConfidence = Literal["high", "medium", "low", "not_determined"]
@@ -111,7 +162,14 @@ EvidenceTier = Literal[
 EvidenceSource = Literal["semantic_retrieval", "canonical_catalog"]
 StepStatus = Literal["pending", "running", "completed", "failed", "blocked", "skipped"]
 RunStatus = Literal["running", "completed", "limited", "failed", "blocked"]
-DecisionStatus = Literal["draft", "confirmed", "rejected"]
+DecisionStatus = Literal[
+    "draft",
+    "confirmed",
+    "deprecated",
+    "rejected",
+    "superseded",
+]
+ImpactLevel = Literal["low", "medium", "high", "critical"]
 SelectionRejectionReason = Literal[
     "weak_evidence",
     "insufficient_evidence",
@@ -149,6 +207,30 @@ ValidationViolationType = Literal[
     "contradicted_recommended_component",
     "unsupported_claim",
     "missing_required_limitation",
+    "missing_recommendation",
+    "missing_tradeoff",
+    "missing_benefit",
+    "missing_cost",
+    "missing_system_impact",
+    "missing_decision_reference",
+    "missing_alternatives",
+    "missing_consequence_prediction",
+    "missing_second_order_effects",
+    "missing_perspective_divergence",
+    "missing_council_perspectives",
+    "missing_council_synthesis",
+    "missing_consensus_classification",
+    "missing_scenario_analysis",
+    "missing_historical_timeline",
+]
+ClaimConfidence = Literal["strong", "medium", "weak", "absent"]
+EvidenceIntegrityStatus = Literal["pass", "blocked", "not_applicable"]
+EvidenceIntegrityViolationType = Literal[
+    "unknown_entity_inference",
+    "claim_without_evidence",
+    "internal_audit_leak",
+    "confidence_without_source",
+    "pretrained_only_recommendation",
 ]
 
 
@@ -176,6 +258,40 @@ class ExactEntityMatch(StrictModel):
     matched_alias: str
 
 
+class InternalAlternative(StrictModel):
+    entity_id: str
+    name: str
+    target_type: Literal["component", "pattern"]
+    use_case: str | None = None
+
+
+class ExternalReferenceAction(StrictModel):
+    label: str
+    url: str
+    source_type: str
+    trusted: bool = True
+    reference_id: str | None = None
+
+
+class DesignSystemGap(StrictModel):
+    entity_label: str
+    entity_type: EntityKind
+    reason: str
+    suggested_action: str
+
+
+class CatalogEntityResolution(StrictModel):
+    entity_key: str | None = None
+    entity_label: str | None = None
+    entity_type: EntityKind | None = None
+    entity_status: EntityCatalogStatus = "unknown"
+    internal_alternatives: list[InternalAlternative] = Field(default_factory=list)
+    external_reference: ExternalReferenceAction | None = None
+    design_system_gap: DesignSystemGap | None = None
+    matched_alias: str | None = None
+    response_guidance: str | None = None
+
+
 class ExtractedEntities(StrictModel):
     components: list[str] = Field(default_factory=list)
     patterns: list[str] = Field(default_factory=list)
@@ -195,11 +311,14 @@ class QueryUnderstanding(StrictModel):
     language: UserLanguage = "unknown"
     entities: ExtractedEntities = Field(default_factory=ExtractedEntities)
     exact_entity_matches: list[ExactEntityMatch] = Field(default_factory=list)
+    catalog_entity_resolution: CatalogEntityResolution | None = None
     resolved_route: str | None = None
     resolved_section_label: str | None = None
     resolved_perspective_id: str | None = None
     goal: str = "answer_design_system_question"
     retrieval_query: str = ""
+    decision_analysis_mode: bool = False
+    architect_review_mode: bool = False
 
 
 class AgentPlan(StrictModel):
@@ -321,6 +440,23 @@ class ResponseValidation(StrictModel):
 class EvidenceStatement(StrictModel):
     text: str
     source_titles: list[str] = Field(default_factory=list)
+
+
+class Claim(StrictModel):
+    id: str
+    claim: str
+    evidence_source: str | None = None
+    evidence_strength: float = Field(default=0.0, ge=0.0, le=1.0)
+    confidence: ClaimConfidence = "absent"
+
+
+class EvidenceIntegrityResult(StrictModel):
+    status: EvidenceIntegrityStatus = "not_applicable"
+    violations: list[EvidenceIntegrityViolationType] = Field(default_factory=list)
+    blocked_claim_ids: list[str] = Field(default_factory=list)
+    audit_warnings: list[str] = Field(default_factory=list)
+    fallback_used: bool = False
+    fallback_reason: str | None = None
 
 
 class SearchComponentInput(StrictModel):
@@ -445,6 +581,145 @@ class AuditMetadata(StrictModel):
     decision_id: str | None = None
     decision_status: DecisionStatus | None = None
     execution_status: RunStatus = "running"
+    entity_status: EntityCatalogStatus | None = None
+    entity_type: EntityKind | None = None
+    entity_label: str | None = None
+    design_system_gap: DesignSystemGap | None = None
+    claims: list[Claim] = Field(default_factory=list)
+    evidence_integrity_status: EvidenceIntegrityStatus = "not_applicable"
+    evidence_integrity_violations: list[EvidenceIntegrityViolationType] = Field(
+        default_factory=list
+    )
+    audit_warnings: list[str] = Field(default_factory=list)
+
+
+class TradeoffAnalysis(StrictModel):
+    recommendation: str = ""
+    benefits: list[str] = Field(default_factory=list)
+    costs: list[str] = Field(default_factory=list)
+    risks: list[str] = Field(default_factory=list)
+    debts: list[str] = Field(default_factory=list)
+    alternatives: list[str] = Field(default_factory=list)
+
+
+class SystemImpactAnalysis(StrictModel):
+    level: ImpactLevel = "low"
+    affected_areas: list[str] = Field(default_factory=list)
+    required_changes: list[str] = Field(default_factory=list)
+    affected_entities: list[str] = Field(default_factory=list)
+
+
+class DecisionMemoryEntry(StrictModel):
+    decision_id: str
+    decision_code: str | None = None
+    title: str = ""
+    recommended_option: str = ""
+    rejected_options: list[str] = Field(default_factory=list)
+    status: DecisionStatus = "draft"
+    relevance: str = ""
+
+
+class DecisionMemoryContext(StrictModel):
+    related_decisions: list[DecisionMemoryEntry] = Field(default_factory=list)
+
+
+RiskForecastLevel = Literal["high", "medium", "low"]
+ConsensusLevel = Literal["consensus", "partial_consensus", "conflict"]
+ScenarioCaseType = Literal["best", "expected", "worst"]
+
+
+class PredictedConsequence(StrictModel):
+    description: str
+    probability: RiskForecastLevel
+
+
+class ConsequenceSimulation(StrictModel):
+    change_summary: str = ""
+    dependencies: list[str] = Field(default_factory=list)
+    impacts: list[str] = Field(default_factory=list)
+    consequences: list[PredictedConsequence] = Field(default_factory=list)
+    future_risks: list[str] = Field(default_factory=list)
+
+
+class EntityHistoryEntry(StrictModel):
+    entity: str
+    version_before: str = ""
+    decision_code: str | None = None
+    decision_date: str = ""
+    change_summary: str = ""
+    impacts: list[str] = Field(default_factory=list)
+
+
+class EntityTimeline(StrictModel):
+    entity: str
+    entries: list[EntityHistoryEntry] = Field(default_factory=list)
+
+
+class PerspectiveOpinion(StrictModel):
+    perspective: str
+    perspective_label: str
+    preferred_option: str
+    rationale: str
+
+
+class CouncilPerspectiveOpinion(StrictModel):
+    perspective: str
+    perspective_label: str
+    recommendation: str
+    justification: str
+    risks: list[str] = Field(default_factory=list)
+    confidence: str = "medium"
+
+
+class CouncilSynthesis(StrictModel):
+    consensus: ConsensusLevel = "partial_consensus"
+    consensus_percent: int = Field(ge=0, le=100, default=0)
+    executive_summary: str = ""
+    points_of_agreement: list[str] = Field(default_factory=list)
+    points_of_disagreement: list[str] = Field(default_factory=list)
+    divergence_reason: str = ""
+    final_recommendation: str = ""
+
+
+class MultiAgentCouncilAnalysis(StrictModel):
+    perspectives: list[CouncilPerspectiveOpinion] = Field(default_factory=list)
+    synthesis: CouncilSynthesis = Field(default_factory=CouncilSynthesis)
+
+
+class PerspectiveDivergenceAnalysis(StrictModel):
+    opinions: list[PerspectiveOpinion] = Field(default_factory=list)
+    synthesis: str = ""
+    consensus: ConsensusLevel = "partial_consensus"
+
+
+class ScenarioCase(StrictModel):
+    case_type: ScenarioCaseType
+    outcomes: list[str] = Field(default_factory=list)
+
+
+class ScenarioAnalysis(StrictModel):
+    scenarios: list[ScenarioCase] = Field(default_factory=list)
+
+
+class SecondOrderEffects(StrictModel):
+    direct: list[str] = Field(default_factory=list)
+    indirect: list[str] = Field(default_factory=list)
+
+
+class StrategicReasoningAnalysis(StrictModel):
+    architect_review_mode: bool = False
+    consequence_simulation: ConsequenceSimulation = Field(
+        default_factory=ConsequenceSimulation
+    )
+    entity_timelines: list[EntityTimeline] = Field(default_factory=list)
+    perspective_divergence: PerspectiveDivergenceAnalysis = Field(
+        default_factory=PerspectiveDivergenceAnalysis
+    )
+    scenario_analysis: ScenarioAnalysis = Field(default_factory=ScenarioAnalysis)
+    second_order_effects: SecondOrderEffects = Field(
+        default_factory=SecondOrderEffects
+    )
+    confidence_rationale: str = ""
 
 
 class CreateDecisionRecordInput(StrictModel):
@@ -455,12 +730,21 @@ class CreateDecisionRecordInput(StrictModel):
     profile: str
     workflow: WorkflowName
     recommendation: str
+    title: str = ""
+    context: str = ""
+    recommended_option: str = ""
     alternatives_considered: list[str] = Field(default_factory=list)
+    rejected_options: list[str] = Field(default_factory=list)
     tradeoffs: list[str] = Field(default_factory=list)
+    tradeoff_analysis: TradeoffAnalysis | None = None
+    risks: list[str] = Field(default_factory=list)
+    affected_entities: list[str] = Field(default_factory=list)
+    system_impact: SystemImpactAnalysis | None = None
     evidence_sources: list[EvidenceItem] = Field(default_factory=list)
     top_similarity: float = Field(ge=0.0, le=1.0)
     evidence_tier: EvidenceTier
     model: str
+    author: str = "beatrice"
     status: Literal["draft"] = "draft"
 
     @field_validator("profile", mode="before")
@@ -478,6 +762,7 @@ class CreateDecisionRecordInput(StrictModel):
 
 class CreateDecisionRecordOutput(StrictModel):
     decision_id: str
+    decision_code: str | None = None
     status: Literal["draft"]
     created_at: str
 

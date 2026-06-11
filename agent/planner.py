@@ -62,9 +62,13 @@ _WORKFLOW_TOOLS: dict[str, list[str]] = {
     "semantic_navigation_query": [],
     "perspective_lookup": [],
     "entity_lookup": [],
+    "unsupported_entity_lookup": [],
+    "unsupported_entity_recommendation": [],
+    "unknown_entity_lookup": [],
     "direct_entity_guidance": [],
     "single_choice_recommendation": [],
     "decision_rule_recommendation": [],
+    "comparison_rule": [],
     "concept_query": [],
     "component_decision": ["search_component", "search_pattern"],
     "pattern_guidance": ["search_pattern"],
@@ -74,7 +78,22 @@ _WORKFLOW_TOOLS: dict[str, list[str]] = {
     "xai_explanation": ["search_explainability"],
     "design_audit": ["validate_against_design_system"],
     "compare_options": ["compare_design_options"],
+    "decision_analysis": [
+        "search_design_decision",
+        "search_component",
+        "search_pattern",
+        "validate_against_design_system",
+    ],
     "documentation_help": ["search_component", "search_pattern", "search_token"],
+    "system_health": ["search_explainability"],
+    "agent_identity": [],
+    "governance_analysis": ["search_design_decision"],
+    "simulation": [
+        "search_design_decision",
+        "search_component",
+        "compare_design_options",
+    ],
+    "multi_agent_reasoning": ["search_design_decision", "search_pattern"],
     "out_of_scope": [],
 }
 
@@ -83,7 +102,27 @@ _DRAFT_WORKFLOWS = {
     "pattern_guidance",
     "design_audit",
     "compare_options",
+    "decision_analysis",
 }
+
+
+def _decision_analysis_tools(
+    query: str,
+    understanding: QueryUnderstanding,
+) -> list[str]:
+    normalized = " ".join(query.lower().split())
+    tools = ["search_design_decision"]
+    if understanding.entities.components or _contains_any(normalized, _COMPONENT_TERMS):
+        tools.append("search_component")
+    if understanding.entities.patterns or _contains_any(normalized, _PATTERN_TERMS):
+        tools.append("search_pattern")
+    if (
+        _contains_any(normalized, _COMPARE_TERMS)
+        or understanding.user_intent == "component_comparison"
+    ):
+        tools.append("compare_design_options")
+    tools.append("validate_against_design_system")
+    return list(dict.fromkeys(tools))
 
 
 def _contains_any(query: str, terms: tuple[str, ...]) -> bool:
@@ -148,12 +187,36 @@ def build_agent_plan(
     elif understanding.user_intent == "entity_lookup":
         workflow = "entity_lookup"
         rationale = "The request asks whether a catalog entity exists."
+    elif understanding.user_intent == "unsupported_entity_lookup":
+        workflow = "unsupported_entity_lookup"
+        rationale = "The request cites a known UI entity absent from the Velaris catalog."
+    elif understanding.user_intent == "unsupported_entity_recommendation":
+        workflow = "unsupported_entity_recommendation"
+        rationale = "The request asks for guidance on an entity absent from the Velaris catalog."
+    elif understanding.user_intent == "unknown_entity_lookup":
+        workflow = "unknown_entity_lookup"
+        rationale = "The request cites an unrecognized entity and needs clarification."
     elif understanding.user_intent == "direct_entity_guidance":
         workflow = "direct_entity_guidance"
         rationale = "The request asks for direct usage guidance on a named entity."
     elif understanding.user_intent == "concept_query":
         workflow = "concept_query"
         rationale = "The request asks for a product or oracle concept definition."
+    elif understanding.user_intent == "agent_identity":
+        workflow = "agent_identity"
+        rationale = "The request asks how Abraxos differs from a chatbot or generic oracle."
+    elif understanding.user_intent == "system_health":
+        workflow = "system_health"
+        rationale = "The request asks about system health metrics or reliability diagnostics."
+    elif understanding.user_intent == "governance_analysis":
+        workflow = "governance_analysis"
+        rationale = "The request asks about governance state, alerts or catalog hygiene."
+    elif understanding.user_intent == "simulation":
+        workflow = "simulation"
+        rationale = "The request asks to simulate a design-system change or scenario."
+    elif understanding.user_intent == "multi_agent_reasoning":
+        workflow = "multi_agent_reasoning"
+        rationale = "The request needs deliberation across professional perspectives."
     elif understanding.user_intent == "legacy_name_query":
         workflow = "documentation_help"
         rationale = "The request asks about a legacy product name."
@@ -172,6 +235,24 @@ def build_agent_plan(
     elif understanding.user_intent == "xai_explanation":
         workflow = "xai_explanation"
         rationale = "The request asks how evidence, confidence or a recommendation is explained."
+    elif understanding.decision_analysis_mode and understanding.user_intent not in {
+        "greeting",
+        "small_talk",
+        "navigation_query",
+        "semantic_navigation_query",
+        "perspective_lookup",
+        "entity_lookup",
+        "unsupported_entity_lookup",
+        "unsupported_entity_recommendation",
+        "unknown_entity_lookup",
+        "direct_entity_guidance",
+        "concept_query",
+        "out_of_scope",
+    }:
+        workflow = "decision_analysis"
+        rationale = (
+            "The request asks for a decision with tradeoffs, impact and rationale."
+        )
     elif understanding.user_intent == "design_decision":
         workflow = "design_decision"
         rationale = "The request asks for documented rationale and trade-offs."
@@ -180,8 +261,14 @@ def build_agent_plan(
         or _contains_any(normalized, _COMPARE_TERMS)
         or routed_intent == "comparison_query"
     ):
-        workflow = "compare_options"
-        rationale = "The request compares design alternatives."
+        from agent.decision_rules import resolve_comparison_rule
+
+        if resolve_comparison_rule(query) is not None:
+            workflow = "comparison_rule"
+            rationale = "The request matches a canonical comparison rule."
+        else:
+            workflow = "compare_options"
+            rationale = "The request compares design alternatives."
     elif (
         understanding.user_intent == "token_lookup"
         or _contains_any(normalized, _TOKEN_TERMS)
@@ -237,6 +324,8 @@ def build_agent_plan(
         rationale = "No design-system domain signal was detected."
 
     tools = list(_WORKFLOW_TOOLS.get(workflow, []))
+    if workflow == "decision_analysis":
+        tools = _decision_analysis_tools(query, understanding)
     if understanding.user_intent in {
         "greeting",
         "small_talk",
@@ -245,9 +334,13 @@ def build_agent_plan(
         "semantic_navigation_query",
         "perspective_lookup",
         "entity_lookup",
+        "unsupported_entity_lookup",
+        "unsupported_entity_recommendation",
+        "unknown_entity_lookup",
         "direct_entity_guidance",
         "concept_query",
         "legacy_name_query",
+        "agent_identity",
     }:
         tools = []
     steps = [
@@ -266,11 +359,16 @@ def build_agent_plan(
         "semantic_navigation_query",
         "perspective_lookup",
         "entity_lookup",
+        "unsupported_entity_lookup",
+        "unsupported_entity_recommendation",
+        "unknown_entity_lookup",
         "direct_entity_guidance",
         "concept_query",
         "single_choice_recommendation",
         "decision_rule_recommendation",
+        "comparison_rule",
         "legacy_name_query",
+        "agent_identity",
     }:
         steps.append("compose_response")
     else:

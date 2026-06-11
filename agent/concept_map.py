@@ -50,15 +50,17 @@ def concept_response(concept_key: str, *, english: bool = False) -> str:
     responses = {
         "abraxos": {
             "pt": (
-                "Abraxos é o oráculo contextual do Velaris. Ele ajuda a interpretar "
-                "componentes, tokens, padrões, perspectivas, acessibilidade, "
-                "auditorias e decisões documentadas com base no catálogo e nas "
-                "evidências disponíveis."
+                "Abraxos é o agente cognitivo do Velaris — um oráculo contextual com "
+                "recuperação de evidências (RAG), roteamento de intenção, validação "
+                "de respostas e engines especializados (/health, /governance, "
+                "/simulate). Não é um chatbot genérico: responde apenas com base no "
+                "catálogo e nas evidências documentadas."
             ),
             "en": (
-                "Abraxos is the contextual oracle of Velaris. It helps interpret "
-                "components, tokens, patterns, perspectives, accessibility, "
-                "audits and documented decisions using the catalog and available "
+                "Abraxos is Velaris's cognitive agent — a contextual oracle with "
+                "evidence retrieval (RAG), intent routing, response validation and "
+                "specialized engines (/health, /governance, /simulate). It is not a "
+                "generic chatbot: it answers only from the catalog and documented "
                 "evidence."
             ),
         },
@@ -163,3 +165,27 @@ def concept_response(concept_key: str, *, english: bool = False) -> str:
     }
     locale = "en" if english else "pt"
     return responses[concept_key][locale]
+
+
+def agent_identity_response(*, english: bool = False) -> str:
+    if english:
+        return (
+            "Abraxos is a **cognitive agent**, not a generic chatbot.\n\n"
+            "- **Chatbot**: open-domain conversation without a grounded catalog.\n"
+            "- **Oracle**: contextual interpreter of Velaris evidence with source "
+            "attribution.\n"
+            "- **Cognitive agent**: oracle + intent routing, validation gates, "
+            "perspectives, governance and specialized engines.\n\n"
+            "Beatrice was the previous oracle name; the current identity is Abraxos "
+            "inside Velaris (formerly Aetheris)."
+        )
+    return (
+        "Abraxos é um **agente cognitivo**, não um chatbot genérico.\n\n"
+        "- **Chatbot**: conversa aberta sem catálogo fundamentado.\n"
+        "- **Oráculo**: intérprete contextual das evidências do Velaris com "
+        "atribuição de fontes.\n"
+        "- **Agente cognitivo**: oráculo + roteamento de intenção, validação, "
+        "perspectivas, governança e engines especializados.\n\n"
+        "Beatrice era o nome anterior do oráculo; a identidade atual é Abraxos "
+        "dentro do Velaris (antes Aetheris)."
+    )

@@ -10,6 +10,7 @@ def build_create_decision_record_tool(store: AgentStore) -> ToolDefinition:
         decision = store.create_decision(payload)
         return CreateDecisionRecordOutput(
             decision_id=decision["decision_id"],
+            decision_code=decision.get("decision_code"),
             status="draft",
             created_at=decision["timestamp"],
         )

@@ -8,7 +8,12 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 
-from .evidence import RuleScorer, build_component_selection
+from .evidence import (
+    EVIDENCE_BASIS_GUIDANCE,
+    RuleScorer,
+    build_component_selection,
+    evidence_basis,
+)
 from .executor import PlanExecution, ToolExecutionError, execute_plan
 from .navigation_actions import (
     navigation_action_for_component,
@@ -16,24 +21,34 @@ from .navigation_actions import (
     navigation_action_for_route,
     single_choice_navigation_actions,
 )
+from .claims import build_claims_for_context
+from .evidence_integrity import EvidenceIntegrityValidator, integrity_fallback_response
 from .models import (
     AgentPlan,
     AnswerConfidence,
     AuditMetadata,
+    Claim,
     ComponentSelection,
     CreateDecisionRecordInput,
+    DecisionMemoryContext,
+    EvidenceIntegrityResult,
     EvidenceItem,
     ExecutionStep,
     NavigationAction,
     ResponseValidation,
     QueryUnderstanding,
+    MultiAgentCouncilAnalysis,
+    StrategicReasoningAnalysis,
+    SystemImpactAnalysis,
     ToolExecutionSummary,
+    TradeoffAnalysis,
 )
 from .planner import build_agent_plan
 from .policies import ToolPolicyContext, authorize_tool
 from .registry import ToolRegistry
 from .concept_map import concept_response, resolve_concept_key
 from .operational_responses import (
+    deprecated_entity_lookup_response,
     direct_entity_guidance_response,
     entity_lookup_response,
     greeting_response,
@@ -43,10 +58,43 @@ from .operational_responses import (
     perspective_lookup_response,
     semantic_navigation_response,
     small_talk_response,
+    unknown_entity_lookup_response,
+    unsupported_entity_lookup_response,
+    unsupported_entity_recommendation_response,
 )
 from .perspective_registry import resolve_perspective_match
 from .semantic_navigation import resolve_semantic_navigation
-from .decision_rules import decision_rule_response, resolve_decision_rule
+from .action_builder import ActionPayload, build_actions_for_context
+from .decision_rules import (
+    decision_rule_response,
+    resolve_comparison_rule,
+    resolve_decision_rule,
+)
+from .decision_intelligence import (
+    analyze_system_impact,
+    build_decision_analysis_contract,
+    build_tradeoff_analysis,
+    is_significant_change,
+    resolve_decision_memory,
+)
+from .decision_validator import (
+    deterministic_decision_response,
+    validate_decision_response,
+)
+from .strategic_reasoning import (
+    build_strategic_reasoning,
+    build_strategic_reasoning_contract,
+)
+from .multi_agent_council import build_multi_agent_council, build_multi_agent_council_contract
+from .multi_agent_council_validator import (
+    deterministic_council_response,
+    validate_council_response,
+)
+from .strategic_reasoning_validator import (
+    deterministic_strategic_reasoning_response,
+    validate_strategic_reasoning_response,
+)
+from .ui_leak_guard import sanitize_assistant_content
 from .recommendation_policy import (
     is_single_choice_recommendation_query,
     single_choice_recommendation_response,
@@ -61,6 +109,7 @@ from .response_validation import (
 from .route_map import resolve_navigation_route
 from .store import AgentStore
 from .understanding import analyze_query
+from .unsupported_entity_detection import is_registered_absent_entity
 from component_metadata import component_registry
 
 
@@ -97,6 +146,14 @@ def _debug_enabled() -> bool:
 def _debug(message: str) -> None:
     if _debug_enabled():
         print(f"[beatrice:runtime] {message}")
+
+
+def _evidence_basis_payload(tier: str) -> dict[str, str]:
+    basis = evidence_basis(tier)
+    return {
+        "level": basis,
+        "guidance": EVIDENCE_BASIS_GUIDANCE[basis],
+    }
 
 
 @dataclass
@@ -139,11 +196,37 @@ class AgentExecutionContext:
     response_validation: ResponseValidation = field(
         default_factory=ResponseValidation
     )
+    evidence_integrity: EvidenceIntegrityResult = field(
+        default_factory=EvidenceIntegrityResult
+    )
+    claims: list[Claim] = field(default_factory=list)
     limitations: list[str] = field(default_factory=list)
     should_compose: bool = True
     deterministic_response: str | None = None
     navigation_action: NavigationAction | None = None
     secondary_navigation_actions: list[NavigationAction] = field(default_factory=list)
+    decision_memory: DecisionMemoryContext = field(
+        default_factory=DecisionMemoryContext
+    )
+    tradeoff_analysis: TradeoffAnalysis | None = None
+    system_impact: SystemImpactAnalysis | None = None
+    strategic_reasoning: StrategicReasoningAnalysis | None = None
+    multi_agent_council: MultiAgentCouncilAnalysis | None = None
+
+    def decision_intelligence_active(self) -> bool:
+        return (
+            self.plan.workflow == "decision_analysis"
+            or self.plan.understanding.decision_analysis_mode
+        )
+
+    def architect_review_active(self) -> bool:
+        return (
+            self.plan.understanding.architect_review_mode
+            or (
+                self.decision_intelligence_active()
+                and is_significant_change(self.query)
+            )
+        )
 
     def evidence_not_required(self) -> bool:
         return self.plan.understanding.user_intent in {
@@ -154,9 +237,13 @@ class AgentExecutionContext:
             "semantic_navigation_query",
             "perspective_lookup",
             "entity_lookup",
+            "unsupported_entity_lookup",
+            "unsupported_entity_recommendation",
+            "unknown_entity_lookup",
             "direct_entity_guidance",
             "concept_query",
             "legacy_name_query",
+            "agent_identity",
             "out_of_scope",
         }
 
@@ -346,6 +433,32 @@ class AgentExecutionContext:
             decision_id=decision_id,
             decision_status=decision_status,
             execution_status=execution_status,
+            entity_status=(
+                self.plan.understanding.catalog_entity_resolution.entity_status
+                if self.plan.understanding.catalog_entity_resolution
+                else None
+            ),
+            entity_type=(
+                self.plan.understanding.catalog_entity_resolution.entity_type
+                if self.plan.understanding.catalog_entity_resolution
+                else None
+            ),
+            entity_label=(
+                self.plan.understanding.catalog_entity_resolution.entity_label
+                if self.plan.understanding.catalog_entity_resolution
+                else None
+            ),
+            design_system_gap=(
+                self.plan.understanding.catalog_entity_resolution.design_system_gap
+                if self.plan.understanding.catalog_entity_resolution
+                else None
+            ),
+            claims=self.claims,
+            evidence_integrity_status=self.evidence_integrity.status,
+            evidence_integrity_violations=self.evidence_integrity.violations,
+            audit_warnings=list(dict.fromkeys([
+                *self.evidence_integrity.audit_warnings,
+            ])),
         )
 
 
@@ -423,11 +536,16 @@ class AgentRuntime:
             "semantic_navigation_query",
             "perspective_lookup",
             "entity_lookup",
+            "unsupported_entity_lookup",
+            "unsupported_entity_recommendation",
+            "unknown_entity_lookup",
             "direct_entity_guidance",
             "concept_query",
             "single_choice_recommendation",
             "decision_rule_recommendation",
+            "comparison_rule",
             "legacy_name_query",
+            "agent_identity",
             "out_of_scope",
         }
         _debug(
@@ -590,6 +708,22 @@ class AgentRuntime:
             self._finalize(context, status="completed")
             return context
 
+        if plan.understanding.user_intent == "agent_identity":
+            from agent.concept_map import agent_identity_response
+
+            recorder.add(
+                "policy_checked",
+                details="Deterministic agent_identity response approved.",
+            )
+            recorder.add("response_completed")
+            context.should_compose = False
+            context.deterministic_response = dedupe_response(
+                agent_identity_response(english=self._is_english(query))
+            )
+            _debug("answered deterministically: agent_identity")
+            self._finalize(context, status="completed")
+            return context
+
         if plan.understanding.user_intent == "direct_entity_guidance":
             recorder.add(
                 "policy_checked",
@@ -601,14 +735,15 @@ class AgentRuntime:
                 query,
                 understanding,
             )
-            component = self._resolved_component(understanding)
-            if component is not None:
-                self._attach_entity_navigation(
-                    context,
-                    component,
+            self._apply_action_payload(
+                context,
+                build_actions_for_context(
+                    workflow="direct_entity_guidance",
+                    query=query,
+                    understanding=understanding,
                     english=self._is_english(query),
-                    verb="view",
-                )
+                ),
+            )
             _debug(
                 "answered deterministically: direct_entity_guidance "
                 f"match={understanding.exact_entity_matches[0].component_id if understanding.exact_entity_matches else None}"
@@ -663,6 +798,32 @@ class AgentRuntime:
             self._finalize(context, status="completed")
             return context
 
+        if plan.workflow == "comparison_rule":
+            english = self._is_english(query)
+            rule = resolve_comparison_rule(query, english=english)
+            recorder.add(
+                "policy_checked",
+                details="Deterministic comparison_rule approved.",
+            )
+            recorder.add("response_completed")
+            context.should_compose = False
+            if rule is None:
+                context.deterministic_response = self._component_not_found_response(query)
+            else:
+                context.deterministic_response = dedupe_response(
+                    decision_rule_response(rule, english=english)
+                )
+                context.navigation_action = rule.navigation_action
+                context.secondary_navigation_actions = list(
+                    rule.secondary_navigation_actions
+                )
+            _debug(
+                "answered deterministically: comparison_rule "
+                f"rule={rule.rule_id if rule else None}"
+            )
+            self._finalize(context, status="completed")
+            return context
+
         if plan.understanding.user_intent == "entity_lookup":
             recorder.add(
                 "policy_checked",
@@ -671,17 +832,53 @@ class AgentRuntime:
             recorder.add("response_completed")
             context.should_compose = False
             context.deterministic_response = self._entity_lookup_response(query, understanding)
-            component = self._resolved_component(understanding)
-            if component is not None:
-                self._attach_entity_navigation(
-                    context,
-                    component,
+            self._apply_action_payload(
+                context,
+                build_actions_for_context(
+                    workflow="entity_lookup",
+                    query=query,
+                    understanding=understanding,
                     english=self._is_english(query),
-                    verb="open",
-                )
+                ),
+            )
             _debug(
                 "answered deterministically: entity_lookup "
                 f"match={understanding.exact_entity_matches[0].component_id if understanding.exact_entity_matches else None}"
+            )
+            self._finalize(context, status="completed")
+            return context
+
+        if plan.understanding.user_intent in {
+            "unsupported_entity_lookup",
+            "unsupported_entity_recommendation",
+            "unknown_entity_lookup",
+        }:
+            recorder.add(
+                "policy_checked",
+                details=f"Deterministic {plan.understanding.user_intent} response approved.",
+            )
+            recorder.add("response_completed")
+            context.should_compose = False
+            context.deterministic_response = self._unsupported_entity_response(
+                query,
+                understanding,
+            )
+            self._apply_action_payload(
+                context,
+                build_actions_for_context(
+                    workflow=plan.workflow,
+                    query=query,
+                    understanding=understanding,
+                    english=self._is_english(query),
+                ),
+            )
+            resolution = understanding.catalog_entity_resolution
+            if resolution and resolution.design_system_gap is not None:
+                context.limitations.append(resolution.design_system_gap.reason)
+            _debug(
+                "answered deterministically: "
+                f"{plan.understanding.user_intent} "
+                f"entity={resolution.entity_label if resolution else None}"
             )
             self._finalize(context, status="completed")
             return context
@@ -753,6 +950,17 @@ class AgentRuntime:
             )
             recovered = self._recover_from_catalog(context)
             if recovered:
+                if context.component_selection and context.plan.workflow == "component_decision":
+                    self._apply_action_payload(
+                        context,
+                        build_actions_for_context(
+                            workflow=context.plan.workflow,
+                            query=query,
+                            understanding=understanding,
+                            component_selection=context.component_selection,
+                            english=self._is_english(query),
+                        ),
+                    )
                 return context
             context.should_compose = False
             context.deterministic_response = self._technical_failure_response(query)
@@ -767,7 +975,7 @@ class AgentRuntime:
                 status="failed",
                 details=", ".join(execution.failed_tools),
             )
-        if plan.workflow == "component_decision":
+        if plan.workflow in {"component_decision", "decision_analysis"}:
             context.component_selection = build_component_selection(
                 execution.evidence,
                 query=query,
@@ -805,7 +1013,41 @@ class AgentRuntime:
                     context.limitations.append(
                         f"Component field '{missing_field}' is not documented."
                     )
-                self._attach_selection_navigation(context)
+                self._apply_action_payload(
+                    context,
+                    build_actions_for_context(
+                        workflow=plan.workflow,
+                        query=query,
+                        understanding=understanding,
+                        component_selection=context.component_selection,
+                        english=self._is_english(query),
+                    ),
+                )
+        elif plan.workflow in {
+            "compare_options",
+            "token_lookup",
+            "pattern_guidance",
+            "accessibility_guidance",
+            "design_decision",
+            "decision_analysis",
+            "documentation_help",
+        }:
+            comparison_ids: tuple[str, ...] = ()
+            if plan.workflow == "compare_options":
+                comparison_ids = tuple(
+                    match.component_id
+                    for match in understanding.exact_entity_matches[:2]
+                )
+            self._apply_action_payload(
+                context,
+                build_actions_for_context(
+                    workflow=plan.workflow,
+                    query=query,
+                    understanding=understanding,
+                    english=self._is_english(query),
+                    comparison_component_ids=comparison_ids or None,
+                ),
+            )
         recorder.add(
             "retrieval_executed",
             details=f"{len(execution.evidence)} evidence item(s) recovered.",
@@ -831,6 +1073,43 @@ class AgentRuntime:
             f"top_similarity={execution.top_similarity:.3f}, "
             f"failed_tools={execution.failed_tools}"
         )
+
+        if context.decision_intelligence_active():
+            context.decision_memory = resolve_decision_memory(
+                self.store,
+                project_id=context.project_id,
+                session_id=context.session_id,
+                query=context.query,
+                entities=plan.understanding.entities,
+            )
+            context.tradeoff_analysis = build_tradeoff_analysis(
+                query=context.query,
+                execution=execution,
+                component_selection=context.component_selection,
+            )
+            context.system_impact = analyze_system_impact(
+                query=context.query,
+                execution=execution,
+                entities=plan.understanding.entities,
+            )
+            context.multi_agent_council = build_multi_agent_council(
+                query=context.query,
+                tradeoff=context.tradeoff_analysis or TradeoffAnalysis(),
+                impact=context.system_impact or SystemImpactAnalysis(),
+                english=self._is_english(context.query),
+            )
+            if context.architect_review_active():
+                context.strategic_reasoning = build_strategic_reasoning(
+                    query=context.query,
+                    tradeoff=context.tradeoff_analysis or TradeoffAnalysis(),
+                    impact=context.system_impact or SystemImpactAnalysis(),
+                    memory=context.decision_memory,
+                    entities=plan.understanding.entities,
+                    execution=execution,
+                    store=self.store,
+                    project_id=context.project_id,
+                    english=self._is_english(context.query),
+                )
 
         if plan.workflow == "component_decision" and context.component_selection:
             if context.component_selection.recommended is None:
@@ -924,6 +1203,17 @@ class AgentRuntime:
             "component_selection_completed",
             details=selection.recommended.component.name,
         )
+        if context.plan.workflow == "component_decision":
+            self._apply_action_payload(
+                context,
+                build_actions_for_context(
+                    workflow=context.plan.workflow,
+                    query=context.query,
+                    understanding=context.plan.understanding,
+                    component_selection=context.component_selection,
+                    english=self._is_english(context.query),
+                ),
+            )
         return True
 
     def _recover_from_catalog(self, context: AgentExecutionContext) -> bool:
@@ -987,6 +1277,12 @@ class AgentRuntime:
                 context.component_selection.evidence_source
                 if context.component_selection else "semantic_retrieval"
             ),
+            "evidence_basis": _evidence_basis_payload(
+                context.component_selection.evidence_tier
+                if context.component_selection
+                and context.component_selection.recommended
+                else execution.evidence_tier if execution else "insufficient"
+            ),
             "component_selection": (
                 context.component_selection.model_dump(mode="json")
                 if context.component_selection else None
@@ -1012,6 +1308,48 @@ class AgentRuntime:
             ],
             "session_memory": session_memory,
             "project_memory": project_memory,
+            "decision_memory": (
+                context.decision_memory.model_dump(mode="json")
+                if context.decision_intelligence_active()
+                else None
+            ),
+            "multi_agent_council_contract": (
+                build_multi_agent_council_contract(
+                    council=context.multi_agent_council,
+                    tradeoff=context.tradeoff_analysis or TradeoffAnalysis(),
+                    impact=context.system_impact or SystemImpactAnalysis(),
+                    english=self._is_english(context.query),
+                )
+                if context.decision_intelligence_active()
+                and context.multi_agent_council is not None
+                and not context.architect_review_active()
+                else None
+            ),
+            "decision_analysis_contract": (
+                build_decision_analysis_contract(
+                    tradeoff=context.tradeoff_analysis or TradeoffAnalysis(),
+                    impact=context.system_impact or SystemImpactAnalysis(),
+                    memory=context.decision_memory,
+                    significant_change=is_significant_change(context.query),
+                    english=self._is_english(context.query),
+                )
+                if context.decision_intelligence_active()
+                and not context.architect_review_active()
+                and context.multi_agent_council is None
+                else None
+            ),
+            "strategic_reasoning_contract": (
+                build_strategic_reasoning_contract(
+                    analysis=context.strategic_reasoning,
+                    tradeoff=context.tradeoff_analysis or TradeoffAnalysis(),
+                    impact=context.system_impact or SystemImpactAnalysis(),
+                    memory=context.decision_memory,
+                    english=self._is_english(context.query),
+                )
+                if context.architect_review_active()
+                and context.strategic_reasoning is not None
+                else None
+            ),
             "component_response_contract": (
                 {
                     "required_sections": [
@@ -1045,52 +1383,194 @@ class AgentRuntime:
             + json.dumps(payload, ensure_ascii=False, indent=2)
         )
 
+    def _seal_response(
+        self,
+        context: AgentExecutionContext,
+        response_text: str,
+        *,
+        deterministic: bool = False,
+    ) -> str:
+        english = self._is_english(context.query)
+        evidence = context.execution.evidence if context.execution else []
+        sealed = response_text
+
+        if not deterministic:
+            if (
+                context.plan.workflow == "component_decision"
+                and context.component_selection is not None
+            ):
+                validation = validate_component_response(
+                    sealed,
+                    context.component_selection,
+                )
+                if validation.fallback_used:
+                    sealed = deterministic_component_response(
+                        context.component_selection,
+                        english=english,
+                    )
+                    context.recorder.add(
+                        "fallback_applied",
+                        status="completed",
+                        details=validation.violation_type,
+                    )
+                context.response_validation = validation
+                context.recorder.add(
+                    "response_validated",
+                    status="completed",
+                    details=validation.status,
+                )
+            elif context.plan.workflow == "token_lookup":
+                validation = validate_token_response(sealed, evidence)
+                if validation.fallback_used:
+                    sealed = deterministic_token_response(evidence, english=english)
+                    context.recorder.add(
+                        "fallback_applied",
+                        status="completed",
+                        details=validation.violation_type,
+                    )
+                context.response_validation = validation
+                context.recorder.add(
+                    "response_validated",
+                    status="completed",
+                    details=validation.status,
+                )
+            elif context.decision_intelligence_active():
+                tradeoff = context.tradeoff_analysis or TradeoffAnalysis()
+                impact = context.system_impact or SystemImpactAnalysis()
+                requires_alternatives = (
+                    context.plan.workflow in {"compare_options", "decision_analysis"}
+                    or len(tradeoff.alternatives) >= 2
+                )
+                if context.architect_review_active() and context.strategic_reasoning:
+                    validation = validate_strategic_reasoning_response(
+                        sealed,
+                        query=context.query,
+                        tradeoff=tradeoff,
+                        impact=impact,
+                        memory=context.decision_memory,
+                        analysis=context.strategic_reasoning,
+                        requires_alternatives=requires_alternatives,
+                    )
+                    if validation.fallback_used:
+                        sealed = deterministic_strategic_reasoning_response(
+                            query=context.query,
+                            tradeoff=tradeoff,
+                            impact=impact,
+                            memory=context.decision_memory,
+                            analysis=context.strategic_reasoning,
+                            english=english,
+                        )
+                        context.recorder.add(
+                            "fallback_applied",
+                            status="completed",
+                            details=validation.violation_type,
+                        )
+                elif context.multi_agent_council is not None:
+                    validation = validate_council_response(
+                        sealed,
+                        query=context.query,
+                        tradeoff=tradeoff,
+                        impact=impact,
+                        memory=context.decision_memory,
+                        council=context.multi_agent_council,
+                        requires_alternatives=requires_alternatives,
+                    )
+                    if validation.fallback_used:
+                        sealed = deterministic_council_response(
+                            query=context.query,
+                            tradeoff=tradeoff,
+                            impact=impact,
+                            memory=context.decision_memory,
+                            council=context.multi_agent_council,
+                            english=english,
+                        )
+                        context.recorder.add(
+                            "fallback_applied",
+                            status="completed",
+                            details=validation.violation_type,
+                        )
+                else:
+                    validation = validate_decision_response(
+                        sealed,
+                        query=context.query,
+                        tradeoff=tradeoff,
+                        impact=impact,
+                        memory=context.decision_memory,
+                        requires_alternatives=requires_alternatives,
+                    )
+                    if validation.fallback_used:
+                        sealed = deterministic_decision_response(
+                            query=context.query,
+                            tradeoff=tradeoff,
+                            impact=impact,
+                            memory=context.decision_memory,
+                            english=english,
+                        )
+                        context.recorder.add(
+                            "fallback_applied",
+                            status="completed",
+                            details=validation.violation_type,
+                        )
+                context.response_validation = validation
+                context.recorder.add(
+                    "response_validated",
+                    status="completed",
+                    details=validation.status,
+                )
+            else:
+                context.response_validation = ResponseValidation(
+                    status="not_applicable"
+                )
+
+        context.claims = build_claims_for_context(
+            workflow=context.plan.workflow,
+            component_selection=context.component_selection,
+            evidence=evidence,
+            catalog_resolution=context.plan.understanding.catalog_entity_resolution,
+            english=english,
+        )
+        integrity = EvidenceIntegrityValidator().validate(
+            response_text=sealed,
+            workflow=context.plan.workflow,
+            understanding=context.plan.understanding,
+            component_selection=context.component_selection,
+            evidence=evidence,
+            claims=context.claims,
+            english=english,
+        )
+        context.evidence_integrity = integrity
+        should_apply_integrity_fallback = integrity.fallback_used and (
+            not deterministic
+            or "internal_audit_leak" in integrity.violations
+        )
+        if should_apply_integrity_fallback:
+            sealed = integrity_fallback_response(
+                workflow=context.plan.workflow,
+                component_selection=context.component_selection,
+                evidence=evidence,
+                english=english,
+            )
+            context.recorder.add(
+                "fallback_applied",
+                status="completed",
+                details="evidence_integrity",
+            )
+
+        return sanitize_assistant_content(dedupe_response(sealed))
+
     def validate_response(
         self,
         context: AgentExecutionContext,
         response_text: str,
     ) -> str:
-        if (
-            context.plan.workflow == "component_decision"
-            and context.component_selection is not None
-        ):
-            validation = validate_component_response(
-                response_text,
-                context.component_selection,
-            )
-            fallback = deterministic_component_response(
-                context.component_selection,
-                english=self._is_english(context.query),
-            )
-        elif context.plan.workflow == "token_lookup":
-            validation = validate_token_response(
-                response_text,
-                context.execution.evidence if context.execution else [],
-            )
-            fallback = deterministic_token_response(
-                context.execution.evidence if context.execution else [],
-                english=self._is_english(context.query),
-            )
-        else:
-            context.response_validation = ResponseValidation(
-                status="not_applicable"
-            )
-            return dedupe_response(response_text)
+        return self._seal_response(context, response_text)
 
-        context.response_validation = validation
-        context.recorder.add(
-            "response_validated",
-            status="completed",
-            details=validation.status,
-        )
-        if not validation.fallback_used:
-            return dedupe_response(response_text)
-        context.recorder.add(
-            "fallback_applied",
-            status="completed",
-            details=validation.violation_type,
-        )
-        return dedupe_response(fallback)
+    def seal_deterministic_response(
+        self,
+        context: AgentExecutionContext,
+        response_text: str,
+    ) -> str:
+        return self._seal_response(context, response_text, deterministic=True)
 
     def finalize_success(
         self,
@@ -1114,6 +1594,8 @@ class AgentRuntime:
             and response_text.strip()
         ):
             alternatives, tradeoffs = self._decision_signals(execution)
+            tradeoff = context.tradeoff_analysis
+            impact = context.system_impact
             definition = self.registry.get("create_decision_record")
             authorize_tool(ToolPolicyContext(
                 name=definition.name,
@@ -1131,8 +1613,20 @@ class AgentRuntime:
                     profile=context.profile,
                     workflow=context.plan.workflow,
                     recommendation=response_text.strip(),
+                    title=context.query.strip()[:200],
+                    context=context.query.strip(),
+                    recommended_option=(
+                        tradeoff.recommendation if tradeoff else ""
+                    ),
                     alternatives_considered=alternatives,
+                    rejected_options=alternatives[1:] if len(alternatives) > 1 else [],
                     tradeoffs=tradeoffs,
+                    tradeoff_analysis=tradeoff,
+                    risks=tradeoff.risks if tradeoff else [],
+                    affected_entities=(
+                        impact.affected_entities if impact else []
+                    ),
+                    system_impact=impact,
                     evidence_sources=execution.evidence,
                     top_similarity=execution.top_similarity,
                     evidence_tier=execution.evidence_tier,
@@ -1232,6 +1726,11 @@ class AgentRuntime:
         status: str,
         decision_id: str | None = None,
     ) -> None:
+        if context.deterministic_response is not None:
+            context.deterministic_response = self.seal_deterministic_response(
+                context,
+                context.deterministic_response,
+            )
         audit = context.audit_metadata(
             execution_status=status,
             decision_id=decision_id,
@@ -1282,6 +1781,17 @@ class AgentRuntime:
     @staticmethod
     def _memory_topics(context: AgentExecutionContext) -> list[str]:
         topics = [context.plan.workflow]
+        # Keep the recommended component as a session topic even when the
+        # recommendation came from the canonical catalog with no retrieval
+        # evidence, so follow-up questions ("e como testo isso?") can resolve
+        # the referenced component from session memory.
+        if (
+            context.component_selection
+            and context.component_selection.recommended
+        ):
+            topics.append(
+                context.component_selection.recommended.component.name
+            )
         if context.execution:
             topics.extend(item.title for item in context.execution.evidence[:5])
         return list(dict.fromkeys(topics))
@@ -1409,9 +1919,49 @@ class AgentRuntime:
         component = component_registry().get(exact.component_id)
         if component is None:
             return self._component_not_found_response(query)
+        if component.status in {"deprecated", "legacy", "draft", "experimental"}:
+            return dedupe_response(
+                deprecated_entity_lookup_response(
+                    component,
+                    english=english,
+                )
+            )
         return dedupe_response(
             entity_lookup_response(
                 component,
+                english=english,
+            )
+        )
+
+    def _unsupported_entity_response(
+        self,
+        query: str,
+        understanding: QueryUnderstanding,
+    ) -> str:
+        english = self._is_english(query)
+        resolution = understanding.catalog_entity_resolution
+        if understanding.user_intent == "unknown_entity_lookup":
+            label = resolution.entity_label if resolution else None
+            return dedupe_response(
+                unknown_entity_lookup_response(
+                    query,
+                    english=english,
+                    entity_label=label,
+                )
+            )
+        if resolution is None or not is_registered_absent_entity(resolution):
+            return self._component_not_found_response(query)
+        if understanding.user_intent == "unsupported_entity_recommendation":
+            return dedupe_response(
+                unsupported_entity_recommendation_response(
+                    resolution,
+                    english=english,
+                )
+            )
+        return dedupe_response(
+            unsupported_entity_lookup_response(
+                resolution,
+                query,
                 english=english,
             )
         )
@@ -1430,34 +1980,15 @@ class AgentRuntime:
             verb=verb,
         )
 
-    def _attach_selection_navigation(self, context: AgentExecutionContext) -> None:
-        selection = context.component_selection
-        if selection is None or selection.recommended is None:
-            return
-        english = self._is_english(context.query)
-        recommended = selection.recommended.component
-        context.navigation_action = navigation_action_for_component(
-            recommended,
-            english=english,
-            verb="view",
-        )
-        secondary: list[NavigationAction] = []
-        from component_metadata import component_registry
-
-        registry = component_registry()
-        for alternative in selection.alternative_components[:2]:
-            component = registry.get(alternative.component_id)
-            if component is None:
-                continue
-            secondary.append(
-                navigation_action_for_component(
-                    component,
-                    english=english,
-                    verb="view",
-                )
-            )
-        if secondary:
-            context.secondary_navigation_actions = secondary
+    @staticmethod
+    def _apply_action_payload(
+        context: AgentExecutionContext,
+        payload: ActionPayload,
+    ) -> None:
+        if payload.navigation_action is not None:
+            context.navigation_action = payload.navigation_action
+        if payload.secondary_navigation_actions:
+            context.secondary_navigation_actions = payload.secondary_navigation_actions
 
     def _direct_entity_guidance_response(
         self,

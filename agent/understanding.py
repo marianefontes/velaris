@@ -6,7 +6,9 @@ from functools import lru_cache
 
 from component_metadata import component_catalog
 
-from .entity_alias_registry import COMPONENT_ALIASES
+from .entity_alias_registry import COMPONENT_ALIASES, PATTERN_ENTITY_ALIASES
+from .decision_intelligence import detect_decision_analysis_mode
+from .strategic_reasoning import detect_architect_review_mode
 
 from .models import (
     AnswerStrategy,
@@ -18,6 +20,7 @@ from .models import (
 
 
 _PATTERN_ALIASES: dict[str, tuple[str, ...]] = {
+    "Side Drawer": PATTERN_ENTITY_ALIASES["side-drawer"],
     "Dashboard": ("dashboard",),
     "Multi-step Form": ("multi step form", "formulario multi etapas", "formulário multi-etapas"),
     "Onboarding": ("onboarding",),
@@ -300,6 +303,8 @@ _DIRECT_GUIDANCE_TERMS = (
     "when not to use", "para que serve", "what is it for", "como usar",
     "how to use", "como funciona", "how does", "quando devo usar",
     "when should i use",
+    "quais estados", "what states", "estados do", "states of",
+    "acessibilidade do", "accessibility of", "a11y do",
 )
 _ENTITY_LOOKUP_BLOCKERS = (
     "qual componente devo", "qual componente uso", "which component should",
@@ -525,10 +530,19 @@ def _language(query: str, normalized: str) -> UserLanguage:
     return "unknown"
 
 
-def _is_component_comparison(normalized: str, components: list[str]) -> bool:
+def _is_component_comparison(
+    normalized: str,
+    components: list[str],
+    patterns: list[str] | None = None,
+) -> bool:
     if _contains_any(normalized, _COMPARISON_TERMS):
         return True
-    return len(components) >= 2 and bool(
+    pattern_count = len(patterns or [])
+    if len(components) + pattern_count >= 2 and bool(
+        re.search(r"\b(?:ou|or)\b", normalized)
+    ):
+        return True
+    return len(components) >= 1 and pattern_count >= 1 and bool(
         re.search(r"\b(?:ou|or)\b", normalized)
     )
 
@@ -637,10 +651,37 @@ def _intent(
         return "legacy_name_query"
     if _contains_any(normalized, _LEGACY_SYSTEM_TERMS):
         return "legacy_name_query"
+    from agent.intelligence_intents import resolve_intelligence_intent
+
+    intelligence_intent = resolve_intelligence_intent(query, normalized)
+    if intelligence_intent is not None:
+        return intelligence_intent  # type: ignore[return-value]
     from agent.concept_map import resolve_concept_key
 
     if resolve_concept_key(normalized) is not None:
         return "concept_query"
+    from agent.unsupported_entity_detection import (
+        detect_unsupported_entity_intent,
+        match_unsupported_entity,
+    )
+
+    if match_unsupported_entity(normalized_query) is not None:
+        unsupported_intent = detect_unsupported_entity_intent(
+            query,
+            normalized_query=normalized_query,
+            entities=entities,
+        )
+        if unsupported_intent is not None:
+            return unsupported_intent  # type: ignore[return-value]
+    from agent.unsupported_entity_detection import detect_catalog_unknown_intent
+
+    catalog_unknown_intent = detect_catalog_unknown_intent(
+        query,
+        normalized_query=normalized_query,
+        entities=entities,
+    )
+    if catalog_unknown_intent is not None:
+        return catalog_unknown_intent  # type: ignore[return-value]
     if _is_entity_lookup_query(normalized, entities):
         return "entity_lookup"
     location_intent = _resolve_location_intent(query, normalized)
@@ -654,10 +695,22 @@ def _intent(
     if _is_direct_entity_guidance(normalized, entities):
         return "direct_entity_guidance"
 
+    from agent.comparison_entity_validator import validate_comparison_entities
+
+    blocked_comparison = validate_comparison_entities(
+        query,
+        normalized_query=normalized_query,
+        entities=entities,
+    )
+    if blocked_comparison.blocked:
+        return "unsupported_entity_lookup"
+
+    from agent.catalog_registries import extract_cited_component_names
+
     has_component_reference = bool(entities.components) or any(
         marker in f" {normalized} "
         for marker in (" componente ", " component ")
-    )
+    ) or bool(extract_cited_component_names(query))
     has_implementation_signal = _contains_any(normalized, _IMPLEMENTATION_SIGNALS)
     has_component_request = has_component_reference and (
         _contains_any(normalized, _RECOMMENDATION_TERMS)
@@ -686,7 +739,15 @@ def _intent(
         return "xai_explanation"
     if "beatrice" in normalized and "chatgpt" in normalized:
         return "xai_explanation"
-    if _is_component_comparison(normalized, entities.components):
+    if _is_component_comparison(normalized, entities.components, entities.patterns):
+        from agent.unsupported_entity_detection import resolve_blocked_comparison
+
+        if resolve_blocked_comparison(
+            query,
+            normalized_query=normalized_query,
+            entities=entities,
+        ) is not None:
+            return "unsupported_entity_lookup"
         return "component_comparison"
     if _contains_any(normalized, _PATTERN_TERMS) or entities.patterns:
         return "pattern_guidance"
@@ -714,6 +775,11 @@ def _intent(
         return "semantic_navigation_query"
     if _contains_any(normalized, _DOMAIN_TERMS):
         return "general_design_system"
+    if _is_entity_lookup_query(normalized, entities):
+        from agent.unsupported_entity_detection import _should_defer_unknown_entity_intent
+
+        if not _should_defer_unknown_entity_intent(normalized):
+            return "unknown_entity_lookup"
     return "out_of_scope"
 
 
@@ -722,6 +788,12 @@ def _answer_strategy(intent: UserIntent) -> AnswerStrategy:
         return "greeting"
     if intent in {"navigation_query", "semantic_navigation_query", "perspective_lookup"}:
         return "navigation_query"
+    if intent in {
+        "unsupported_entity_lookup",
+        "unsupported_entity_recommendation",
+        "unknown_entity_lookup",
+    }:
+        return intent
     if intent == "language_followup":
         return "documentation_help"
     if intent == "help_request":
@@ -741,9 +813,17 @@ def _goal(intent: UserIntent) -> str:
         "semantic_navigation_query": "resolve_semantic_destination",
         "perspective_lookup": "resolve_professional_perspective",
         "entity_lookup": "confirm_catalog_entity",
+        "unsupported_entity_lookup": "confirm_unsupported_catalog_entity",
+        "unsupported_entity_recommendation": "recommend_for_unsupported_entity",
+        "unknown_entity_lookup": "clarify_unknown_catalog_entity",
         "direct_entity_guidance": "explain_direct_entity_usage",
         "concept_query": "explain_product_concept",
         "legacy_name_query": "explain_legacy_name_migration",
+        "system_health": "explain_system_health",
+        "agent_identity": "explain_agent_identity",
+        "governance_analysis": "analyze_governance_state",
+        "simulation": "simulate_design_change",
+        "multi_agent_reasoning": "deliberate_across_perspectives",
         "component_recommendation": "select_or_verify_component",
         "component_comparison": "compare_component_fit",
         "pattern_guidance": "structure_product_flow",
@@ -786,6 +866,11 @@ def analyze_query(query: str) -> QueryUnderstanding:
     from agent.perspective_registry import resolve_perspective_match
     from agent.route_map import resolve_navigation_route
     from agent.semantic_navigation import resolve_semantic_navigation
+    from agent.unsupported_entity_detection import (
+        match_unsupported_entity,
+        resolve_catalog_entity,
+    )
+    from agent.catalog_registries import extract_dot_notation_tokens
 
     normalized = normalize_text(query)
     normalized_query = normalize_query(query)
@@ -793,7 +878,10 @@ def analyze_query(query: str) -> QueryUnderstanding:
     entities = ExtractedEntities(
         components=_components(normalized_query),
         patterns=_patterns(normalized),
-        tokens=list(dict.fromkeys(_TOKEN_PATTERN.findall(normalized))),
+        tokens=list(dict.fromkeys([
+            *_TOKEN_PATTERN.findall(normalized),
+            *extract_dot_notation_tokens(query),
+        ])),
         token_categories=_collect_terms(normalized, _TOKEN_CATEGORIES),
         states=_collect_terms(normalized, _STATE_TERMS),
         interaction_intents=_collect_terms(normalized, _INTERACTION_INTENTS),
@@ -808,6 +896,14 @@ def analyze_query(query: str) -> QueryUnderstanding:
     intent = _intent(query, normalized, entities, normalized_query=normalized_query)
     if intent == "concept_query" and resolve_concept_key(query) is None:
         intent = "general_design_system"
+    if intent == "entity_lookup" and not exact_matches and not entities.components:
+        from agent.unsupported_entity_detection import _should_defer_unknown_entity_intent
+
+        if (
+            match_unsupported_entity(normalized_query) is None
+            and not _should_defer_unknown_entity_intent(normalized)
+        ):
+            intent = "unknown_entity_lookup"
     route_resolution = None
     resolved_route: str | None = None
     resolved_section_label: str | None = None
@@ -832,6 +928,27 @@ def analyze_query(query: str) -> QueryUnderstanding:
             if resolved_section_label is None:
                 resolved_section_label = perspective_match.entry.label
     goal = _goal(intent)
+    from agent.comparison_entity_validator import blocked_comparison_resolution
+
+    catalog_resolution = resolve_catalog_entity(
+        query,
+        normalized_query=normalized_query,
+        entities=entities,
+    )
+    blocked = blocked_comparison_resolution(
+        query,
+        normalized_query=normalized_query,
+        entities=entities,
+    )
+    if blocked is not None:
+        catalog_resolution = blocked
+        if intent not in {
+            "unsupported_entity_lookup",
+            "unsupported_entity_recommendation",
+            "unknown_entity_lookup",
+        }:
+            intent = "unsupported_entity_lookup"
+            operational_intent = intent
     return QueryUnderstanding(
         user_intent=intent,
         operational_intent=intent,
@@ -839,9 +956,15 @@ def analyze_query(query: str) -> QueryUnderstanding:
         language=_language(query, normalized),
         entities=entities,
         exact_entity_matches=exact_matches,
+        catalog_entity_resolution=catalog_resolution,
         resolved_route=resolved_route,
         resolved_section_label=resolved_section_label,
         resolved_perspective_id=resolved_perspective_id,
         goal=goal,
         retrieval_query=_retrieval_query(query, entities, goal),
+        decision_analysis_mode=(
+            detect_decision_analysis_mode(query)
+            or detect_architect_review_mode(query)
+        ),
+        architect_review_mode=detect_architect_review_mode(query),
     )

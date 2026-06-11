@@ -61,9 +61,21 @@ CANONICAL_ROUTES: dict[str, RouteResolution] = {
     ),
     "accessibility": RouteResolution(
         section_key="accessibility",
-        route="/foundations?focus=manifesto",
+        route="/foundations?focus=foundations",
         label_pt="acessibilidade",
         label_en="accessibility",
+    ),
+    "evidence": RouteResolution(
+        section_key="evidence",
+        route="/foundations?focus=evidence",
+        label_pt="evidências e validação de conhecimento",
+        label_en="evidence and knowledge validation",
+    ),
+    "agent_runtime": RouteResolution(
+        section_key="agent_runtime",
+        route="/architecture?focus=agent-runtime",
+        label_pt="runtime do agente e fluxo cognitivo",
+        label_en="agent runtime and cognitive flow",
     ),
     "reasoning": RouteResolution(
         section_key="reasoning",
@@ -129,6 +141,14 @@ _SECTION_ALIASES: dict[str, tuple[str, ...]] = {
     ),
     "accessibility": (
         "acessibilidade", "accessibility", "wcag", "a11y",
+    ),
+    "evidence": (
+        "evidencia", "evidência", "evidencias", "evidências", "evidence",
+        "validacao de conhecimento", "validação de conhecimento",
+    ),
+    "agent_runtime": (
+        "agent runtime", "runtime do agente", "fluxo cognitivo", "cognitive flow",
+        "como o abraxos pensa", "how abraxos thinks",
     ),
     "reasoning": (
         "raciocinio", "raciocínio", "reasoning", "explicabilidade", "explainability",

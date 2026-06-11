@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import re
+
+from agent.models import CatalogEntityResolution, InternalAlternative
 from agent.perspective_registry import PerspectiveMatch, get_perspective_entry
 from component_metadata import ComponentMetadata, localized_text
 
@@ -9,6 +12,300 @@ from .response_dedup import _dedupe_lines, _split_sentences, dedupe_response
 from .route_map import RouteResolution
 from .navigation_actions import page_destination_label
 from .understanding import normalize_query, normalize_text
+
+
+def _entity_type_label(entity_type: str | None, *, english: bool) -> str:
+    mapping = {
+        "component": ("componente", "component"),
+        "component_or_pattern": ("componente ou padrão", "component or pattern"),
+        "pattern": ("padrão", "pattern"),
+        "token": ("token", "token"),
+        "state": ("estado", "state"),
+        "variant": ("variante", "variant"),
+        "guideline": ("guideline", "guideline"),
+        "accessibility_rule": ("regra de acessibilidade", "accessibility rule"),
+        "concept": ("conceito", "concept"),
+        "decision": ("decisão", "decision"),
+    }
+    labels = mapping.get(entity_type or "component", ("entidade", "entity"))
+    return labels[1 if english else 0]
+
+
+def _is_comparison_query_text(query: str) -> bool:
+    normalized = normalize_text(query)
+    comparison_terms = (
+        " vs ",
+        " versus ",
+        "compare",
+        "comparar",
+        "comparacao",
+        "comparação",
+        "diferenca entre",
+        "diferença entre",
+        "em vez de",
+        "instead of",
+    )
+    if any(term in normalized for term in comparison_terms):
+        return True
+    return bool(re.search(r"\b(?:ou|or)\b", normalized))
+
+
+def catalog_unknown_evidence_message(
+    *,
+    english: bool = False,
+    entity_label: str | None = None,
+) -> str:
+    if entity_label:
+        if english:
+            return f"I did not find evidence of {entity_label} in the current catalog."
+        return f"Não encontrei evidência de {entity_label} no catálogo atual."
+    if english:
+        return "I did not find evidence of this entity in the current catalog."
+    return "Não encontrei evidência desta entidade no catálogo atual."
+
+
+def catalog_partial_evidence_message(*, english: bool = False) -> str:
+    if english:
+        return "The concept exists, but the available documentation is partial."
+    return "O conceito existe, mas a documentação disponível é parcial."
+
+
+def blocked_catalog_comparison_response(
+    resolution: CatalogEntityResolution,
+    *,
+    english: bool = False,
+) -> str:
+    from agent.comparison_entity_validator import blocked_comparison_message
+
+    return dedupe_response(blocked_comparison_message(english=english))
+
+
+def _alternative_phrase(
+    alternative: InternalAlternative,
+    *,
+    english: bool,
+) -> str:
+    if alternative.target_type == "pattern":
+        return alternative.name
+    return alternative.name
+
+
+def unsupported_entity_lookup_response(
+    resolution: CatalogEntityResolution,
+    query: str,
+    *,
+    english: bool = False,
+) -> str:
+    if _is_comparison_query_text(query):
+        return blocked_catalog_comparison_response(resolution, english=english)
+
+    label = resolution.entity_label or "this entity"
+    normalized = normalize_text(query)
+    guidance_mode = any(
+        marker in normalized
+        for marker in (
+            "quando usar",
+            "when to use",
+            "quando nao usar",
+            "quando não usar",
+            "when not to use",
+            "como usar",
+            "how to use",
+        )
+    )
+
+    opening = catalog_unknown_evidence_message(english=english, entity_label=label)
+    parts = [opening]
+    alternatives = resolution.internal_alternatives
+
+    if alternatives:
+        primary = alternatives[0]
+        alt_name = _alternative_phrase(primary, english=english)
+        if guidance_mode:
+            if english:
+                parts.append(
+                    f"For close cases, check {alt_name}"
+                    + (
+                        f" if the goal is {primary.use_case}."
+                        if primary.use_case
+                        else "."
+                    )
+                )
+            else:
+                parts.append(
+                    f"Para casos próximos, verifica {alt_name}"
+                    + (
+                        f" se o objetivo for {primary.use_case}."
+                        if primary.use_case
+                        else "."
+                    )
+                )
+        else:
+            if english:
+                parts.append(
+                    f"The closest item in the catalog is {alt_name}"
+                    + (
+                        f" when the goal is {primary.use_case}."
+                        if primary.use_case
+                        else "."
+                    )
+                )
+            else:
+                parts.append(
+                    f"O mais próximo no catálogo é {alt_name}"
+                    + (
+                        f" se o objetivo for {primary.use_case}."
+                        if primary.use_case
+                        else "."
+                    )
+                )
+        if len(alternatives) > 1:
+            extra = ", ".join(
+                _alternative_phrase(item, english=english)
+                for item in alternatives[1:2]
+            )
+            if english:
+                parts.append(f"You can also review {extra}.")
+            else:
+                parts.append(f"Também podes rever {extra}.")
+    elif guidance_mode:
+        if english:
+            parts.append(
+                "I did not find an equivalent component documented in the current catalog."
+            )
+        else:
+            parts.append(
+                "Não encontrei um componente equivalente no catálogo atual."
+            )
+
+    if resolution.entity_key == "side-drawer" and guidance_mode:
+        if english:
+            parts.append(
+                "If the intent is lateral editing while keeping context visible, "
+                "there is still no documented canonical equivalent."
+            )
+        else:
+            parts.append(
+                "Se a intenção for edição lateral mantendo contexto, "
+                "ainda não há um componente canônico equivalente documentado."
+            )
+
+    external = resolution.external_reference
+    if external is not None:
+        if english:
+            parts.append(
+                f"For an external reference about the pattern, see {external.label}."
+            )
+        else:
+            parts.append(
+                f"Para referência externa sobre o padrão, podes consultar "
+                f"{external.label}."
+            )
+
+    return dedupe_response("\n\n".join(parts))
+
+
+def unsupported_entity_recommendation_response(
+    resolution: CatalogEntityResolution,
+    *,
+    english: bool = False,
+) -> str:
+    label = resolution.entity_label or "this entity"
+    alternatives = resolution.internal_alternatives
+
+    parts = [catalog_unknown_evidence_message(english=english, entity_label=label)]
+    if alternatives:
+        primary = alternatives[0]
+        alt_name = _alternative_phrase(primary, english=english)
+        if english:
+            parts.append(
+                f"If the goal is {primary.use_case or 'a close documented case'}, "
+                f"use {alt_name}."
+            )
+        else:
+            parts.append(
+                f"Se o objetivo for {primary.use_case or 'um caso documentado próximo'}, "
+                f"usa {alt_name}."
+            )
+        if len(alternatives) > 1:
+            secondary = alternatives[1]
+            secondary_name = _alternative_phrase(secondary, english=english)
+            if english:
+                parts.append(
+                    f"If the goal is {secondary.use_case or 'another documented case'}, "
+                    f"consider {secondary_name}."
+                )
+            else:
+                parts.append(
+                    f"Se o objetivo for {secondary.use_case or 'outro caso documentado'}, "
+                    f"considera {secondary_name}."
+                )
+    else:
+        if english:
+            parts.append(
+                "I did not find a documented internal equivalent in the current catalog."
+            )
+        else:
+            parts.append(
+                "Não encontrei um equivalente interno documentado no catálogo atual."
+            )
+
+    if resolution.entity_key in {"side-drawer", "drawer"}:
+        if english:
+            parts.append(
+                "If the goal is lateral editing while keeping context visible, "
+                "this looks like a current catalog gap."
+            )
+        else:
+            parts.append(
+                "Se o objetivo for edição lateral mantendo contexto, "
+                "isso parece uma lacuna do catálogo atual."
+            )
+
+    external = resolution.external_reference
+    if external is not None:
+        if english:
+            parts.append(f"External reference: {external.label}.")
+        else:
+            parts.append(f"Referência externa: {external.label}.")
+
+    return dedupe_response("\n\n".join(parts))
+
+
+def unknown_entity_lookup_response(
+    query: str,
+    *,
+    english: bool = False,
+    entity_label: str | None = None,
+) -> str:
+    del query
+    return dedupe_response(
+        catalog_unknown_evidence_message(english=english, entity_label=entity_label)
+    )
+
+
+def partial_entity_lookup_response(
+    component: ComponentMetadata,
+    *,
+    english: bool = False,
+) -> str:
+    about = localized_text(component.about, "en" if english else "pt")
+    opening = catalog_partial_evidence_message(english=english)
+    if english:
+        return dedupe_response(
+            f"{opening} {component.name} is marked as {component.status} in Velaris.\n\n{about}"
+        )
+    return dedupe_response(
+        f"{opening} {component.name} está marcado como {component.status} no Velaris.\n\n{about}"
+    )
+
+
+def deprecated_entity_lookup_response(
+    component: ComponentMetadata,
+    *,
+    english: bool = False,
+) -> str:
+    return partial_entity_lookup_response(component, english=english)
 
 
 def greeting_response(*, english: bool = False) -> str:
