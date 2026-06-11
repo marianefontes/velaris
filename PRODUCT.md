@@ -1,68 +1,53 @@
 # Product
 
-## Abraxos Capability Architecture
-
-The canonical public taxonomy for automatic Abraxos skills, actionable Oracle
-commands, aliases, RAG evidence and auditability is documented in
-[`docs/beatrice-capability-architecture.md`](docs/beatrice-capability-architecture.md).
-The document path remains unchanged for technical compatibility.
-
 ## Register
 
 product
 
 ## Users
 
-Aetheris serves consumers and maintainers of design systems, including product
-designers, developers, product managers, technical writers, QA professionals,
-accessibility specialists, and academic evaluators. They use the platform to
-understand components and patterns, justify product decisions, assess
-trade-offs, and trace recommendations back to documented evidence.
+Primary audience: **designers** working inside or alongside the Velaris design system. They arrive with component-fit questions, pattern decisions, accessibility tradeoffs, and documentation gaps. Context is usually a design review, spec draft, or system exploration session at a desk or in a design tool, not a marketing landing visit.
+
+Secondary audiences (developers, PMs, QA, tech writers) use the same surfaces through persona lenses, but design decisions should optimize for designer cognition first: scannable hierarchy, evidence-backed guidance, and calm confidence over feature density.
 
 ## Product Purpose
 
-Aetheris turns fragmented design-system documentation into an explainable
-decision-support system. Abraxos combines retrieval, source attribution,
-confidence calibration, and UX-oriented reasoning so that teams can move from
-"what exists" to "why this is the right choice here." Success means users can
-reach grounded decisions faster without surrendering judgment to the AI.
+Velaris is a living **Design System Intelligence** platform. It unifies components, patterns, guidelines, decisions, and evidence into one navigable library. **Beatrice** is the voice; **Abraxos** is the spectral presence that connects knowledge and surfaces what matters.
+
+Success looks like: designers make faster, traceable decisions; new UI stays on-system without feeling generic; explainability (XAI) is visible in the product, not bolted on; the interface itself demonstrates the standards it teaches.
 
 ## Brand Personality
 
-Precise, serene, and intellectually confident. The experience should feel like
-a founding product document interpreted through a mature digital system:
-strategic without grandstanding, premium without ornament, and technical
-without becoming cold or opaque.
+**Oracle calm · editorial luxury · precise warmth**
+
+- Unhurried intelligence: answers feel considered, not rushed or chatbot-cheerful.
+- Editorial restraint: typography and spacing carry hierarchy; decoration earns its place.
+- Spectral presence: Abraxos manifests as light, graph, and translucence, never mascot energy.
+- Expert confidence: show reasoning, cite evidence, avoid hedging filler.
+
+Emotional goal: trust through clarity. The product should feel like a premium instrument panel for design judgment, not a demo of AI novelty.
 
 ## Anti-references
 
-- Generic SaaS dashboards with dense navigation, KPI grids, and decorative
-  widgets.
-- Documentation portals that reduce principles to compact cards or searchable
-  inventory.
-- Chatbot-first interfaces that hide provenance and reasoning behind a single
-  answer box.
-- Decorative AI aesthetics built from excessive glow, glass, gradients, pills,
-  and pseudo-technical labels.
-- Editorial treatments that sacrifice scanability, contrast, or practical
-  consultation for atmosphere.
+- Generic SaaS templates: hero-metric blocks, identical icon-card grids, gradient text, decorative glass cards, modal-first flows.
+- Side-stripe accent borders on cards and callouts.
+- AI hype aesthetics: neon cyber palettes, "magic" copy, chatbot mascots, bouncing loaders.
+- Visual noise that competes with evidence and reasoning panels.
+
+Abraxos anti-reference (separate from UI): fantasy dragon, game character, or aggressive creature posture. See `abraxos/ABRAXOS.md` for canonical presence rules.
 
 ## Design Principles
 
-1. Practice explainability: hierarchy, source, confidence, and limits should be
-   visible where they matter.
-2. Support cognition: reveal the essential message first and let detail follow
-   in deliberate layers.
-3. Preserve human judgment: guide and clarify decisions without presenting the
-   system as an infallible oracle.
-4. Make the system consultable: long-form narrative must remain structured,
-   scannable, and useful during real product work.
-5. Earn every expressive gesture: color, motion, imagery, and density must
-   reinforce meaning rather than decorate the interface.
+1. **Practice what you preach** — Velaris UI must exemplify the accessibility, token discipline, and clarity it documents.
+2. **Show the reasoning** — Prefer visible evidence, tradeoffs, and decision trails over opaque answers.
+3. **Elevate without spectacle** — Distinctive premium craft through type, rhythm, and material depth, not decorative trends.
+4. **Oracle calm over urgency** — Motion, color, and copy stay measured; intelligence feels present, not performative.
+5. **Designers first** — Information architecture and visual hierarchy serve design decision workflows before admin or marketing optics.
 
 ## Accessibility & Inclusion
 
-Accessibility is a baseline. Core surfaces should meet WCAG AA contrast,
-support semantic heading order and keyboard reading flow, preserve readability
-across responsive layouts, avoid communicating meaning through color alone,
-and respect `prefers-reduced-motion`.
+- **WCAG 2.2 AA** as baseline for all product surfaces.
+- Keyboard operability and visible focus on interactive controls.
+- Respect `prefers-reduced-motion`; keep animation functional, not ornamental.
+- Color is never the sole carrier of meaning; maintain contrast on lavender-on-void pairings.
+- i18n: pt-BR, pt-PT, en — copy and layout must accommodate string length variance.
