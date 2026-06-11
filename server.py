@@ -427,6 +427,10 @@ def _composition_failure_events(
             "error": error_message,
             "request_id": agent_context.request_id,
             "audit_metadata": _merge_audit_metadata(final_audit),
+            **serialize_navigation_payload(
+                agent_context.navigation_action,
+                agent_context.secondary_navigation_actions,
+            ),
         })
     ]
 
@@ -592,13 +596,12 @@ async def lifespan(app: FastAPI):
                 _rag_ready = True
                 print("✅ BGE-M3 carregado: retrieval vetorial ativo")
 
-                # Production deploys ship without rag/chroma_db (gitignored). If
-                # the collection is empty, rebuild it from the versioned corpus
-                # so retrieval works without a separate indexing step.
-                if _collection.count() == 0 and corpus_available():
-                    print("📚 Coleção vazia: reconstruindo índice a partir do corpus versionado...")
-                    indexed = bootstrap_collection(_collection, _embedder)
-                    print(f"✅ Bootstrap concluído: {indexed} chunks indexados ({_collection.count()} no total)")
+                # Bootstrap disabled: using pre-indexed rag/chroma_db committed to git.
+                # If needed, re-enable by uncommenting:
+                # if _collection.count() == 0 and corpus_available():
+                #     print("📚 Coleção vazia: reconstruindo índice a partir do corpus versionado...")
+                #     indexed = bootstrap_collection(_collection, _embedder)
+                #     print(f"✅ Bootstrap concluído: {indexed} chunks indexados ({_collection.count()} no total)")
             except ImportError:
                 _embedder = None
                 _rag_ready = False
@@ -727,11 +730,15 @@ def knowledge_health():
     payload = _health_payload()
     dump_path = RAG_DIR / "aetheris-docs-dump.json"
     corpus_version = None
+    corpus_product = None
     if dump_path.exists():
         try:
-            corpus_version = json.loads(dump_path.read_text(encoding="utf-8")).get("version")
+            dump = json.loads(dump_path.read_text(encoding="utf-8"))
+            corpus_version = dump.get("version") or dump.get("meta", {}).get("extractor_version")
+            corpus_product = dump.get("meta", {}).get("product_name")
         except (json.JSONDecodeError, OSError):
             corpus_version = None
+            corpus_product = None
     warnings: list[dict[str, str]] = []
     if not payload["rag_active"]:
         warnings.append({"code": "rag_inactive", "message": "Vector retrieval is inactive."})
@@ -742,8 +749,13 @@ def knowledge_health():
         "corpus": {
             "chunks": payload["corpus_chunks"],
             "corpus_version": corpus_version,
+            "product_name": corpus_product,
             "last_indexed_at": payload["last_indexed_at"],
         },
+        "decision_rules": __import__(
+            "agent.decision_rules",
+            fromlist=["decision_rules_health"],
+        ).decision_rules_health(),
         "chromadb": {
             "loaded": payload["vector_collection_loaded"],
             "count": payload["vector_collection_count"],
