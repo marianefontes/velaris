@@ -32,6 +32,7 @@ import {
   ErrorState,
   LoadingState,
   PageShell,
+  SecondaryButton,
 } from "./ui/VisualPrimitives";
 
 const COPY: Record<Locale, {
@@ -624,14 +625,10 @@ function ResultsError({ copy, onRetry }: { copy: typeof COPY[Locale]; onRetry: (
         title={copy.errorTitle}
         description={copy.errorBody}
         action={
-          <button
-            type="button"
-            onClick={onRetry}
-            className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/10 px-5 py-2.5 text-xs font-semibold text-slate-300 transition-colors hover:border-primary/25 hover:text-white"
-          >
+          <SecondaryButton onClick={onRetry}>
             <RefreshCw className="h-3.5 w-3.5" />
             {copy.retry}
-          </button>
+          </SecondaryButton>
         }
       />
     </div>

@@ -1,5 +1,7 @@
 import type {
+  ButtonHTMLAttributes,
   CSSProperties,
+  ElementType,
   HTMLAttributes,
   ReactNode,
 } from "react";
@@ -267,6 +269,46 @@ export function LoadingState({
       title={title}
       description={description}
     />
+  );
+}
+
+type SurfacePanelVariant = "raised" | "subtle" | "stack";
+
+const SURFACE_PANEL_CLASSES: Record<SurfacePanelVariant, string> = {
+  raised: "surface-panel",
+  subtle: "surface-panel-subtle",
+  stack: "surface-stack",
+};
+
+export function SurfacePanel<T extends ElementType = "article">({
+  as,
+  children,
+  className,
+  variant = "raised",
+  ...props
+}: {
+  as?: T;
+  children: ReactNode;
+  className?: string;
+  variant?: SurfacePanelVariant;
+} & Omit<HTMLAttributes<HTMLElement>, "className">) {
+  const Component = as ?? "article";
+  return (
+    <Component className={cx(SURFACE_PANEL_CLASSES[variant], className)} {...props}>
+      {children}
+    </Component>
+  );
+}
+
+export function SecondaryButton({
+  children,
+  className,
+  ...props
+}: ButtonHTMLAttributes<HTMLButtonElement>) {
+  return (
+    <button type="button" className={cx("btn-secondary", className)} {...props}>
+      {children}
+    </button>
   );
 }
 

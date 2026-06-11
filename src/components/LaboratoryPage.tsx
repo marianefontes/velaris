@@ -445,7 +445,7 @@ function AutomationOverview({
             {snapshot.notifications.slice(0, 3).map((notification) => (
               <div
                 key={notification.id}
-                className="rounded-xl border border-white/[0.07] bg-black/20 px-4 py-3"
+                className="surface-panel px-4 py-3"
               >
                 <div className="flex items-center gap-2">
                   {!notification.read_at ? <span className="h-1.5 w-1.5 rounded-full bg-primary" /> : null}
@@ -622,7 +622,7 @@ function RecommendationDetail({
 
       <section className="mt-6">
         <SectionLabel icon={<ScanSearch />} label="Por que" />
-        <p className="mt-3 rounded-xl border border-white/[0.07] bg-black/20 p-5 text-sm leading-7 text-slate-300">
+        <p className="surface-panel mt-3 p-5 text-sm leading-7 text-slate-300">
           {recommendation.rationale}
         </p>
       </section>
@@ -867,7 +867,7 @@ function RunComposer({
             })}
           </div>
         </div>
-        <div className="flex items-center justify-between rounded-xl border border-white/[0.07] bg-black/20 px-3 py-3">
+        <div className="surface-panel flex items-center justify-between px-3 py-3">
           <div>
             <p className="font-mono text-lg font-semibold text-white">{requestCount}</p>
             <p className="text-[9px] uppercase tracking-widest text-slate-600">requisições previstas</p>
@@ -1160,7 +1160,7 @@ function CaseInspector({
       {item.answer_text ? (
         <div className="mt-6">
           <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-slate-600">Resposta gerada</p>
-          <div className="mt-3 whitespace-pre-wrap rounded-xl border border-white/[0.07] bg-black/20 p-5 text-sm leading-7 text-slate-300">
+          <div className="surface-panel mt-3 whitespace-pre-wrap p-5 text-sm leading-7 text-slate-300">
             {item.answer_text}
           </div>
         </div>

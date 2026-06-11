@@ -4,7 +4,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
-import { useLocation, useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams, Link } from "react-router-dom";
 import { useI18n } from "../i18n/I18nProvider";
 import { getReasoningPageContent } from "../i18n/pages/reasoningPage";
 import {
@@ -21,6 +21,7 @@ import {
   FileCheck2,
   Filter,
   Gauge,
+  HeartPulse,
   History,
   Layers,
   Lightbulb,
@@ -90,7 +91,10 @@ const CAPABILITY_ICONS: Record<string, LucideIcon> = {
   perspectives: Users,
   audit: Activity,
   "knowledge-gap": BookOpenCheck,
+  governance: ShieldCheck,
+  health: HeartPulse,
   "governance-impact": Blocks,
+  simulate: Network,
   "principle-conflict": Scale,
   "adoption-friction": AlertTriangle,
   "oracle-council": Users,
@@ -455,8 +459,21 @@ function SkillsSection() {
 }
 
 function CommandsSection() {
+  const location = useLocation();
   const { locale } = useI18n();
   const copy = getReasoningPageContent(locale).commands;
+  const operationalCommands = ORACLE_COMMANDS.filter((command) => command.type === "Ação operacional");
+  const investigativeCommands = ORACLE_COMMANDS.filter(
+    (command) => command.type !== "Ação operacional",
+  );
+
+  useEffect(() => {
+    const hash = location.hash.replace("#", "");
+    if (hash === "comandos-operacional" || hash === "comandos-investigativo") {
+      document.getElementById(hash)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [location.hash]);
+
   return (
     <ZoneShell
       id="comandos-do-oraculo"
@@ -465,34 +482,46 @@ function CommandsSection() {
       caption={copy.caption}
       icon={<Wrench className="h-3.5 w-3.5" aria-hidden />}
     >
-      <p className="mb-6 text-xs leading-6 text-slate-400">
-        {copy.manual}
-      </p>
+      <CommandHowTo manual={copy.manual} />
 
-      <CommandHowTo />
-
-      <div className="mb-4 grid gap-3 md:grid-cols-2">
-        <CategoryLegend
-          id="comandos-operacional"
-          label={copy.operational}
-          description={copy.operationalDescription}
-          tone="primary"
-        />
-        <CategoryLegend
-          id="comandos-investigativo"
-          label={copy.investigative}
-          description={copy.investigativeDescription}
-          tone="secondary"
-        />
+      <div className="commands-subsection">
+        <div className="grid gap-4 md:grid-cols-2">
+          <CategoryNavButton
+            targetId="comandos-operacional"
+            label={copy.operational}
+            description={copy.operationalDescription}
+            tone="primary"
+          />
+          <CategoryNavButton
+            targetId="comandos-investigativo"
+            label={copy.investigative}
+            description={copy.investigativeDescription}
+            tone="secondary"
+          />
+        </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {ORACLE_COMMANDS.map((command) => (
-          <CommandCard key={command.id} capability={command} />
-        ))}
-      </div>
+      <section id="comandos-operacional" className="commands-subsection scroll-mt-28">
+        <h3 className="subsection-heading">{copy.operational}</h3>
+        <p className="mb-5 max-w-3xl text-xs leading-6 text-slate-400">{copy.operationalDescription}</p>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {operationalCommands.map((command) => (
+            <CommandCard key={command.id} capability={command} />
+          ))}
+        </div>
+      </section>
 
-      <div className="mt-4 rounded-2xl border border-white/8 bg-white/[0.02] p-4 text-xs leading-6 text-slate-400">
+      <section id="comandos-investigativo" className="commands-subsection scroll-mt-28">
+        <h3 className="subsection-heading">{copy.investigative}</h3>
+        <p className="mb-5 max-w-3xl text-xs leading-6 text-slate-400">{copy.investigativeDescription}</p>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {investigativeCommands.map((command) => (
+            <CommandCard key={command.id} capability={command} />
+          ))}
+        </div>
+      </section>
+
+      <div className="commands-subsection rounded-2xl border border-white/8 bg-white/[0.02] p-4 text-xs leading-6 text-slate-400">
         <strong className="text-slate-200">{copy.compatibilityLabel}</strong> {copy.compatibilityBody}
       </div>
     </ZoneShell>
@@ -577,28 +606,40 @@ function CommandCard({ capability }: { capability: CapabilityDefinition }) {
       {capability.canonicalCommand ? (
         <CapabilityField label={copy.canonicalContract} value={capability.canonicalCommand} mono />
       ) : null}
+      {capability.id === "health" ? (
+        <Link
+          to="/evaluation?focus=health#health"
+          className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-primary transition hover:text-primary-dim"
+        >
+          Abrir Health do Sistema em Avaliação
+          <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+        </Link>
+      ) : null}
     </article>
   );
 }
 
-function CommandHowTo() {
+function CommandHowTo({ manual }: { manual: string }) {
   const { locale } = useI18n();
   const copy = getReasoningPageContent(locale).commands;
 
   return (
     <div
       data-testid="command-how-to"
-      className="mb-6 overflow-hidden rounded-2xl border border-primary/20 bg-[linear-gradient(135deg,rgba(169,153,198,0.09),rgba(255,255,255,0.02))] shadow-[0_0_40px_rgba(169,153,198,0.08)]"
+      className="overflow-hidden rounded-2xl border border-primary/20 bg-[linear-gradient(135deg,rgba(169,153,198,0.09),rgba(255,255,255,0.02))] shadow-[0_0_40px_rgba(169,153,198,0.08)]"
     >
-      <div className="border-b border-white/[0.07] p-5">
+      <div className="border-b border-white/[0.07] p-5 sm:p-6">
         <div className="flex items-start gap-3">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
             <Wrench className="h-4 w-4" aria-hidden />
           </span>
-          <div>
+          <div className="min-w-0">
             <h3 className="font-serif text-lg font-semibold text-white">{copy.howTitle}</h3>
-            <p className="mt-1 text-sm leading-6 text-slate-300">
+            <p className="mt-2 text-sm leading-6 text-slate-300">
               {copy.howBody}
+            </p>
+            <p className="mt-3 text-xs leading-6 text-slate-400">
+              {manual}
             </p>
             <p className="mt-2 text-xs leading-5 text-slate-500">
               {copy.howHint}
@@ -606,36 +647,70 @@ function CommandHowTo() {
           </div>
         </div>
       </div>
-      <div className="grid gap-px bg-white/[0.05] md:grid-cols-2">
-        {copy.examples.map((example) => (
-          <code key={example} className="bg-surface-container-highest/90 px-4 py-3 font-mono text-[10px] leading-5 text-primary/85">
-            {example}
-          </code>
-        ))}
-      </div>
+      <CommandExampleGroup label={copy.operational} examples={copy.operationalExamples} tone="primary" />
+      <CommandExampleGroup label={copy.investigative} examples={copy.investigativeExamples} tone="secondary" />
     </div>
   );
 }
 
-function CategoryLegend({
-  id,
+function CategoryNavButton({
+  targetId,
   label,
   description,
   tone,
 }: {
-  id?: string;
+  targetId: string;
   label: string;
   description: string;
   tone: "primary" | "secondary";
 }) {
   const classes = tone === "primary"
-    ? "border-primary/15 bg-primary/[0.05] text-primary"
-    : "border-secondary/15 bg-secondary/[0.05] text-secondary";
+    ? "border-primary/15 bg-primary/[0.05] text-primary hover:border-primary/30 hover:bg-primary/[0.08]"
+    : "border-secondary/15 bg-secondary/[0.05] text-secondary hover:border-secondary/30 hover:bg-secondary/[0.08]";
+
+  const jumpToSection = () => {
+    document.getElementById(targetId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.history.replaceState(null, "", `#${targetId}`);
+  };
 
   return (
-    <div id={id} className={`scroll-mt-28 rounded-xl border px-4 py-3 ${classes}`}>
-      <p className="text-[10px] font-bold uppercase tracking-[0.14em]">{label}</p>
+    <button
+      type="button"
+      onClick={jumpToSection}
+      className={`group w-full rounded-xl border px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background ${classes}`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-[10px] font-bold uppercase tracking-[0.14em]">{label}</p>
+        <ArrowRight className="mt-0.5 h-3.5 w-3.5 shrink-0 opacity-60 transition group-hover:translate-x-0.5 group-hover:opacity-100" aria-hidden />
+      </div>
       <p className="mt-1.5 text-xs leading-5 text-slate-400">{description}</p>
+    </button>
+  );
+}
+
+function CommandExampleGroup({
+  label,
+  examples,
+  tone,
+}: {
+  label: string;
+  examples: string[];
+  tone: "primary" | "secondary";
+}) {
+  const labelClass = tone === "primary" ? "text-primary" : "text-secondary";
+
+  return (
+    <div className="border-t border-white/[0.07]">
+      <p className={`bg-surface-container-highest/70 px-4 py-2 text-[9px] font-bold uppercase tracking-[0.14em] ${labelClass}`}>
+        {label}
+      </p>
+      <div className="grid gap-px bg-white/[0.05] md:grid-cols-2">
+        {examples.map((example) => (
+          <code key={example} className="bg-surface-container-highest/90 px-4 py-3 font-mono text-[10px] leading-5 text-primary/85">
+            {example}
+          </code>
+        ))}
+      </div>
     </div>
   );
 }

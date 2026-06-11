@@ -1,5 +1,5 @@
 // ||| Phase IB · /evaluation : academic validation surface
-// 4 final sections: methodology, instruments (all metrics aggregated),
+// 5 sections: methodology, instruments (all metrics aggregated),
 // baseline (Abraxos vs generic LLM, merged from ComparisonPage),
 // status (explicit "pending collection" flag for all metrics).
 //
@@ -7,7 +7,8 @@
 // No fabricated numbers. All status = "pending" until TCC data collection.
 
 import type { ReactNode } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Suspense, lazy } from "react";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { useI18n } from "../i18n/I18nProvider";
 import { getEvaluationHeader } from "../i18n/pages/technicalPageHeaders";
 import {
@@ -18,6 +19,7 @@ import {
   Database,
   FileText,
   Gauge,
+  HeartPulse,
   Microscope,
   Radar,
   Scale,
@@ -29,19 +31,26 @@ import {
   Workflow,
 } from "lucide-react";
 import { EvaluationMatrix } from "./comparison/EvaluationMatrix";
-import { PageHero, PageShell, SectionIntroHeader } from "./ui/VisualPrimitives";
+import { LoadingState, PageHero, PageShell, SectionIntroHeader } from "./ui/VisualPrimitives";
+
+const SystemHealthSection = lazy(() =>
+  import("./evaluation/SystemHealthSection").then((module) => ({
+    default: module.SystemHealthSection,
+  })),
+);
 
 // ──────────────────────────────────────────────────────────────────────────
-// Section model : 4 final sections per spec
+// Section model : 5 sections (health = system reliability diagnostics)
 // ──────────────────────────────────────────────────────────────────────────
 
-type FocusId = "methodology" | "instruments" | "baseline" | "status";
+type FocusId = "methodology" | "instruments" | "baseline" | "status" | "health";
 
 const SECTIONS: Array<{ id: FocusId; icon: typeof Activity }> = [
   { id: "methodology", icon: Microscope },
   { id: "instruments", icon: Target },
   { id: "baseline", icon: Scale },
   { id: "status", icon: Clock },
+  { id: "health", icon: HeartPulse },
 ];
 
 const DIMENSION_IDS = [
@@ -95,8 +104,11 @@ type CollectionStatus = "scaffolded" | "in-progress" | "complete";
 // ──────────────────────────────────────────────────────────────────────────
 
 export function EvaluationPage() {
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const focus = (searchParams.get("focus") as FocusId | null) ?? "methodology";
+  const hashFocus = location.hash.replace("#", "") === "health" ? "health" : null;
+  const requestedFocus = searchParams.get("focus") as FocusId | null;
+  const focus = requestedFocus ?? hashFocus ?? "methodology";
   const active = SECTIONS.find((section) => section.id === focus) ?? SECTIONS[0];
 
   const updateFocus = (next: FocusId) => {
@@ -119,6 +131,11 @@ export function EvaluationPage() {
         {active.id === "instruments" ? <InstrumentsSection /> : null}
         {active.id === "baseline" ? <BaselineSection /> : null}
         {active.id === "status" ? <StatusSection /> : null}
+        {active.id === "health" ? (
+          <Suspense fallback={<HealthSectionFallback />}>
+            <SystemHealthSection />
+          </Suspense>
+        ) : null}
       </div>
     </PageShell>
   );
@@ -127,6 +144,18 @@ export function EvaluationPage() {
 // ──────────────────────────────────────────────────────────────────────────
 // Hero & nav
 // ──────────────────────────────────────────────────────────────────────────
+
+function HealthSectionFallback() {
+  const { t } = useI18n();
+  return (
+    <div className="py-10">
+      <LoadingState
+        title={t("pages.evaluation.health.loadingTitle")}
+        description={t("pages.evaluation.health.loadingDescription")}
+      />
+    </div>
+  );
+}
 
 function Hero() {
   const { locale, t } = useI18n();
@@ -155,7 +184,7 @@ function SectionNav({ active, onChange }: { active: FocusId; onChange: (next: Fo
   return (
     <nav
       aria-label={copy.navigationAria}
-      className="flex gap-2 overflow-x-auto xl:grid xl:grid-cols-4 xl:overflow-visible"
+      className="flex gap-2 overflow-x-auto xl:grid xl:grid-cols-5 xl:overflow-visible"
     >
       {SECTIONS.map((section) => {
         const Icon = section.icon;

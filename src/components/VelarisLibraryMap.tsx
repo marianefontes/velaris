@@ -1,9 +1,11 @@
 import {
   Bell,
   BrainCircuit,
+  Compass,
   FormInput,
   LayoutGrid,
   MousePointerClick,
+  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 import type { ComponentDoc, SectionId } from "./componentPresentation";
@@ -28,125 +30,79 @@ interface SectionMeta {
   description: string;
 }
 
-interface TerritoryConfig {
+interface TerritoryDef {
   id: SectionId;
   index: number;
   icon: LucideIcon;
+  color: string;
+  rgb: string;
   waypoint: { x: number; y: number };
+  cardSide: "right" | "left";
 }
 
-const MAP_WIDTH = 1200;
-const MAP_HEIGHT = 520;
+const W = 1300;
+const H = 540;
 
-const TERRITORY_CONFIG: TerritoryConfig[] = [
-  { id: "actions", index: 1, icon: MousePointerClick, waypoint: { x: 210, y: 380 } },
-  { id: "forms", index: 2, icon: FormInput, waypoint: { x: 390, y: 210 } },
-  { id: "structure", index: 3, icon: LayoutGrid, waypoint: { x: 600, y: 165 } },
-  { id: "feedback", index: 4, icon: Bell, waypoint: { x: 830, y: 290 } },
-  { id: "intelligence", index: 5, icon: BrainCircuit, waypoint: { x: 665, y: 420 } },
+const TERRITORIES: TerritoryDef[] = [
+  {
+    id: "actions",
+    index: 1,
+    icon: MousePointerClick,
+    color: "#deccfd",
+    rgb: "222,204,253",
+    waypoint: { x: 185, y: 400 },
+    cardSide: "right",
+  },
+  {
+    id: "forms",
+    index: 2,
+    icon: FormInput,
+    color: "#c2a0fc",
+    rgb: "194,160,252",
+    waypoint: { x: 390, y: 185 },
+    cardSide: "right",
+  },
+  {
+    id: "structure",
+    index: 3,
+    icon: LayoutGrid,
+    color: "#c29fff",
+    rgb: "194,159,255",
+    waypoint: { x: 650, y: 145 },
+    cardSide: "right",
+  },
+  {
+    id: "feedback",
+    index: 4,
+    icon: Bell,
+    color: "#a999c6",
+    rgb: "169,153,198",
+    waypoint: { x: 1020, y: 310 },
+    cardSide: "left",
+  },
+  {
+    id: "intelligence",
+    index: 5,
+    icon: BrainCircuit,
+    color: "#ffa657",
+    rgb: "255,166,87",
+    waypoint: { x: 760, y: 460 },
+    cardSide: "left",
+  },
 ];
 
-const JOURNEY_START = { x: 72, y: 420 };
-const JOURNEY_END = { x: 1065, y: 220 };
+const START_PT = { x: 75, y: 490 };
+const END_PT = { x: 1195, y: 248 };
 
-const JOURNEY_RAIL = [
-  `M ${JOURNEY_START.x} ${JOURNEY_START.y}`,
-  "C 120 408, 165 392, 210 380",
-  "C 275 340, 330 250, 390 210",
-  "C 470 175, 535 155, 600 165",
-  "C 700 195, 780 250, 830 290",
-  "C 780 360, 720 400, 665 420",
-  "C 780 330, 920 260, 1065 220",
+const RAIL = [
+  `M ${START_PT.x} ${START_PT.y}`,
+  `C 115 470, 155 435, 185 400`,
+  `C 255 350, 320 220, 390 185`,
+  `C 480 153, 570 138, 650 145`,
+  `C 780 162, 940 248, 1020 310`,
+  `C 975 390, 905 445, 760 460`,
+  `C 880 385, 1055 308, 1195 248`,
 ].join(" ");
-
-function TerritoryNav({
-  catalog,
-  componentsLabel,
-  onSelectSection,
-  sections,
-  selectedSectionId,
-}: {
-  catalog: ComponentDoc[];
-  componentsLabel: string;
-  onSelectSection: (id: SectionId) => void;
-  sections: SectionMeta[];
-  selectedSectionId: SectionId;
-}) {
-  const sectionById = Object.fromEntries(sections.map((section) => [section.id, section])) as Record<
-    SectionId,
-    SectionMeta
-  >;
-
-  return (
-    <nav
-      aria-label="Territórios da biblioteca"
-      className="velaris-library-territory-nav"
-    >
-      {TERRITORY_CONFIG.map((territory) => {
-        const section = sectionById[territory.id];
-        const count = catalog.filter((item) => item.section === territory.id).length;
-        const active = selectedSectionId === territory.id;
-        const Icon = territory.icon;
-
-        return (
-          <button
-            key={territory.id}
-            type="button"
-            onClick={() => onSelectSection(territory.id)}
-            aria-pressed={active}
-            data-domain={territory.id}
-            className={`${active ? "section-tab-active" : "section-tab"} velaris-library-territory-tab shrink-0 xl:min-w-0`}
-          >
-            <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden strokeWidth={1.5} />
-            <span className="font-semibold">{section.title}</span>
-            <span className="velaris-library-territory-tab-role">
-              {String(count).padStart(2, "0")} {componentsLabel}
-            </span>
-          </button>
-        );
-      })}
-    </nav>
-  );
-}
-
-function ActiveTerritoryComponents({
-  catalog,
-  componentId,
-  onSelectComponent,
-  selectedSectionId,
-  territoryComponentsLabel,
-}: {
-  catalog: ComponentDoc[];
-  componentId: string;
-  onSelectComponent: (id: ComponentDoc["id"]) => void;
-  selectedSectionId: SectionId;
-  territoryComponentsLabel: string;
-}) {
-  const items = catalog.filter((item) => item.section === selectedSectionId);
-
-  return (
-    <div
-      className="velaris-library-territory-panel"
-      role="region"
-      aria-label={territoryComponentsLabel}
-    >
-      <ul className="velaris-library-territory-panel-list">
-        {items.map((item) => (
-          <li key={item.id}>
-            <button
-              type="button"
-              onClick={() => onSelectComponent(item.id)}
-              aria-current={item.id === componentId ? "true" : undefined}
-              className="velaris-library-territory-panel-item"
-            >
-              {item.title}
-            </button>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
 
 export function VelarisLibraryMap({
   catalog,
@@ -165,50 +121,73 @@ export function VelarisLibraryMap({
   onSelectComponent: (id: ComponentDoc["id"]) => void;
   onSelectSection: (id: SectionId) => void;
 }) {
-  const waypoints = [JOURNEY_START, ...TERRITORY_CONFIG.map((t) => t.waypoint), JOURNEY_END];
-  const activeWaypoint = TERRITORY_CONFIG.find((t) => t.id === selectedSectionId)?.waypoint;
+  const byId = Object.fromEntries(sections.map((s) => [s.id, s])) as Record<SectionId, SectionMeta>;
+  const activeItems = catalog.filter((item) => item.section === selectedSectionId);
 
   return (
-    <section className="velaris-library-map" aria-labelledby="velaris-library-map-title">
+    <section className="velaris-library-map" aria-labelledby="vlm-title">
+
+      {/* Header */}
       <header className="velaris-library-map-header">
         <p className="velaris-library-map-eyebrow">{copy.eyebrow}</p>
-        <h2 id="velaris-library-map-title" className="velaris-library-map-title">
+        <h2 id="vlm-title" className="velaris-library-map-title">
           {copy.title}
         </h2>
         <p className="velaris-library-map-lead">{copy.lead}</p>
         <p className="velaris-library-map-meta">{copy.meta}</p>
       </header>
 
-      <TerritoryNav
-        catalog={catalog}
-        componentsLabel={copy.componentsLabel}
-        sections={sections}
-        selectedSectionId={selectedSectionId}
-        onSelectSection={onSelectSection}
-      />
+      {/* Territory navigation tabs */}
+      <nav aria-label="Territórios da biblioteca" className="velaris-library-territory-nav">
+        {TERRITORIES.map((t) => {
+          const s = byId[t.id];
+          const count = catalog.filter((c) => c.section === t.id).length;
+          const active = selectedSectionId === t.id;
+          const Icon = t.icon;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => onSelectSection(t.id)}
+              aria-pressed={active}
+              data-domain={t.id}
+              className={`${active ? "section-tab-active" : "section-tab"} velaris-library-territory-tab shrink-0`}
+            >
+              <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden strokeWidth={1.5} />
+              <span className="font-semibold">{s.title}</span>
+              <span className="velaris-library-territory-tab-role">
+                {String(count).padStart(2, "0")} {copy.componentsLabel}
+              </span>
+            </button>
+          );
+        })}
+      </nav>
 
-      <div className="velaris-library-journey" aria-hidden={false} aria-label={copy.title}>
+      {/* Map canvas — purely decorative */}
+      <div className="velaris-library-journey" aria-hidden="true">
         <div
           className="velaris-library-journey-canvas"
-          style={{ aspectRatio: `${MAP_WIDTH} / ${MAP_HEIGHT}` }}
+          style={{ aspectRatio: `${W} / ${H}` }}
         >
+          {/* SVG: rail path + fallback dots */}
           <svg
             className="velaris-library-journey-rail"
-            viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
-            preserveAspectRatio="xMidYMid meet"
+            viewBox={`0 0 ${W} ${H}`}
+            preserveAspectRatio="none"
             aria-hidden
           >
             <defs>
-              <linearGradient id="velaris-rail-gradient" x1="0%" y1="50%" x2="100%" y2="50%">
-                <stop offset="0%" stopColor="var(--velaris-color-primary)" stopOpacity="0.25" />
-                <stop offset="22%" stopColor="var(--velaris-color-primary)" stopOpacity="0.55" />
-                <stop offset="45%" stopColor="var(--velaris-color-secondary)" stopOpacity="0.6" />
-                <stop offset="68%" stopColor="var(--velaris-color-tertiary)" stopOpacity="0.55" />
-                <stop offset="85%" stopColor="var(--velaris-color-primary-container)" stopOpacity="0.6" />
-                <stop offset="100%" stopColor="var(--velaris-color-warning)" stopOpacity="0.7" />
+              <linearGradient id="vlm-grad" x1="0%" y1="50%" x2="100%" y2="50%">
+                <stop offset="0%"   stopColor="#deccfd" stopOpacity="0.1" />
+                <stop offset="16%"  stopColor="#deccfd" stopOpacity="0.85" />
+                <stop offset="34%"  stopColor="#c2a0fc" stopOpacity="0.9" />
+                <stop offset="52%"  stopColor="#c29fff" stopOpacity="0.85" />
+                <stop offset="70%"  stopColor="#a999c6" stopOpacity="0.8" />
+                <stop offset="88%"  stopColor="#ffa657" stopOpacity="0.85" />
+                <stop offset="100%" stopColor="#ffa657" stopOpacity="0.95" />
               </linearGradient>
-              <filter id="velaris-rail-glow" x="-30%" y="-30%" width="160%" height="160%">
-                <feGaussianBlur stdDeviation="5" result="blur" />
+              <filter id="vlm-glow" x="-10%" y="-100%" width="120%" height="300%">
+                <feGaussianBlur stdDeviation="3" result="blur" />
                 <feMerge>
                   <feMergeNode in="blur" />
                   <feMergeNode in="SourceGraphic" />
@@ -216,74 +195,117 @@ export function VelarisLibraryMap({
               </filter>
             </defs>
 
-            <path
-              d={JOURNEY_RAIL}
-              className="velaris-library-rail-glow"
-              fill="none"
-              stroke="url(#velaris-rail-gradient)"
-              strokeWidth="10"
-              strokeLinecap="round"
-              opacity="0.22"
-            />
-            <path
-              d={JOURNEY_RAIL}
-              className="velaris-library-rail-core"
-              fill="none"
-              stroke="url(#velaris-rail-gradient)"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              filter="url(#velaris-rail-glow)"
-            />
+            {/* Ambient halo */}
+            <path d={RAIL} fill="none" stroke="url(#vlm-grad)" strokeWidth="18"
+              strokeLinecap="round" opacity="0.12" style={{ filter: "blur(14px)" }} />
+            {/* Core line */}
+            <path d={RAIL} fill="none" stroke="url(#vlm-grad)" strokeWidth="1.5"
+              strokeLinecap="round" filter="url(#vlm-glow)" />
 
-            {waypoints.map((point, index) => {
-              const isStart = index === 0;
-              const isEnd = index === waypoints.length - 1;
-              const isActiveStop = activeWaypoint
-                && point.x === activeWaypoint.x
-                && point.y === activeWaypoint.y;
+            {/* Start spark */}
+            <circle cx={START_PT.x} cy={START_PT.y} r={3} fill="rgba(222,204,253,0.5)" />
+            <circle cx={START_PT.x} cy={START_PT.y} r={7} fill="none"
+              stroke="rgba(222,204,253,0.18)" strokeWidth="1" />
 
+            {/* Fallback dots — hidden at ≥960px via CSS when HTML nodes render */}
+            {TERRITORIES.map((t) => {
+              const isActive = selectedSectionId === t.id;
               return (
-                <g key={`wp-${index}`}>
-                  {!isEnd ? (
-                    <circle
-                      cx={point.x}
-                      cy={point.y}
-                      r={isActiveStop ? 9 : isStart ? 5 : 7}
-                      className={isActiveStop ? "velaris-library-rail-halo-active" : "velaris-library-rail-halo"}
-                    />
-                  ) : null}
+                <g key={`dot-${t.id}`} className="vlm-svg-dot">
                   <circle
-                    cx={point.x}
-                    cy={point.y}
-                    r={isStart ? 3 : isEnd ? 4 : isActiveStop ? 5 : 4.5}
-                    className={
-                      isEnd
-                        ? "velaris-library-rail-destination"
-                        : isActiveStop
-                          ? "velaris-library-rail-node-active"
-                          : "velaris-library-rail-node"
-                    }
+                    cx={t.waypoint.x} cy={t.waypoint.y}
+                    r={isActive ? 13 : 9}
+                    fill={`rgba(${t.rgb},0.08)`}
+                    stroke={t.color}
+                    strokeWidth="0.75"
+                    strokeOpacity={isActive ? 0.65 : 0.28}
+                  />
+                  <circle
+                    cx={t.waypoint.x} cy={t.waypoint.y}
+                    r={isActive ? 6 : 4.5}
+                    fill={t.color}
+                    fillOpacity={isActive ? 0.95 : 0.65}
                   />
                 </g>
               );
             })}
+
+            {/* Destination dot */}
+            <circle cx={END_PT.x} cy={END_PT.y} r={5}  fill="#ffa657" fillOpacity="0.9" />
+            <circle cx={END_PT.x} cy={END_PT.y} r={14} fill="none"
+              stroke="#ffa657" strokeWidth="0.75" strokeOpacity="0.35" />
           </svg>
 
-          <p
-            className="velaris-library-journey-origin"
+          {/* Start label */}
+          <div
+            className="vlm-start-label"
             style={{
-              left: `${(JOURNEY_START.x / MAP_WIDTH) * 100}%`,
-              top: `${(JOURNEY_START.y / MAP_HEIGHT) * 100}%`,
+              left: `${(START_PT.x / W) * 100}%`,
+              top: `${((START_PT.y + 14) / H) * 100}%`,
             }}
           >
-            {copy.journeyStart}
-          </p>
+            <Sparkles className="h-2.5 w-2.5" aria-hidden />
+            <span>{copy.journeyStart}</span>
+          </div>
 
+          {/* Territory station nodes + cards */}
+          {TERRITORIES.map((t) => {
+            const section = byId[t.id];
+            const isActive = selectedSectionId === t.id;
+            const items = catalog.filter((c) => c.section === t.id);
+            const Icon = t.icon;
+
+            return (
+              <button
+                key={t.id}
+                type="button"
+                tabIndex={-1}
+                onClick={() => onSelectSection(t.id)}
+                aria-label={section.title}
+                data-active={String(isActive)}
+                data-side={t.cardSide}
+                className="vlm-station"
+                style={{
+                  left: `${(t.waypoint.x / W) * 100}%`,
+                  top: `${(t.waypoint.y / H) * 100}%`,
+                  "--sc": t.color,
+                  "--sr": t.rgb,
+                } as React.CSSProperties}
+              >
+                {/* Node — always rendered, always centered at waypoint */}
+                <div className="vlm-node">
+                  <span className="vlm-node-halo" aria-hidden />
+                  <span className="vlm-node-ring" aria-hidden />
+                  <span className="vlm-node-fill">
+                    <Icon className="vlm-node-icon" aria-hidden />
+                  </span>
+                  <span className="vlm-node-num" aria-hidden>
+                    {String(t.index).padStart(2, "0")}
+                  </span>
+                </div>
+
+                {/* Card — absolutely positioned to one side of the node */}
+                <div className="vlm-card" aria-hidden>
+                  <p className="vlm-card-title">{section.title}</p>
+                  <p className="vlm-card-count">
+                    {String(items.length).padStart(2, "0")} COMPONENTES
+                  </p>
+                  <ul className="vlm-card-list">
+                    {items.map((item) => (
+                      <li key={item.id}>{item.title}</li>
+                    ))}
+                  </ul>
+                </div>
+              </button>
+            );
+          })}
+
+          {/* Destination */}
           <div
             className="velaris-library-destination"
             style={{
-              left: `${(JOURNEY_END.x / MAP_WIDTH) * 100}%`,
-              top: `${(JOURNEY_END.y / MAP_HEIGHT) * 100}%`,
+              left: `${(END_PT.x / W) * 100}%`,
+              top: `${(END_PT.y / H) * 100}%`,
             }}
           >
             <div className="velaris-library-destination-symbol" aria-hidden>
@@ -295,6 +317,7 @@ export function VelarisLibraryMap({
             <p className="velaris-library-destination-lead">{copy.destinationLead}</p>
           </div>
 
+          {/* "You are here" badge */}
           <p className="velaris-library-journey-here">
             <span className="velaris-library-map-legend-here-dot" aria-hidden />
             {copy.youAreHere}
@@ -302,13 +325,59 @@ export function VelarisLibraryMap({
         </div>
       </div>
 
-      <ActiveTerritoryComponents
-        catalog={catalog}
-        componentId={selectedId}
-        selectedSectionId={selectedSectionId}
-        territoryComponentsLabel={copy.territoryComponents}
-        onSelectComponent={onSelectComponent}
-      />
+      {/* Legend bar */}
+      <div className="vlm-legend" role="presentation">
+        <div className="vlm-legend-cap">
+          <Sparkles className="h-2.5 w-2.5" aria-hidden />
+          <span>{copy.journeyStart}</span>
+        </div>
+        {TERRITORIES.map((t) => {
+          const s = byId[t.id];
+          const active = selectedSectionId === t.id;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => onSelectSection(t.id)}
+              data-active={String(active)}
+              className="velaris-library-map-legend-item"
+              aria-pressed={active}
+            >
+              <span
+                className="velaris-library-map-legend-swatch"
+                style={{ background: t.color }}
+              />
+              <span>{s.title}</span>
+            </button>
+          );
+        })}
+        <div className="vlm-legend-cap vlm-legend-destination">
+          <Compass className="h-2.5 w-2.5" aria-hidden />
+          <span>{copy.destinationTitle}</span>
+        </div>
+      </div>
+
+      {/* Active territory component list */}
+      <div
+        className="velaris-library-territory-panel"
+        role="region"
+        aria-label={copy.territoryComponents}
+      >
+        <ul className="velaris-library-territory-panel-list">
+          {activeItems.map((item) => (
+            <li key={item.id}>
+              <button
+                type="button"
+                onClick={() => onSelectComponent(item.id)}
+                aria-current={item.id === selectedId ? "true" : undefined}
+                className="velaris-library-territory-panel-item"
+              >
+                {item.title}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
     </section>
   );
 }

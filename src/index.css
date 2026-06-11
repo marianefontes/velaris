@@ -199,6 +199,10 @@ body {
     transform: translateY(-2px);
     box-shadow: 0 0 20px rgba(222, 204, 253, 0.06), 0 0 0 1px rgba(222, 204, 253, 0.07);
   }
+  .suggestion-card:active {
+    transform: translateY(0);
+    transition-duration: 100ms;
+  }
 
   /* Top bar nav accent line : hairline cognitive atmosphere separator */
   .topbar-accent {
@@ -546,6 +550,53 @@ body {
     @apply mt-0;
   }
 
+  .lazy-panel-fallback {
+    @apply flex min-h-[12rem] w-full max-w-md flex-col items-center justify-center gap-3 surface-panel-subtle px-6 py-10;
+  }
+
+  .library-map-fallback {
+    @apply min-h-[18rem] animate-pulse rounded-[20px] border border-white/[0.06] bg-white/[0.015];
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .library-map-fallback {
+      animation: none;
+    }
+  }
+
+  .health-subsection,
+  .commands-subsection {
+    @apply mt-10 border-t border-white/[0.06] pt-10;
+  }
+
+  .subsection-heading {
+    @apply mb-4 text-sm font-semibold tracking-[-0.01em] text-slate-100;
+  }
+
+  .mode-switcher-grid {
+    @apply grid gap-6 pt-7 sm:grid-cols-2 sm:gap-x-10 sm:gap-y-0 sm:pt-8;
+  }
+
+  .mode-switcher-column {
+    @apply flex min-w-0 flex-col gap-4 sm:gap-5;
+  }
+
+  .mode-switcher-column + .mode-switcher-column {
+    @apply border-t border-white/[0.06] pt-6 sm:border-l sm:border-t-0 sm:pl-10 sm:pt-0;
+  }
+
+  .section-tab-card {
+    @apply w-full flex-col items-start gap-2 p-4 sm:min-h-[5.75rem];
+  }
+
+  .section-tab-card .section-tab-label {
+    @apply text-sm font-semibold;
+  }
+
+  .section-tab-card .section-tab-role {
+    @apply text-[10px] uppercase tracking-widest opacity-60;
+  }
+
   /* Reasoning page hero: wider lead without early breaks. */
   .reasoning-page-hero .page-h1 {
     @apply max-w-[34ch] sm:max-w-[38ch];
@@ -562,6 +613,31 @@ body {
   ─────────────────────────────────────────────────────────────────────── */
   .content-card {
     @apply rounded-[var(--velaris-radius-card)] border border-white/[0.07] bg-white/[0.022] p-5;
+  }
+
+  /* Dense data panels (audit, health, governance) */
+  .surface-panel {
+    @apply rounded-xl border border-white/[0.07] bg-black/20;
+  }
+
+  .surface-panel-subtle {
+    @apply rounded-xl border border-white/[0.07] bg-white/[0.018];
+  }
+
+  .surface-stack {
+    @apply overflow-hidden rounded-xl border border-white/[0.07] bg-black/20;
+  }
+
+  .btn-secondary {
+    @apply inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/10 px-5 py-2.5 text-xs font-semibold text-slate-300 transition-[transform,border-color,color] duration-150 hover:border-primary/25 hover:text-white disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-secondary:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+
+  .execution-banner-settled {
+    animation: execution-settle 1.1s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .xai-card {
@@ -1021,6 +1097,18 @@ body {
   50% {
     opacity: 1;
     transform: translateY(-2px);
+  }
+}
+
+@keyframes execution-settle {
+  0% {
+    border-color: rgba(222, 204, 253, 0.22);
+    box-shadow: inset 0 0 0 1px rgba(222, 204, 253, 0.08);
+  }
+
+  100% {
+    border-color: rgba(255, 255, 255, 0.07);
+    box-shadow: none;
   }
 }
 
@@ -2000,7 +2088,7 @@ body {
 .velaris-library-journey-canvas {
   position: relative;
   width: 100%;
-  min-height: 28rem;
+  min-height: 320px;
 }
 
 .velaris-library-journey-rail {
@@ -2320,7 +2408,7 @@ body {
   }
 
   .velaris-library-journey-canvas {
-    min-height: 22rem;
+    min-height: auto;
   }
 }
 
@@ -2329,3 +2417,256 @@ body {
     filter: none;
   }
 }
+
+/* ─── VelarisLibraryMap v2 — station cards ──────────────────────────────── */
+
+/*
+ * Station container: sized to the node (44×44) and centered exactly on the
+ * waypoint. The card is absolutely positioned OUTSIDE the 44px box so it
+ * never shifts the node off-center.
+ */
+.vlm-station {
+  position: absolute;
+  z-index: 2;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  overflow: visible;
+}
+
+/* Node: the 42×42 circle at each waypoint */
+.vlm-node {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+
+/* Outer ambient halo */
+.vlm-node-halo {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(var(--sr), 0.18), transparent 65%);
+  opacity: 0;
+  transition: opacity 220ms ease;
+  pointer-events: none;
+}
+
+.vlm-station:hover .vlm-node-halo,
+.vlm-station[data-active="true"] .vlm-node-halo {
+  opacity: 1;
+}
+
+/* Outer ring */
+.vlm-node-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(var(--sr), 0.22);
+  transition: border-color 220ms ease, box-shadow 220ms ease;
+  pointer-events: none;
+}
+
+.vlm-station:hover .vlm-node-ring,
+.vlm-station[data-active="true"] .vlm-node-ring {
+  border-color: rgba(var(--sr), 0.6);
+  box-shadow: 0 0 0 3px rgba(var(--sr), 0.1), 0 0 18px rgba(var(--sr), 0.18);
+}
+
+/* Inner filled circle */
+.vlm-node-fill {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(var(--sr), 0.07);
+  border: 1px solid rgba(var(--sr), 0.2);
+  transition: background 220ms ease, border-color 220ms ease;
+}
+
+.vlm-station:hover .vlm-node-fill,
+.vlm-station[data-active="true"] .vlm-node-fill {
+  background: rgba(var(--sr), 0.18);
+  border-color: rgba(var(--sr), 0.48);
+}
+
+/* Icon inside the node */
+.vlm-node-icon {
+  width: 12px;
+  height: 12px;
+  color: var(--sc);
+  opacity: 0.72;
+  transition: opacity 220ms ease;
+}
+
+.vlm-station[data-active="true"] .vlm-node-icon {
+  opacity: 1;
+}
+
+/* Number badge (01, 02…) */
+.vlm-node-num {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  z-index: 2;
+  font-size: 7px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  line-height: 1.3;
+  color: var(--sc);
+  background: #09090d;
+  border: 1px solid rgba(var(--sr), 0.32);
+  border-radius: 4px;
+  padding: 1px 3px;
+  pointer-events: none;
+}
+
+/* Cards — hidden on small screens; absolutely positioned at ≥960px */
+.vlm-card {
+  display: none;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 170px;
+  border-radius: 11px;
+  border: 1px solid rgba(var(--sr), 0.15);
+  background: rgba(9, 9, 13, 0.82);
+  backdrop-filter: blur(14px);
+  padding: 10px 12px 11px;
+  text-align: left;
+  transition: border-color 220ms ease, background 220ms ease;
+  pointer-events: none;
+}
+
+.vlm-station:hover .vlm-card,
+.vlm-station[data-active="true"] .vlm-card {
+  border-color: rgba(var(--sr), 0.34);
+  background: rgba(var(--sr), 0.055);
+}
+
+.vlm-card-title {
+  font-size: 8px;
+  font-weight: 720;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.88);
+  line-height: 1.4;
+}
+
+.vlm-card-count {
+  margin-top: 3px;
+  font-size: 7px;
+  font-weight: 720;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--sc);
+}
+
+.vlm-card-list {
+  list-style: none;
+  margin: 7px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.vlm-card-list li {
+  position: relative;
+  padding-left: 9px;
+  font-size: 9.5px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.48);
+}
+
+.vlm-card-list li::before {
+  content: "•";
+  position: absolute;
+  left: 1px;
+  color: rgba(var(--sr), 0.5);
+  font-size: 8px;
+}
+
+/* Start label */
+.vlm-start-label {
+  position: absolute;
+  z-index: 1;
+  transform: translate(-50%, 0);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 7px;
+  font-weight: 650;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(222, 204, 253, 0.42);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* Legend bar */
+.vlm-legend {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-top: 0.75rem;
+  overflow-x: auto;
+  padding-bottom: 0.125rem;
+  scrollbar-width: none;
+}
+
+.vlm-legend::-webkit-scrollbar {
+  display: none;
+}
+
+.vlm-legend-cap {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  padding: 0 0.75rem 0 0.25rem;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.28);
+}
+
+.vlm-legend-destination {
+  padding: 0 0.25rem 0 0.75rem;
+  color: rgba(255, 166, 87, 0.6);
+}
+
+/* At ≥960px: show cards, hide SVG fallback dots */
+@media (min-width: 960px) {
+  .vlm-card {
+    display: block;
+  }
+
+  /* Card to the right of the node */
+  .vlm-station[data-side="right"] .vlm-card {
+    left: calc(44px + 10px);
+  }
+
+  /* Card to the left of the node */
+  .vlm-station[data-side="left"] .vlm-card {
+    right: calc(44px + 10px);
+  }
+
+  .vlm-svg-dot {
+    display: none;
+  }
+}
+

@@ -1,6 +1,6 @@
 // ||| Phase IB · /developers : implementation intelligence
-// 4 final sections: architecture (merged infrastructure), rag, integration,
-// corpus (merged inspector + live trace). Reference and decisions removed per spec.
+// 5 final sections: architecture (merged infrastructure), rag, integration,
+// corpus (merged inspector + live trace), agent-runtime (cognitive flow).
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
@@ -10,6 +10,7 @@ import { getDevelopersPageContent } from "../i18n/pages/developersPage";
 import { getDevelopersHeader } from "../i18n/pages/technicalPageHeaders";
 import {
   Activity,
+  BrainCircuit,
   Cpu,
   Database,
   FileCode,
@@ -29,6 +30,7 @@ import type { HealthData, ResponseAuditMetadata, SourceChip } from "../beatrice/
 import { usePersonaContext } from "../beatrice/hooks/usePersonaContext";
 import { PageHero, PageShell, SectionIntroHeader } from "./ui/VisualPrimitives";
 import { ReasoningLiveTrace, type TraceSnapshot } from "./ReasoningLiveTrace";
+import { CognitiveFlow } from "./oracle/CognitiveFlow";
 
 // ──────────────────────────────────────────────────────────────────────────
 // Section model
@@ -38,13 +40,15 @@ type FocusId =
   | "architecture"
   | "rag"
   | "integration"
-  | "corpus";
+  | "corpus"
+  | "agent-runtime";
 
 const SECTIONS: Array<{ id: FocusId; icon: typeof Cpu }> = [
   { id: "architecture", icon: Network },
   { id: "rag", icon: Workflow },
   { id: "integration", icon: FileCode },
   { id: "corpus", icon: Database },
+  { id: "agent-runtime", icon: BrainCircuit },
 ];
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -76,6 +80,7 @@ export function DevelopersPage() {
         {active.id === "rag" ? <RagSection /> : null}
         {active.id === "integration" ? <IntegrationSection /> : null}
         {active.id === "corpus" ? <CorpusSection /> : null}
+        {active.id === "agent-runtime" ? <AgentRuntimeSection /> : null}
       </div>
     </PageShell>
   );
@@ -112,7 +117,7 @@ function SectionNav({ active, onChange }: { active: FocusId; onChange: (next: Fo
   return (
     <nav
       aria-label={copy.navigationAria}
-      className="flex gap-2 overflow-x-auto xl:grid xl:grid-cols-4 xl:overflow-visible"
+      className="flex gap-2 overflow-x-auto xl:grid xl:grid-cols-5 xl:overflow-visible"
     >
       {SECTIONS.map((section) => {
         const Icon = section.icon;
@@ -144,6 +149,174 @@ function SectionNav({ active, onChange }: { active: FocusId; onChange: (next: Fo
 
 const TIER_LEVELS = [3, 2, 1] as const;
 
+type TechAccent = {
+  shell: string;
+  badge: string;
+  chip: string;
+  chipBorder: string;
+  name: string;
+  key: string;
+  value: string;
+};
+
+const TECH_ACCENTS = {
+  browser: {
+    shell: "border-primary/20 bg-primary/[0.04]",
+    badge: "border-primary/25 bg-primary/10 text-primary",
+    chip: "bg-primary/[0.06] text-primary",
+    chipBorder: "border-primary/20",
+    name: "text-primary",
+    key: "text-technical-keyword",
+    value: "text-technical-property",
+  },
+  fastapi: {
+    shell: "border-sky-400/20 bg-sky-400/[0.04]",
+    badge: "border-sky-400/25 bg-sky-400/10 text-sky-300",
+    chip: "bg-sky-400/[0.07] text-sky-200",
+    chipBorder: "border-sky-400/22",
+    name: "text-sky-200",
+    key: "text-sky-400/80",
+    value: "text-sky-100",
+  },
+  embedding: {
+    shell: "border-secondary/20 bg-secondary/[0.05]",
+    badge: "border-secondary/25 bg-secondary/10 text-secondary",
+    chip: "bg-secondary/[0.08] text-secondary-dim",
+    chipBorder: "border-secondary/22",
+    name: "text-secondary-dim",
+    key: "text-technical-keyword",
+    value: "text-technical-type",
+  },
+  vector: {
+    shell: "border-emerald-400/20 bg-emerald-400/[0.04]",
+    badge: "border-emerald-400/25 bg-emerald-400/10 text-emerald-300",
+    chip: "bg-emerald-400/[0.07] text-emerald-200",
+    chipBorder: "border-emerald-400/22",
+    name: "text-emerald-200",
+    key: "text-emerald-400/75",
+    value: "text-emerald-100",
+  },
+  llm: {
+    shell: "border-warning/20 bg-warning/[0.04]",
+    badge: "border-warning/25 bg-warning/10 text-warning",
+    chip: "bg-warning/[0.08] text-technical-command",
+    chipBorder: "border-warning/22",
+    name: "text-technical-command",
+    key: "text-warning/80",
+    value: "text-technical-foreground",
+  },
+  stream: {
+    shell: "border-fuchsia-400/20 bg-fuchsia-400/[0.04]",
+    badge: "border-fuchsia-400/25 bg-fuchsia-400/10 text-fuchsia-300",
+    chip: "bg-fuchsia-400/[0.07] text-fuchsia-200",
+    chipBorder: "border-fuchsia-400/22",
+    name: "text-fuchsia-200",
+    key: "text-fuchsia-400/75",
+    value: "text-fuchsia-100",
+  },
+} as const satisfies Record<string, TechAccent>;
+
+const TIER_ACCENTS = [TECH_ACCENTS.browser, TECH_ACCENTS.fastapi, TECH_ACCENTS.vector] as const;
+const COMMAND_ACCENTS = [TECH_ACCENTS.browser, TECH_ACCENTS.fastapi, TECH_ACCENTS.vector] as const;
+const INTEGRATION_SNIPPET_ACCENTS = [
+  TECH_ACCENTS.fastapi,
+  TECH_ACCENTS.stream,
+  TECH_ACCENTS.embedding,
+  TECH_ACCENTS.llm,
+] as const;
+const HEALTH_METRIC_ACCENTS = [TECH_ACCENTS.vector, TECH_ACCENTS.embedding, TECH_ACCENTS.browser] as const;
+const GAP_ACCENTS = [TECH_ACCENTS.browser, TECH_ACCENTS.llm, TECH_ACCENTS.fastapi] as const;
+const LAYER_ACCENTS = [
+  TECH_ACCENTS.fastapi,
+  TECH_ACCENTS.embedding,
+  TECH_ACCENTS.llm,
+  TECH_ACCENTS.vector,
+] as const;
+const LAYER_DOTS = ["bg-sky-400/75", "bg-secondary/75", "bg-warning/80", "bg-emerald-400/75"] as const;
+const CAPABILITY_NAME_ACCENTS = [
+  TECH_ACCENTS.vector,
+  TECH_ACCENTS.llm,
+  TECH_ACCENTS.stream,
+  TECH_ACCENTS.browser,
+  TECH_ACCENTS.embedding,
+  TECH_ACCENTS.fastapi,
+  TECH_ACCENTS.llm,
+  TECH_ACCENTS.embedding,
+] as const;
+
+function resolveRagPhaseAccent(phase: string): TechAccent {
+  switch (phase) {
+    case "extraction":
+      return TECH_ACCENTS.browser;
+    case "indexing":
+      return TECH_ACCENTS.embedding;
+    case "watch":
+      return TECH_ACCENTS.llm;
+    case "serve":
+      return TECH_ACCENTS.fastapi;
+    default:
+      return TECH_ACCENTS.browser;
+  }
+}
+
+function resolveFlowAccent(label: string): TechAccent {
+  const normalized = label.toLowerCase();
+  if (normalized.includes("navegador") || normalized.includes("browser")) return TECH_ACCENTS.browser;
+  if (normalized.includes("fastapi")) return TECH_ACCENTS.fastapi;
+  if (normalized.includes("bge")) return TECH_ACCENTS.embedding;
+  if (normalized.includes("chroma")) return TECH_ACCENTS.vector;
+  if (normalized.includes("groq")) return TECH_ACCENTS.llm;
+  return TECH_ACCENTS.browser;
+}
+
+function resolveComponentAccent(name: string): TechAccent {
+  const normalized = name.toLowerCase();
+  if (normalized.includes("chroma")) return TECH_ACCENTS.vector;
+  if (normalized.includes("bge") || normalized.includes("embedding")) return TECH_ACCENTS.embedding;
+  if (normalized.includes("groq") || normalized.includes("llama")) return TECH_ACCENTS.llm;
+  if (
+    normalized.includes("react")
+    || normalized.includes("tailwind")
+    || normalized.includes("router")
+    || normalized.includes("provider")
+    || normalized.includes("workspace")
+  ) {
+    return TECH_ACCENTS.browser;
+  }
+  if (normalized.includes("server") || normalized.includes("prompts") || normalized.includes("rag")) {
+    return TECH_ACCENTS.fastapi;
+  }
+  return TECH_ACCENTS.browser;
+}
+
+function resolveInfraAccent(name: string): TechAccent {
+  switch (name) {
+    case "Groq":
+      return TECH_ACCENTS.llm;
+    case "BAAI/bge-m3":
+      return TECH_ACCENTS.embedding;
+    case "ChromaDB":
+      return TECH_ACCENTS.vector;
+    case "FastAPI":
+      return TECH_ACCENTS.fastapi;
+    case "SSE":
+      return TECH_ACCENTS.stream;
+    default:
+      return TECH_ACCENTS.fastapi;
+  }
+}
+
+function FlowEndpoint({ label }: { label: string }) {
+  const accent = resolveFlowAccent(label);
+  return (
+    <span
+      className={`inline-flex max-w-full break-all rounded-md border px-2 py-0.5 font-mono text-[11px] ${accent.chip} ${accent.chipBorder}`}
+    >
+      {label}
+    </span>
+  );
+}
+
 function ArchitectureSection() {
   const { locale } = useI18n();
   const copy = getDevelopersPageContent(locale).architecture;
@@ -156,28 +329,41 @@ function ArchitectureSection() {
         caption={copy.stack.caption}
         icon={<Layers className="h-3.5 w-3.5" aria-hidden />}
       >
-        <ol className="space-y-3">
+        <ol className="space-y-4">
           {copy.tiers.map((tier, index) => {
             const level = TIER_LEVELS[index];
+            const tierAccent = TIER_ACCENTS[index] ?? TECH_ACCENTS.browser;
             return (
-            <li key={level} className="rounded-2xl border border-white/8 bg-white/[0.02] p-5">
-              <header className="mb-3 flex flex-wrap items-baseline gap-3">
-                <span className="font-mono text-[10px] uppercase tracking-widest text-slate-500">
+            <li
+              key={level}
+              className={`rounded-2xl border p-5 sm:p-6 ${tierAccent.shell}`}
+            >
+              <header className="mb-4 flex flex-wrap items-center gap-3">
+                <span
+                  className={`rounded-full border px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-widest ${tierAccent.badge}`}
+                >
                   {copy.stack.tierLabel(level)}
                 </span>
-                <span className="text-sm font-semibold text-slate-100">{tier.label}</span>
-                <span className="text-[11px] text-slate-500">: {tier.responsibility}</span>
+                <span className={`text-sm font-semibold ${tierAccent.name}`}>{tier.label}</span>
+                <span className="text-[11px] text-slate-400">· {tier.responsibility}</span>
               </header>
-              <ul className="grid gap-2 lg:grid-cols-2">
-                {tier.components.map((component) => (
-                  <li
-                    key={component.name}
-                    className="flex min-w-0 flex-wrap items-baseline gap-2 rounded-xl border border-white/8 bg-black/20 p-3 text-xs"
-                  >
-                    <code className="max-w-full break-all font-mono text-technical-property">{component.name}</code>
-                    <span className="min-w-0 break-words text-[11px] text-slate-400">{component.detail}</span>
-                  </li>
-                ))}
+              <ul className="grid gap-3 lg:grid-cols-2">
+                {tier.components.map((component) => {
+                  const accent = resolveComponentAccent(component.name);
+                  return (
+                    <li
+                      key={component.name}
+                      className={`flex min-w-0 flex-col gap-2 rounded-xl border p-3.5 ${accent.chipBorder} bg-black/25`}
+                    >
+                      <code className={`max-w-full break-all font-mono text-xs font-semibold ${accent.name}`}>
+                        {component.name}
+                      </code>
+                      <span className="min-w-0 break-words text-[11px] leading-relaxed text-slate-400">
+                        {component.detail}
+                      </span>
+                    </li>
+                  );
+                })}
               </ul>
             </li>
             );
@@ -191,7 +377,7 @@ function ArchitectureSection() {
         caption={copy.dataFlows.caption}
         icon={<GitBranch className="h-3.5 w-3.5" aria-hidden />}
       >
-        <div className="table-scroll rounded-2xl border border-white/8">
+        <div className="table-scroll rounded-2xl border border-white/8 bg-white/[0.015]">
           <table className="w-full text-xs">
             <thead className="bg-white/[0.03] text-[10px] uppercase tracking-widest text-slate-500">
               <tr>
@@ -202,10 +388,16 @@ function ArchitectureSection() {
             </thead>
             <tbody className="divide-y divide-white/5">
               {copy.dataFlows.rows.map((flow) => (
-                <tr key={`${flow.from}-${flow.to}-${flow.payload}`}>
-                  <td className="px-4 py-3 font-mono text-slate-200">{flow.from}</td>
-                  <td className="px-4 py-3 font-mono text-slate-200">{flow.to}</td>
-                  <td className="px-4 py-3 font-mono text-[11px] text-slate-400">{flow.payload}</td>
+                <tr key={`${flow.from}-${flow.to}-${flow.payload}`} className="transition-colors hover:bg-white/[0.02]">
+                  <td className="px-4 py-3">
+                    <FlowEndpoint label={flow.from} />
+                  </td>
+                  <td className="px-4 py-3">
+                    <FlowEndpoint label={flow.to} />
+                  </td>
+                  <td className="px-4 py-3 font-mono text-[11px] leading-relaxed text-technical-type">
+                    {flow.payload}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -217,10 +409,11 @@ function ArchitectureSection() {
         eyebrow={copy.devCommands.eyebrow}
         title={copy.devCommands.title}
       >
-        <div className="grid gap-3 sm:grid-cols-3">
-          {copy.devCommands.panels.map((panel) => (
+        <div className="grid gap-4 sm:grid-cols-3 sm:items-stretch">
+          {copy.devCommands.panels.map((panel, index) => (
             <CommandPanel
               key={panel.command}
+              accent={COMMAND_ACCENTS[index] ?? TECH_ACCENTS.browser}
               label={panel.label}
               command={panel.command}
               detail={panel.detail}
@@ -233,15 +426,25 @@ function ArchitectureSection() {
   );
 }
 
-function CommandPanel({ label, command, detail }: { label: string; command: string; detail: string }) {
+function CommandPanel({
+  accent,
+  label,
+  command,
+  detail,
+}: {
+  accent: TechAccent;
+  label: string;
+  command: string;
+  detail: string;
+}) {
   return (
-    <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-5">
-      <h3 className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">{label}</h3>
-      <code className="technical-block mb-3 text-technical-command">
+    <article className={`flex h-full flex-col gap-4 rounded-2xl border p-5 sm:p-6 ${accent.shell}`}>
+      <h3 className={`text-[10px] font-bold uppercase tracking-[0.22em] ${accent.name}`}>{label}</h3>
+      <code className={`technical-block block w-full border ${accent.chipBorder} bg-black/30 text-technical-command`}>
         $ {command}
       </code>
-      <p className="text-[11px] leading-relaxed text-slate-400">{detail}</p>
-    </div>
+      <p className="text-xs leading-relaxed text-slate-400">{detail}</p>
+    </article>
   );
 }
 
@@ -261,29 +464,38 @@ function RagSection() {
         caption={copy.pipeline.caption}
         icon={<Workflow className="h-3.5 w-3.5" aria-hidden />}
       >
-        <ol className="space-y-3">
-          {copy.stages.map((stage) => (
-            <li key={stage.artefact} className="rounded-2xl border border-white/8 bg-white/[0.02] p-5">
-              <div className="mb-3 flex flex-wrap items-baseline gap-3">
-                <span className="text-[10px] uppercase tracking-widest text-slate-500">
-                  {copy.pipeline.phaseLabel(stage.phase)}
-                </span>
-                <code className="technical-chip text-technical-property">
-                  {stage.artefact}
-                </code>
-                {"command" in stage && stage.command ? (
-                  <code className="technical-chip text-technical-command">
-                    $ {stage.command}
+        <ol className="space-y-4">
+          {copy.stages.map((stage) => {
+            const accent = resolveRagPhaseAccent(stage.phase);
+            return (
+              <li key={stage.artefact} className={`rounded-2xl border p-5 sm:p-6 ${accent.shell}`}>
+                <div className="mb-4 flex flex-wrap items-center gap-3">
+                  <span
+                    className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest ${accent.badge}`}
+                  >
+                    {copy.pipeline.phaseLabel(stage.phase)}
+                  </span>
+                  <code className={`technical-chip border ${accent.chipBorder} ${accent.chip}`}>
+                    {stage.artefact}
                   </code>
-                ) : null}
-              </div>
-              <p className="mb-3 text-sm leading-relaxed text-slate-300">{stage.description}</p>
-              <div className="rounded-xl border border-white/8 bg-black/20 p-3">
-                <div className="mb-1 text-[10px] uppercase tracking-widest text-slate-600">{copy.pipeline.outputLabel}</div>
-                <code className="break-words font-mono text-[11px] text-slate-300 [overflow-wrap:anywhere]">{stage.output}</code>
-              </div>
-            </li>
-          ))}
+                  {"command" in stage && stage.command ? (
+                    <code className="technical-chip border border-warning/22 bg-warning/[0.08] text-technical-command">
+                      $ {stage.command}
+                    </code>
+                  ) : null}
+                </div>
+                <p className="mb-4 text-sm leading-relaxed text-slate-300">{stage.description}</p>
+                <div className={`rounded-xl border bg-black/25 p-3.5 ${accent.chipBorder}`}>
+                  <div className={`mb-1.5 text-[10px] font-semibold uppercase tracking-widest ${accent.key}`}>
+                    {copy.pipeline.outputLabel}
+                  </div>
+                  <code className={`break-words font-mono text-[11px] [overflow-wrap:anywhere] ${accent.value}`}>
+                    {stage.output}
+                  </code>
+                </div>
+              </li>
+            );
+          })}
         </ol>
       </ZoneShell>
 
@@ -312,29 +524,39 @@ function InfrastructureSection() {
       caption={copy.caption}
       icon={<Cpu className="h-3.5 w-3.5" aria-hidden />}
     >
-      <div className="space-y-3">
-        {copy.components.map((component) => (
-          <article
-            key={component.name}
-            className="rounded-2xl border border-white/8 bg-white/[0.02] p-5"
-          >
-            <header className="mb-3 flex flex-wrap items-baseline gap-3">
-              <span className="text-sm font-semibold text-slate-100">{component.name}</span>
-              <code className="technical-chip text-technical-property">
-                {component.version}
-              </code>
-            </header>
-            <p className="mb-3 text-sm leading-relaxed text-slate-300">{component.role}</p>
-            <dl className="grid gap-2 sm:grid-cols-2">
-              {component.config.map((entry) => (
-                <div key={entry.key} className="flex min-w-0 flex-wrap items-baseline gap-2 rounded-xl border border-white/8 bg-black/20 p-3 text-[11px]">
-                  <dt className="shrink-0 font-mono text-slate-500">{entry.key}</dt>
-                  <dd className="min-w-0 break-all font-mono text-slate-300">{entry.value}</dd>
-                </div>
-              ))}
-            </dl>
-          </article>
-        ))}
+      <div className="space-y-4">
+        {copy.components.map((component) => {
+          const accent = resolveInfraAccent(component.name);
+          return (
+            <article
+              key={component.name}
+              className={`rounded-2xl border p-5 sm:p-6 ${accent.shell}`}
+            >
+              <header className="mb-3 flex flex-wrap items-center gap-3">
+                <span className={`text-sm font-semibold ${accent.name}`}>{component.name}</span>
+                <code className={`technical-chip border ${accent.chipBorder} ${accent.chip}`}>
+                  {component.version}
+                </code>
+              </header>
+              <p className="mb-4 text-sm leading-relaxed text-slate-300">{component.role}</p>
+              <dl className="grid gap-3 sm:grid-cols-2">
+                {component.config.map((entry) => (
+                  <div
+                    key={entry.key}
+                    className={`flex min-w-0 flex-col gap-1.5 rounded-xl border bg-black/25 p-3.5 ${accent.chipBorder}`}
+                  >
+                    <dt className={`shrink-0 font-mono text-[10px] font-semibold uppercase tracking-wider ${accent.key}`}>
+                      {entry.key}
+                    </dt>
+                    <dd className={`min-w-0 break-all font-mono text-[11px] leading-relaxed ${accent.value}`}>
+                      {entry.value}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </article>
+          );
+        })}
       </div>
     </ZoneShell>
   );
@@ -355,22 +577,27 @@ function IntegrationSection() {
       caption={copy.guides.caption}
       icon={<FileCode className="h-3.5 w-3.5" aria-hidden />}
     >
-      <div className="space-y-3">
-        {copy.snippets.map((snippet) => (
-          <article
-            key={snippet.label}
-            className="overflow-hidden rounded-2xl border border-white/8 bg-white/[0.02]"
-          >
-            <header className="border-b border-white/8 bg-white/[0.03] px-4 py-2">
-              <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">
-                {snippet.label}
-              </span>
-            </header>
-            <pre className="overflow-x-auto bg-black/40 p-4 font-mono text-[11px] leading-relaxed text-slate-300">
-              {snippet.body}
-            </pre>
-          </article>
-        ))}
+      <div className="space-y-4">
+        {copy.snippets.map((snippet, index) => {
+          const accent = INTEGRATION_SNIPPET_ACCENTS[index] ?? TECH_ACCENTS.browser;
+          return (
+            <article
+              key={snippet.label}
+              className={`overflow-hidden rounded-2xl border ${accent.shell}`}
+            >
+              <header className={`border-b px-4 py-2.5 ${accent.chipBorder} bg-black/20`}>
+                <span className={`text-[10px] font-bold uppercase tracking-[0.22em] ${accent.name}`}>
+                  {snippet.label}
+                </span>
+              </header>
+              <pre
+                className={`overflow-x-auto border-l-2 bg-black/35 p-4 font-mono text-[11px] leading-relaxed text-technical-foreground ${accent.chipBorder}`}
+              >
+                {snippet.body}
+              </pre>
+            </article>
+          );
+        })}
       </div>
     </ZoneShell>
   );
@@ -413,16 +640,20 @@ function CorpusSection() {
       >
         <div className="mb-4 grid gap-3 sm:grid-cols-3">
           <HealthMetric
+            accent={HEALTH_METRIC_ACCENTS[0]}
             label="corpus_chunks"
             value={totalChunks.toString()}
             detail={health ? copy.health.metrics.live : healthError ? copy.health.metrics.fromProfile : copy.health.metrics.loading}
           />
           <HealthMetric
+            accent={HEALTH_METRIC_ACCENTS[1]}
             label="rag_active"
             value={health ? (health.rag_active ? "yes" : "no") : ":"}
             detail={health?.embedder ?? ":"}
+            valueTone={health?.rag_active === false ? "text-warning" : undefined}
           />
           <HealthMetric
+            accent={HEALTH_METRIC_ACCENTS[2]}
             label="extraction"
             value={copy.health.metrics.pageTypes(pageTypeProfile.length)}
             detail={copy.health.metrics.expectedChunks(expectedTotal)}
@@ -435,7 +666,7 @@ function CorpusSection() {
           </div>
         ) : null}
 
-        <div className="table-scroll rounded-2xl border border-white/8">
+        <div className="table-scroll rounded-2xl border border-white/8 bg-white/[0.015]">
           <table className="w-full text-xs">
             <thead className="bg-white/[0.03] text-[10px] uppercase tracking-widest text-slate-500">
               <tr>
@@ -447,10 +678,10 @@ function CorpusSection() {
             </thead>
             <tbody className="divide-y divide-white/5">
               {pageTypeProfile.map((row) => (
-                <tr key={row.page_type}>
+                <tr key={row.page_type} className="transition-colors hover:bg-white/[0.02]">
                   <td className="px-4 py-3 font-mono text-technical-type">{row.page_type}</td>
-                  <td className="px-4 py-3 font-mono text-[11px] text-slate-400">{row.source}</td>
-                  <td className="px-4 py-3 text-right font-mono text-slate-300">{row.expected}</td>
+                  <td className="px-4 py-3 font-mono text-[11px] text-technical-property">{row.source}</td>
+                  <td className="px-4 py-3 text-right font-mono text-technical-number">{row.expected}</td>
                   <td className="px-4 py-3 text-[11px] text-slate-400">{row.role}</td>
                 </tr>
               ))}
@@ -464,12 +695,15 @@ function CorpusSection() {
         title={copy.gaps.title}
         caption={copy.gaps.caption}
       >
-        <ul className="space-y-2 text-xs text-slate-400">
-          {copy.gaps.items.map((item) => (
-            <li key={item.strong} className="rounded-xl border border-white/8 bg-white/[0.02] p-3">
-              <strong className="text-slate-200">{item.strong}</strong> {item.body}
-            </li>
-          ))}
+        <ul className="space-y-3 text-xs text-slate-400">
+          {copy.gaps.items.map((item, index) => {
+            const accent = GAP_ACCENTS[index] ?? TECH_ACCENTS.browser;
+            return (
+              <li key={item.strong} className={`rounded-xl border p-3.5 ${accent.shell}`}>
+                <strong className={accent.name}>{item.strong}</strong> {item.body}
+              </li>
+            );
+          })}
         </ul>
       </ZoneShell>
       <InspectorSection onTraceUpdate={updateTrace} />
@@ -485,11 +719,23 @@ function CorpusSection() {
   );
 }
 
-function HealthMetric({ label, value, detail }: { label: string; value: string; detail: string }) {
+function HealthMetric({
+  accent,
+  label,
+  value,
+  detail,
+  valueTone,
+}: {
+  accent: TechAccent;
+  label: string;
+  value: string;
+  detail: string;
+  valueTone?: string;
+}) {
   return (
-    <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-4">
-      <div className="mb-1 text-[10px] uppercase tracking-widest text-slate-500">{label}</div>
-      <div className="font-mono text-xl text-slate-100">{value}</div>
+    <div className={`rounded-2xl border p-4 ${accent.shell}`}>
+      <div className={`mb-1 text-[10px] font-semibold uppercase tracking-widest ${accent.key}`}>{label}</div>
+      <div className={`font-mono text-xl ${valueTone ?? "text-slate-100"}`}>{value}</div>
       <div className="mt-1 text-[10px] text-slate-500">{detail}</div>
     </div>
   );
@@ -584,7 +830,7 @@ function InspectorSection({ onTraceUpdate }: { onTraceUpdate?: (patch: Partial<T
             event.preventDefault();
             if (status !== "running") void run();
           }}
-          className="mb-4 flex min-w-0 items-stretch gap-2 rounded-2xl border border-white/10 bg-black/30 p-2"
+          className="mb-4 flex min-w-0 items-stretch gap-2 rounded-2xl border border-primary/15 bg-black/30 p-2"
         >
           <input
             type="text"
@@ -617,8 +863,8 @@ function InspectorSection({ onTraceUpdate }: { onTraceUpdate?: (patch: Partial<T
         </form>
 
         <div className="grid gap-4 lg:grid-cols-3">
-          <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-4 lg:col-span-1">
-            <h3 className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">
+          <div className={`rounded-2xl border p-4 lg:col-span-1 ${TECH_ACCENTS.browser.shell}`}>
+            <h3 className={`mb-3 text-[10px] font-bold uppercase tracking-[0.22em] ${TECH_ACCENTS.browser.name}`}>
               {copy.requestState}
             </h3>
             <dl className="space-y-2 text-[11px]">
@@ -630,27 +876,30 @@ function InspectorSection({ onTraceUpdate }: { onTraceUpdate?: (patch: Partial<T
             </dl>
           </div>
 
-          <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-4 lg:col-span-2">
-            <h3 className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">
+          <div className={`rounded-2xl border p-4 lg:col-span-2 ${TECH_ACCENTS.vector.shell}`}>
+            <h3 className={`mb-3 text-[10px] font-bold uppercase tracking-[0.22em] ${TECH_ACCENTS.vector.name}`}>
               {copy.sourceChunks}
             </h3>
             {sources && sources.length > 0 ? (
               <ol className="space-y-2">
                 {sources.map((chunk, index) => (
-                  <li key={`${chunk.title}-${index}`} className="rounded-xl border border-white/8 bg-black/20 p-3 text-[11px]">
+                  <li
+                    key={`${chunk.title}-${index}`}
+                    className={`rounded-xl border bg-black/25 p-3 text-[11px] ${TECH_ACCENTS.vector.chipBorder}`}
+                  >
                     <div className="mb-1 flex flex-wrap items-baseline gap-2">
-                      <span className="font-mono text-slate-500">#{index + 1}</span>
+                      <span className="font-mono text-technical-keyword">#{index + 1}</span>
                       <span className="text-slate-200">{chunk.title || copy.untitled}</span>
                       {chunk.page_type ? (
-                        <code className="technical-chip text-technical-property">
+                        <code className="technical-chip border border-sky-400/22 bg-sky-400/[0.07] text-technical-type">
                           {chunk.page_type}
                         </code>
                       ) : null}
                     </div>
-                    <div className="grid grid-cols-1 gap-1 font-mono text-[10px] text-slate-400 min-[390px]:grid-cols-3 min-[390px]:gap-2">
-                      <span>sim {chunk.similarity.toFixed(3)}</span>
-                      <span>w ×{chunk.retrieval_weight?.toFixed(2) ?? "1.00"}</span>
-                      <span>score {chunk.weighted_score?.toFixed(3) ?? ":"}</span>
+                    <div className="grid grid-cols-1 gap-1 font-mono text-[10px] min-[390px]:grid-cols-3 min-[390px]:gap-2">
+                      <span className="text-technical-type">sim {chunk.similarity.toFixed(3)}</span>
+                      <span className="text-technical-keyword">w ×{chunk.retrieval_weight?.toFixed(2) ?? "1.00"}</span>
+                      <span className="text-technical-number">score {chunk.weighted_score?.toFixed(3) ?? ":"}</span>
                     </div>
                     {chunk.source ? (
                       <div className="mt-2 break-words text-[10px] text-slate-600 [overflow-wrap:anywhere]">{chunk.source}</div>
@@ -667,11 +916,11 @@ function InspectorSection({ onTraceUpdate }: { onTraceUpdate?: (patch: Partial<T
         </div>
 
         {responseText ? (
-          <div className="mt-4 rounded-2xl border border-white/8 bg-black/20 p-4">
-            <h3 className="mb-2 text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">
+          <div className={`mt-4 rounded-2xl border bg-black/20 p-4 ${TECH_ACCENTS.stream.shell}`}>
+            <h3 className={`mb-2 text-[10px] font-bold uppercase tracking-[0.22em] ${TECH_ACCENTS.stream.name}`}>
               {copy.responseRaw}
             </h3>
-            <pre className="max-h-96 overflow-auto whitespace-pre-wrap font-mono text-[11px] leading-relaxed text-slate-300 [overflow-wrap:anywhere]">
+            <pre className="max-h-96 overflow-auto whitespace-pre-wrap font-mono text-[11px] leading-relaxed text-technical-foreground [overflow-wrap:anywhere]">
               {responseText}
             </pre>
           </div>
@@ -688,11 +937,132 @@ function InspectorSection({ onTraceUpdate }: { onTraceUpdate?: (patch: Partial<T
   );
 }
 
+// ──────────────────────────────────────────────────────────────────────────
+// SECTION 5 : Agent runtime (cognitive flow)
+// ──────────────────────────────────────────────────────────────────────────
+
+function AgentRuntimeSection() {
+  const { locale } = useI18n();
+  const copy = getDevelopersPageContent(locale).agentRuntime;
+
+  return (
+    <>
+      <ZoneShell
+        eyebrow={copy.flow.eyebrow}
+        title={copy.flow.title}
+        caption={copy.flow.caption}
+        icon={<BrainCircuit className="h-3.5 w-3.5" aria-hidden />}
+      >
+        <div className="content-card">
+          <CognitiveFlow steps={copy.flow.steps} />
+        </div>
+      </ZoneShell>
+
+      <ZoneShell
+        eyebrow={copy.layers.eyebrow}
+        title={copy.layers.title}
+        caption={copy.layers.caption}
+        icon={<Layers className="h-3.5 w-3.5" aria-hidden />}
+      >
+        <div className="grid gap-4 sm:grid-cols-2">
+          {copy.layers.items.map((layer, index) => {
+            const accent = LAYER_ACCENTS[index] ?? TECH_ACCENTS.browser;
+            return (
+              <div key={layer.label} className={`rounded-2xl border p-5 ${accent.shell}`}>
+                <h3 className={`mb-3 text-sm font-semibold ${accent.name}`}>{layer.label}</h3>
+                <ul className="space-y-2.5">
+                  {layer.responsibilities.map((item) => (
+                    <li key={item} className="flex items-start gap-2 text-[11px] leading-relaxed text-slate-400">
+                      <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${LAYER_DOTS[index] ?? "bg-primary/75"}`} aria-hidden />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
+        </div>
+      </ZoneShell>
+
+      <ZoneShell
+        eyebrow={copy.capabilities.eyebrow}
+        title={copy.capabilities.title}
+        caption={copy.capabilities.caption}
+        icon={<Cpu className="h-3.5 w-3.5" aria-hidden />}
+      >
+        <div className="table-scroll rounded-2xl border border-white/8 bg-white/[0.015]">
+          <table className="w-full text-xs">
+            <thead className="bg-white/[0.03] text-[10px] uppercase tracking-widest text-slate-500">
+              <tr>
+                <th className="px-4 py-3 text-left font-semibold">{copy.capabilities.columns.name}</th>
+                <th className="px-4 py-3 text-left font-semibold">{copy.capabilities.columns.input}</th>
+                <th className="px-4 py-3 text-left font-semibold">{copy.capabilities.columns.output}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {copy.capabilities.rows.map((row, index) => {
+                const accent = CAPABILITY_NAME_ACCENTS[index] ?? TECH_ACCENTS.browser;
+                return (
+                  <tr key={row.name} className="transition-colors hover:bg-white/[0.02]">
+                    <td className={`px-4 py-3 font-semibold ${accent.name}`}>{row.name}</td>
+                    <td className="px-4 py-3 text-[11px] leading-relaxed text-slate-400">{row.input}</td>
+                    <td className="px-4 py-3 text-[11px] leading-relaxed text-technical-type">{row.output}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </ZoneShell>
+
+      <ZoneShell
+        eyebrow={copy.ragVsAgent.eyebrow}
+        title={copy.ragVsAgent.title}
+        caption={copy.ragVsAgent.caption}
+        icon={<GitBranch className="h-3.5 w-3.5" aria-hidden />}
+      >
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className={`rounded-2xl border p-5 ${TECH_ACCENTS.embedding.shell}`}>
+            <h3 className={`mb-2 font-mono text-xs font-semibold ${TECH_ACCENTS.embedding.name}`}>
+              {copy.ragVsAgent.rag.label}
+            </h3>
+            <p className="text-[11px] leading-relaxed text-slate-400">{copy.ragVsAgent.rag.body}</p>
+          </div>
+          <div className={`rounded-2xl border p-5 ${TECH_ACCENTS.browser.shell}`}>
+            <h3 className={`mb-2 text-xs font-semibold ${TECH_ACCENTS.browser.name}`}>
+              {copy.ragVsAgent.agent.label}
+            </h3>
+            <p className="text-[11px] leading-relaxed text-slate-400">{copy.ragVsAgent.agent.body}</p>
+          </div>
+        </div>
+      </ZoneShell>
+
+      <ZoneShell
+        eyebrow={copy.contract.eyebrow}
+        title={copy.contract.title}
+        caption={copy.contract.caption}
+        icon={<Network className="h-3.5 w-3.5" aria-hidden />}
+      >
+        <ul className="space-y-3">
+          {copy.contract.reasons.map((reason) => (
+            <li key={reason} className="flex gap-3 text-sm leading-6 text-slate-300">
+              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" aria-hidden />
+              <span>{reason}</span>
+            </li>
+          ))}
+        </ul>
+      </ZoneShell>
+
+      <CrossRefPanel title={copy.crossRef.title} links={copy.crossRef.links} />
+    </>
+  );
+}
+
 function Row({ k, v, tone }: { k: string; v: string; tone?: string }) {
   return (
     <div className="flex min-w-0 items-start justify-between gap-2 border-b border-white/5 pb-1 last:border-0">
-      <dt className="font-mono text-slate-500">{k}</dt>
-      <dd className={`min-w-0 break-words text-right font-mono [overflow-wrap:anywhere] ${tone ?? "text-slate-300"}`}>{v}</dd>
+      <dt className="font-mono text-technical-keyword">{k}</dt>
+      <dd className={`min-w-0 break-words text-right font-mono [overflow-wrap:anywhere] ${tone ?? "text-technical-property"}`}>{v}</dd>
     </div>
   );
 }

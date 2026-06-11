@@ -93,12 +93,17 @@ export default {
           "0%, 100%": { opacity: "0.25", transform: "translateY(0)" },
           "50%": { opacity: "1", transform: "translateY(-1px)" },
         },
+        "spectral-halo": {
+          "0%, 100%": { opacity: "0.14", transform: "scale(2.35)" },
+          "50%": { opacity: "0.26", transform: "scale(2.5)" },
+        },
       },
       animation: {
         "message-in": "message-in 0.2s cubic-bezier(0.22, 1, 0.36, 1)",
         "fade-in": "fade-in 0.3s cubic-bezier(0.22, 1, 0.36, 1)",
         "fade-up": "fade-up 0.2s cubic-bezier(0.22, 1, 0.36, 1)",
         "dot-breathe": "dot-breathe 1.2s ease-in-out infinite",
+        "spectral-halo": "spectral-halo 4.5s cubic-bezier(0.22, 1, 0.36, 1) infinite",
       },
       backgroundImage: {
         signature: "linear-gradient(135deg, #deccfd 0%, #c2a0fc 100%)",

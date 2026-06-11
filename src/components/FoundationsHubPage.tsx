@@ -4,7 +4,7 @@
 import { lazy, Suspense, useEffect, useRef } from "react";
 import type { KeyboardEvent } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Accessibility, Compass, LayoutGrid, Palette, Shapes, Sparkles } from "lucide-react";
+import { Accessibility, Compass, LayoutGrid, Palette, ShieldCheck, Shapes, Sparkles } from "lucide-react";
 import { useI18n } from "../i18n/I18nProvider";
 import { PageHero, PageShell } from "./ui/VisualPrimitives";
 
@@ -20,8 +20,11 @@ const PatternsPage = lazy(() =>
 const TokensPage = lazy(() =>
   import("./TokensPage").then((module) => ({ default: module.TokensPage })),
 );
+const EvidencePage = lazy(() =>
+  import("./EvidencePage").then((module) => ({ default: module.EvidencePage })),
+);
 
-type FocusId = "manifesto" | "foundations" | "patterns" | "tokens";
+type FocusId = "manifesto" | "foundations" | "patterns" | "tokens" | "evidence";
 
 interface SectionMeta {
   id: FocusId;
@@ -33,6 +36,7 @@ const SECTIONS: SectionMeta[] = [
   { id: "foundations", icon: Accessibility },
   { id: "patterns", icon: Shapes },
   { id: "tokens", icon: Palette },
+  { id: "evidence", icon: ShieldCheck },
 ];
 
 export function FoundationsPage() {
@@ -71,6 +75,7 @@ export function FoundationsPage() {
           {focus === "foundations" ? <AccessibilityPage /> : null}
           {focus === "patterns" ? <PatternsPage /> : null}
           {focus === "tokens" ? <TokensPage /> : null}
+          {focus === "evidence" ? <EvidencePage /> : null}
         </Suspense>
       </div>
     </div>
@@ -142,7 +147,7 @@ function SectionNav({ active, onChange }: { active: FocusId; onChange: (next: Fo
       aria-label={t("pages.foundations.navigationLabel")}
       role="tablist"
       aria-orientation="horizontal"
-      className="flex gap-2 overflow-x-auto xl:grid xl:grid-cols-4 xl:overflow-visible"
+      className="flex gap-2 overflow-x-auto xl:grid xl:grid-cols-5 xl:overflow-visible"
     >
       {SECTIONS.map((section, index) => {
         const Icon = section.icon;

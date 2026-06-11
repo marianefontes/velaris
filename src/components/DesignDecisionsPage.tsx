@@ -12,6 +12,7 @@ import {
   Vibrate,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { buildOracleHref } from "../beatrice/navigation/oracleNavigation";
 import { useI18n } from "../i18n/I18nProvider";
 import type { Locale } from "../i18n/translations";
 
@@ -53,6 +54,7 @@ function getDesignDecisionsContent(locale: Locale) {
       contextSignalsTitle: "Context Signals",
       tradeOffsTitle: "Trade-offs",
       viewMatrix: "VIEW FULL MATRIX",
+      oraclePrompt: "When should I use a modal overlay vs a side drawer for multi-step forms?",
       inferenceCore: "Velaris Inference Core",
       analysisTitle: "Neural Architecture Analysis",
       analysisText:
@@ -132,6 +134,7 @@ function getDesignDecisionsContent(locale: Locale) {
       contextSignalsTitle: "Sinais de contexto",
       tradeOffsTitle: "Trade-offs",
       viewMatrix: "VER MATRIZ COMPLETA",
+      oraclePrompt: "Quando devo utilizar modal overlay versus side drawer em formulários multi-etapas?",
       inferenceCore: "Núcleo de inferência Velaris",
       analysisTitle: "Análise da arquitectura neural",
       analysisText:
@@ -210,6 +213,7 @@ function getDesignDecisionsContent(locale: Locale) {
     contextSignalsTitle: "Sinais de contexto",
     tradeOffsTitle: "Trade-offs",
     viewMatrix: "VER MATRIZ COMPLETA",
+    oraclePrompt: "Quando devo usar modal overlay versus side drawer em formulários multi-etapas?",
     inferenceCore: "Núcleo de inferência Velaris",
     analysisTitle: "Análise da arquitetura neural",
     analysisText:
@@ -362,7 +366,7 @@ export function DesignDecisionsPage() {
             </div>
 
             <Link
-              to="/oracle"
+              to={buildOracleHref(content.oraclePrompt)}
               className="flex w-full items-center justify-center gap-2 rounded-[20px] bg-signature py-4 font-bold text-on-primary transition-opacity hover:opacity-90"
             >
               {content.viewMatrix}
