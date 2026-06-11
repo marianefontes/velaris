@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from agent.decision_rules import resolve_decision_rule
+from agent.decision_rules import resolve_comparison_rule, resolve_decision_rule
 from agent.planner import build_agent_plan
 from agent.runtime import AgentRuntime
 from agent.store import AgentStore
@@ -106,6 +106,48 @@ class HelpAndEntityLookupTests(unittest.TestCase):
     def test_quero_ver_radio_button_is_entity_lookup(self) -> None:
         understanding = analyze_query("quero ver Radio Button")
         self.assertEqual(understanding.user_intent, "entity_lookup")
+
+
+class ComparisonRuleTests(unittest.TestCase):
+    COMPARISON_CASES = (
+        ("Button ou Link?", "button_vs_link"),
+        ("Radio Button ou Select?", "radio_vs_select"),
+        ("Checkbox ou Switch?", "checkbox_vs_switch"),
+    )
+
+    GAP_COMPARISON_CASES = (
+        "Modal ou Drawer?",
+        "Modal ou SideDrawer?",
+    )
+
+    def test_comparison_rules_resolve(self) -> None:
+        for query, rule_id in self.COMPARISON_CASES:
+            with self.subTest(query=query):
+                rule = resolve_comparison_rule(query)
+                self.assertIsNotNone(rule)
+                assert rule is not None
+                self.assertEqual(rule.rule_id, rule_id)
+                self.assertIsNotNone(rule.navigation_action)
+
+    def test_modal_vs_drawer_allows_comparison_when_drawer_is_catalog_gap(self) -> None:
+        for query in self.GAP_COMPARISON_CASES:
+            with self.subTest(query=query):
+                self.assertIsNone(resolve_comparison_rule(query))
+                understanding = analyze_query(query)
+                self.assertEqual(
+                    understanding.user_intent,
+                    "component_comparison",
+                )
+
+
+class GuidanceIntentTests(unittest.TestCase):
+    def test_accessibility_modal_is_direct_guidance(self) -> None:
+        understanding = analyze_query("acessibilidade do Modal")
+        self.assertEqual(understanding.user_intent, "direct_entity_guidance")
+
+    def test_button_states_is_direct_guidance(self) -> None:
+        understanding = analyze_query("quais estados do Button?")
+        self.assertEqual(understanding.user_intent, "direct_entity_guidance")
 
 
 if __name__ == "__main__":

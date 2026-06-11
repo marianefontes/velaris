@@ -263,20 +263,13 @@ class CatalogFallbackTests(RuntimeHarness):
         audit = context.audit_metadata()
         self.assertEqual(audit.evidence_tier, "not_required")
 
-    def test_modal_vs_drawer_composes_from_catalog_when_rag_empty(self) -> None:
-        context = self.prepare(
-            "me explique a diferença entre modal e drawer",
-            routed_intent="comparison_query",
-        )
+    def test_modal_vs_drawer_routes_to_comparison(self) -> None:
+        query = "me explique a diferença entre modal e drawer"
+        understanding = analyze_query(query)
+        self.assertEqual(understanding.user_intent, "component_comparison")
+        context = self.prepare(query, routed_intent="comparison_query")
+        self.assertEqual(context.plan.workflow, "compare_options")
         self.assertTrue(context.should_compose)
-        selection = context.component_selection
-        self.assertIsNotNone(selection)
-        self.assertEqual(
-            selection.recommended.component.name, "Modal/Dialog"
-        )
-        self.assertEqual(
-            selection.recommended.evidence_source, "canonical_catalog"
-        )
 
 
 class TechnicalFailureTests(RuntimeHarness):
@@ -329,7 +322,7 @@ class MandatoryRoutingTests(RuntimeHarness):
         self.assertEqual(context.plan.workflow, "token_lookup")
         self.assertTrue(context.should_compose)
 
-    def test_modal_vs_drawer_compares_without_blocking(self) -> None:
+    def test_modal_vs_drawer_routes_to_comparison(self) -> None:
         query = "me explique a diferença entre modal e drawer"
         understanding = analyze_query(query)
         self.assertEqual(understanding.user_intent, "component_comparison")

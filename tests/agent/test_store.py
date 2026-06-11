@@ -47,6 +47,7 @@ class AgentStoreIntegrationTests(unittest.TestCase):
     def test_creates_lists_and_reads_decision_draft(self) -> None:
         created = self.store.create_decision(self.decision_payload())
         self.assertEqual(created["status"], "draft")
+        self.assertTrue(created["decision_code"].startswith("DEC-"))
         self.assertFalse(created["confirmed_by_user"])
         self.assertEqual(
             self.store.get_decision(created["decision_id"])["recommendation"],

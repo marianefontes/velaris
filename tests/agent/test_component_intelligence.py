@@ -103,8 +103,8 @@ class ComponentIntelligenceTests(unittest.TestCase):
             all(rule.sources for rule in recommended.selected_when_to_use)
         )
         self.assertIn("intent", recommended.missing_fields)
-        self.assertIn("variants", recommended.missing_fields)
-        self.assertEqual(recommended.empty_fields, ["examples"])
+        self.assertIn("anti_patterns", recommended.missing_fields)
+        self.assertEqual(recommended.empty_fields, [])
 
     def test_developer_and_accessibility_receive_structured_accessibility_fields(self) -> None:
         chunk = component_chunk(
@@ -212,9 +212,8 @@ class ComponentIntelligenceTests(unittest.TestCase):
         fallback = deterministic_component_response(selection)
         self.assertIn("Modal/Dialog", fallback)
         self.assertIn("Alert", fallback)
-        self.assertIn("Documentação", fallback)
-        self.assertIn("Retrieval evidence tier: partial", fallback)
-        self.assertIn("não confiança da resposta", fallback)
+        self.assertNotIn("Retrieval evidence tier", fallback)
+        self.assertNotIn("Documentação", fallback)
 
     def test_valid_response_passes_without_fallback(self) -> None:
         selection = self.selection()

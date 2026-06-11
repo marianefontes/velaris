@@ -25,6 +25,7 @@ class AgentPlannerPolicyTests(unittest.TestCase):
             "Por que esta decisão existe?": "design_decision",
             "Por que a Beatrice recomendou isto?": "xai_explanation",
             "Explique o design system Aetheris": "documentation_help",
+            "Devemos usar Dialog para confirmação crítica?": "decision_analysis",
             "Qual é a previsão do tempo?": "out_of_scope",
         }
         for query, expected in cases.items():
@@ -37,7 +38,19 @@ class AgentPlannerPolicyTests(unittest.TestCase):
         self.assertEqual(plan.tools, ["validate_against_design_system"])
 
     def test_comparison_selects_expected_tool(self) -> None:
+        plan = build_agent_plan("Compare Modal versus Drawer for a form")
+        self.assertEqual(plan.tools, ["compare_design_options"])
+        self.assertTrue(plan.creates_decision_draft)
+
+    def test_canonical_comparison_uses_deterministic_rule(self) -> None:
+        plan = build_agent_plan("Compare Button versus Link")
+        self.assertEqual(plan.workflow, "comparison_rule")
+        self.assertEqual(plan.tools, [])
+        self.assertFalse(plan.creates_decision_draft)
+
+    def test_drawer_comparison_allows_catalog_gap(self) -> None:
         plan = build_agent_plan("Compare Dialog versus Drawer")
+        self.assertEqual(plan.workflow, "compare_options")
         self.assertEqual(plan.tools, ["compare_design_options"])
         self.assertTrue(plan.creates_decision_draft)
 

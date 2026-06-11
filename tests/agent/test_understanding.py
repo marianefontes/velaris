@@ -40,11 +40,11 @@ class QueryUnderstandingTests(unittest.TestCase):
             ),
             "Checkbox ou radio para escolher apenas uma opção?": (
                 "component_comparison",
-                "compare_options",
+                "comparison_rule",
             ),
             "Quando uso switch em vez de checkbox?": (
                 "component_comparison",
-                "compare_options",
+                "comparison_rule",
             ),
             "Como deixo um botão destrutivo acessível?": (
                 "component_recommendation",

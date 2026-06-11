@@ -272,7 +272,8 @@ class AgentSSEContractTests(unittest.TestCase):
             "design_decision": "Por que esta decisão de hierarquia existe?",
             "xai_explanation": "Por que a Beatrice recomendou este componente?",
             "design_audit": "Valide este Button com cor hardcoded e sem foco.",
-            "compare_options": "Compare modal vs drawer para editar detalhes.",
+            "comparison_rule": "Compare Button versus Link para ações de navegação.",
+            "compare_options": "Compare Modal versus Drawer for a settings form.",
             "documentation_help": "Explique como funciona o design system Aetheris.",
             "out_of_scope": "Qual é a previsão do tempo?",
         }
@@ -291,8 +292,21 @@ class AgentSSEContractTests(unittest.TestCase):
                         final = events[-1]["audit_metadata"]
                         self.assertEqual(final["workflow"], expected_workflow)
                         self.assertTrue(final["steps"])
-                        if expected_workflow == "out_of_scope":
-                            self.assertEqual(final["execution_status"], "blocked")
+                        deterministic_workflows = {
+                            "out_of_scope",
+                            "comparison_rule",
+                            "decision_rule_recommendation",
+                            "single_choice_recommendation",
+                            "unsupported_entity_lookup",
+                        }
+                        if expected_workflow in deterministic_workflows:
+                            if expected_workflow == "out_of_scope":
+                                self.assertEqual(final["execution_status"], "blocked")
+                            else:
+                                self.assertIn(
+                                    "response_completed",
+                                    [step["id"] for step in final["steps"]],
+                                )
                             self.assertEqual(final["tools_used"], [])
                         else:
                             self.assertIn(
