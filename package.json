@@ -22,6 +22,8 @@
     "test:agent-contracts": "python3 scripts/test_agent_layer_contracts.py",
     "test:agent-ui": "vitest run",
     "test:agent-all": "npm run test:agent && npm run test:agent-contracts && npm run test:agent-ui",
+    "test:intelligence": "python3 -m unittest tests.agent.test_knowledge_health -v && python3 scripts/test_intelligence_e2e.py",
+    "test:reliability-gates": "python3 scripts/run_reliability_gates.py",
     "validate:agent-examples": "python3 scripts/validate_agent_layer_v1.py"
   },
   "dependencies": {

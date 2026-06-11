@@ -8,4 +8,18 @@ export default defineConfig({
       "/api": "http://localhost:3333",
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.indexOf("node_modules/recharts") !== -1) {
+            return "recharts";
+          }
+          if (id.indexOf("node_modules/framer-motion") !== -1) {
+            return "framer-motion";
+          }
+        },
+      },
+    },
+  },
 });
