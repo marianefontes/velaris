@@ -331,4 +331,4 @@ This project is proprietary. All rights reserved © 2025.
 
 ---
 
-**Made with ❤️ by the Aetheris team.**
+**Made with ❤️ by Beetrice.**
