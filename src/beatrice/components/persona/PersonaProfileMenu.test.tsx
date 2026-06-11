@@ -19,7 +19,7 @@ describe("PersonaProfileMenu", () => {
     window.localStorage.clear();
   });
 
-  it("exposes an accessible name and expanded state on the mobile trigger", () => {
+  it("exposes an accessible name and expanded state on the trigger", () => {
     renderMenu();
 
     const trigger = screen.getByRole("button", {
@@ -44,5 +44,14 @@ describe("PersonaProfileMenu", () => {
 
     expect(screen.queryByRole("menu")).toBeNull();
     expect(document.activeElement).toBe(trigger);
+  });
+
+  it("does not render the expandable profile detail sheet", () => {
+    renderMenu();
+
+    fireEvent.click(screen.getByRole("button", { name: /abrir menu da perspectiva/i }));
+
+    expect(screen.queryByText("Responsabilidade principal")).toBeNull();
+    expect(screen.queryByText("Estilo de análise e estrutura mental")).toBeNull();
   });
 });

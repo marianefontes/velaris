@@ -2,6 +2,7 @@ import { MessageSquareMore, RadioTower } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useI18n } from "../../../i18n/I18nProvider";
 import { usePersonaContext } from "../../hooks/usePersonaContext";
+import { buildOracleHref } from "../../navigation/oracleNavigation";
 
 export function ActivePersonaHeader() {
   const { t } = useI18n();
@@ -36,7 +37,7 @@ export function ActivePersonaHeader() {
           {t("beatricePersona.activePersonaSession")}
         </div>
         <Link
-          to="/oracle"
+          to={buildOracleHref(strategy.examples[0])}
           className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.035] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-on-surface-variant transition-colors hover:border-primary/25 hover:text-white"
         >
           <MessageSquareMore className="h-3.5 w-3.5" />

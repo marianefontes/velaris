@@ -180,6 +180,20 @@ export const COMMAND_META: Record<CommandMode, CommandMeta> = {
     borderClass: "border-yellow-300/30",
     bgClass: "bg-yellow-300/10",
   },
+  governance: {
+    icon: "⬡",
+    label: "GOVERNANCE",
+    colorClass: "text-emerald-300",
+    borderClass: "border-emerald-300/30",
+    bgClass: "bg-emerald-300/10",
+  },
+  health: {
+    icon: "◉",
+    label: "HEALTH",
+    colorClass: "text-lime-300",
+    borderClass: "border-lime-300/30",
+    bgClass: "bg-lime-300/10",
+  },
   "oracle-council": {
     icon: "❂",
     label: "COUNCIL",
@@ -197,7 +211,6 @@ export const ORACLE_ACTION_ORDER: CommandMode[] = [
   "document",
   "token-impact",
   "contract-check",
-  "feedback-review",
 ];
 
 export const ORACLE_INVESTIGATION_ORDER: CommandMode[] = [
@@ -206,7 +219,5 @@ export const ORACLE_INVESTIGATION_ORDER: CommandMode[] = [
   "perspectives",
   "audit",
   "knowledge-gap",
-  "governance-impact",
-  "principle-conflict",
-  "adoption-friction",
+  "simulate",
 ];

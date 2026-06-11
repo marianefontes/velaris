@@ -29,7 +29,8 @@ export type GovernanceCommand =
 // Core Oracle Engines : user-selected specialized capabilities (Camada 2).
 export type OracleEngineId =
   | "organizational-memory" | "decision-archaeology" | "perspective-synthesis" | "explainability-audit"
-  | "knowledge-gap" | "governance-impact" | "principle-conflict" | "adoption-friction"
+  | "knowledge-gap" | "governance-impact" | "simulate" | "principle-conflict" | "adoption-friction"
+  | "governance" | "health"
   | "oracle-council";
 
 export type CommandMode = GovernanceCommand | OracleEngineId;
@@ -563,6 +564,7 @@ export interface WorkspaceState {
   setMessages: Dispatch<SetStateAction<ChatMessage[]>>;
   startNewConversation: () => void;
   submitPrompt: (promptText?: string) => Promise<void>;
+  retryPrompt: (errorMessageId: string) => Promise<void>;
   updateSettings: (patch: Partial<BeatriceSettings>) => void;
 }
 

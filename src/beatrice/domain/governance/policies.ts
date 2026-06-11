@@ -6,7 +6,7 @@ import {
 } from "../../../i18n/commandMessages";
 
 const COMMAND_PATTERN =
-  /^\/(memory|decision|perspectives|audit|organizational-memory|decision-archaeology|perspective-synthesis|explainability-audit|knowledge-gap|governance-impact|principle-conflict|adoption-friction|oracle-council|enforce|migrate|token-impact|contract-check|feedback-review|capture|document|history|why|tradeoff|score|simulate|learn)\b/;
+  /^\/(memory|decision|perspectives|audit|organizational-memory|decision-archaeology|perspective-synthesis|explainability-audit|knowledge-gap|governance|governance-impact|principle-conflict|adoption-friction|health|oracle-council|enforce|migrate|token-impact|contract-check|feedback-review|capture|document|history|why|tradeoff|score|simulate|learn)\b/;
 
 export function detectCommandMode(input: string): CommandMode | null {
   const match = input.match(COMMAND_PATTERN);
