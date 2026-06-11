@@ -24,7 +24,7 @@ with sync_playwright() as playwright:
     assert page.get_by_text("Component Fit Analysis", exact=True).is_visible()
     assert page.get_by_text("Component Misuse Detection", exact=True).is_visible()
     assert page.get_by_text("Accessibility & Interaction Guardrail", exact=True).is_visible()
-    assert page.locator("article").count() == 12
+    assert page.locator("article").count() == 15
     assert page.locator("article code").count() == 0
 
     page.goto(f"{BASE_URL}/reasoning?focus=commands")
@@ -32,14 +32,16 @@ with sync_playwright() as playwright:
     assert page.get_by_text("Comandos do Oráculo", exact=True).first.is_visible()
     assert page.get_by_text("Ações e modos acionáveis", exact=True).first.is_visible()
     assert page.get_by_text("Como ativar um comando", exact=True).is_visible()
-    for command in ("/enforce", "/migrate", "/capture", "/memory", "/decision", "/perspectives", "/audit"):
+    for command in ("/enforce", "/migrate", "/capture", "/memory", "/decision", "/perspectives", "/audit", "/simulate"):
         assert page.get_by_text(command, exact=True).first.is_visible()
     assert page.get_by_text("Ação operacional", exact=True).first.is_visible()
     assert page.get_by_text("Modo investigativo", exact=True).first.is_visible()
     assert page.get_by_text("/token-impact", exact=True).is_visible()
     assert page.get_by_text("/contract-check", exact=True).is_visible()
-    assert page.get_by_text("/feedback-review", exact=True).is_visible()
-    assert page.locator("article").count() == 16
+    assert page.get_by_text("/knowledge-gap", exact=True).is_visible()
+    assert page.get_by_text("/feedback-review", exact=True).count() == 0
+    assert page.get_by_text("/adoption-friction", exact=True).count() == 0
+    assert page.locator("article").count() == 12
     assert page.locator("article", has_text="/learn").count() == 0
     assert page.get_by_text("Oracle Engines", exact=True).count() == 0
     assert page.get_by_text("Operational Commands", exact=True).count() == 0

@@ -155,10 +155,10 @@ MATRIX = [
     ("Recommendation", "qual componente uso para feedback de sucesso?", True),
     ("Recommendation", "qual componente uso para erro em campo?", True),
     ("Recommendation", "qual componente uso para lista longa de opções?", True),
-    ("Comparison", "Button ou Link?", False),
-    ("Comparison", "Radio Button ou Select?", False),
-    ("Comparison", "Modal ou Drawer?", False),
-    ("Comparison", "Checkbox ou Switch?", False),
+    ("Comparison", "Button ou Link?", True),
+    ("Comparison", "Radio Button ou Select?", True),
+    ("Comparison", "Modal ou Drawer?", True),
+    ("Comparison", "Checkbox ou Switch?", True),
     ("Concept", "o que é Abraxos?", False),
     ("Concept", "o que era Beatrice?", False),
     ("Concept", "o que é Velaris?", False),
@@ -224,6 +224,12 @@ def main() -> None:
             if row["user_intent"] != "component_comparison":
                 row["passed"] = False
                 row["fail_reason"] = f"expected component_comparison, got {row['user_intent']}"
+            elif row["workflow"] not in ("comparison_rule", "compare_options"):
+                row["passed"] = False
+                row["fail_reason"] = f"expected comparison workflow, got {row['workflow']}"
+            elif expect_action and not row["action_payload"]:
+                row["passed"] = False
+                row["fail_reason"] = "expected navigation_action for comparison"
         elif category == "Concept":
             if row["user_intent"] not in ("concept_query", "legacy_name_query"):
                 row["passed"] = False
