@@ -25,6 +25,7 @@ class OracleEngine:
     tier: str = "core"            # "core" | "specialized" | "experimental"
     aliases: tuple[str, ...] = field(default_factory=tuple)
     needs_evidence_metrics: bool = False
+    needs_governance_alerts: bool = False
     public: bool = True
 
 
@@ -91,7 +92,16 @@ SPECIALIZED_ENGINES: tuple[OracleEngine, ...] = (
         top_k=7,
         theory_base="Systems Thinking · Change Impact Analysis",
         tier="specialized",
-        aliases=("simulate",),
+        public=False,
+    ),
+    OracleEngine(
+        id="simulate",
+        label="Simulate",
+        contract_path="engines/simulate.md",
+        retrieval_intent="design_decision",
+        top_k=8,
+        theory_base="Systems Thinking · Scenario Planning · Change Impact Analysis",
+        tier="specialized",
     ),
     OracleEngine(
         id="principle-conflict",
@@ -101,6 +111,7 @@ SPECIALIZED_ENGINES: tuple[OracleEngine, ...] = (
         top_k=6,
         theory_base="Design Principles · Value Tensions in Design",
         tier="specialized",
+        public=False,
     ),
     OracleEngine(
         id="adoption-friction",
@@ -110,6 +121,30 @@ SPECIALIZED_ENGINES: tuple[OracleEngine, ...] = (
         top_k=8,
         theory_base="Design System Adoption · Diffusion of Innovations · Documentation Diagnostics",
         tier="specialized",
+        public=False,
+    ),
+    OracleEngine(
+        id="governance",
+        label="Governance Agent",
+        contract_path="engines/governanceAgent.md",
+        retrieval_intent="general",
+        top_k=6,
+        theory_base="Design System Governance · Continuous Catalog Auditing",
+        tier="specialized",
+        needs_governance_alerts=True,
+        public=False,
+    ),
+    OracleEngine(
+        id="health",
+        label="System Health",
+        contract_path="engines/health.md",
+        retrieval_intent="system_health",
+        top_k=8,
+        theory_base="Reliability Engineering · Design System Observability",
+        tier="specialized",
+        aliases=("system-health",),
+        needs_evidence_metrics=True,
+        public=False,
     ),
 )
 
@@ -126,8 +161,10 @@ EXPERIMENTAL_ENGINES: tuple[OracleEngine, ...] = (
     ),
 )
 
-PUBLIC_ENGINES: tuple[OracleEngine, ...] = CORE_ENGINES + SPECIALIZED_ENGINES
-ALL_ENGINES: tuple[OracleEngine, ...] = PUBLIC_ENGINES + EXPERIMENTAL_ENGINES
+ALL_ENGINES: tuple[OracleEngine, ...] = CORE_ENGINES + SPECIALIZED_ENGINES + EXPERIMENTAL_ENGINES
+PUBLIC_ENGINES: tuple[OracleEngine, ...] = tuple(
+    engine for engine in ALL_ENGINES if engine.public
+)
 
 # Resolve a command_mode (canonical id OR legacy alias) to its engine.
 _ENGINE_BY_COMMAND: dict[str, OracleEngine] = {}

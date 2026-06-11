@@ -98,6 +98,12 @@ def _activation_reason(
         return "token dependency signal"
     if strategy_id == "design_to_code_contract_check":
         return "design-code contract signal"
+    if strategy_id == "feedback_insight_analysis":
+        return "feedback or usage signal"
+    if strategy_id == "adoption_friction_detection":
+        return "adoption friction signal"
+    if strategy_id == "governance_impact_analysis":
+        return "governance change signal"
     return "intent alignment"
 
 

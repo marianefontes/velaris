@@ -60,6 +60,18 @@ SKILL_APPLICATION_SIGNALS: dict[str, tuple[tuple[str, ...], int]] = {
         ("risco", "edge cases", "falha", "permissao", "duplo", "mitigacao"),
         2,
     ),
+    "feedback_insight_analysis": (
+        ("feedback", "padrao", "recomendacao", "validacao", "evidencia", "causa"),
+        2,
+    ),
+    "adoption_friction_detection": (
+        ("adocao", "friccao", "descoberta", "documentacao", "workaround", "resistencia"),
+        2,
+    ),
+    "governance_impact_analysis": (
+        ("impacto", "dependencias", "migracao", "breaking", "governanca", "decisao"),
+        2,
+    ),
 }
 
 
