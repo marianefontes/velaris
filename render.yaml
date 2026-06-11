@@ -6,7 +6,7 @@ services:
     staticPublishPath: dist
     envVars:
       - key: VITE_API_BASE_URL
-        value: https://beatrice-chat-server.onrender.com
+        value: https://aetheris-bz9q.onrender.com
     routes:
       - type: rewrite
         source: /*
@@ -29,6 +29,10 @@ services:
       # (e.g. https://aetheris-app.onrender.com) to lock it down later.
       - key: ALLOWED_ORIGINS
         value: "*"
+      # Skip RAG startup to keep memory under 512MB free tier limit.
+      # Backend runs in catalog-only mode without vector search.
+      - key: AETHERIS_SKIP_RAG_STARTUP
+        value: "1"
       # Persist the vector index and the BGE-M3 download on the mounted disk so
       # the corpus bootstrap and model download happen once, not per restart.
       - key: CHROMA_DB_PATH
