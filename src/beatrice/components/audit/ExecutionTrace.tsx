@@ -18,8 +18,10 @@ export function ExecutionTrace({ steps, locale }: { steps?: ExecutionStep[]; loc
     return (
       <p className="rounded-xl border border-white/8 bg-white/[0.025] px-3 py-3 text-xs leading-5 text-slate-500">
         {isEn
-          ? "Execution trace unavailable for this response"
-          : "Trilha de execução indisponível para esta resposta"}
+          ? "No execution trace for this response. Traces appear when Abraxos runs a multi-step workflow."
+          : locale === "pt-PT"
+            ? "Sem trilha de execução para esta resposta. Trilhas aparecem quando o Abraxos executa um fluxo com vários passos."
+            : "Sem trilha de execução para esta resposta. Trilhas aparecem quando o Abraxos executa um fluxo com vários passos."}
       </p>
     );
   }

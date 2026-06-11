@@ -1,4 +1,5 @@
 import {
+  useWorkspaceComposer,
   useWorkspaceMessages,
   useWorkspacePreferences,
 } from "../../providers/WorkspaceProvider";
@@ -7,6 +8,7 @@ import { ChatMessage } from "./ChatMessage";
 
 export function ChatStream() {
   const { bottomRef, messages } = useWorkspaceMessages();
+  const { retryPrompt } = useWorkspaceComposer();
   const { content, settings } = useWorkspacePreferences();
   const { labels, openMessage, updateDecisionStatus, updatingDecisionId } = useAuditTrail();
   const visibleMessages = messages.filter((message) => !message.id.startsWith("assistant-persona-"));
@@ -20,6 +22,7 @@ export function ChatStream() {
           content={content}
           settings={settings}
           onOpenAudit={() => openMessage(message.id)}
+          onRetry={message.isError ? () => void retryPrompt(message.id) : undefined}
           onUpdateDecision={updateDecisionStatus}
           decisionUpdating={updatingDecisionId === message.decisionId}
           evidenceLabel={labels.evidence}

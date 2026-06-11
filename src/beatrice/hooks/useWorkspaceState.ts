@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import type { ChatMessage } from "../types/beatrice";
 import type { Locale } from "../../i18n/translations";
 import type { ChatContent, HealthData, ProfileId, WorkspaceState } from "../types/beatrice";
 import { detectCommandMode } from "../domain/governance";
+import { ORACLE_QUERY_PARAM } from "../navigation/oracleNavigation";
 import { fetchHealthData } from "../services/retrieval.service";
 import { getPromptStats } from "../services/orchestration.service";
 import { consumeFloatingHandoff } from "../storage/floatingHandoff";
-import { consumeAskPrefill } from "../storage/beatriceStorage";
+import { consumeAskPrefill, lockAskPrefillDispatch } from "../storage/beatriceStorage";
 import { useBeatriceHistory } from "./useBeatriceHistory";
 import { useBeatriceSettings } from "./useBeatriceSettings";
 import { useChatStream } from "./useChatStream";
@@ -16,18 +19,33 @@ interface UseWorkspaceStateParams {
   profileId: ProfileId;
 }
 
-function readInitialComposerDraft() {
+function readInitialComposerDraft(queryPrefill = "") {
   const handoff = consumeFloatingHandoff();
-  const askPrefill = consumeAskPrefill();
+  const sessionPrefill = consumeAskPrefill();
+  const askPrefill = sessionPrefill || queryPrefill;
   return {
     input: handoff?.input || askPrefill,
     handoff,
+    askPrefill,
   };
 }
 
+function hasVisibleUserTurn(messages: ChatMessage[]) {
+  return messages.some(
+    (message) => message.role === "user" && !message.id.startsWith("assistant-persona-"),
+  );
+}
+
 export function useWorkspaceState({ content, locale, profileId }: UseWorkspaceStateParams): WorkspaceState {
-  const initialComposer = useMemo(() => readInitialComposerDraft(), []);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialComposer = useMemo(() => {
+    const queryPrefill = typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get(ORACLE_QUERY_PARAM)?.trim() ?? ""
+      : "";
+    return readInitialComposerDraft(queryPrefill);
+  }, []);
   const [input, setInput] = useState(initialComposer.input);
+  const [deferredAskSubmit, setDeferredAskSubmit] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [healthData, setHealthData] = useState<HealthData | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -57,7 +75,7 @@ export function useWorkspaceState({ content, locale, profileId }: UseWorkspaceSt
     setMessages,
   } = beatriceHistory;
 
-  const submitPrompt = useChatStream({
+  const { submitPrompt, retryPrompt } = useChatStream({
     input,
     isLoading,
     history,
@@ -88,6 +106,37 @@ export function useWorkspaceState({ content, locale, profileId }: UseWorkspaceSt
     }
   }, [importHandoffConversation, initialComposer.handoff]);
 
+  const askPrefillHandledRef = useRef(false);
+  useEffect(() => {
+    const askPrefill = initialComposer.askPrefill.trim();
+    if (askPrefillHandledRef.current || !askPrefill) return;
+    askPrefillHandledRef.current = true;
+    lockAskPrefillDispatch();
+
+    const hasPriorTurns = history.some((entry) => entry.role === "user") || hasVisibleUserTurn(messages);
+    if (hasPriorTurns) {
+      setDeferredAskSubmit(askPrefill);
+      createConversation();
+      return;
+    }
+
+    void submitPrompt(askPrefill);
+  }, [createConversation, history, initialComposer.askPrefill, messages, submitPrompt]);
+
+  useEffect(() => {
+    if (!deferredAskSubmit) return;
+    const text = deferredAskSubmit;
+    setDeferredAskSubmit(null);
+    void submitPrompt(text);
+  }, [activeConversationId, deferredAskSubmit, submitPrompt]);
+
+  useEffect(() => {
+    if (!searchParams.has(ORACLE_QUERY_PARAM)) return;
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete(ORACLE_QUERY_PARAM);
+    setSearchParams(nextParams, { replace: true });
+  }, [searchParams, setSearchParams]);
+
   useEffect(() => {
     fetchHealthData()
       .then((data) => {
@@ -111,11 +160,13 @@ export function useWorkspaceState({ content, locale, profileId }: UseWorkspaceSt
     if (!settings.autoScroll) return;
     const scrollContainer = bottomRef.current?.closest<HTMLElement>(".beatrice-scrollbar");
     if (!scrollContainer) return;
+    const streamingActive = isLoading || messages.some((message) => message.isStreaming);
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     scrollContainer.scrollTo({
       top: scrollContainer.scrollHeight,
-      behavior: "smooth",
+      behavior: streamingActive || reduceMotion ? "auto" : "smooth",
     });
-  }, [messages, settings.autoScroll]);
+  }, [isLoading, messages, settings.autoScroll]);
 
   return {
     content,
@@ -141,6 +192,7 @@ export function useWorkspaceState({ content, locale, profileId }: UseWorkspaceSt
     setMessages,
     startNewConversation,
     submitPrompt,
+    retryPrompt,
     updateSettings,
   };
 }

@@ -5,9 +5,10 @@ import {
   Clipboard,
   FileSearch,
   FileText,
-  Sparkles,
+  RefreshCw,
   XCircle,
 } from "lucide-react";
+import { AbraxosMark } from "../assistant/AbraxosMark";
 import { COMMAND_META } from "../../domain/governance";
 import { useI18n } from "../../../i18n/I18nProvider";
 import type {
@@ -18,6 +19,7 @@ import type {
   SourceChip,
 } from "../../types/beatrice";
 import { CommandMarkdownRenderer, MarkdownRenderer } from "../primitives";
+import { SecondaryButton } from "../../../components/ui/VisualPrimitives";
 import { ChatLoadingState } from "./ChatLoadingState";
 import { ChatNavigationActions } from "./ChatNavigationActions";
 import { ExecutionSummaryBanner } from "./ExecutionSummaryBanner";
@@ -106,7 +108,7 @@ function SourceDisclosure({
   const additionalSourcesId = useId();
 
   return (
-    <section aria-label={evidenceLabel} className="mt-3 max-w-[72ch] border-t border-white/[0.07] pt-3">
+    <section aria-label={evidenceLabel} className="mt-3 max-w-[72ch] border-t border-white/[0.07] pt-3 motion-safe:animate-fade-in">
       <div className="mb-2 flex items-center justify-between gap-3">
         <h3 className="text-[11px] font-semibold text-slate-300">{evidenceLabel}</h3>
         <span className="text-[11px] tabular-nums text-slate-500">
@@ -165,6 +167,7 @@ function ChatMessageComponent({
   content,
   settings,
   onOpenAudit,
+  onRetry,
   onUpdateDecision,
   decisionUpdating = false,
   evidenceLabel,
@@ -174,6 +177,7 @@ function ChatMessageComponent({
   content: ChatContent;
   settings: BeatriceSettings;
   onOpenAudit?: () => void;
+  onRetry?: () => void;
   onUpdateDecision?: (
     decisionId: string,
     status: Exclude<DecisionRecordStatus, "draft">,
@@ -217,9 +221,7 @@ function ChatMessageComponent({
 
   return (
     <article className={`group/message flex min-w-0 ${density.gap} motion-safe:animate-message-in`}>
-      <div className="mt-1 hidden h-8 w-8 shrink-0 items-center justify-center rounded-[10px] border border-primary/15 bg-primary/90 sm:flex">
-        <Sparkles aria-hidden="true" className="h-4 w-4 text-on-primary" />
-      </div>
+      <AbraxosMark variant="consult" size="sm" className="mt-1 hidden shrink-0 sm:block" />
       <div className="min-w-0 flex-1">
         {message.commandMode && !message.isStreaming && (
           <div className={`mb-2 flex min-h-10 flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border px-3 py-2 ${COMMAND_META[message.commandMode].borderClass} ${COMMAND_META[message.commandMode].bgClass}`}>
@@ -289,6 +291,19 @@ function ChatMessageComponent({
             </>
           )}
         </div>
+
+        {message.isError && onRetry ? (
+          <div className="mt-3 flex flex-wrap gap-2 px-4 sm:px-5">
+            <SecondaryButton
+              disabled={message.isStreaming}
+              onClick={onRetry}
+              className="min-h-11 gap-2 rounded-lg px-3 py-2"
+            >
+              <RefreshCw aria-hidden="true" className="h-3.5 w-3.5" />
+              {t("assistant.retry")}
+            </SecondaryButton>
+          </div>
+        ) : null}
 
         {!message.isStreaming && (message.navigationAction || message.secondaryNavigationActions?.length) ? (
           <ChatNavigationActions

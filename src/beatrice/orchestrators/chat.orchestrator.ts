@@ -77,8 +77,8 @@ export function offlineMessage(locale: Locale): string {
   // show a calm, human message. The technical hint stays for local development.
   if (import.meta.env.DEV) {
     return locale === "en-US"
-      ? "Abraxos is offline. Start the API server:\n\nuvicorn server:app --port 3333 --reload"
-      : "Abraxos está offline. Inicie o servidor da API:\n\nuvicorn server:app --port 3333 --reload";
+      ? "Abraxos is offline. Start the backend with npm start in the project root, then reload this page."
+      : "Abraxos está offline. Inicie o backend com npm start na raiz do projeto e recarregue a página.";
   }
   return locale === "en-US"
     ? "Abraxos is temporarily unavailable. Please try again in a few moments."

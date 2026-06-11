@@ -22,6 +22,22 @@ export function removeOfflineMessages(messages: ChatMessage[]): ChatMessage[] {
   return messages.filter((message) => !isOfflineMessage(message));
 }
 
+/** Drop interrupted stream placeholders and the final orphaned user turn, if any. */
+export function sanitizePersistedMessages(messages: ChatMessage[]): ChatMessage[] {
+  const withoutStreaming = removeOfflineMessages(
+    messages.filter((message) => !message.isStreaming),
+  );
+
+  if (withoutStreaming.length === 0) return withoutStreaming;
+
+  const last = withoutStreaming[withoutStreaming.length - 1];
+  if (last.role === "user") {
+    return withoutStreaming.slice(0, -1);
+  }
+
+  return withoutStreaming;
+}
+
 export function patchMessage(messages: ChatMessage[], id: string, patch: Partial<ChatMessage>): ChatMessage[] {
   return messages.map((message) => (message.id === id ? { ...message, ...patch } : message));
 }

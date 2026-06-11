@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ResponseAuditMetadata } from "../types/beatrice";
-import { mergeAuditMetadata, removeOfflineMessages } from "./workspace.store";
+import { mergeAuditMetadata, removeOfflineMessages, sanitizePersistedMessages } from "./workspace.store";
 
 function metadata(
   overrides: Partial<ResponseAuditMetadata> = {},
@@ -96,6 +96,55 @@ describe("removeOfflineMessages", () => {
 
     expect(removeOfflineMessages(messages).map((message) => message.id)).toEqual([
       "technical",
+    ]);
+  });
+});
+
+describe("sanitizePersistedMessages", () => {
+  it("removes stuck streaming placeholders and only the final orphaned user turn", () => {
+    const interruptedTurn = [
+      {
+        id: "user-1",
+        role: "user" as const,
+        content: "Qual componente usar?",
+      },
+      {
+        id: "assistant-1",
+        role: "assistant" as const,
+        content: "Pensando...",
+        isStreaming: true,
+      },
+    ];
+
+    expect(sanitizePersistedMessages(interruptedTurn).map((message) => message.id)).toEqual([]);
+
+    const followUpWithoutAnswer = [
+      {
+        id: "user-1",
+        role: "user" as const,
+        content: "Primeira pergunta",
+      },
+      {
+        id: "assistant-1",
+        role: "assistant" as const,
+        content: "Resposta completa",
+      },
+      {
+        id: "user-2",
+        role: "user" as const,
+        content: "Segunda pergunta sem resposta",
+      },
+      {
+        id: "assistant-2",
+        role: "assistant" as const,
+        content: "",
+        isStreaming: true,
+      },
+    ];
+
+    expect(sanitizePersistedMessages(followUpWithoutAnswer).map((message) => message.id)).toEqual([
+      "user-1",
+      "assistant-1",
     ]);
   });
 });

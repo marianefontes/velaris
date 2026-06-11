@@ -58,7 +58,7 @@ describe("NewChatAction", () => {
     fireEvent.click(screen.getByRole("button", { name: "Novo chat" }));
 
     expect(screen.getByRole("alertdialog")).toBeTruthy();
-    expect(screen.getByText("Tem certeza que deseja iniciar um novo chat? A conversa atual será removida da tela.")).toBeTruthy();
+    expect(screen.getByText("A conversa atual sai da tela e não volta. Salve o que precisar antes de continuar.")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
 

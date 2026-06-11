@@ -9,7 +9,7 @@ export const WorkspaceContext = createContext<WorkspaceState | null>(null);
 type WorkspaceMessagesValue = Pick<WorkspaceState, "bottomRef" | "messages" | "setMessages">;
 type WorkspaceComposerValue = Pick<
   WorkspaceState,
-  "activeCommand" | "input" | "isLoading" | "setInput" | "submitPrompt"
+  "activeCommand" | "input" | "isLoading" | "retryPrompt" | "setInput" | "submitPrompt"
 >;
 type WorkspacePreferencesValue = Pick<
   WorkspaceState,
@@ -56,10 +56,12 @@ export function WorkspaceProvider({
     isLoading: workspace.isLoading,
     setInput: workspace.setInput,
     submitPrompt: workspace.submitPrompt,
+    retryPrompt: workspace.retryPrompt,
   }), [
     workspace.activeCommand,
     workspace.input,
     workspace.isLoading,
+    workspace.retryPrompt,
     workspace.setInput,
     workspace.submitPrompt,
   ]);

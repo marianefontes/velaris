@@ -36,6 +36,11 @@ interface UseChatStreamParams {
   setMessages: Dispatch<SetStateAction<ChatMessage[]>>;
 }
 
+interface SubmitPromptOptions {
+  /** Retry after a failed assistant turn; keeps the existing user message and history entry. */
+  skipUserTurn?: boolean;
+}
+
 export function useChatStream({
   input,
   isLoading,
@@ -51,8 +56,8 @@ export function useChatStream({
   setIsLoading,
   setMessages,
 }: UseChatStreamParams) {
-  return useCallback(
-    async (promptText?: string) => {
+  const submitPrompt = useCallback(
+    async (promptText?: string, options?: SubmitPromptOptions) => {
       const text = sanitizeUserPrompt(promptText ?? input);
       if (!text || isLoading) return;
 
@@ -61,18 +66,28 @@ export function useChatStream({
       const assistantMessage = createStreamingAssistantMessage(detectedCommand);
       const streamId = assistantMessage.id;
 
-      setMessages((previous) => [...previous, userMessage, assistantMessage]);
-      setInput("");
+      if (options?.skipUserTurn) {
+        setMessages((previous) => [...previous, assistantMessage]);
+      } else {
+        setMessages((previous) => [...previous, userMessage, assistantMessage]);
+        setInput("");
+      }
       setIsLoading(true);
 
-      const nextHistory: HistoryEntry[] = [...history, { role: "user", content: text }];
-      setHistory(nextHistory);
-      void trackStudyEvent("prompt_submitted", {
-        prompt: text,
-        profile: profileId,
-        command_mode: detectedCommand ?? null,
-        history_messages: nextHistory.length,
-      });
+      const nextHistory: HistoryEntry[] = options?.skipUserTurn
+        ? history
+        : [...history, { role: "user", content: text }];
+      if (!options?.skipUserTurn) {
+        setHistory(nextHistory);
+      }
+      if (!options?.skipUserTurn) {
+        void trackStudyEvent("prompt_submitted", {
+          prompt: text,
+          profile: profileId,
+          command_mode: detectedCommand ?? null,
+          history_messages: nextHistory.length,
+        });
+      }
 
       // rAF-batched streaming append: one setMessages per animation frame (~16ms
       // at 60fps). Tokens that arrive within the same frame are coalesced into a
@@ -222,4 +237,27 @@ export function useChatStream({
     },
     [history, input, isLoading, locale, profileId, projectId, sessionId, surfaceContext, settings, setHistory, setInput, setIsLoading, setMessages],
   );
+
+  const retryPrompt = useCallback(
+    async (errorMessageId: string) => {
+      if (isLoading) return;
+
+      let retryText = "";
+      setMessages((previous) => {
+        const errorIndex = previous.findIndex((message) => message.id === errorMessageId);
+        if (errorIndex <= 0) return previous;
+        const userMessage = previous[errorIndex - 1];
+        const errorMessage = previous[errorIndex];
+        if (userMessage.role !== "user" || !errorMessage.isError) return previous;
+        retryText = userMessage.content;
+        return previous.filter((message) => message.id !== errorMessageId);
+      });
+
+      if (!retryText) return;
+      await submitPrompt(retryText, { skipUserTurn: true });
+    },
+    [isLoading, setMessages, submitPrompt],
+  );
+
+  return { submitPrompt, retryPrompt };
 }

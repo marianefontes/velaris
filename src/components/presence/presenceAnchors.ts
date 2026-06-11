@@ -102,6 +102,12 @@ export const ROUTE_ANCHOR_REGISTRY: RouteAnchorEntry[] = [
           placement: { xRatio: 0.1, yRatio: 0.35 },
         };
       }
+      if (focus === "health") {
+        return {
+          selectors: ['[data-abraxos-focus="evaluation-health"]', "#main-content nav button[aria-pressed='true']"],
+          placement: { xRatio: 0.1, yRatio: 0.35 },
+        };
+      }
       return {
         selectors: ['#main-content nav button[aria-pressed="true"]'],
         placement: { xRatio: 0.12, yRatio: 0.5 },

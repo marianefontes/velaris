@@ -8,7 +8,7 @@ describe("ExecutionTrace", () => {
     render(<ExecutionTrace locale="pt-BR" />);
 
     expect(
-      screen.getByText("Trilha de execução indisponível para esta resposta"),
+      screen.getByText("Sem trilha de execução para esta resposta. Trilhas aparecem quando o Abraxos executa um fluxo com vários passos."),
     ).toBeTruthy();
   });
 

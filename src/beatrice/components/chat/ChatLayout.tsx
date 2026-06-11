@@ -47,7 +47,7 @@ export function ChatLayout({
     <div className={`beatrice-chat grid min-h-0 flex-1 ${density.shell} min-[1360px]:grid-cols-[minmax(0,1fr)_14rem]`}>
       <section
         aria-labelledby="beatrice-chat-title"
-        className={`beatrice-chat-shell relative flex min-w-0 flex-col overflow-hidden rounded-[22px] border sm:rounded-[28px] ${blur} ${strategy.theme.shell}`}
+        className={`beatrice-chat-shell relative flex min-w-0 flex-col overflow-hidden overflow-x-clip rounded-[22px] border sm:rounded-[28px] ${blur} ${strategy.theme.shell}`}
         style={{ isolation: "isolate" }}
       >
         <div className={`pointer-events-none absolute inset-x-0 top-0 h-36 opacity-70 ${strategy.theme.backdrop}`} />

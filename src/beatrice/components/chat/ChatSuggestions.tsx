@@ -63,7 +63,7 @@ export function ChatSuggestions() {
 
   return (
     <>
-      <div className="mx-auto grid w-full max-w-[46rem] gap-2.5 sm:grid-cols-3">
+      <div className="mx-auto grid w-full max-w-[46rem] grid-cols-1 gap-2.5 min-[480px]:grid-cols-2 sm:grid-cols-3">
         {content.suggestedPrompts.slice(0, 3).map((prompt) => {
           const Icon = prompt.icon;
           const title = toDisplayTitle(prompt.title, locale);

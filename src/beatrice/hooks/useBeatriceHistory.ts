@@ -11,10 +11,11 @@ import type {
 } from "../types/beatrice";
 import {
   downloadJsonFile,
+  historyFromMessages,
   readBeatriceHistory,
   writeBeatriceHistory,
 } from "../storage/beatriceStorage";
-import { removeOfflineMessages } from "../stores/workspace.store";
+import { sanitizePersistedMessages } from "../stores/workspace.store";
 
 interface UseBeatriceHistoryParams {
   initialMessages: ChatMessage[];
@@ -347,12 +348,16 @@ export function useBeatriceHistory(params: UseBeatriceHistoryParams) {
     setSnapshot((current) => {
       let changed = false;
       const conversations = current.conversations.map((conversation) => {
-        const messages = removeOfflineMessages(conversation.messages);
-        if (messages.length === conversation.messages.length) {
+        const messages = sanitizePersistedMessages(conversation.messages);
+        const history = historyFromMessages(messages);
+        const messagesChanged = messages.length !== conversation.messages.length
+          || messages.some((message, index) => message.id !== conversation.messages[index]?.id);
+        const historyChanged = history.length !== conversation.history.length;
+        if (!messagesChanged && !historyChanged) {
           return conversation;
         }
         changed = true;
-        return { ...conversation, messages };
+        return { ...conversation, messages, history };
       });
       return changed ? { ...current, conversations } : current;
     });

@@ -8,6 +8,7 @@ import type {
   ProfileId,
 } from "../types/beatrice";
 import { profileIdOrDefault } from "../domain/perspective/profileIds";
+import { sanitizePersistedMessages } from "../stores/workspace.store";
 
 export const BEATRICE_HISTORY_STORAGE_KEY = "aetheris_beatrice_history";
 export const BEATRICE_SETTINGS_STORAGE_KEY = "aetheris_beatrice_settings";
@@ -121,7 +122,7 @@ function normalizeHistoryEntry(value: unknown): HistoryEntry | null {
   return { role, content };
 }
 
-function historyFromMessages(messages: ChatMessage[]): HistoryEntry[] {
+export function historyFromMessages(messages: ChatMessage[]): HistoryEntry[] {
   return messages
     .filter((message) => !message.isStreaming && !message.isError && (message.role === "user" || message.role === "assistant"))
     .map((message) => ({ role: message.role, content: message.content }));
@@ -130,12 +131,16 @@ function historyFromMessages(messages: ChatMessage[]): HistoryEntry[] {
 function normalizeConversation(value: unknown, index: number): BeatriceConversation | null {
   if (!isRecord(value)) return null;
 
-  const messages = Array.isArray(value.messages)
+  const rawMessages = Array.isArray(value.messages)
     ? value.messages.map(normalizeMessage).filter((message): message is ChatMessage => Boolean(message))
     : [];
+  const messages = sanitizePersistedMessages(rawMessages);
 
   const history = Array.isArray(value.history)
-    ? value.history.map(normalizeHistoryEntry).filter((entry): entry is HistoryEntry => Boolean(entry))
+    ? value.history
+        .map(normalizeHistoryEntry)
+        .filter((entry): entry is HistoryEntry => Boolean(entry))
+        .filter((entry) => !entry.content.startsWith("Abraxos está offline.") && !entry.content.startsWith("Abraxos is offline."))
     : historyFromMessages(messages);
 
   const now = new Date().toISOString();
@@ -203,9 +208,10 @@ export function writeAskPrefill(question: string) {
 // One-shot, but stable within the same render pass: StrictMode double-invokes
 // state initializers, so the consumed value is cached until the microtask ends.
 let pendingAskPrefill: string | null = null;
+let askPrefillDispatchLock = false;
 
 export function consumeAskPrefill(): string {
-  if (typeof window === "undefined") return "";
+  if (typeof window === "undefined" || askPrefillDispatchLock) return "";
   if (pendingAskPrefill === null) {
     try {
       pendingAskPrefill = window.sessionStorage.getItem(BEATRICE_ASK_PREFILL_KEY) ?? "";
@@ -218,6 +224,13 @@ export function consumeAskPrefill(): string {
     });
   }
   return pendingAskPrefill;
+}
+
+export function lockAskPrefillDispatch() {
+  askPrefillDispatchLock = true;
+  queueMicrotask(() => {
+    askPrefillDispatchLock = false;
+  });
 }
 
 export function downloadJsonFile(filename: string, data: unknown) {

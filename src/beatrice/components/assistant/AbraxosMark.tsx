@@ -1,5 +1,6 @@
 export const ABRAXOS_AVATAR_SRC = "/abraxos-avatar.png";
 export const ABRAXOS_CHAT_ICON_SRC = "/abraxos-chat-icon.png";
+export const ABRAXOS_CONSULT_ICON_SRC = "/abraxos-consult-icon.png";
 
 const SIZE_CLASS = {
   xs: "h-4 w-4",
@@ -18,9 +19,14 @@ export function AbraxosMark({
   size?: keyof typeof SIZE_CLASS;
   className?: string;
   alt?: string;
-  variant?: "chat" | "avatar";
+  variant?: "chat" | "avatar" | "consult";
 }) {
-  const src = variant === "chat" ? ABRAXOS_CHAT_ICON_SRC : ABRAXOS_AVATAR_SRC;
+  const src =
+    variant === "consult"
+      ? ABRAXOS_CONSULT_ICON_SRC
+      : variant === "chat"
+        ? ABRAXOS_CHAT_ICON_SRC
+        : ABRAXOS_AVATAR_SRC;
 
   return (
     <img

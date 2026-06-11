@@ -89,7 +89,7 @@ export function AbraxosAssistantProvider({ children }: { children: ReactNode }) 
     [explicitContext, routeContext],
   );
 
-  const submitPrompt = useChatStream({
+  const { submitPrompt } = useChatStream({
     input,
     isLoading,
     history,

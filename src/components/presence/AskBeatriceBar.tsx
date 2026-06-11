@@ -3,10 +3,11 @@
 // near-subliminal serpent silhouette passes behind the interface); submitting
 // hands the question to the /oracle composer via session prefill.
 
-import { ArrowRight, RefreshCw, Sparkles } from "lucide-react";
+import { ArrowRight, RefreshCw } from "lucide-react";
+import { AbraxosMark } from "../../beatrice/components/assistant/AbraxosMark";
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { writeAskPrefill } from "../../beatrice/storage/beatriceStorage";
+import { buildOracleHref } from "../../beatrice/navigation/oracleNavigation";
 import { emitPresence } from "./presenceBus";
 import { StardustEngine } from "./stardustEngine";
 import { usePrefersReducedMotion } from "./usePrefersReducedMotion";
@@ -42,8 +43,7 @@ export function AskBeatriceBar({
   const ask = (question: string) => {
     const trimmed = question.trim();
     if (!trimmed) return;
-    writeAskPrefill(trimmed);
-    navigate("/oracle");
+    navigate(buildOracleHref(trimmed));
   };
 
   const handleFocus = () => {
@@ -97,7 +97,7 @@ export function AskBeatriceBar({
           data-abraxos-focus="home-ask"
           className="flex items-center gap-3 rounded-[20px] border border-white/[0.1] bg-surface-container-high/60 py-2 pl-5 pr-2 backdrop-blur-xl transition-[border-color,box-shadow] duration-300 focus-within:border-primary/40 focus-within:shadow-[0_0_40px_rgba(194,160,252,0.12)]"
         >
-          <Sparkles aria-hidden="true" className="h-4 w-4 shrink-0 text-primary/80" />
+          <AbraxosMark variant="consult" size="xs" className="shrink-0" />
           <input
             id="velaris-ask-input"
             type="text"

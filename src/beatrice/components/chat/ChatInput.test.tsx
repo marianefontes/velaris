@@ -39,6 +39,7 @@ describe("ChatInput", () => {
       isLoading: false,
       setInput: vi.fn(),
       submitPrompt: vi.fn(),
+      retryPrompt: vi.fn(),
     });
 
     render(
@@ -58,6 +59,7 @@ describe("ChatInput", () => {
       isLoading: false,
       setInput: vi.fn(),
       submitPrompt: vi.fn(),
+      retryPrompt: vi.fn(),
     });
 
     render(

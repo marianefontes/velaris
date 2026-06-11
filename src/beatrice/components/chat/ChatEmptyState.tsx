@@ -15,7 +15,7 @@ export function ChatEmptyState() {
     <div className="flex flex-col items-center justify-center px-3 pb-2 pt-4 text-center sm:pt-6">
       <div className="relative mb-5 hidden items-center justify-center sm:flex">
         <div
-          className={`pointer-events-none absolute inset-0 scale-[2.4] rounded-full opacity-20 blur-3xl ${strategy.theme.accentBg}`}
+          className={`pointer-events-none absolute inset-0 scale-[2.4] rounded-full opacity-20 blur-3xl motion-safe:animate-spectral-halo ${strategy.theme.accentBg}`}
         />
         <div
           className={`pointer-events-none absolute -inset-[6px] rounded-[22px] border ${strategy.theme.accentBorder} opacity-20`}
