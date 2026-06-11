@@ -6,7 +6,12 @@ tailwind.config.js
 tailwind.config.d.ts
 vite.config.js
 vite.config.d.ts
-docs/
+# Local-only documentation (personal, academic, specs drafts)
+docs/_personal/
+docs/academic/
+docs/dissertation/
+docs/_legacy/
+docs/_superpowers/
 .claude/
 .superpowers/
 .env.local

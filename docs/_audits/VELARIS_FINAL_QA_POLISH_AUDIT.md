@@ -112,7 +112,7 @@ Rodada de QA focada nos dois bugs reportados (estado inicial incorreto do chat e
 | `src/beatrice/hooks/useBeatriceHistory.ts` | Sync de history pós-sanitização |
 | `src/beatrice/components/contextual/PersonaExamples.tsx` | Prefill + navegação nos exemplos |
 | `src/beatrice/services/orchestration.service.ts` | Quick links canônicos |
-| `VELARIS_FINAL_QA_POLISH_AUDIT.md` | Este relatório |
+| `docs/_audits/VELARIS_FINAL_QA_POLISH_AUDIT.md` | Este relatório |
 
 ---
 
