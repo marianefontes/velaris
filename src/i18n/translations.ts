@@ -26,6 +26,7 @@ export const translations = {
       guidelines: "Diretrizes",
       persona: "Perspectiva",
       perspectives: "Perspectivas",
+      cognition: "Cognição",
       patterns: "Padrões",
       reasoning: "Raciocínio",
       systemEvaluation: "Avaliação",
@@ -49,7 +50,8 @@ export const translations = {
       foundations: "Base visual",
       guidelines: "Princípios de uso",
       persona: "Perfil de pesquisa",
-      perspectives: "Lentes cognitivas",
+      perspectives: "Galeria de especialistas",
+      cognition: "Arquitetura cognitiva",
       patterns: "Lógica de interação",
       reasoning: "Pipeline cognitivo",
       systemEvaluation: "Camada de auditoria",
@@ -114,13 +116,13 @@ export const translations = {
       openHtml: "Abrir HTML",
       beatriceChat: "Consultar Abraxos",
       sidebarSubtitle: "Oracle Intelligence",
-      sidebarEmpty: "Nenhum item encontrado.",
+      sidebarEmpty: "Nada nesta seção. Use o menu acima para navegar.",
       sidebarCardTitle: "Núcleo Velaris",
       sidebarCardStatus: "RAG online",
       sidebarCardText:
         "Camada preparada para apoiar consumidores de design systems com recomendações explicáveis, rastreáveis e orientadas por contexto.",
-      loadingEyebrow: "Carregando interface",
-      loadingText: "Preparando a próxima experiência...",
+      loadingEyebrow: "Carregando página",
+      loadingText: "Abrindo a superfície Velaris…",
     },
     lang: {
       label: "Idioma",
@@ -183,7 +185,7 @@ export const translations = {
       newChatDisabled: "Aguarde a resposta atual terminar para iniciar um novo chat.",
       newChatConfirmTitle: "Iniciar novo chat?",
       newChatConfirmMessage:
-        "Tem certeza que deseja iniciar um novo chat? A conversa atual será removida da tela.",
+        "A conversa atual sai da tela e não volta. Salve o que precisar antes de continuar.",
       closeNewChatDialog: "Fechar confirmação de novo chat",
       cancelNewChat: "Cancelar",
       startNewChat: "Iniciar novo chat",
@@ -205,7 +207,11 @@ export const translations = {
       messages: "Mensagens",
       decisionsCited: "Decisões citadas",
       avgConfidence: "Confiança média",
-      responding: "Abraxos está respondendo...",
+      responding: "Abraxos está consultando o Velaris e montando a resposta…",
+      retrievalPhase1: "Percorrendo componentes e padrões indexados…",
+      retrievalPhase2: "Relacionando decisões documentadas com a pergunta…",
+      retrievalPhase3: "Avaliando evidência e nível de confiança…",
+      retrievalPhase4: "Montando resposta com fontes rastreáveis…",
     },
     assistant: {
       open: "Abrir Abraxos",
@@ -218,13 +224,15 @@ export const translations = {
       inputLabel: "Pergunta para o Abraxos sobre esta seção",
       inputPlaceholder: "Pergunte algo sobre esta seção...",
       send: "Enviar pergunta",
-      thinking: "Pensando...",
+      thinking: "Consultando o Velaris…",
       openFullChat: "Abrir chat completo",
       askAboutItem: "Perguntar ao Abraxos",
-      offlineCompact: "Abraxos está offline.",
+      offlineCompact: "Serviço do Abraxos indisponível.",
       retry: "Tentar novamente",
     },
     beatricePersona: {
+      activeIndicatorLabel: "Persona ativa",
+      activeIndicatorAria: "Persona ativa: {profile}, {role}",
       profileTrigger: "Perspectiva do Abraxos",
       openProfileMenu: "Abrir menu da perspectiva {profile}",
       closeProfileMenu: "Fechar menu da perspectiva {profile}",
@@ -301,7 +309,7 @@ export const translations = {
         subtitle: "Sessões recentes do Abraxos",
         newConversation: "Nova conversa",
         empty: "Nenhuma conversa registrada ainda",
-        emptyBody: "A primeira pergunta enviada vira uma sessão nomeada aqui.",
+        emptyBody: "Envie a primeira pergunta ao Abraxos. Ela vira uma sessão nomeada aqui.",
         close: "Fechar histórico",
         rename: "Renomear conversa",
         delete: "Excluir conversa",
@@ -387,15 +395,34 @@ export const translations = {
     },
     perspectives: {
       hero: {
-        eyebrow: "Perspectivas profissionais do Abraxos",
-        titlePrefix: "Escolha uma perspectiva profissional da",
+        eyebrow: "Galeria de especialistas do Abraxos",
+        titlePrefix: "Quem está analisando com a",
         titleEm: "Abraxos",
       },
       preamble: {
-        paragraph1:
-          "Uma perspectiva profissional do Abraxos é uma lente cognitiva: um modelo estruturado de raciocínio que define quais dimensões da mesma evidência aparecem primeiro, com que profundidade e com qual vocabulário.",
-        paragraph2:
-          "A evidência recuperada não muda. A arquitetura não muda. O que muda é a sequência, densidade e calibração da explicação. Selecionar uma lente configura a cognição do próprio sistema.",
+        concept:
+          "Cada perspectiva profissional funciona como um especialista distinto: alguém com responsabilidades, ferramentas, foco e limites próprios.",
+        usageIn: "Em",
+        usageChoose: ", você escolhe quem analisa. Em",
+        usageUnderstand: ", você entende como essa persona interpreta evidências, incertezas e decisões.",
+      },
+      identity: {
+        cognitionCta: "Ver arquitetura cognitiva",
+        detailEyebrow: "Perfil profissional",
+        analysisExample: "Exemplo de análise",
+        limitations: "Limitações",
+        activeBadge: "ativa",
+      },
+      sections: {
+        navAria: "Seções de Perspectivas",
+        identity: {
+          label: "Perspectivas",
+          role: "Quem está analisando",
+        },
+        cognition: {
+          label: "Cognição",
+          role: "Como está pensando",
+        },
       },
       activeLens: {
         label: "Perspectiva ativa",
@@ -404,10 +431,10 @@ export const translations = {
         status: "Indicador da perspectiva profissional ativa",
       },
       selector: {
-        eyebrow: "Perspectivas profissionais",
-        title: "Selecione uma perspectiva",
+        eyebrow: "Especialistas disponíveis",
+        title: "Selecione uma persona",
         caption:
-          "Oito perspectivas profissionais do Abraxos, cada uma com um foco distinto sobre o mesmo corpus de evidência. Fixe uma segunda perspectiva para comparar divergências.",
+          "Oito perspectivas profissionais do Abraxos. Cada uma traz uma identidade distinta sobre o mesmo corpus de evidência.",
         compare: "comparar",
         pinned: "ativa",
         ariaLabel: "Perspectivas profissionais disponíveis",
@@ -444,7 +471,7 @@ export const translations = {
         runLive: "Rodar ao vivo",
         stop: "Parar",
         waitingDelta: "aguardando o primeiro delta…",
-        empty: ":",
+        empty: "Rode um trial ao vivo ou escolha um exemplo para ver a adaptação desta lente.",
         footnoteStatic:
           "Duas lentes convergem em Modal, uma diverge para SideDrawer : por uma razão que é ela própria um tipo de evidência que a lente de engenharia privilegia (custo de migração). A divergência é principiada, não estilística.",
         footnoteLive:
@@ -456,8 +483,8 @@ export const translations = {
           stopped: "parado",
           error: "erro",
         },
-        errorPrefix: "Erro do backend",
-        errorGeneric: "Falha na requisição do trial",
+        errorPrefix: "Não foi possível completar o trial",
+        errorGeneric: "Verifique se o backend está ativo e tente novamente.",
       },
       hierarchy: {
         eyebrow: "Ordenação de seções",
@@ -542,7 +569,7 @@ export const translations = {
         title: "Histórico de trials",
         caption:
           "Suas últimas execuções ao vivo permanecem disponíveis por lente. Selecione um trial para reabri-lo no preview.",
-        empty: "Nenhum trial salvo para esta lente ainda.",
+        empty: "Nenhum trial salvo para esta lente. Rode um trial ao vivo para guardar o histórico.",
         replay: "Reabrir",
         delete: "Remover",
         clear: "Limpar histórico",
@@ -559,6 +586,19 @@ export const translations = {
         a11y: "Accessibility Specialist",
         maintainer: "Maintainer",
         design_system_manager: "Design System Manager",
+      },
+    },
+    cognition: {
+      hero: {
+        eyebrow: "Arquitetura cognitiva do Abraxos",
+        titlePrefix: "Como pensa",
+      },
+      changePersonaCta: "Trocar persona",
+      compare: {
+        eyebrow: "Divergência entre lentes",
+        title: "Comparar com outra perspectiva",
+        caption:
+          "Fixe uma segunda lente para sobrepor calibração, sinais e adaptação de raciocínio sobre a mesma evidência.",
       },
     },
     pages: {
@@ -740,7 +780,7 @@ export const translations = {
           intentPrefix: "intenção:",
           evidenceSimilarityLabel: "Similaridade da evidência",
           evidenceSimilarityNote: "relevância do retrieval, não confiança da resposta",
-          noSources: "Nenhuma fonte retornada para esta pergunta : Abraxos dirá isso em vez de inventar fontes.",
+          noSources: "Nenhuma fonte retornada. Abraxos informará isso em vez de inventar referências.",
         },
         generic: {
           name: "LLM Genérico",
@@ -770,7 +810,7 @@ export const translations = {
           body: "LLMs genéricos são otimizados para geração ampla de linguagem. Abraxos é otimizado para apoio à decisão contextual dentro de um design system específico. A resposta dele é restringida por documentação recuperada, atribuição de fontes, calibração de confiança e raciocínio orientado a UX.",
         },
         error: {
-          beatrice: "Abraxos está indisponível. Inicie o servidor da API (uvicorn server:app --port 3333) e tente novamente.",
+          beatrice: "Abraxos não respondeu. Inicie o backend com npm start na raiz do projeto e tente novamente.",
         },
       },
       foundations: {
@@ -778,15 +818,16 @@ export const translations = {
         hero: {
           titleLead: "Contratos para um",
           titleAccent: "sistema explicável",
-          description: "Diretrizes, acessibilidade, padrões e tokens transformam a intenção do Velaris em critérios normativos, qualidade transversal e linguagem consistente de produto.",
+          description: "Diretrizes, acessibilidade, padrões, tokens e evidências transformam a intenção do Velaris em critérios normativos, validação de conhecimento e linguagem consistente de produto.",
         },
         navigationLabel: "Seções de fundamentos",
-        loading: "Carregando seção",
+        loading: "Carregando conteúdo da seção…",
         sections: {
           manifesto: { label: "Diretrizes", role: "pilares e princípios" },
           foundations: { label: "Acessibilidade", role: "qualidade transversal" },
           patterns: { label: "Padrões", role: "lógica de interação" },
           tokens: { label: "Tokens", role: "primitivas de design" },
+          evidence: { label: "Evidências", role: "validação de conhecimento" },
         },
         manifesto: {
           resistsLabel: "resiste a",
@@ -946,6 +987,7 @@ export const translations = {
           rag: { label: "Pipeline RAG", role: "extração · indexação · serve" },
           integration: { label: "Integração", role: "exemplos de código" },
           corpus: { label: "Corpus & Retrieval", role: "diagnóstico ao vivo" },
+          "agent-runtime": { label: "Agent Runtime", role: "fluxo cognitivo" },
         },
       },
       evaluation: {
@@ -955,6 +997,7 @@ export const translations = {
           instruments: { label: "Instrumentos & Alvos", role: "métricas" },
           baseline: { label: "Comparação baseline", role: "Abraxos vs LLM genérico" },
           status: { label: "Status", role: "coleta de dados" },
+          health: { label: "Health do Sistema", role: "diagnóstico de confiabilidade" },
         },
         statuses: {
           scaffolded: "estruturado",
@@ -963,6 +1006,10 @@ export const translations = {
           pending: "pendente",
         },
         pendingBanner: "{label}: meta {target} : coleta de dados pendente.",
+        health: {
+          loadingTitle: "Carregando health do sistema",
+          loadingDescription: "Preparando métricas de confiabilidade e gráficos de evolução.",
+        },
         methodology: {
           overview: {
             eyebrow: "Visão geral da metodologia",
@@ -1165,6 +1212,7 @@ export const translations = {
       guidelines: "Diretrizes",
       persona: "Perspetiva",
       perspectives: "Perspetivas",
+      cognition: "Cognição",
       patterns: "Padrões",
       reasoning: "Raciocínio",
       systemEvaluation: "Avaliação",
@@ -1188,7 +1236,8 @@ export const translations = {
       foundations: "Base visual",
       guidelines: "Princípios de uso",
       persona: "Perfil de investigação",
-      perspectives: "Lentes cognitivas",
+      perspectives: "Galeria de especialistas",
+      cognition: "Arquitetura cognitiva",
       patterns: "Lógica de interação",
       reasoning: "Pipeline cognitivo",
       systemEvaluation: "Camada de auditoria",
@@ -1253,13 +1302,13 @@ export const translations = {
       openHtml: "Abrir HTML",
       beatriceChat: "Consultar Abraxos",
       sidebarSubtitle: "Oracle Intelligence",
-      sidebarEmpty: "Nenhum item encontrado.",
+      sidebarEmpty: "Nada nesta secção. Use o menu acima para navegar.",
       sidebarCardTitle: "Núcleo Velaris",
       sidebarCardStatus: "RAG online",
       sidebarCardText:
         "Camada preparada para apoiar consumidores de design systems com recomendações explicáveis, rastreáveis e orientadas por contexto.",
-      loadingEyebrow: "A carregar interface",
-      loadingText: "A preparar a próxima experiência...",
+      loadingEyebrow: "A carregar página",
+      loadingText: "A abrir a superfície Velaris…",
     },
     lang: {
       label: "Idioma",
@@ -1322,7 +1371,7 @@ export const translations = {
       newChatDisabled: "Aguarde que a resposta atual termine para iniciar um novo chat.",
       newChatConfirmTitle: "Iniciar novo chat?",
       newChatConfirmMessage:
-        "Tem a certeza de que deseja iniciar um novo chat? A conversa atual será removida do ecrã.",
+        "A conversa atual sai do ecrã e não volta. Guarde o que precisar antes de continuar.",
       closeNewChatDialog: "Fechar confirmação de novo chat",
       cancelNewChat: "Cancelar",
       startNewChat: "Iniciar novo chat",
@@ -1344,7 +1393,11 @@ export const translations = {
       messages: "Mensagens",
       decisionsCited: "Decisões citadas",
       avgConfidence: "Confiança média",
-      responding: "Abraxos está a responder...",
+      responding: "O Abraxos está a consultar o Velaris e a montar a resposta…",
+      retrievalPhase1: "A percorrer componentes e padrões indexados…",
+      retrievalPhase2: "A relacionar decisões documentadas com a pergunta…",
+      retrievalPhase3: "A avaliar evidência e nível de confiança…",
+      retrievalPhase4: "A montar resposta com fontes rastreáveis…",
     },
     assistant: {
       open: "Abrir Abraxos",
@@ -1357,13 +1410,15 @@ export const translations = {
       inputLabel: "Pergunta para o Abraxos sobre esta secção",
       inputPlaceholder: "Pergunte algo sobre esta secção...",
       send: "Enviar pergunta",
-      thinking: "A pensar...",
+      thinking: "A consultar o Velaris…",
       openFullChat: "Abrir chat completo",
       askAboutItem: "Perguntar ao Abraxos",
-      offlineCompact: "O Abraxos está offline.",
+      offlineCompact: "Serviço do Abraxos indisponível.",
       retry: "Tentar novamente",
     },
     beatricePersona: {
+      activeIndicatorLabel: "Persona ativa",
+      activeIndicatorAria: "Persona ativa: {profile}, {role}",
       profileTrigger: "Perspetiva do Abraxos",
       openProfileMenu: "Abrir menu da perspetiva {profile}",
       closeProfileMenu: "Fechar menu da perspetiva {profile}",
@@ -1440,7 +1495,7 @@ export const translations = {
         subtitle: "Sessões recentes do Abraxos",
         newConversation: "Nova conversa",
         empty: "Ainda não existem conversas registadas",
-        emptyBody: "A primeira pergunta enviada torna-se uma sessão nomeada aqui.",
+        emptyBody: "Envie a primeira pergunta ao Abraxos. Ela torna-se uma sessão nomeada aqui.",
         close: "Fechar histórico",
         rename: "Renomear conversa",
         delete: "Eliminar conversa",
@@ -1526,15 +1581,34 @@ export const translations = {
     },
     perspectives: {
       hero: {
-        eyebrow: "Perspetivas profissionais do Abraxos",
-        titlePrefix: "Escolha uma perspetiva profissional da",
+        eyebrow: "Galeria de especialistas do Abraxos",
+        titlePrefix: "Quem está a analisar com a",
         titleEm: "Abraxos",
       },
       preamble: {
-        paragraph1:
-          "Uma perspetiva profissional do Abraxos é uma lente cognitiva: um modelo estruturado de raciocínio que define quais dimensões da mesma evidência aparecem primeiro, com que profundidade e com qual vocabulário.",
-        paragraph2:
-          "A evidência recuperada não muda. A arquitetura não muda. O que muda é a sequência, densidade e calibração da explicação. Selecionar uma lente configura a cognição do próprio sistema.",
+        concept:
+          "Cada perspetiva profissional funciona como um especialista distinto: alguém com responsabilidades, ferramentas, foco e limites próprios.",
+        usageIn: "Em",
+        usageChoose: ", escolhe quem analisa. Em",
+        usageUnderstand: ", percebe como essa persona interpreta evidências, incertezas e decisões.",
+      },
+      identity: {
+        cognitionCta: "Ver arquitetura cognitiva",
+        detailEyebrow: "Perfil profissional",
+        analysisExample: "Exemplo de análise",
+        limitations: "Limitações",
+        activeBadge: "ativa",
+      },
+      sections: {
+        navAria: "Secções de Perspetivas",
+        identity: {
+          label: "Perspetivas",
+          role: "Quem está a analisar",
+        },
+        cognition: {
+          label: "Cognição",
+          role: "Como está a pensar",
+        },
       },
       activeLens: {
         label: "Perspetiva ativa",
@@ -1543,10 +1617,10 @@ export const translations = {
         status: "Indicador da perspetiva profissional ativa",
       },
       selector: {
-        eyebrow: "Perspetivas profissionais",
-        title: "Selecione uma perspetiva",
+        eyebrow: "Especialistas disponíveis",
+        title: "Selecione uma persona",
         caption:
-          "Oito perspetivas profissionais do Abraxos, cada uma com um foco distinto sobre o mesmo corpus de evidência. Fixe uma segunda perspetiva para comparar divergências.",
+          "Oito perspetivas profissionais do Abraxos. Cada uma traz uma identidade distinta sobre o mesmo corpus de evidência.",
         compare: "comparar",
         pinned: "ativa",
         ariaLabel: "Perspetivas profissionais disponíveis",
@@ -1583,7 +1657,7 @@ export const translations = {
         runLive: "Executar ao vivo",
         stop: "Parar",
         waitingDelta: "à espera do primeiro delta…",
-        empty: ":",
+        empty: "Execute um ensaio ao vivo ou escolha um exemplo para ver a adaptação desta lente.",
         footnoteStatic:
           "Duas lentes convergem em Modal, uma diverge para SideDrawer : por uma razão que é ela própria um tipo de evidência que a lente de engenharia privilegia (custo de migração). A divergência é principiada, não estilística.",
         footnoteLive:
@@ -1595,8 +1669,8 @@ export const translations = {
           stopped: "parado",
           error: "erro",
         },
-        errorPrefix: "Erro do backend",
-        errorGeneric: "Falha no pedido de ensaio",
+        errorPrefix: "Não foi possível completar o ensaio",
+        errorGeneric: "Verifique se o backend está ativo e tente novamente.",
       },
       hierarchy: {
         eyebrow: "Ordenação de secções",
@@ -1681,7 +1755,7 @@ export const translations = {
         title: "Histórico de ensaios",
         caption:
           "As suas últimas execuções ao vivo permanecem disponíveis por lente. Selecione um ensaio para o reabrir no preview.",
-        empty: "Ainda não há ensaios guardados para esta lente.",
+        empty: "Ainda não há ensaios guardados para esta lente. Execute um ensaio ao vivo para guardar o histórico.",
         replay: "Reabrir",
         delete: "Remover",
         clear: "Limpar histórico",
@@ -1698,6 +1772,19 @@ export const translations = {
         a11y: "Accessibility Specialist",
         maintainer: "Maintainer",
         design_system_manager: "Design System Manager",
+      },
+    },
+    cognition: {
+      hero: {
+        eyebrow: "Arquitetura cognitiva do Abraxos",
+        titlePrefix: "Como pensa",
+      },
+      changePersonaCta: "Trocar persona",
+      compare: {
+        eyebrow: "Divergência entre lentes",
+        title: "Comparar com outra perspetiva",
+        caption:
+          "Fixe uma segunda lente para sobrepor calibração, sinais e adaptação de raciocínio sobre a mesma evidência.",
       },
     },
     pages: {
@@ -1879,7 +1966,7 @@ export const translations = {
           intentPrefix: "intenção:",
           evidenceSimilarityLabel: "Similaridade da evidência",
           evidenceSimilarityNote: "relevância do retrieval, não confiança da resposta",
-          noSources: "Nenhuma fonte retornada para esta pergunta : Abraxos dirá isso em vez de inventar fontes.",
+          noSources: "Nenhuma fonte retornada. Abraxos informará isso em vez de inventar referências.",
         },
         generic: {
           name: "LLM Genérico",
@@ -1909,7 +1996,7 @@ export const translations = {
           body: "LLMs genéricos são otimizados para geração ampla de linguagem. Abraxos é otimizado para apoio à decisão contextual dentro de um design system específico. A resposta dele é restringida por documentação recuperada, atribuição de fontes, calibração de confiança e raciocínio orientado a UX.",
         },
         error: {
-          beatrice: "Abraxos está indisponível. Inicie o servidor da API (uvicorn server:app --port 3333) e tente novamente.",
+          beatrice: "Abraxos não respondeu. Inicie o backend com npm start na raiz do projeto e tente novamente.",
         },
       },
       foundations: {
@@ -1917,15 +2004,16 @@ export const translations = {
         hero: {
           titleLead: "Contratos para um",
           titleAccent: "sistema explicável",
-          description: "Diretrizes, acessibilidade, padrões e tokens transformam a intenção do Velaris em critérios normativos, qualidade transversal e linguagem coerente de produto.",
+          description: "Diretrizes, acessibilidade, padrões, tokens e evidências transformam a intenção do Velaris em critérios normativos, validação de conhecimento e linguagem coerente de produto.",
         },
         navigationLabel: "Secções das fundações",
-        loading: "A carregar secção",
+        loading: "A carregar conteúdo da secção…",
         sections: {
           manifesto: { label: "Diretrizes", role: "pilares e princípios" },
           foundations: { label: "Acessibilidade", role: "qualidade transversal" },
           patterns: { label: "Padrões", role: "lógica de interação" },
           tokens: { label: "Tokens", role: "primitivas de design" },
+          evidence: { label: "Evidências", role: "validação de conhecimento" },
         },
         manifesto: {
           resistsLabel: "opõe-se a",
@@ -2085,6 +2173,7 @@ export const translations = {
           rag: { label: "Pipeline RAG", role: "extração · indexação · serve" },
           integration: { label: "Integração", role: "exemplos de código" },
           corpus: { label: "Corpus & Retrieval", role: "diagnóstico ao vivo" },
+          "agent-runtime": { label: "Agent Runtime", role: "fluxo cognitivo" },
         },
       },
       evaluation: {
@@ -2094,6 +2183,7 @@ export const translations = {
           instruments: { label: "Instrumentos & Alvos", role: "métricas" },
           baseline: { label: "Comparação baseline", role: "Abraxos vs LLM genérico" },
           status: { label: "Status", role: "recolha de dados" },
+          health: { label: "Health do Sistema", role: "diagnóstico de confiabilidade" },
         },
         statuses: {
           scaffolded: "estruturado",
@@ -2102,6 +2192,10 @@ export const translations = {
           pending: "pendente",
         },
         pendingBanner: "{label}: meta {target} : recolha de dados pendente.",
+        health: {
+          loadingTitle: "A carregar health do sistema",
+          loadingDescription: "A preparar métricas de confiabilidade e gráficos de evolução.",
+        },
         methodology: {
           overview: {
             eyebrow: "Visão geral da metodologia",
@@ -2304,6 +2398,7 @@ export const translations = {
       guidelines: "Guidelines",
       persona: "Perspective",
       perspectives: "Perspectives",
+      cognition: "Cognition",
       patterns: "Patterns",
       reasoning: "Reasoning",
       systemEvaluation: "Evaluation",
@@ -2327,7 +2422,8 @@ export const translations = {
       foundations: "Visual foundation",
       guidelines: "Usage principles",
       persona: "Research profile",
-      perspectives: "Cognitive lenses",
+      perspectives: "Specialist gallery",
+      cognition: "Cognitive architecture",
       patterns: "Interaction logic",
       reasoning: "Cognitive pipeline",
       systemEvaluation: "Audit layer",
@@ -2392,13 +2488,13 @@ export const translations = {
       openHtml: "Open HTML",
       beatriceChat: "Consult Abraxos",
       sidebarSubtitle: "Oracle Intelligence",
-      sidebarEmpty: "No items found.",
+      sidebarEmpty: "Nothing in this section. Use the menu above to navigate.",
       sidebarCardTitle: "Velaris Core",
       sidebarCardStatus: "RAG online",
       sidebarCardText:
         "A layer prepared to support design system consumers with explainable, traceable and context-aware recommendations.",
-      loadingEyebrow: "Loading surface",
-      loadingText: "Preparing the next experience...",
+      loadingEyebrow: "Loading page",
+      loadingText: "Opening the Velaris surface…",
     },
     lang: {
       label: "Language",
@@ -2461,7 +2557,7 @@ export const translations = {
       newChatDisabled: "Wait for the current response to finish before starting a new chat.",
       newChatConfirmTitle: "Start a new chat?",
       newChatConfirmMessage:
-        "Are you sure you want to start a new chat? The current conversation will be removed from the screen.",
+        "The current conversation leaves the screen and cannot be restored. Save anything you need before continuing.",
       closeNewChatDialog: "Close new chat confirmation",
       cancelNewChat: "Cancel",
       startNewChat: "Start new chat",
@@ -2483,7 +2579,11 @@ export const translations = {
       messages: "Messages",
       decisionsCited: "Decisions cited",
       avgConfidence: "Avg confidence",
-      responding: "Abraxos is responding...",
+      responding: "Abraxos is consulting Velaris and building the answer…",
+      retrievalPhase1: "Scanning indexed components and patterns…",
+      retrievalPhase2: "Matching documented decisions to your question…",
+      retrievalPhase3: "Weighing evidence and confidence tier…",
+      retrievalPhase4: "Assembling a traceable, source-backed answer…",
     },
     assistant: {
       open: "Open Abraxos",
@@ -2496,13 +2596,15 @@ export const translations = {
       inputLabel: "Ask Abraxos about this section",
       inputPlaceholder: "Ask something about this section...",
       send: "Send question",
-      thinking: "Thinking...",
+      thinking: "Consulting Velaris…",
       openFullChat: "Open full chat",
       askAboutItem: "Ask Abraxos",
-      offlineCompact: "Abraxos is offline.",
+      offlineCompact: "Abraxos service unavailable.",
       retry: "Try again",
     },
     beatricePersona: {
+      activeIndicatorLabel: "Active persona",
+      activeIndicatorAria: "Active persona: {profile}, {role}",
       profileTrigger: "Abraxos Perspective",
       openProfileMenu: "Open {profile} perspective menu",
       closeProfileMenu: "Close {profile} perspective menu",
@@ -2579,7 +2681,7 @@ export const translations = {
         subtitle: "Recent Abraxos sessions",
         newConversation: "New conversation",
         empty: "No conversations recorded yet",
-        emptyBody: "Your first prompt will become a named session here.",
+        emptyBody: "Send Abraxos your first question. It becomes a named session here.",
         close: "Close history",
         rename: "Rename conversation",
         delete: "Delete conversation",
@@ -2665,15 +2767,34 @@ export const translations = {
     },
     perspectives: {
       hero: {
-        eyebrow: "Abraxos professional perspectives",
-        titlePrefix: "Choose a professional perspective of",
+        eyebrow: "Abraxos specialist gallery",
+        titlePrefix: "Who is analyzing with",
         titleEm: "Abraxos",
       },
       preamble: {
-        paragraph1:
-          "Abraxos professional perspective is a cognitive lens: a structured reasoning model that shapes which dimensions of the same evidence appear first, at what depth and with which vocabulary.",
-        paragraph2:
-          "The retrieved evidence does not change. The architecture does not change. What changes is the sequence, density and calibration of explanation. Selecting a lens configures the cognition of the system itself.",
+        concept:
+          "Each professional perspective works as a distinct specialist: someone with their own responsibilities, tools, focus, and boundaries.",
+        usageIn: "In",
+        usageChoose: ", you choose who analyzes. In",
+        usageUnderstand: ", you understand how that persona interprets evidence, uncertainty, and decisions.",
+      },
+      identity: {
+        cognitionCta: "View cognitive architecture",
+        detailEyebrow: "Professional profile",
+        analysisExample: "Analysis example",
+        limitations: "Limitations",
+        activeBadge: "active",
+      },
+      sections: {
+        navAria: "Perspectives sections",
+        identity: {
+          label: "Perspectives",
+          role: "Who is analyzing",
+        },
+        cognition: {
+          label: "Cognition",
+          role: "How it is thinking",
+        },
       },
       activeLens: {
         label: "Active perspective",
@@ -2682,10 +2803,10 @@ export const translations = {
         status: "Active professional perspective indicator",
       },
       selector: {
-        eyebrow: "Professional perspectives",
-        title: "Select a perspective",
+        eyebrow: "Available specialists",
+        title: "Select a persona",
         caption:
-          "Eight Abraxos professional perspectives, each with a distinct focus on the same evidence corpus. Pin a second perspective to compare divergence.",
+          "Eight Abraxos professional perspectives. Each brings a distinct identity to the same evidence corpus.",
         compare: "compare",
         pinned: "pinned",
         ariaLabel: "Available professional perspectives",
@@ -2722,7 +2843,7 @@ export const translations = {
         runLive: "Run live",
         stop: "Stop",
         waitingDelta: "waiting for first delta…",
-        empty: ":",
+        empty: "Run a live trial or pick an example to see this lens adapt its reasoning.",
         footnoteStatic:
           "Two lenses converge on Modal, one diverges to SideDrawer : for a reason that is itself an evidence type the engineering lens privileges (migration cost). The divergence is principled, not stylistic.",
         footnoteLive:
@@ -2734,8 +2855,8 @@ export const translations = {
           stopped: "stopped",
           error: "error",
         },
-        errorPrefix: "Backend error",
-        errorGeneric: "Trial request failed",
+        errorPrefix: "Could not complete the trial",
+        errorGeneric: "Check that the backend is running, then try again.",
       },
       hierarchy: {
         eyebrow: "Section ordering",
@@ -2820,7 +2941,7 @@ export const translations = {
         title: "Trial history",
         caption:
           "Your most recent live runs remain available per lens. Select a trial to reopen it in the preview.",
-        empty: "No saved trials for this lens yet.",
+        empty: "No saved trials for this lens. Run a live trial to build history here.",
         replay: "Reopen",
         delete: "Remove",
         clear: "Clear history",
@@ -2837,6 +2958,19 @@ export const translations = {
         a11y: "Accessibility Specialist",
         maintainer: "Maintainer",
         design_system_manager: "Design System Manager",
+      },
+    },
+    cognition: {
+      hero: {
+        eyebrow: "Abraxos cognitive architecture",
+        titlePrefix: "How",
+      },
+      changePersonaCta: "Change persona",
+      compare: {
+        eyebrow: "Lens divergence",
+        title: "Compare with another perspective",
+        caption:
+          "Pin a second lens to overlay calibration, signals and reasoning adaptation over the same evidence.",
       },
     },
     pages: {
@@ -3018,7 +3152,7 @@ export const translations = {
           intentPrefix: "intent:",
           evidenceSimilarityLabel: "Evidence similarity",
           evidenceSimilarityNote: "retrieval relevance, not answer confidence",
-          noSources: "No sources returned for this question : Abraxos will say so rather than fabricate them.",
+          noSources: "No sources returned. Abraxos will say so rather than fabricate references.",
         },
         generic: {
           name: "Generic LLM",
@@ -3048,7 +3182,7 @@ export const translations = {
           body: "Generic LLMs are optimized for broad language generation. Abraxos is optimized for contextual decision support inside a specific design system. His answer is constrained by retrieved documentation, source attribution, confidence calibration and UX-oriented reasoning.",
         },
         error: {
-          beatrice: "Abraxos is unavailable. Start the API server (uvicorn server:app --port 3333) and try again.",
+          beatrice: "Abraxos did not respond. Run npm start at the project root, then try again.",
         },
       },
       foundations: {
@@ -3056,15 +3190,16 @@ export const translations = {
         hero: {
           titleLead: "Contracts for an",
           titleAccent: "explainable system",
-          description: "Guidelines, accessibility, patterns and tokens turn Velaris intent into normative criteria, transversal quality and a consistent product language.",
+          description: "Guidelines, accessibility, patterns, tokens and evidence turn Velaris intent into normative criteria, knowledge validation and a consistent product language.",
         },
         navigationLabel: "Foundations sections",
-        loading: "Loading section",
+        loading: "Loading section content…",
         sections: {
           manifesto: { label: "Guidelines", role: "pillars and principles" },
           foundations: { label: "Accessibility", role: "transversal quality" },
           patterns: { label: "Patterns", role: "interaction logic" },
           tokens: { label: "Tokens", role: "design primitives" },
+          evidence: { label: "Evidence", role: "knowledge validation" },
         },
         manifesto: {
           resistsLabel: "resists",
@@ -3224,6 +3359,7 @@ export const translations = {
           rag: { label: "RAG Pipeline", role: "extract · index · serve" },
           integration: { label: "Integration", role: "code examples" },
           corpus: { label: "Corpus & Retrieval", role: "live diagnostics" },
+          "agent-runtime": { label: "Agent Runtime", role: "cognitive flow" },
         },
       },
       evaluation: {
@@ -3233,6 +3369,7 @@ export const translations = {
           instruments: { label: "Instruments & Targets", role: "metrics" },
           baseline: { label: "Baseline Comparison", role: "Abraxos vs generic LLM" },
           status: { label: "Status", role: "data collection" },
+          health: { label: "System Health", role: "reliability diagnostics" },
         },
         statuses: {
           scaffolded: "scaffolded",
@@ -3241,6 +3378,10 @@ export const translations = {
           pending: "pending",
         },
         pendingBanner: "{label}: target {target} : pending data collection.",
+        health: {
+          loadingTitle: "Loading system health",
+          loadingDescription: "Preparing reliability metrics and trend charts.",
+        },
         methodology: {
           overview: {
             eyebrow: "Methodology overview",

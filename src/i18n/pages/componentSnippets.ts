@@ -14,7 +14,7 @@ const replacements: Array<readonly [string, string, string]> = [
   ["Contexto da análise", "Contexto da análise", "Analysis context"],
   ["Data da revisão", "Data da revisão", "Review date"],
   ["Documentação Velaris", "Documentação Velaris", "Velaris documentation"],
-  ["Falha ao carregar", "Falha ao carregar", "Failed to load"],
+  ["Não foi possível carregar", "Não foi possível carregar", "Could not load"],
   ["Filtrar por status", "Filtrar por estado", "Filter by status"],
   ["Fonte recomendada", "Fonte recomendada", "Recommended source"],
   ["Gerenciar fontes", "Gerir fontes", "Manage sources"],

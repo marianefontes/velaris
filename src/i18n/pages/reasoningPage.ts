@@ -194,20 +194,20 @@ export function getReasoningPageContent(locale: Locale) {
       ),
       operational: t("Ação operacional", "Operational action"),
       operationalDescription: t(
-        "Comandos que orientam Abraxos a executar uma tarefa de produto ou design system, como documentar, migrar, capturar, aplicar contrato, gerar feedback ou avaliar impacto de tokens.",
-        "Commands that direct Abraxos to execute a product or design system task, such as documenting, migrating, capturing, applying contracts, generating feedback, or assessing token impact.",
-        "Comandos que orientam Abraxos a executar uma tarefa de produto ou design system, como documentar, migrar, capturar, aplicar contrato, gerar feedback ou avaliar impacto de tokens.",
+        "Comandos que orientam Abraxos a executar uma tarefa de produto ou design system, como validar, migrar, capturar, documentar, verificar contrato ou analisar impacto de tokens.",
+        "Commands that direct Abraxos to execute a product or design system task, such as validating, migrating, capturing, documenting, checking contracts, or assessing token impact.",
+        "Comandos que orientam Abraxos a executar uma tarefa de produto ou design system, como validar, migrar, capturar, documentar, verificar contrato ou analisar impacto de tokens.",
       ),
       investigative: t("Modo investigativo", "Investigative mode"),
       investigativeDescription: t(
-        "Comandos que orientam Abraxos a investigar, comparar, auditar ou recuperar contexto antes de recomendar, como memória, decisão, perspetivas, auditoria, lacuna de conhecimento, impacto de governança, princípios e adoção.",
-        "Commands that direct Abraxos to investigate, compare, audit, or recover context before recommending, such as memory, decision, perspectives, audit, knowledge gaps, governance impact, principles, and adoption.",
-        "Comandos que orientam Abraxos a investigar, comparar, auditar ou recuperar contexto antes de recomendar, como memória, decisão, perspetivas, auditoria, lacuna de conhecimento, impacto de governança, princípios e adoção.",
+        "Comandos que orientam Abraxos a investigar, comparar, auditar ou recuperar contexto antes de recomendar, como memória, decisão, perspetivas, auditoria, lacuna de conhecimento e simulação.",
+        "Commands that direct Abraxos to investigate, compare, audit, or recover context before recommending, such as memory, decision, perspectives, audit, knowledge gaps, and simulation.",
+        "Comandos que orientam Abraxos a investigar, comparar, auditar ou recuperar contexto antes de recomendar, como memória, decisão, perspetivas, auditoria, lacuna de conhecimento e simulação.",
       ),
       compatibilityLabel: t("Compatibilidade:", "Compatibility:"),
       compatibilityBody: t(
-        "os nomes canónicos longos continuam a funcionar. Os aliases antigos /history, /why, /score e /simulate também permanecem disponíveis como fallback.",
-        "long canonical names continue to work. The legacy aliases /history, /why, /score, and /simulate also remain available as fallback.",
+        "os nomes canónicos longos continuam a funcionar. Os aliases antigos /history, /why e /score também permanecem disponíveis como fallback.",
+        "long canonical names continue to work. The legacy aliases /history, /why, and /score also remain available as fallback.",
       ),
       howTitle: t("Como ativar um comando", "How to invoke a command"),
       howBody: t(
@@ -218,14 +218,57 @@ export function getReasoningPageContent(locale: Locale) {
         "Os comandos funcionam como atalhos explícitos de raciocínio ou ação. Ajudam quando pretende controlar o tipo de resposta que Abraxos deve produzir.",
         "Commands work as explicit shortcuts for reasoning or action. They help when you want to control the type of response Abraxos should produce.",
       ),
-      examples: [
-        '/enforce <Button color="red">Delete</Button>',
-        "/migrate LegacyDrawer -> Drawer",
-        t("/capture [cole uma discussão de PR ou decisão de produto]", "/capture [paste a PR discussion or product decision]"),
-        t("/memory O que já foi decidido sobre modais em ações destrutivas?", "/memory What has already been decided about modals in destructive actions?"),
-        t("/decision Por que usamos Toast em vez de Alert para feedback não bloqueante?", "/decision Why do we use Toast instead of Alert for non-blocking feedback?"),
-        t("/perspectives Compare esta decisão do ponto de vista de design, frontend e QA.", "/perspectives Compare this decision from design, frontend, and QA viewpoints."),
-        t("/audit Mostre as fontes, lacunas e nível de confiança desta recomendação.", "/audit Show the sources, gaps, and confidence level for this recommendation."),
+      operationalExamples: [
+        t(
+          '/enforce <Button intent="negative">Excluir análise</Button>',
+          '/enforce <Button intent="negative">Delete analysis</Button>',
+          '/enforce <Button intent="negative">Eliminar análise</Button>',
+        ),
+        t(
+          "/migrate notification → Toast/Notification",
+          "/migrate notification → Toast/Notification",
+        ),
+        t(
+          "/capture [cole discussão de PR sobre Form Field em fluxos multi-etapa]",
+          "/capture [paste a PR thread about Form Field in multi-step flows]",
+          "/capture [cole discussão de PR sobre Form Field em fluxos multi-etapa]",
+        ),
+        t(
+          "/document Confidence Badge",
+          "/document Confidence Badge",
+        ),
+      ],
+      investigativeExamples: [
+        t(
+          "/memory O que já foi decidido sobre Modal/Dialog em ações destrutivas?",
+          "/memory What has already been decided about Modal/Dialog for destructive actions?",
+          "/memory O que já foi decidido sobre Modal/Dialog em ações destrutivas?",
+        ),
+        t(
+          "/decision Por que usamos Toast em vez de Alert para confirmação de salvamento?",
+          "/decision Why do we use Toast instead of Alert for save confirmation?",
+          "/decision Porque usamos Toast em vez de Alert para confirmação de gravação?",
+        ),
+        t(
+          "/perspectives Tabs ou Card para organizar o catálogo? Compare design, frontend e QA.",
+          "/perspectives Tabs or Card to organize the catalog? Compare design, frontend, and QA.",
+          "/perspectives Tabs ou Card para organizar o catálogo? Compare design, frontend e QA.",
+        ),
+        t(
+          "/audit Audite fontes, lacunas e confiança desta recomendação de Confidence Badge.",
+          "/audit Audit sources, gaps, and confidence for this Confidence Badge recommendation.",
+          "/audit Audite fontes, lacunas e confiança desta recomendação de Confidence Badge.",
+        ),
+        t(
+          "/knowledge-gap o que falta documentar sobre acessibilidade em formulários?",
+          "/knowledge-gap what is missing about form accessibility?",
+          "/knowledge-gap o que falta documentar sobre acessibilidade em formulários?",
+        ),
+        t(
+          "/simulate trocar Alert por Toast em erros de Form Field",
+          "/simulate replace Alert with Toast for Form Field errors",
+          "/simulate trocar Alert por Toast em erros de Form Field",
+        ),
       ],
     },
     capability: {

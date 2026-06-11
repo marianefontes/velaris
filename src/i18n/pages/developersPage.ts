@@ -402,5 +402,181 @@ const current = readCalibration("a11y");
         limitations: t("Limitações", "Limitations"),
       },
     },
+    agentRuntime: {
+      flow: {
+        eyebrow: t("Fluxo cognitivo", "Cognitive flow", "Fluxo cognitivo"),
+        title: t("Como o Abraxos transforma evidência em raciocínio", "How Abraxos turns evidence into reasoning", "Como o Abraxos transforma evidência em raciocínio"),
+        caption: t(
+          "Cada resposta passa por uma sequência explícita de estágios. O fluxo não é decorativo — é o contrato cognitivo do agente.",
+          "Every answer passes through an explicit sequence of stages. The flow is not decorative — it is the agent's cognitive contract.",
+          "Cada resposta passa por uma sequência explícita de etapas. O fluxo não é decorativo — é o contrato cognitivo do agente.",
+        ),
+        steps: [
+          { label: t("Pergunta", "Question", "Pergunta"), detail: t("Entrada do usuário com contexto de perspectiva e modo de comando", "User input with perspective context and command mode", "Entrada do utilizador com contexto de perspetiva e modo de comando") },
+          { label: t("Detecção de intent", "Intent detection", "Detecção de intent"), detail: t("Classificação da intenção, entidades citadas e roteamento de workflow", "Intent classification, cited entities and workflow routing", "Classificação da intenção, entidades citadas e encaminhamento de workflow") },
+          { label: "Planner", detail: t("Montagem do plano de execução: ferramentas, estratégias e políticas aplicáveis", "Execution plan assembly: tools, strategies and applicable policies", "Montagem do plano de execução: ferramentas, estratégias e políticas aplicáveis") },
+          { label: t("Recuperação de evidência", "Evidence retrieval", "Recuperação de evidência"), detail: t("Busca no corpus oficial com filtro por intent e perspectiva ativa", "Search in the official corpus with intent and active perspective filter", "Pesquisa no corpus oficial com filtro por intent e perspetiva ativa") },
+          { label: t("Validação", "Validation", "Validação"), detail: t("Verificação de entidades, integridade de evidência e bloqueio anti-alucinação", "Entity verification, evidence integrity and anti-hallucination blocking", "Verificação de entidades, integridade de evidência e bloqueio anti-alucinação") },
+          { label: t("Camada de perspectiva", "Perspective layer", "Camada de perspetiva"), detail: t("Recalibração de prioridades, vocabulário e critérios de decisão pela lente ativa", "Recalibration of priorities, vocabulary and decision criteria by the active lens", "Recalibração de prioridades, vocabulário e critérios de decisão pela lente ativa") },
+          { label: t("Conselho do Oráculo", "Oracle Council", "Conselho do Oráculo"), detail: t("Deliberação multi-perspectiva quando o workflow exige análise de decisão ou consenso", "Multi-perspective deliberation when the workflow requires decision analysis or consensus", "Deliberação multi-perspetiva quando o workflow exige análise de decisão ou consenso") },
+          { label: t("Calibração de confiança", "Confidence calibration", "Calibração de confiança"), detail: t("Rótulo de confiança derivado da força da evidência — separado da similaridade de recuperação", "Confidence label derived from evidence strength — separate from retrieval similarity", "Rótulo de confiança derivado da força da evidência — separado da similaridade de recuperação") },
+          { label: t("Montagem da resposta", "Response assembly", "Montagem da resposta"), detail: t("Síntese final com atribuição de fontes, explicabilidade e limitações declaradas", "Final synthesis with source attribution, explainability and declared limitations", "Síntese final com atribuição de fontes, explicabilidade e limitações declaradas") },
+          { label: t("Resposta", "Response", "Resposta"), detail: t("Entrega ao usuário via streaming, com evento de fontes precedendo o texto", "Delivery to the user via streaming, with a sources event preceding the text", "Entrega ao utilizador via streaming, com evento de fontes precedendo o texto") },
+        ],
+      },
+      layers: {
+        eyebrow: t("Arquitetura interna", "Internal architecture", "Arquitetura interna"),
+        title: t("Camadas do agente", "Agent layers", "Camadas do agente"),
+        caption: t(
+          "Quatro camadas com responsabilidades distintas. Cada uma opera sobre a anterior sem colapsar recuperação, raciocínio e validação.",
+          "Four layers with distinct responsibilities. Each operates on the previous without collapsing retrieval, reasoning and validation.",
+          "Quatro camadas com responsabilidades distintas. Cada uma opera sobre a anterior sem colapsar recuperação, raciocínio e validação.",
+        ),
+        items: [
+          {
+            label: t("Knowledge Layer", "Knowledge Layer", "Knowledge Layer"),
+            responsibilities: [
+              t("Corpus oficial do Velaris", "Official Velaris corpus", "Corpus oficial do Velaris"),
+              t("Recuperação contextual por intent", "Intent-aware contextual retrieval", "Recuperação contextual por intent"),
+              t("Chunks indexados como evidência", "Chunks indexed as evidence", "Chunks indexados como evidência"),
+              t("Catálogo canônico de componentes e tokens", "Canonical component and token catalog", "Catálogo canónico de componentes e tokens"),
+            ],
+          },
+          {
+            label: t("Reasoning Layer", "Reasoning Layer", "Reasoning Layer"),
+            responsibilities: [
+              t("Classificação de intent e planejamento", "Intent classification and planning", "Classificação de intent e planeamento"),
+              t("Estratégias cognitivas automáticas", "Automatic cognitive strategies", "Estratégias cognitivas automáticas"),
+              t("Perspectivas profissionais e calibração", "Professional perspectives and calibration", "Perspetivas profissionais e calibração"),
+              t("Conselho multi-agente em análises de decisão", "Multi-agent council in decision analyses", "Conselho multi-agente em análises de decisão"),
+            ],
+          },
+          {
+            label: t("Validation Layer", "Validation Layer", "Validation Layer"),
+            responsibilities: [
+              t("Validação de entidades no catálogo", "Catalog entity validation", "Validação de entidades no catálogo"),
+              t("Integridade de evidência antes da entrega", "Evidence integrity before delivery", "Integridade de evidência antes da entrega"),
+              t("Calibração de confiança e bloqueio de alucinação", "Confidence calibration and hallucination blocking", "Calibração de confiança e bloqueio de alucinação"),
+              t("Gates de confiabilidade para novas capacidades", "Reliability gates for new capabilities", "Gates de confiabilidade para novas capacidades"),
+            ],
+          },
+          {
+            label: t("Response Layer", "Response Layer", "Response Layer"),
+            responsibilities: [
+              t("Síntese da resposta com contrato de formato", "Response synthesis with format contract", "Síntese da resposta com contrato de formato"),
+              t("Atribuição de fontes e explicabilidade", "Source attribution and explainability", "Atribuição de fontes e explicabilidade"),
+              t("Declaração de limitações e lacunas", "Limitation and gap declaration", "Declaração de limitações e lacunas"),
+              t("Apresentação calibrada à perspectiva ativa", "Presentation calibrated to the active perspective", "Apresentação calibrada à perspetiva ativa"),
+            ],
+          },
+        ],
+      },
+      capabilities: {
+        eyebrow: t("Capacidades cognitivas", "Cognitive capabilities", "Capacidades cognitivas"),
+        title: t("Motores e módulos de raciocínio", "Reasoning engines and modules", "Motores e módulos de raciocínio"),
+        caption: t(
+          "Capacidades especializadas acionadas por workflow ou comando explícito. Cada uma define entrada, processamento e saída sem expor implementação.",
+          "Specialized capabilities triggered by workflow or explicit command. Each defines input, processing and output without exposing implementation.",
+          "Capacidades especializadas acionadas por workflow ou comando explícito. Cada uma define entrada, processamento e saída sem expor implementação.",
+        ),
+        columns: {
+          name: t("Capacidade", "Capability", "Capacidade"),
+          input: t("Entrada", "Input", "Entrada"),
+          output: t("Saída", "Output", "Saída"),
+        },
+        rows: [
+          {
+            name: t("Governance Agent", "Governance Agent", "Governance Agent"),
+            input: t("Catálogo Velaris e alertas de governança pré-computados", "Velaris catalog and pre-computed governance alerts", "Catálogo Velaris e alertas de governança pré-computados"),
+            output: t("Scan de governança, alertas priorizados e plano de ação", "Governance scan, prioritized alerts and action plan", "Scan de governança, alertas priorizados e plano de ação"),
+          },
+          {
+            name: t("Simulation Engine", "Simulation Engine", "Simulation Engine"),
+            input: t("Proposta de mudança ou cenário hipotético", "Proposed change or hypothetical scenario", "Proposta de mudança ou cenário hipotético"),
+            output: t("Consequências previstas, cenários e efeitos de segunda ordem", "Predicted consequences, scenarios and second-order effects", "Consequências previstas, cenários e efeitos de segunda ordem"),
+          },
+          {
+            name: t("Oracle Council", "Oracle Council", "Oracle Council"),
+            input: t("Questão de decisão com evidência recuperada", "Decision question with retrieved evidence", "Questão de decisão com evidência recuperada"),
+            output: t("Posições por perspectiva, conflitos nomeados e recomendação final", "Positions per perspective, named conflicts and final recommendation", "Posições por perspetiva, conflitos nomeados e recomendação final"),
+          },
+          {
+            name: t("Organizational Memory", "Organizational Memory", "Organizational Memory"),
+            input: t("Consulta sobre histórico de decisões do sistema", "Query about the system's decision history", "Consulta sobre histórico de decisões do sistema"),
+            output: t("Decisões registradas (DEC), contexto e rationale documentado", "Recorded decisions (DEC), context and documented rationale", "Decisões registadas (DEC), contexto e rationale documentado"),
+          },
+          {
+            name: t("Decision Archaeology", "Decision Archaeology", "Decision Archaeology"),
+            input: t("Componente, padrão ou decisão específica", "Specific component, pattern or decision", "Componente, padrão ou decisão específica"),
+            output: t("Linha do tempo evolutiva e rationale histórico", "Evolutionary timeline and historical rationale", "Linha do tempo evolutiva e rationale histórico"),
+          },
+          {
+            name: t("Governance Impact", "Governance Impact", "Governance Impact"),
+            input: t("Mudança proposta no design system", "Proposed design system change", "Mudança proposta no design system"),
+            output: t("Impactos diretos e indiretos em documentação, adoção e testes", "Direct and indirect impacts on documentation, adoption and tests", "Impactos diretos e indiretos em documentação, adoção e testes"),
+          },
+          {
+            name: t("Principle Conflict", "Principle Conflict", "Principle Conflict"),
+            input: t("Proposta que tensiona princípios do Velaris", "Proposal that tensions Velaris principles", "Proposta que tensiona princípios do Velaris"),
+            output: t("Conflitos nomeados entre princípios e trade-offs explícitos", "Named conflicts between principles and explicit trade-offs", "Conflitos nomeados entre princípios e trade-offs explícitos"),
+          },
+          {
+            name: t("Knowledge Gap Detection", "Knowledge Gap Detection", "Knowledge Gap Detection"),
+            input: t("Consulta ou entidade com cobertura insuficiente", "Query or entity with insufficient coverage", "Consulta ou entidade com cobertura insuficiente"),
+            output: t("Lacunas documentadas: exemplos, edge cases, acessibilidade ou referências ausentes", "Documented gaps: missing examples, edge cases, accessibility or references", "Lacunas documentadas: exemplos, edge cases, acessibilidade ou referências ausentes"),
+          },
+        ],
+      },
+      ragVsAgent: {
+        eyebrow: t("De recuperação a agente", "From retrieval to agent", "De recuperação a agente"),
+        title: t("RAG recupera. O agente decide.", "RAG retrieves. The agent decides.", "RAG recupera. O agente decide."),
+        caption: t(
+          "A diferença não é volume de conteúdo — é a presença de planejamento, validação e governança entre a evidência e a resposta.",
+          "The difference is not content volume — it is the presence of planning, validation and governance between evidence and the answer.",
+          "A diferença não é volume de conteúdo — é a presença de planeamento, validação e governança entre a evidência e a resposta.",
+        ),
+        rag: {
+          label: "RAG",
+          body: t(
+            "Recupera conhecimento do corpus. Filtra por intent. Entrega chunks relevantes como contexto.",
+            "Retrieves knowledge from the corpus. Filters by intent. Delivers relevant chunks as context.",
+            "Recupera conhecimento do corpus. Filtra por intent. Entrega chunks relevantes como contexto.",
+          ),
+        },
+        agent: {
+          label: t("Agente cognitivo", "Cognitive agent", "Agente cognitivo"),
+          body: t(
+            "Recupera, interpreta, valida e decide. Aplica perspectiva, calibra confiança e monta uma resposta com contrato explícito.",
+            "Retrieves, interprets, validates and decides. Applies perspective, calibrates confidence and assembles a response with an explicit contract.",
+            "Recupera, interpreta, valida e decide. Aplica perspetiva, calibra confiança e monta uma resposta com contrato explícito.",
+          ),
+        },
+      },
+      contract: {
+        eyebrow: t("Contrato cognitivo", "Cognitive contract", "Contrato cognitivo"),
+        title: t("Por que o Abraxos é um agente cognitivo", "Why Abraxos is a cognitive agent", "Por que o Abraxos é um agente cognitivo"),
+        caption: t(
+          "Não é um mecanismo de busca com interface conversacional. Opera como agente porque possui capacidades explícitas de raciocínio, validação e incerteza.",
+          "Not a search mechanism with a conversational interface. It operates as an agent because it has explicit reasoning, validation and uncertainty capabilities.",
+          "Não é um mecanismo de busca com interface conversacional. Opera como agente porque possui capacidades explícitas de raciocínio, validação e incerteza.",
+        ),
+        reasons: [
+          t("Possui recuperação contextual orientada a intent", "Has intent-oriented contextual retrieval", "Possui recuperação contextual orientada a intent"),
+          t("Possui planejamento de execução por workflow", "Has workflow execution planning", "Possui planeamento de execução por workflow"),
+          t("Possui validação de entidades e integridade de evidência", "Has entity validation and evidence integrity", "Possui validação de entidades e integridade de evidência"),
+          t("Possui governança proativa do catálogo", "Has proactive catalog governance", "Possui governança proativa do catálogo"),
+          t("Possui raciocínio multi-perspectiva com síntese de consenso", "Has multi-perspective reasoning with consensus synthesis", "Possui raciocínio multi-perspetiva com síntese de consenso"),
+          t("Possui mecanismos explícitos de incerteza e admissão de desconhecimento", "Has explicit uncertainty mechanisms and admission of ignorance", "Possui mecanismos explícitos de incerteza e admissão de desconhecimento"),
+        ],
+      },
+      crossRef: {
+        title: t("Documentação relacionada", "Related documentation", "Documentação relacionada"),
+        links: [
+          { to: "/foundations?focus=evidence", label: t("Fundamentos · Evidências", "Foundations · Evidence", "Fundamentos · Evidências") },
+          { to: "/reasoning?focus=weaver", label: t("Raciocínio · Tecelã de Evidências", "Reasoning · Evidence Weaver", "Raciocínio · Tecelã de Evidências") },
+          { to: "/reasoning?focus=commands", label: t("Raciocínio · Comandos do Oráculo", "Reasoning · Oracle Commands", "Raciocínio · Comandos do Oráculo") },
+        ],
+      },
+    },
   };
 }
