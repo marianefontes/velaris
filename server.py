@@ -193,6 +193,16 @@ def _evidence_metrics_block(route, chunks: list[dict]) -> str:
     return build_evidence_metrics_block(metrics)
 
 
+def _governance_alerts_block(route) -> str:
+    """Inject pre-computed governance alerts for the Governance Agent engine."""
+    engine = resolve_engine(route.active_command_mode)
+    if engine is None or not engine.needs_governance_alerts:
+        return ""
+    from agent.governance_agent import build_governance_alerts_block
+
+    return build_governance_alerts_block()
+
+
 def _build_groq_messages(
     messages: list[dict],
     query: str,
@@ -226,8 +236,11 @@ def _build_groq_messages(
         agent_context=agent_context,
         calibration_override=calibration_override,
         evidence_metrics_block=_evidence_metrics_block(route, chunks),
+        governance_alerts_block=_governance_alerts_block(route),
         perspective_evidence_block=build_perspective_evidence_block(chunks),
         surface_context_block=build_surface_context_block(surface_context),
+        decision_analysis_mode=route.understanding.decision_analysis_mode,
+        architect_review_mode=route.understanding.architect_review_mode,
     )
     system_content = build_system_prompt(prompt_context)
     return [{"role": "system", "content": system_content}] + messages
@@ -596,12 +609,12 @@ async def lifespan(app: FastAPI):
                 _rag_ready = True
                 print("✅ BGE-M3 carregado: retrieval vetorial ativo")
 
-                # Bootstrap disabled: using pre-indexed rag/chroma_db committed to git.
-                # If needed, re-enable by uncommenting:
-                # if _collection.count() == 0 and corpus_available():
-                #     print("📚 Coleção vazia: reconstruindo índice a partir do corpus versionado...")
-                #     indexed = bootstrap_collection(_collection, _embedder)
-                #     print(f"✅ Bootstrap concluído: {indexed} chunks indexados ({_collection.count()} no total)")
+                # Production deploys: skip RAG bootstrap via AETHERIS_SKIP_RAG_STARTUP=1
+                # to keep memory usage under 512MB free tier limit.
+                if _collection.count() == 0 and corpus_available():
+                    print("📚 Coleção vazia: reconstruindo índice a partir do corpus versionado...")
+                    indexed = bootstrap_collection(_collection, _embedder)
+                    print(f"✅ Bootstrap concluído: {indexed} chunks indexados ({_collection.count()} no total)")
             except ImportError:
                 _embedder = None
                 _rag_ready = False
@@ -788,6 +801,45 @@ def perspectives_health():
             + "; ".join(warning["code"] for warning in payload["warnings"])
         )
     return payload
+
+
+@app.get("/api/knowledge/health/dashboard")
+def knowledge_health_dashboard(x_research_key: str | None = Header(default=None)):
+    _require_research_admin(x_research_key)
+    from agent.knowledge_health import build_knowledge_health_dashboard
+
+    return build_knowledge_health_dashboard(_collection)
+
+
+@app.get("/api/governance/alerts")
+def governance_alerts():
+    from agent.governance_agent import build_governance_alerts
+
+    return build_governance_alerts()
+
+
+@app.get("/api/intelligence/lab/cases")
+def intelligence_lab_cases(x_research_key: str | None = Header(default=None)):
+    _require_research_admin(x_research_key)
+    from agent.intelligence_lab import list_adversarial_cases
+
+    return {"cases": list_adversarial_cases()}
+
+
+@app.post("/api/intelligence/lab/run")
+def run_intelligence_lab_suite(x_research_key: str | None = Header(default=None)):
+    _require_research_admin(x_research_key)
+    from agent.intelligence_lab import run_adversarial_suite
+
+    return run_adversarial_suite()
+
+
+@app.get("/api/intelligence/reliability-gates")
+def intelligence_reliability_gates(x_research_key: str | None = Header(default=None)):
+    _require_research_admin(x_research_key)
+    from agent.reliability_gates import run_reliability_gates
+
+    return run_reliability_gates(_collection)
 
 
 class CreateResearchInvitePayload(BaseModel):
@@ -1499,7 +1551,9 @@ async def chat(payload: AgentChatRequest) -> StreamingResponse:
             agent_context.plan.workflow in {
                 "component_decision",
                 "token_lookup",
+                "decision_analysis",
             }
+            or agent_context.decision_intelligence_active()
         )
         async with httpx.AsyncClient(timeout=60.0) as client:
             try:
