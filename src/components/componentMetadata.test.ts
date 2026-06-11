@@ -13,10 +13,14 @@ describe("component metadata catalog", () => {
     expect(ids).toHaveLength(legacySnapshot.component_count);
   });
 
-  it("distinguishes undocumented fields from reviewed empty lists", () => {
+  it("distinguishes legacy nullable fields from structured reviewed lists", () => {
+    const button = COMPONENT_METADATA.find((component) => component.component_id === "button");
+    expect(button?.intent).toBeNull();
+    expect(button?.intents?.length).toBeGreaterThan(0);
+
     const modal = COMPONENT_METADATA.find((component) => component.component_id === "modal-dialog");
-    expect(modal?.edge_cases).toBeNull();
-    expect(modal?.examples).toEqual([]);
+    expect(modal?.edge_cases?.length).toBeGreaterThan(0);
+    expect(modal?.examples?.length).toBeGreaterThan(0);
   });
 
   it("rejects unsupported status values", () => {

@@ -26,14 +26,16 @@ class ComponentMetadataTests(unittest.TestCase):
         self.assertEqual(len(canonical_ids), snapshot["component_count"])
 
     def test_null_and_empty_list_have_distinct_meanings(self) -> None:
-        catalog = load_component_catalog()
-        modal = next(
-            component
-            for component in catalog.components
-            if component.component_id == "modal-dialog"
-        )
-        self.assertIsNone(modal.edge_cases)
-        self.assertEqual(modal.examples, [])
+        # The schema must preserve the distinction between an undocumented
+        # field (None) and a documented-but-empty field ([]). Assert it
+        # structurally instead of pinning specific catalog rows, so catalog
+        # documentation growth does not break the schema contract.
+        payload = json.loads(DEFAULT_CATALOG_PATH.read_text(encoding="utf-8"))
+        payload["components"][0]["edge_cases"] = None
+        payload["components"][0]["examples"] = []
+        parsed = ComponentCatalog.model_validate(payload)
+        self.assertIsNone(parsed.components[0].edge_cases)
+        self.assertEqual(parsed.components[0].examples, [])
 
     def test_rule_ids_are_stable_and_globally_unique(self) -> None:
         catalog = load_component_catalog()
