@@ -45,13 +45,49 @@ INTENT_FILTER: dict[str, list[str]] = {
         "foundation",
         "token",
         "token_alias",
+        "accessibility",
     ],
     "design_decision": ["design_decision"],
     "when_not_to_use": ["component", "guideline", "xai_component"],
     "xai_explanation": ["xai_component", "foundation", "reasoning"],
     "new_product_scaffolding": ["pattern", "component", "xai_component", "guideline", "dev_integration"],
     "comparison_query": [],
-    "general": [],
+    "system_health": [
+        "system_health",
+        "oracle_command",
+        "automatic_skill",
+        "engine_contract",
+        "foundation",
+        "reasoning",
+    ],
+    "governance_analysis": [
+        "governance",
+        "oracle_command",
+        "engine_contract",
+        "design_decision",
+    ],
+    "simulation": [
+        "design_decision",
+        "oracle_command",
+        "engine_contract",
+        "component",
+    ],
+    "multi_agent_reasoning": [
+        "perspective",
+        "cognition",
+        "oracle_command",
+        "engine_contract",
+        "reasoning",
+    ],
+    "general": [
+        "foundation",
+        "guideline",
+        "oracle_command",
+        "automatic_skill",
+        "engine_contract",
+        "perspective",
+        "cognition",
+    ],
 }
 
 INTENT_KEYWORDS: dict[str, list[str]] = {
@@ -105,9 +141,11 @@ COMMAND_INTENT_OVERRIDE: dict[str, str] = {
     "contract-check": "component_guidance",
 }
 
-COMMAND_ALIASES: dict[str, str] = {
-    "learn": "feedback-review",
-}
+# Legacy slash aliases that resolve to hidden engines or operational prompts.
+COMMAND_ALIASES: dict[str, str] = {}
+
+# /learn no longer maps to a public command. Intent triggered skills handle it.
+LEGACY_AUTO_SKILL_COMMANDS: frozenset[str] = frozenset({"learn"})
 
 
 @dataclass(frozen=True)
@@ -144,6 +182,9 @@ def classify_intent(query: str) -> str:
         "semantic_navigation_query": "general",
         "perspective_lookup": "general",
         "entity_lookup": "general",
+        "unsupported_entity_lookup": "general",
+        "unsupported_entity_recommendation": "general",
+        "unknown_entity_lookup": "general",
         "direct_entity_guidance": "general",
         "concept_query": "general",
         "legacy_name_query": "general",
@@ -158,6 +199,11 @@ def classify_intent(query: str) -> str:
         "language_followup": "general",
         "help_request": "general",
         "general_design_system": "general",
+        "system_health": "system_health",
+        "agent_identity": "general",
+        "governance_analysis": "governance_analysis",
+        "simulation": "simulation",
+        "multi_agent_reasoning": "multi_agent_reasoning",
         "out_of_scope": "general",
     }
     intent = mapped[understanding.user_intent]
@@ -200,13 +246,22 @@ def route_query(query: str, profile: str = "general", command_mode: str | None =
         else None
     )
     requested_command_mode = command_mode or legacy_command_mode
-    active_command_mode = COMMAND_ALIASES.get(requested_command_mode, requested_command_mode)
+    if requested_command_mode in LEGACY_AUTO_SKILL_COMMANDS:
+        requested_command_mode = None
+    active_command_mode = COMMAND_ALIASES.get(requested_command_mode, requested_command_mode) if requested_command_mode else None
     persona_profile = "general" if legacy_command_mode else profile
 
     # Oracle Engines take priority over catalog/intent detection: when the user
     # selects an engine, its retrieval intent and depth govern the request.
     engine = resolve_engine(active_command_mode)
     if engine is not None:
+        if engine.id == "simulate":
+            understanding = understanding.model_copy(
+                update={
+                    "decision_analysis_mode": True,
+                    "architect_review_mode": True,
+                }
+            )
         return RoutingResult(
             retrieval_intent=engine.retrieval_intent,
             response_intent=engine.retrieval_intent,
@@ -254,6 +309,10 @@ def route_query(query: str, profile: str = "general", command_mode: str | None =
         "design_decision": 5,
         "xai_explanation": 5,
         "when_not_to_use": 5,
+        "system_health": 8,
+        "governance_analysis": 7,
+        "simulation": 8,
+        "multi_agent_reasoning": 8,
     }.get(intent, 4)
     return RoutingResult(
         retrieval_intent=intent,

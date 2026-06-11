@@ -77,10 +77,14 @@ class PromptBuildContext:
     # Computed retrieval evidence metrics block, injected for XAI engines
     # (explainability-audit, knowledge-gap) so scores are grounded, not invented.
     evidence_metrics_block: str = ""
+    # Pre-computed governance alerts for the Governance Agent engine.
+    governance_alerts_block: str = ""
     # Exact source similarity and tier values for specialized perspective
     # contracts. This is retrieval relevance, not answer confidence.
     perspective_evidence_block: str = ""
     surface_context_block: str = ""
+    decision_analysis_mode: bool = False
+    architect_review_mode: bool = False
 
 
 def build_intent_prompt(intent: str) -> str:
@@ -180,12 +184,22 @@ def build_system_prompt(context: PromptBuildContext) -> str:
             catalog_mode=context.catalog_mode,
             command_mode=context.command_mode,
         ),
+        (
+            ""
+            if context.command_mode == "simulate"
+            else load_prompt("responses/strategicReasoningResponse.md")
+            if context.architect_review_mode
+            else load_prompt("responses/multiAgentCouncilResponse.md")
+            if context.decision_analysis_mode
+            else ""
+        ),
         build_cognitive_profile_prompt(
             context.profile,
             command_mode=context.command_mode,
             calibration_override=context.calibration_override,
         ),
         context.evidence_metrics_block,
+        context.governance_alerts_block,
         context.dialogue_context,
         context.agent_context,
         context.rag_context,

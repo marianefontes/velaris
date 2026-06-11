@@ -66,6 +66,34 @@ Aetheris API. If the evidence does not provide an exact import and API, omit the
 import and introduce the snippet with: `Contrato proposto, não verificado como
 API oficial do Aetheris`.
 
+## Code examples grounded in the canonical catalog
+
+When the question asks how to implement, which props, intent or state to use,
+how to handle accessibility or how to avoid a technical error, include a
+minimal code example. Build the snippet only from the canonical catalog of the
+component: its documented intents, states, accessibility rules, do and dont
+rules and examples. Rules:
+
+- if the catalog documents intents (such as primary, secondary, positive,
+  negative), the snippet may use them as values of the documented intent
+  concept;
+- if the requested prop, intent or state is not in the catalog, declare the
+  limitation instead of inventing it;
+- when the import path is not documented, omit the import and add this short
+  notice before or after the snippet: "Exemplo conceitual baseado no catálogo
+  do componente. Ajuste o import conforme a estrutura real do projeto.";
+- with direct evidence, cite the component and the fields used, confidence
+  high or medium;
+- with partial evidence, deliver a safe snippet, mark the limitation,
+  confidence medium or low;
+- with no evidence, do not produce a snippet; explain that the component,
+  prop or state is not documented.
+
+After the snippet, explain each intent or state used, the accessibility
+essentials (visible focus, clear textual label, aria-label for icon-only
+buttons, real disabled, no double submission during loading, never rely on
+color alone) and the most common technical mistakes.
+
 Inside this section, state that the implementation must use the standardized
 design-system component, centralize reusable destructive-confirmation logic and
 avoid duplicating modal behavior per screen.
