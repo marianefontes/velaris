@@ -70,6 +70,12 @@ from prompts.prompt_builder import (
     build_system_prompt,
 )
 from rag.bootstrap import bootstrap_collection, corpus_available
+from rag.embedding_provider import (
+    create_embedding_provider,
+    dense_vectors,
+    embedder_label,
+    embedding_mode,
+)
 from rag.context_builder import (
     build_dialogue_context,
     build_perspective_evidence_block,
@@ -131,6 +137,8 @@ _chroma: chromadb.ClientAPI | None = None
 _collection: chromadb.Collection | None = None
 _embedder = None
 _rag_ready = False
+_embedding_mode = "local"
+_bootstrap_running = False
 _laboratory_runner: LaboratoryRunner | None = None
 _laboratory_automation: LaboratoryAutomation | None = None
 
@@ -384,7 +392,7 @@ def _rule_similarity_scorer(query: str, texts: list[str]) -> list[float]:
         return_sparse=False,
         return_colbert_vecs=False,
     )
-    vectors = result["dense_vecs"]
+    vectors = dense_vectors(result)
     query_vector = vectors[0]
     query_norm = math.sqrt(sum(float(value) ** 2 for value in query_vector))
     scores: list[float] = []
@@ -603,9 +611,30 @@ async def _generate_laboratory_answer(item: dict) -> dict:
     }
 
 
+async def _bootstrap_corpus_background() -> None:
+    global _bootstrap_running
+    if _collection is None or _embedder is None:
+        return
+    _bootstrap_running = True
+    try:
+        indexed = await asyncio.to_thread(bootstrap_collection, _collection, _embedder)
+        total = _collection.count()
+        print(
+            f"✅ Bootstrap concluído: {indexed} chunks indexados ({total} no total)"
+        )
+    except Exception as error:
+        print(
+            f"⚠️  Falha no bootstrap do corpus "
+            f"({type(error).__name__}): {error}"
+        )
+    finally:
+        _bootstrap_running = False
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global _chroma, _collection, _embedder, _rag_ready
+    global _embedding_mode, _bootstrap_running
     global _laboratory_runner, _laboratory_automation
 
     study_store.initialize()
@@ -646,31 +675,45 @@ async def lifespan(app: FastAPI):
             )
             print(f"✅ ChromaDB: {_collection.count()} chunks indexados")
 
-            print("🧠 Carregando BAAI/bge-m3 (pode levar ~30s na primeira vez)...")
+            _embedding_mode = embedding_mode()
             try:
-                from FlagEmbedding import BGEM3FlagModel
-
-                use_fp16 = os.environ.get("AETHERIS_EMBEDDER_FP16", "0") == "1"
-                _embedder = BGEM3FlagModel("BAAI/bge-m3", use_fp16=use_fp16)
+                if _embedding_mode == "api":
+                    print("🔗 Modo de embeddings: Hugging Face Inference API")
+                else:
+                    print("🧠 Modo de embeddings: BGE-M3 local (FlagEmbedding)...")
+                _embedder = create_embedding_provider()
                 _rag_ready = True
-                print("✅ BGE-M3 carregado: retrieval vetorial ativo")
+                print(f"✅ Embedding provider pronto ({embedder_label(_embedder)})")
 
                 if _collection.count() == 0 and corpus_available():
-                    print("📚 Coleção vazia: reconstruindo índice a partir do corpus versionado...")
-                    indexed = bootstrap_collection(_collection, _embedder)
-                    print(f"✅ Bootstrap concluído: {indexed} chunks indexados ({_collection.count()} no total)")
+                    if _embedding_mode == "api":
+                        print(
+                            "📚 Bootstrap do corpus via API em background "
+                            "(o servidor abre enquanto indexa)..."
+                        )
+                        asyncio.create_task(_bootstrap_corpus_background())
+                    else:
+                        print(
+                            "📚 Coleção vazia: reconstruindo índice a partir "
+                            "do corpus versionado..."
+                        )
+                        indexed = bootstrap_collection(_collection, _embedder)
+                        print(
+                            f"✅ Bootstrap concluído: {indexed} chunks indexados "
+                            f"({_collection.count()} no total)"
+                        )
             except ImportError:
                 _embedder = None
                 _rag_ready = False
-                print("⚠️  FlagEmbedding não instalado: RAG desativado (pip install FlagEmbedding)")
+                print(
+                    "⚠️  FlagEmbedding não instalado: use AETHERIS_EMBEDDING_MODE=api "
+                    "ou pip install FlagEmbedding"
+                )
             except Exception as error:
-                # Model download failure, torch/device errors, corrupted cache:
-                # degrade to catalog-only mode instead of crashing the server
-                # or leaving _rag_ready inconsistent.
                 _embedder = None
                 _rag_ready = False
                 print(
-                    "⚠️  Falha ao carregar BGE-M3 "
+                    "⚠️  Falha ao inicializar embeddings "
                     f"({type(error).__name__}): {error}. "
                     "RAG desativado; respostas usarão o catálogo canônico."
                 )
@@ -746,7 +789,9 @@ def _health_payload() -> dict:
         "laboratory_model": LABORATORY_MODEL,
         "corpus_chunks": count,
         "rag_active": _rag_ready and count > 0,
-        "embedder": "BAAI/bge-m3" if _rag_ready else "none",
+        "embedder": embedder_label(_embedder) if _rag_ready else "none",
+        "embedding_mode": _embedding_mode,
+        "corpus_bootstrap_running": _bootstrap_running,
         "catalog_loaded": catalog_loaded,
         "total_components": total_components,
         "vector_collection_loaded": collection_loaded,

@@ -17,6 +17,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from rag.embedding_provider import dense_vectors
+
 RAG_DIR = Path(__file__).parent
 DUMP_PATH = RAG_DIR / "aetheris-docs-dump.json"
 
@@ -76,7 +78,7 @@ def bootstrap_collection(collection: Any, embedder: Any) -> int:
             return_sparse=False,
             return_colbert_vecs=False,
         )
-        embeddings.extend(result["dense_vecs"].tolist())
+        embeddings.extend(dense_vectors(result))
 
     for start in range(0, len(ids), _UPSERT_BATCH):
         end = start + _UPSERT_BATCH

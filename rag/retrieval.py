@@ -27,6 +27,8 @@ signal layer; the static weight is the structural prior.
 import os
 from typing import Any
 
+from rag.embedding_provider import dense_vectors
+
 from component_metadata import component_metadata, component_to_json
 
 from prompts.cognitive_profiles import COGNITIVE_PROFILES
@@ -202,12 +204,14 @@ def _enrich_component_chunk(chunk: dict[str, Any]) -> dict[str, Any]:
 
 
 def _query_embedder(embedder: Any, query: str) -> list[float]:
-    return embedder.encode(
+    result = embedder.encode(
         [query],
         return_dense=True,
         return_sparse=False,
         return_colbert_vecs=False,
-    )["dense_vecs"][0].tolist()
+    )
+    vectors = dense_vectors(result)
+    return vectors[0] if vectors else []
 
 
 def retrieve_chunks(
