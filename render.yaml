@@ -15,10 +15,12 @@ services:
   - type: web
     name: beatrice-chat-server
     runtime: python
-    plan: starter
+    # BGE-M3 + ChromaDB need >512MB RAM; Standard (2GB) is the minimum viable plan.
+    plan: standard
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /api/health
+    maxShutdownDelaySeconds: 120
     autoDeploy: true
     envVars:
       - key: GROQ_API_KEY
@@ -29,10 +31,6 @@ services:
       # (e.g. https://aetheris-app.onrender.com) to lock it down later.
       - key: ALLOWED_ORIGINS
         value: "*"
-      # Skip RAG startup to keep memory under 512MB free tier limit.
-      # Backend runs in catalog-only mode without vector search.
-      - key: AETHERIS_SKIP_RAG_STARTUP
-        value: "1"
       # Persist the vector index and the BGE-M3 download on the mounted disk so
       # the corpus bootstrap and model download happen once, not per restart.
       - key: CHROMA_DB_PATH
