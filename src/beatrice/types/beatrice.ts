@@ -124,7 +124,7 @@ export interface ResponseAuditMetadata {
   workflow?: string;
   user_intent?: string;
   answer_strategy?: string;
-  language?: "pt-BR" | "pt-PT" | "en" | "unknown";
+  language?: "pt-BR" | "pt-PT" | "en" | "es" | "fr" | "ar" | "other" | "unknown";
   entities?: {
     components: string[];
     patterns: string[];

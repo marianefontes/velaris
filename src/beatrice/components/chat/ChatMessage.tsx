@@ -6,6 +6,8 @@ import {
   FileSearch,
   FileText,
   RefreshCw,
+  ThumbsDown,
+  ThumbsUp,
   XCircle,
 } from "lucide-react";
 import { AbraxosMark } from "../assistant/AbraxosMark";
@@ -169,6 +171,8 @@ function ChatMessageComponent({
   onOpenAudit,
   onRetry,
   onUpdateDecision,
+  onFeedback,
+  feedbackRating,
   decisionUpdating = false,
   evidenceLabel,
   viewAllLabel,
@@ -182,6 +186,8 @@ function ChatMessageComponent({
     decisionId: string,
     status: Exclude<DecisionRecordStatus, "draft">,
   ) => Promise<void>;
+  onFeedback?: (rating: "up" | "down") => void;
+  feedbackRating?: "up" | "down";
   decisionUpdating?: boolean;
   evidenceLabel: string;
   viewAllLabel: string;
@@ -359,6 +365,39 @@ function ChatMessageComponent({
               <Clipboard aria-hidden="true" className="h-4 w-4" />
               {t("chat.copy")}
             </button>
+            {onFeedback && (
+              <>
+                <button
+                  type="button"
+                  disabled={!!feedbackRating}
+                  aria-label={t("chat.helpful")}
+                  aria-pressed={feedbackRating === "up"}
+                  onClick={() => onFeedback("up")}
+                  className={`focus-ring flex min-h-11 items-center gap-2 rounded-lg px-3 transition-colors disabled:cursor-default ${
+                    feedbackRating === "up"
+                      ? "text-success"
+                      : "hover:bg-white/[0.035] hover:text-success disabled:opacity-40"
+                  }`}
+                >
+                  <ThumbsUp aria-hidden="true" className="h-4 w-4" />
+                  {!feedbackRating && <span className="sr-only sm:not-sr-only">{t("chat.helpful")}</span>}
+                </button>
+                <button
+                  type="button"
+                  disabled={!!feedbackRating}
+                  aria-label={t("chat.notHelpful")}
+                  aria-pressed={feedbackRating === "down"}
+                  onClick={() => onFeedback("down")}
+                  className={`focus-ring flex min-h-11 items-center gap-2 rounded-lg px-3 transition-colors disabled:cursor-default ${
+                    feedbackRating === "down"
+                      ? "text-red-400"
+                      : "hover:bg-white/[0.035] hover:text-red-400 disabled:opacity-40"
+                  }`}
+                >
+                  <ThumbsDown aria-hidden="true" className="h-4 w-4" />
+                </button>
+              </>
+            )}
             {message.auditMetadata && onOpenAudit && (
               <button type="button" onClick={onOpenAudit} className="focus-ring flex min-h-11 items-center gap-2 rounded-lg px-3 transition-colors hover:bg-white/[0.035] hover:text-primary">
                 <FileSearch aria-hidden="true" className="h-4 w-4" />

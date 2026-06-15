@@ -196,6 +196,10 @@ export const translations = {
       grounded:
         "Abraxos responde com evidências do Velaris: tokens, padrões, decisões documentadas e fontes rastreáveis.",
       helpful: "Útil",
+      notHelpful: "Não útil",
+      feedbackReason: "O que faltou? (opcional)",
+      feedbackSend: "Enviar",
+      feedbackThanks: "Feedback registrado",
       copy: "Copiar",
       viewDecision: "Ver decisão",
       skillsUsed: "Skills usadas",
@@ -1382,6 +1386,10 @@ export const translations = {
       grounded:
         "Abraxos responde com evidências do Velaris: tokens, padrões, decisões documentadas e fontes rastreáveis.",
       helpful: "Útil",
+      notHelpful: "Não útil",
+      feedbackReason: "O que faltou? (opcional)",
+      feedbackSend: "Enviar",
+      feedbackThanks: "Feedback registado",
       copy: "Copiar",
       viewDecision: "Ver decisão",
       skillsUsed: "Skills utilizadas",
@@ -2568,6 +2576,10 @@ export const translations = {
       grounded:
         "Abraxos answers with Velaris evidence: tokens, patterns, documented decisions, and traceable sources.",
       helpful: "Helpful",
+      notHelpful: "Not helpful",
+      feedbackReason: "What was missing? (optional)",
+      feedbackSend: "Send",
+      feedbackThanks: "Feedback recorded",
       copy: "Copy",
       viewDecision: "View decision",
       skillsUsed: "Skills used",

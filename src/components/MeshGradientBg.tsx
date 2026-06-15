@@ -1,4 +1,4 @@
-// MeshGradientBg — isolated ambient background layer for /main.
+// MeshGradientBg: isolated ambient background layer for /main.
 // Pure CSS keyframes, zero external deps.
 // STRICTLY isolated from Framer Motion (design-taste-frontend constraint).
 // All animation via transform-only @keyframes defined in index.css.

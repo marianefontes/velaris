@@ -2418,13 +2418,9 @@ body {
   }
 }
 
-/* ─── VelarisLibraryMap v2 — station cards ──────────────────────────────── */
+/* ─── VelarisLibraryMap v3 — S-curve journey ────────────────────────────── */
 
-/*
- * Station container: sized to the node (44×44) and centered exactly on the
- * waypoint. The card is absolutely positioned OUTSIDE the 44px box so it
- * never shifts the node off-center.
- */
+/* Station container: 44×44, centered on waypoint, card overflows outside */
 .vlm-station {
   position: absolute;
   z-index: 2;
@@ -2438,7 +2434,6 @@ body {
   overflow: visible;
 }
 
-/* Node: the 42×42 circle at each waypoint */
 .vlm-node {
   position: relative;
   display: flex;
@@ -2449,7 +2444,6 @@ body {
   flex-shrink: 0;
 }
 
-/* Outer ambient halo */
 .vlm-node-halo {
   position: absolute;
   inset: -6px;
@@ -2465,7 +2459,6 @@ body {
   opacity: 1;
 }
 
-/* Outer ring */
 .vlm-node-ring {
   position: absolute;
   inset: 0;
@@ -2481,7 +2474,6 @@ body {
   box-shadow: 0 0 0 3px rgba(var(--sr), 0.1), 0 0 18px rgba(var(--sr), 0.18);
 }
 
-/* Inner filled circle */
 .vlm-node-fill {
   position: relative;
   z-index: 1;
@@ -2502,7 +2494,6 @@ body {
   border-color: rgba(var(--sr), 0.48);
 }
 
-/* Icon inside the node */
 .vlm-node-icon {
   width: 12px;
   height: 12px;
@@ -2515,7 +2506,6 @@ body {
   opacity: 1;
 }
 
-/* Number badge (01, 02…) */
 .vlm-node-num {
   position: absolute;
   top: -5px;
@@ -2533,13 +2523,12 @@ body {
   pointer-events: none;
 }
 
-/* Cards — hidden on small screens; absolutely positioned at ≥960px */
+/* Cards: hidden on mobile; appear above/below station at ≥960px */
 .vlm-card {
   display: none;
   position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 170px;
+  left: 50%;
+  width: 165px;
   border-radius: 11px;
   border: 1px solid rgba(var(--sr), 0.15);
   background: rgba(9, 9, 13, 0.82);
@@ -2616,14 +2605,70 @@ body {
   pointer-events: none;
 }
 
-/* Legend bar */
+/* "Como ler o mapa" instructional panel */
+.vlm-how-to-read {
+  display: none;
+  position: absolute;
+  top: 3.5%;
+  right: 1%;
+  z-index: 3;
+  width: 186px;
+  border-radius: 10px;
+  border: 1px solid rgba(222, 204, 253, 0.11);
+  background: rgba(9, 9, 13, 0.76);
+  backdrop-filter: blur(16px);
+  padding: 10px 12px 11px;
+  pointer-events: none;
+}
+
+.vlm-how-to-read-title {
+  margin: 0 0 8px;
+  font-size: 6.5px;
+  font-weight: 720;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(222, 204, 253, 0.32);
+}
+
+.vlm-how-to-read-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.vlm-how-to-read-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 8px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.44);
+}
+
+.vlm-how-to-read-icon {
+  width: 9px;
+  height: 9px;
+  flex-shrink: 0;
+  margin-top: 1.5px;
+  color: rgba(222, 204, 253, 0.48);
+  stroke-width: 1.5px;
+}
+
+/* ── Elaborate legend timeline ───────────────────────────────────────────── */
+
 .vlm-legend {
   display: flex;
   align-items: center;
   gap: 0;
-  margin-top: 0.75rem;
+  margin-top: 1rem;
+  padding: 0.875rem 1.125rem;
+  border-radius: 12px;
+  border: 1px solid rgba(222, 204, 253, 0.07);
+  background: rgba(222, 204, 253, 0.022);
   overflow-x: auto;
-  padding-bottom: 0.125rem;
   scrollbar-width: none;
 }
 
@@ -2631,38 +2676,166 @@ body {
   display: none;
 }
 
-.vlm-legend-cap {
+/* Thin connector between terminus and stop items */
+.vlm-legend-rail {
+  flex-shrink: 0;
+  width: 20px;
+  height: 1px;
+  background: rgba(194, 160, 252, 0.16);
+  position: relative;
+}
+
+.vlm-legend-rail::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(194, 160, 252, 0.25);
+}
+
+/* Journey start / end terminus */
+.vlm-legend-terminus {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 9px;
   flex-shrink: 0;
-  padding: 0 0.75rem 0 0.25rem;
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
+}
+
+.vlm-legend-terminus-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: rgba(222, 204, 253, 0.07);
+  border: 1px solid rgba(222, 204, 253, 0.18);
+  color: rgba(222, 204, 253, 0.62);
+}
+
+.vlm-legend-terminus-icon--end {
+  background: rgba(255, 166, 87, 0.07);
+  border-color: rgba(255, 166, 87, 0.22);
+  color: rgba(255, 166, 87, 0.72);
+}
+
+.vlm-legend-terminus-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.vlm-legend-terminus-label {
+  display: block;
+  font-size: 8px;
+  font-weight: 720;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.28);
+  color: rgba(255, 255, 255, 0.56);
+  white-space: nowrap;
 }
 
-.vlm-legend-destination {
-  padding: 0 0.25rem 0 0.75rem;
-  color: rgba(255, 166, 87, 0.6);
+.vlm-legend-terminus-desc {
+  display: block;
+  font-size: 7.5px;
+  line-height: 1.38;
+  color: rgba(255, 255, 255, 0.27);
+  max-width: 100px;
 }
 
-/* At ≥960px: show cards, hide SVG fallback dots */
+/* Station stop items */
+.vlm-legend-stop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 200ms ease;
+  text-align: center;
+  min-width: 72px;
+}
+
+.vlm-legend-stop:hover {
+  background: rgba(var(--sr), 0.06);
+}
+
+.vlm-legend-stop[data-active="true"] {
+  background: rgba(var(--sr), 0.1);
+}
+
+.vlm-legend-stop-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 7.5px;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  background: rgba(var(--sr), 0.1);
+  border: 1px solid rgba(var(--sr), 0.28);
+  color: var(--sc);
+  transition: background 200ms ease, border-color 200ms ease;
+}
+
+.vlm-legend-stop:hover .vlm-legend-stop-num,
+.vlm-legend-stop[data-active="true"] .vlm-legend-stop-num {
+  background: rgba(var(--sr), 0.22);
+  border-color: rgba(var(--sr), 0.52);
+}
+
+.vlm-legend-stop-name {
+  font-size: 7.5px;
+  font-weight: 640;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.48);
+  white-space: nowrap;
+  transition: color 200ms ease;
+}
+
+.vlm-legend-stop[data-active="true"] .vlm-legend-stop-name {
+  color: var(--sc);
+}
+
+.vlm-legend-stop-desc {
+  font-size: 7.5px;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.25);
+  max-width: 82px;
+}
+
+/* At ≥960px: show cards above/below station, reveal how-to panel */
 @media (min-width: 960px) {
-  .vlm-card {
+  /* Station at wave trough → card floats above */
+  .vlm-station[data-side="top"] .vlm-card {
     display: block;
+    bottom: calc(44px + 10px);
+    top: auto;
+    transform: translateX(-50%);
   }
 
-  /* Card to the right of the node */
-  .vlm-station[data-side="right"] .vlm-card {
-    left: calc(44px + 10px);
+  /* Station at wave peak → card drops below */
+  .vlm-station[data-side="bottom"] .vlm-card {
+    display: block;
+    top: calc(44px + 10px);
+    bottom: auto;
+    transform: translateX(-50%);
   }
 
-  /* Card to the left of the node */
-  .vlm-station[data-side="left"] .vlm-card {
-    right: calc(44px + 10px);
+  .vlm-how-to-read {
+    display: block;
   }
 
   .vlm-svg-dot {

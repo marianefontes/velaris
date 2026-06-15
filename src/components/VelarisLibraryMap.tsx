@@ -1,9 +1,12 @@
 import {
+  ArrowRight,
   Bell,
+  BookOpen,
   BrainCircuit,
   Compass,
   FormInput,
   LayoutGrid,
+  MapPin,
   MousePointerClick,
   Sparkles,
   type LucideIcon,
@@ -37,11 +40,12 @@ interface TerritoryDef {
   color: string;
   rgb: string;
   waypoint: { x: number; y: number };
-  cardSide: "right" | "left";
+  cardSide: "top" | "bottom";
+  legendDesc: string;
 }
 
-const W = 1300;
-const H = 540;
+const W = 1280;
+const H = 420;
 
 const TERRITORIES: TerritoryDef[] = [
   {
@@ -50,8 +54,9 @@ const TERRITORIES: TerritoryDef[] = [
     icon: MousePointerClick,
     color: "#deccfd",
     rgb: "222,204,253",
-    waypoint: { x: 185, y: 400 },
-    cardSide: "right",
+    waypoint: { x: 185, y: 340 },
+    cardSide: "top",
+    legendDesc: "Controles de ação interativa",
   },
   {
     id: "forms",
@@ -59,8 +64,9 @@ const TERRITORIES: TerritoryDef[] = [
     icon: FormInput,
     color: "#c2a0fc",
     rgb: "194,160,252",
-    waypoint: { x: 390, y: 185 },
-    cardSide: "right",
+    waypoint: { x: 400, y: 95 },
+    cardSide: "bottom",
+    legendDesc: "Entradas, selects e validações",
   },
   {
     id: "structure",
@@ -68,8 +74,9 @@ const TERRITORIES: TerritoryDef[] = [
     icon: LayoutGrid,
     color: "#c29fff",
     rgb: "194,159,255",
-    waypoint: { x: 650, y: 145 },
-    cardSide: "right",
+    waypoint: { x: 650, y: 340 },
+    cardSide: "top",
+    legendDesc: "Layout, containers e navegação",
   },
   {
     id: "feedback",
@@ -77,8 +84,9 @@ const TERRITORIES: TerritoryDef[] = [
     icon: Bell,
     color: "#a999c6",
     rgb: "169,153,198",
-    waypoint: { x: 1020, y: 310 },
-    cardSide: "left",
+    waypoint: { x: 890, y: 95 },
+    cardSide: "bottom",
+    legendDesc: "Alertas, toasts e notificações",
   },
   {
     id: "intelligence",
@@ -86,23 +94,31 @@ const TERRITORIES: TerritoryDef[] = [
     icon: BrainCircuit,
     color: "#ffa657",
     rgb: "255,166,87",
-    waypoint: { x: 760, y: 460 },
-    cardSide: "left",
+    waypoint: { x: 1095, y: 340 },
+    cardSide: "top",
+    legendDesc: "IA, oráculos e raciocínio",
   },
 ];
 
-const START_PT = { x: 75, y: 490 };
-const END_PT = { x: 1195, y: 248 };
+const START_PT = { x: 55, y: 340 };
+const END_PT   = { x: 1232, y: 160 };
 
+// Pure sine-wave S-curve — every segment flows strictly left→right, no backtracking
 const RAIL = [
   `M ${START_PT.x} ${START_PT.y}`,
-  `C 115 470, 155 435, 185 400`,
-  `C 255 350, 320 220, 390 185`,
-  `C 480 153, 570 138, 650 145`,
-  `C 780 162, 940 248, 1020 310`,
-  `C 975 390, 905 445, 760 460`,
-  `C 880 385, 1055 308, 1195 248`,
+  `C 90 340, 148 340, 185 340`,      // start → 01  (flat approach)
+  `C 271 340, 314 95, 400 95`,       // 01 → 02  (sweep up)
+  `C 500 95, 550 340, 650 340`,      // 02 → 03  (sweep down)
+  `C 746 340, 794 95, 890 95`,       // 03 → 04  (sweep up)
+  `C 972 95, 1013 340, 1095 340`,    // 04 → 05  (sweep down)
+  `C 1152 340, 1177 160, 1232 160`,  // 05 → end (sweep to destination)
 ].join(" ");
+
+const HOW_TO_READ = [
+  { Icon: MapPin,     text: "Cada estação representa um módulo de componentes" },
+  { Icon: ArrowRight, text: "Siga o caminho para explorar toda a Biblioteca" },
+  { Icon: Sparkles,   text: "A luz mágica indica seu progresso na jornada" },
+] as const;
 
 export function VelarisLibraryMap({
   catalog,
@@ -241,11 +257,24 @@ export function VelarisLibraryMap({
             className="vlm-start-label"
             style={{
               left: `${(START_PT.x / W) * 100}%`,
-              top: `${((START_PT.y + 14) / H) * 100}%`,
+              top:  `${((START_PT.y + 16) / H) * 100}%`,
             }}
           >
             <Sparkles className="h-2.5 w-2.5" aria-hidden />
             <span>{copy.journeyStart}</span>
+          </div>
+
+          {/* "Como ler o mapa" instructional panel — top-right corner */}
+          <div className="vlm-how-to-read">
+            <p className="vlm-how-to-read-title">COMO LER O MAPA</p>
+            <ul className="vlm-how-to-read-list">
+              {HOW_TO_READ.map(({ Icon, text }, i) => (
+                <li key={i} className="vlm-how-to-read-item">
+                  <Icon className="vlm-how-to-read-icon" aria-hidden />
+                  <span>{text}</span>
+                </li>
+              ))}
+            </ul>
           </div>
 
           {/* Territory station nodes + cards */}
@@ -267,12 +296,12 @@ export function VelarisLibraryMap({
                 className="vlm-station"
                 style={{
                   left: `${(t.waypoint.x / W) * 100}%`,
-                  top: `${(t.waypoint.y / H) * 100}%`,
+                  top:  `${(t.waypoint.y / H) * 100}%`,
                   "--sc": t.color,
                   "--sr": t.rgb,
                 } as React.CSSProperties}
               >
-                {/* Node — always rendered, always centered at waypoint */}
+                {/* Node — always centered at waypoint */}
                 <div className="vlm-node">
                   <span className="vlm-node-halo" aria-hidden />
                   <span className="vlm-node-ring" aria-hidden />
@@ -284,7 +313,7 @@ export function VelarisLibraryMap({
                   </span>
                 </div>
 
-                {/* Card — absolutely positioned to one side of the node */}
+                {/* Card — absolutely positioned above or below the node */}
                 <div className="vlm-card" aria-hidden>
                   <p className="vlm-card-title">{section.title}</p>
                   <p className="vlm-card-count">
@@ -300,12 +329,12 @@ export function VelarisLibraryMap({
             );
           })}
 
-          {/* Destination */}
+          {/* Destination marker */}
           <div
             className="velaris-library-destination"
             style={{
               left: `${(END_PT.x / W) * 100}%`,
-              top: `${(END_PT.y / H) * 100}%`,
+              top:  `${(END_PT.y / H) * 100}%`,
             }}
           >
             <div className="velaris-library-destination-symbol" aria-hidden>
@@ -325,35 +354,60 @@ export function VelarisLibraryMap({
         </div>
       </div>
 
-      {/* Legend bar */}
+      {/* Elaborate legend timeline */}
       <div className="vlm-legend" role="presentation">
-        <div className="vlm-legend-cap">
-          <Sparkles className="h-2.5 w-2.5" aria-hidden />
-          <span>{copy.journeyStart}</span>
+
+        {/* Journey start terminus */}
+        <div className="vlm-legend-terminus vlm-legend-terminus--start">
+          <div className="vlm-legend-terminus-icon">
+            <BookOpen className="h-3 w-3" aria-hidden />
+          </div>
+          <div className="vlm-legend-terminus-body">
+            <span className="vlm-legend-terminus-label">{copy.journeyStart}</span>
+            <span className="vlm-legend-terminus-desc">Cada componente é uma peça essencial do sistema.</span>
+          </div>
         </div>
-        {TERRITORIES.map((t) => {
+
+        <div className="vlm-legend-rail" aria-hidden />
+
+        {/* Station stops */}
+        {TERRITORIES.flatMap((t, i) => {
           const s = byId[t.id];
           const active = selectedSectionId === t.id;
-          return (
+          const stop = (
             <button
               key={t.id}
               type="button"
               onClick={() => onSelectSection(t.id)}
               data-active={String(active)}
-              className="velaris-library-map-legend-item"
+              className="vlm-legend-stop"
               aria-pressed={active}
+              style={{ "--sc": t.color, "--sr": t.rgb } as React.CSSProperties}
             >
-              <span
-                className="velaris-library-map-legend-swatch"
-                style={{ background: t.color }}
-              />
-              <span>{s.title}</span>
+              <span className="vlm-legend-stop-num">
+                {String(t.index).padStart(2, "0")}
+              </span>
+              <span className="vlm-legend-stop-name">{s.title}</span>
+              <span className="vlm-legend-stop-desc">{t.legendDesc}</span>
             </button>
           );
+          if (i < TERRITORIES.length - 1) {
+            return [stop, <div key={`r-${t.id}`} className="vlm-legend-rail" aria-hidden />];
+          }
+          return [stop];
         })}
-        <div className="vlm-legend-cap vlm-legend-destination">
-          <Compass className="h-2.5 w-2.5" aria-hidden />
-          <span>{copy.destinationTitle}</span>
+
+        <div className="vlm-legend-rail" aria-hidden />
+
+        {/* Journey end terminus */}
+        <div className="vlm-legend-terminus vlm-legend-terminus--end">
+          <div className="vlm-legend-terminus-icon vlm-legend-terminus-icon--end">
+            <Compass className="h-3 w-3" aria-hidden />
+          </div>
+          <div className="vlm-legend-terminus-body">
+            <span className="vlm-legend-terminus-label">{copy.destinationTitle}</span>
+            <span className="vlm-legend-terminus-desc">Sua jornada pelo design system está completa.</span>
+          </div>
         </div>
       </div>
 
