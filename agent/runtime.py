@@ -6,7 +6,7 @@ import re
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any
+from dataclasses import asdict
 
 from .evidence import (
     EVIDENCE_BASIS_GUIDANCE,
@@ -22,6 +22,13 @@ from .navigation_actions import (
     single_choice_navigation_actions,
 )
 from .claims import build_claims_for_context
+from .entity_validation_gate import (
+    EntityValidationResult,
+    entity_clarification_response,
+    insufficient_evidence_blocks_specific_output,
+    validate_entity_for_capability,
+)
+from .knowledge_taxonomy import classify_knowledge_state, knowledge_state_payload
 from .migration_advisor import build_migration_advisor_contract
 from .page_recommendation import (
     build_page_recommendation_contract,
@@ -58,6 +65,7 @@ from .operational_responses import (
     deprecated_entity_lookup_response,
     direct_entity_guidance_response,
     entity_lookup_response,
+    is_simple_existence_query,
     greeting_response,
     legacy_name_response,
     legacy_navigation_response,
@@ -124,6 +132,7 @@ STEP_LABELS: dict[str, str] = {
     "request_received": "Request received",
     "intent_detected": "Intent detected",
     "pending_intent_resolved": "Pending intent resolved",
+    "entity_validation_blocked": "Entity validation blocked",
     "workflow_selected": "Workflow selected",
     "tools_selected": "Tools selected",
     "policy_checked": "Policy checked",
@@ -221,6 +230,7 @@ class AgentExecutionContext:
     strategic_reasoning: StrategicReasoningAnalysis | None = None
     multi_agent_council: MultiAgentCouncilAnalysis | None = None
     pending_resolution: PendingIntentResolution | None = None
+    entity_validation: EntityValidationResult | None = None
 
     def decision_intelligence_active(self) -> bool:
         return (
@@ -946,6 +956,33 @@ class AgentRuntime:
             self._finalize(context, status="completed")
             return context
 
+        entity_validation = validate_entity_for_capability(
+            query,
+            understanding,
+            workflow=plan.workflow,
+            command_mode=command_mode,
+        )
+        context.entity_validation = entity_validation
+        if entity_validation.status == "needs_clarification":
+            recorder.add(
+                "entity_validation_blocked",
+                details=entity_validation.reason,
+            )
+            recorder.add("response_completed")
+            context.should_compose = False
+            context.deterministic_response = dedupe_response(
+                entity_clarification_response(
+                    english=self._is_english(query),
+                )
+            )
+            context.limitations.append(entity_validation.reason)
+            _debug(
+                "blocked: entity validation "
+                f"workflow={plan.workflow} source={entity_validation.source}"
+            )
+            self._finalize(context, status="limited")
+            return context
+
         recorder.add("policy_checked", details="Tool permissions and scope approved.")
         try:
             execution = execute_plan(
@@ -1280,6 +1317,17 @@ class AgentRuntime:
         execution = context.execution
         session_memory = self.store.get_session_memory(context.session_id)
         project_memory = self.store.get_project_memory(context.project_id)
+        evidence_tier = (
+            context.component_selection.evidence_tier
+            if context.component_selection
+            and context.component_selection.recommended
+            else execution.evidence_tier if execution else "insufficient"
+        )
+        knowledge_state = classify_knowledge_state(
+            context.query,
+            context.plan.understanding,
+            evidence_tier=evidence_tier,
+        )
         payload = {
             "request_id": context.request_id,
             "workflow": context.plan.workflow,
@@ -1287,13 +1335,13 @@ class AgentRuntime:
             "query_understanding": context.plan.understanding.model_dump(
                 mode="json"
             ),
-            "preferred_detail_level": context.preferred_detail_level,
-            "evidence_tier": (
-                context.component_selection.evidence_tier
-                if context.component_selection
-                and context.component_selection.recommended
-                else execution.evidence_tier if execution else "insufficient"
+            "knowledge_state": knowledge_state_payload(
+                knowledge_state,
+                resolution=context.plan.understanding.catalog_entity_resolution,
+                english=self._is_english(context.query),
             ),
+            "preferred_detail_level": context.preferred_detail_level,
+            "evidence_tier": evidence_tier,
             "evidence_similarity": (
                 context.component_selection.evidence_similarity
                 if context.component_selection
@@ -1403,8 +1451,14 @@ class AgentRuntime:
                     understanding=context.plan.understanding,
                     profile=context.profile,
                     english=self._is_english(context.query),
+                    entity_validation=context.entity_validation,
                 )
                 if context.plan.workflow == "migration_advisor"
+                else None
+            ),
+            "entity_validation": (
+                asdict(context.entity_validation)
+                if context.entity_validation is not None
                 else None
             ),
             "page_recommendation_contract": (
@@ -1989,6 +2043,7 @@ class AgentRuntime:
             entity_lookup_response(
                 component,
                 english=english,
+                compact=is_simple_existence_query(query),
             )
         )
 

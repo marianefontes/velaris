@@ -1,4 +1,4 @@
-"""Prompt assembly for Beatrice's semantic conversational engine."""
+"""Prompt assembly for Abraxos's semantic conversational engine."""
 
 from dataclasses import dataclass
 
@@ -19,6 +19,7 @@ SYSTEM_LAYERS: list[str] = [
     "retrieval/chunkingStrategy.md",
     "system/antiPatterns.md",
     "system/scopeBoundaries.md",
+    "system/operatingPrinciples.md",
     "system/multilingual.md",
     "system/responseRules.md",
 ]

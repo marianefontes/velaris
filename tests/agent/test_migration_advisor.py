@@ -4,6 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from agent.entity_validation_gate import validate_entity_for_capability
 from agent.migration_advisor import (
     build_migration_advisor_contract,
     contains_migration_intent,
@@ -71,19 +72,24 @@ class MigrationAdvisorContractTests(unittest.TestCase):
         self.assertIn("Diagnóstico", contract["required_sections"])
         self.assertIn("Caminho de migração", contract["required_sections"])
 
-    def test_generic_custom_migration_has_strategy_without_target(self) -> None:
+    def test_generic_custom_migration_requires_clarification(self) -> None:
         understanding = analyze_query(
             "Como migrar um controle customizado para o design system?"
         )
+        validation = validate_entity_for_capability(
+            "Como migrar um controle customizado para o design system?",
+            understanding,
+            workflow="migration_advisor",
+        )
+        self.assertEqual(validation.status, "needs_clarification")
         contract = build_migration_advisor_contract(
             query="Como migrar um controle customizado para o design system?",
             understanding=understanding,
             profile="dev",
             english=False,
+            entity_validation=validation,
         )
-        self.assertTrue(contract["legacy_source_detected"])
-        self.assertIsNone(contract["recommended_component"])
-        self.assertGreaterEqual(len(contract["reasons"]), 3)
+        self.assertIn("Do not recommend a specific catalog component", contract["response_policy"])
 
     def test_perspective_focus_varies_by_profile(self) -> None:
         query = "Como modernizar nossa interface?"

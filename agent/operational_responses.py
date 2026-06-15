@@ -14,6 +14,54 @@ from .navigation_actions import page_destination_label
 from .understanding import normalize_query, normalize_text
 
 
+_SIMPLE_EXISTENCE_MARKERS = (
+    "tem ",
+    "existe ",
+    "have ",
+    "has ",
+    "do you have",
+    "você tem",
+    "voce tem",
+    "voce tem",
+    "is there a",
+    "is there ",
+    "ha um",
+    "há um",
+    "hay un",
+    "hay ",
+    "tienen ",
+    "tiene ",
+    "existe o",
+    "existe a",
+    "possui ",
+)
+
+
+def is_simple_existence_query(query: str) -> bool:
+    """True when the user only asks whether a catalog entity exists."""
+    normalized = normalize_query(query)
+    if len(normalized.split()) > 10:
+        return False
+    if any(
+        marker in normalized
+        for marker in (
+            "como ",
+            "how ",
+            "why ",
+            "por que ",
+            "porque ",
+            "quando ",
+            "when ",
+            "migrar",
+            "migrate",
+            "implement",
+            "implementar",
+        )
+    ):
+        return False
+    return any(marker in normalized for marker in _SIMPLE_EXISTENCE_MARKERS)
+
+
 def _entity_type_label(entity_type: str | None, *, english: bool) -> str:
     mapping = {
         "component": ("componente", "component"),
@@ -443,7 +491,14 @@ def entity_lookup_response(
     component: ComponentMetadata,
     *,
     english: bool = False,
+    compact: bool = False,
 ) -> str:
+    if compact:
+        if english:
+            return (
+                f"Yes. {component.name} is a canonical Velaris component."
+            )
+        return f"Sim. {component.name} é um componente canônico do Velaris."
     about = localized_text(component.about, "en" if english else "pt")
     if english:
         return dedupe_response(

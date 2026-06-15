@@ -21,8 +21,11 @@ class EntityAliasEntry:
 COMPONENT_ALIASES: dict[str, tuple[str, ...]] = {
     "button": (
         "button", "botao", "botão", "botoes", "botões", "buttons",
+        "componente botao", "componente botão", "componente button",
+        "primary button", "action button", "botao primario", "botão primário",
         # Spanish / French
         "boton", "botón", "botones", "bouton", "boutons",
+        "boton primario", "botón primario", "bouton principal",
     ),
     "toggle-switch": (
         "toggle switch",

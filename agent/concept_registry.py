@@ -90,6 +90,19 @@ CONCEPT_REGISTRY: dict[str, ConceptEntry] = {
         label_en="Audit",
         aliases=("auditoria", "audit", "auditorias"),
     ),
+    "operating_principles": ConceptEntry(
+        key="operating_principles",
+        label_pt="Princípios operacionais do Abraxos",
+        label_en="Abraxos operating principles",
+        aliases=(
+            "principios operacionais",
+            "princípios operacionais",
+            "operating principles",
+            "anti alucinacao",
+            "anti-alucinação",
+            "anti hallucination",
+        ),
+    ),
 }
 
 

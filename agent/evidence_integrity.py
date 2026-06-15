@@ -32,11 +32,29 @@ _RECOMMENDATION_MARKERS = (
     r"\buse\s+[A-Z]",
 )
 
+_SPECIFIC_OUTPUT_MARKERS = (
+    r"```",
+    r"\bapi\b",
+    r"\bprops?\b",
+    r"\btypescript\b",
+    r"\breact\b",
+    r"estados?\s+(?:do|de)\s+",
+    r"state\s+flow",
+    r"edge\s+case",
+)
+
 
 def _has_recommendation_language(response_text: str) -> bool:
     return any(
         re.search(pattern, response_text, flags=re.IGNORECASE)
         for pattern in _RECOMMENDATION_MARKERS
+    )
+
+
+def _has_specific_output_language(response_text: str) -> bool:
+    return any(
+        re.search(pattern, response_text, flags=re.IGNORECASE)
+        for pattern in _SPECIFIC_OUTPUT_MARKERS
     )
 
 
@@ -188,6 +206,23 @@ class EvidenceIntegrityValidator:
             workflow=workflow,
         ):
             violations.append("pretrained_only_recommendation")
+
+        if (
+            not has_evidence
+            and workflow in {
+                "migration_advisor",
+                "compare_options",
+                "comparison_rule",
+                "direct_entity_guidance",
+            }
+            and (
+                _has_recommendation_language(response_text)
+                or _has_specific_output_language(response_text)
+            )
+            and not understanding.exact_entity_matches
+            and not understanding.entities.components
+        ):
+            violations.append("insufficient_evidence")
 
         if resolution and resolution.entity_status == "partial":
             audit_warnings.append(

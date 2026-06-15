@@ -7,6 +7,11 @@ from typing import Any
 
 from component_metadata import ComponentMetadata, component_registry, localized_rules
 
+from .entity_validation_gate import (
+    EntityValidationResult,
+    entity_clarification_response,
+    validate_entity_for_capability,
+)
 from .models import ExtractedEntities, QueryUnderstanding
 
 
@@ -83,6 +88,38 @@ _INTERFACE_SCOPE_MARKERS = (
     "system",
 )
 
+_LEGACY_LABEL_TARGET_HINTS: tuple[tuple[str, str], ...] = (
+    ("modal", "modal-dialog"),
+    ("dialog", "modal-dialog"),
+    ("button", "button"),
+    ("drawer", "side-drawer"),
+    ("table", "table"),
+    ("input", "input"),
+    ("select", "select"),
+    ("toast", "toast"),
+    ("checkbox", "checkbox"),
+    ("radio", "radio-button"),
+    ("switch", "switch"),
+    ("tab", "tabs"),
+)
+
+
+def _infer_target_from_legacy_label(label: str) -> str | None:
+    folded = label.lower().replace("-", "").replace("_", "")
+    registry = component_registry()
+    for hint, component_id in _LEGACY_LABEL_TARGET_HINTS:
+        if hint in folded and component_id in registry:
+            return component_id
+    return None
+
+
+def _resolve_legacy_source_label(query: str) -> str | None:
+    from .entity_validation_gate import _extract_legacy_entity_label
+
+    normalized = " ".join(query.lower().split())
+    return _extract_legacy_entity_label(query, normalized)
+
+
 _COMPONENT_HINTS: tuple[tuple[str, str], ...] = (
     ("botao", "button"),
     ("botão", "button"),
@@ -155,6 +192,8 @@ def _resolve_target_component_id(
     query: str,
     entities: ExtractedEntities,
 ) -> str | None:
+    from .entity_resolution import primary_exact_match
+
     registry = component_registry()
     if entities.components:
         for name in entities.components:
@@ -162,10 +201,9 @@ def _resolve_target_component_id(
                 if candidate.name == name:
                     return candidate.component_id
     normalized = " ".join(query.lower().split())
-    for hint, component_id in _COMPONENT_HINTS:
-        if re.search(rf"(?<![a-z0-9]){re.escape(hint)}(?![a-z0-9])", normalized):
-            if component_id in registry:
-                return component_id
+    exact = primary_exact_match(normalized)
+    if exact is not None:
+        return exact.component_id
     return None
 
 
@@ -177,6 +215,10 @@ def _resolve_target_component(
     if understanding.exact_entity_matches:
         return registry.get(understanding.exact_entity_matches[0].component_id)
     component_id = _resolve_target_component_id(query, understanding.entities)
+    if component_id is None:
+        legacy_label = _resolve_legacy_source_label(query)
+        if legacy_label is not None:
+            component_id = _infer_target_from_legacy_label(legacy_label)
     if component_id is None:
         return None
     return registry.get(component_id)
@@ -277,7 +319,14 @@ def build_migration_advisor_contract(
     understanding: QueryUnderstanding,
     profile: str,
     english: bool,
+    entity_validation: EntityValidationResult | None = None,
 ) -> dict[str, Any]:
+    validation = entity_validation or validate_entity_for_capability(
+        query,
+        understanding,
+        workflow="migration_advisor",
+    )
+    legacy_label = _resolve_legacy_source_label(query)
     target = _resolve_target_component(query, understanding)
     legacy_source = _legacy_source_detected(query)
     interface_scope = _interface_scope(query)
@@ -293,7 +342,7 @@ def build_migration_advisor_contract(
     if english:
         diagnosis = (
             "Legacy or custom UI detected."
-            if legacy_source
+            if legacy_source or legacy_label
             else "Migration requested without a fully specified legacy artifact."
         )
         risks = [
@@ -310,12 +359,10 @@ def build_migration_advisor_contract(
             "Complexity",
             "Perspective focus",
         ]
-        if target is None:
-            required_sections[1] = "Recommended approach"
     else:
         diagnosis = (
             "Interface ou componente legado/custom identificado."
-            if legacy_source
+            if legacy_source or legacy_label
             else "Migração solicitada sem artefato legado totalmente especificado."
         )
         risks = [
@@ -332,29 +379,58 @@ def build_migration_advisor_contract(
             "Complexidade",
             "Foco da perspectiva",
         ]
-        if target is None:
-            required_sections[1] = "Abordagem recomendada"
+
+    if validation.status != "validated":
+        required_sections = [
+            "Clarification request",
+            "Required inputs",
+            "Examples",
+            "What can be generated after clarification",
+        ] if english else [
+            "Pedido de esclarecimento",
+            "Informações necessárias",
+            "Exemplos",
+            "O que pode ser gerado após o esclarecimento",
+        ]
 
     contract: dict[str, Any] = {
         "capability": "MIGRATION_ADVISOR",
+        "entity_validation": {
+            "status": validation.status,
+            "confidence": validation.confidence,
+            "entity_label": validation.entity_label,
+            "catalog_component_id": validation.catalog_component_id,
+            "source": validation.source,
+            "reason": validation.reason,
+        },
         "diagnosis": diagnosis,
         "legacy_source_detected": legacy_source,
+        "legacy_source_label": legacy_label,
         "interface_scope": interface_scope,
         "framework": list(MIGRATION_FRAMEWORK),
-        "migration_steps": _migration_steps(english=english, has_target=target is not None),
+        "migration_steps": _migration_steps(
+            english=english,
+            has_target=target is not None and validation.status == "validated",
+        ),
         "risks": risks,
         "complexity": complexity,
         "perspective_focus": perspective["en" if english else "pt"],
         "required_sections": required_sections,
         "response_policy": (
-            "Produce a practical migration plan. Do not stop at component lookup "
-            "or when_to_use. Do not refuse for insufficient corpus evidence. "
-            "If the legacy artifact is missing, ask for screens, routes or code "
-            "snippets while still providing the strategy."
+            "Do not recommend a specific catalog component, API, code snippet, "
+            "state flow or accessibility checklist unless entity_validation.status "
+            "is validated. If validation is not satisfied, request clarification "
+            "only and do not invent Dialog, Button, Drawer or any other component."
+            if validation.status != "validated"
+            else (
+                "Produce a practical migration plan grounded in the validated "
+                "artifact and documented catalog evidence. Do not invent APIs, "
+                "props, states or code beyond the catalog."
+            )
         ),
     }
 
-    if target is not None:
+    if validation.status == "validated" and target is not None:
         contract["recommended_component"] = target.name
         contract["recommended_component_id"] = target.component_id
         contract["recommended_status"] = target.status
@@ -369,20 +445,23 @@ def build_migration_advisor_contract(
                 target.when_not_to_use,
                 "en" if english else "pt",
             )[:3]
-    else:
+    elif validation.status == "validated":
         contract["recommended_component"] = None
         contract["reasons"] = (
             [
-                "Start from inventory and equivalence mapping",
+                "Validated artifact without a direct catalog target mapping",
                 "Prefer stable catalog primitives before bespoke UI",
                 "Roll out in waves with accessibility and regression gates",
             ]
             if english
             else [
-                "Começar por inventário e mapeamento de equivalência",
+                "Artefato validado sem mapeamento direto no catálogo",
                 "Preferir primitives estáveis do catálogo antes de UI bespoke",
                 "Fazer rollout em ondas com gates de acessibilidade e regressão",
             ]
         )
+    else:
+        contract["recommended_component"] = None
+        contract["reasons"] = []
 
     return contract

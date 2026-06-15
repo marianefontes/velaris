@@ -1,8 +1,8 @@
-"""Declarative registry of Beatrice's Core Oracle Engines.
+"""Declarative registry of Abraxos Core Oracle Engines.
 
-The Oracle Engines are the competitive differentiator of Aetheris: specialized
+The Oracle Engines are the competitive differentiator of Velaris: specialized
 reasoning capabilities that a generic LLM does not provide out of the box. Unlike
-cognitive skills (which Beatrice activates automatically), engines are *selected by
+cognitive skills (which Abraxos activates automatically), engines are *selected by
 the user* through explicit slash commands. Public engines are surfaced in the
 command picker; experimental engines remain typeable but hidden.
 
