@@ -15,6 +15,7 @@ docs/_superpowers/
 .claude/
 .superpowers/
 .env.local
+.env.production
 .env.*.local
 data/aetheris-laboratory.sqlite3*
 data/aetheris-agent.sqlite3*
