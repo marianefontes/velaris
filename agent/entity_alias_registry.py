@@ -19,7 +19,11 @@ class EntityAliasEntry:
 
 
 COMPONENT_ALIASES: dict[str, tuple[str, ...]] = {
-    "button": ("button", "botao", "botão", "botoes", "botões", "buttons"),
+    "button": (
+        "button", "botao", "botão", "botoes", "botões", "buttons",
+        # Spanish / French
+        "boton", "botón", "botones", "bouton", "boutons",
+    ),
     "toggle-switch": (
         "toggle switch",
         "toggle",
@@ -27,6 +31,9 @@ COMPONENT_ALIASES: dict[str, tuple[str, ...]] = {
         "switch",
         "switches",
         "interruptor",
+        # Spanish / French
+        "conmutador",
+        "interrupteur",
     ),
     "checkbox": (
         "checkbox",
@@ -35,6 +42,12 @@ COMPONENT_ALIASES: dict[str, tuple[str, ...]] = {
         "caixa de selecao",
         "caixa de seleção",
         "caixas de selecao",
+        # Spanish / French
+        "casilla",
+        "casilla de verificacion",
+        "casilla de verificación",
+        "case a cocher",
+        "case à cocher",
     ),
     "radio-button": (
         "radio button",
@@ -42,6 +55,10 @@ COMPONENT_ALIASES: dict[str, tuple[str, ...]] = {
         "radio",
         "botao de opcao",
         "botão de opção",
+        # Spanish / French
+        "boton de opcion",
+        "botón de opción",
+        "bouton radio",
     ),
     "selectable-chip": (
         "selectable chip",
@@ -58,6 +75,9 @@ COMPONENT_ALIASES: dict[str, tuple[str, ...]] = {
         "inputs",
         "campo de texto",
         "campo",
+        # Spanish / French
+        "entrada de texto",
+        "champ de texte",
     ),
     "text-area": (
         "text area",
@@ -65,6 +85,9 @@ COMPONENT_ALIASES: dict[str, tuple[str, ...]] = {
         "textareas",
         "area de texto",
         "área de texto",
+        # Spanish / French
+        "zona de texto",
+        "zone de texte",
     ),
     "select-dropdown": (
         "select dropdown",
@@ -73,6 +96,12 @@ COMPONENT_ALIASES: dict[str, tuple[str, ...]] = {
         "dropdown",
         "dropdowns",
         "lista suspensa",
+        # Spanish / French
+        "lista desplegable",
+        "menu desplegable",
+        "menú desplegable",
+        "liste deroulante",
+        "liste déroulante",
     ),
     "date-picker": (
         "date picker",
@@ -82,6 +111,11 @@ COMPONENT_ALIASES: dict[str, tuple[str, ...]] = {
         "seletor de datas",
         "calendario",
         "calendário",
+        # Spanish / French
+        "selector de fecha",
+        "selecteur de date",
+        "sélecteur de date",
+        "calendrier",
     ),
     "form-field": (
         "form field",
@@ -93,9 +127,12 @@ COMPONENT_ALIASES: dict[str, tuple[str, ...]] = {
         "erro em campo",
         "field error",
     ),
-    "link": ("link", "links", "hyperlink"),
-    "tabs": ("tabs", "tab", "abas", "aba"),
-    "card": ("card", "cards", "cartao", "cartão", "cartoes", "cartões"),
+    "link": ("link", "links", "hyperlink", "enlace", "enlaces", "lien", "liens"),
+    "tabs": ("tabs", "tab", "abas", "aba", "pestanas", "pestañas", "onglets"),
+    "card": (
+        "card", "cards", "cartao", "cartão", "cartoes", "cartões",
+        "tarjeta", "tarjetas", "carte", "cartes",
+    ),
     "modal-dialog": (
         "modal dialog",
         "modal",
@@ -107,6 +144,14 @@ COMPONENT_ALIASES: dict[str, tuple[str, ...]] = {
         "diálogo",
         "dialogos",
         "janela modal",
+        # Spanish / French
+        "ventana modal",
+        "cuadro de dialogo",
+        "cuadro de diálogo",
+        "boite de dialogue",
+        "boîte de dialogue",
+        "fenetre modale",
+        "fenêtre modale",
     ),
     "data-table": (
         "data table",
@@ -115,8 +160,13 @@ COMPONENT_ALIASES: dict[str, tuple[str, ...]] = {
         "tables",
         "tabela",
         "tabelas",
+        # Spanish / French
+        "tabla",
+        "tabla de datos",
+        "tableau",
+        "tableau de donnees",
     ),
-    "alert": ("alert", "alerts", "alerta", "alertas", "banner"),
+    "alert": ("alert", "alerts", "alerta", "alertas", "banner", "aviso", "alerte"),
     "toast": (
         "toast notification",
         "toast",
@@ -134,6 +184,10 @@ COMPONENT_ALIASES: dict[str, tuple[str, ...]] = {
         "tooltip",
         "tooltips",
         "explanation bubble",
+        # Spanish / French
+        "informacion sobre herramienta",
+        "información sobre herramienta",
+        "infobulle",
     ),
     "confidence-badge": (
         "confidence badge",
@@ -150,8 +204,11 @@ COMPONENT_ALIASES: dict[str, tuple[str, ...]] = {
         "atribuição de fonte",
     ),
     "audit-panel": ("audit panel", "painel de auditoria"),
-    "typography": ("typography", "tipografia"),
-    "icon": ("icon", "icons", "icone", "ícone", "icones", "ícones", "icon button"),
+    "typography": ("typography", "tipografia", "tipografía", "typographie"),
+    "icon": (
+        "icon", "icons", "icone", "ícone", "icones", "ícones", "icon button",
+        "icono", "iconos", "icône", "icônes",
+    ),
 }
 
 PATTERN_ENTITY_ALIASES: dict[str, tuple[str, ...]] = {

@@ -18,6 +18,8 @@ SYSTEM_LAYERS: list[str] = [
     "retrieval/retrievalPolicy.md",
     "retrieval/chunkingStrategy.md",
     "system/antiPatterns.md",
+    "system/scopeBoundaries.md",
+    "system/multilingual.md",
     "system/responseRules.md",
 ]
 
@@ -31,6 +33,13 @@ INTENT_PROMPTS: dict[str, str] = {
     "xai_explanation": "intents/explainability.md",
     "new_product_scaffolding": "intents/patternGuidance.md",
     "comparison_query": "intents/designDecision.md",
+    "knowledge_explanation": "intents/professionalKnowledge.md",
+    "design_rationale": "intents/professionalKnowledge.md",
+    "design_audit": "intents/professionalKnowledge.md",
+    "architecture_review": "intents/professionalKnowledge.md",
+    "professional_guidance": "intents/professionalKnowledge.md",
+    "migration_advisor": "intents/migrationAdvisor.md",
+    "page_recommendation": "intents/pageRecommendation.md",
 }
 
 RESPONSE_TEMPLATES: dict[str, str] = {
@@ -43,6 +52,13 @@ RESPONSE_TEMPLATES: dict[str, str] = {
     "xai_explanation": "responses/xaiResponse.md",
     "new_product_scaffolding": "responses/componentResponse.md",
     "comparison_query": "responses/comparisonResponse.md",
+    "knowledge_explanation": "responses/decisionResponse.md",
+    "design_rationale": "responses/decisionResponse.md",
+    "design_audit": "responses/decisionResponse.md",
+    "architecture_review": "responses/decisionResponse.md",
+    "professional_guidance": "responses/decisionResponse.md",
+    "migration_advisor": "responses/migrationResponse.md",
+    "page_recommendation": "responses/pageRecommendation.md",
     "out_of_scope": "responses/outOfScope.md",
 }
 
@@ -148,8 +164,21 @@ def build_runtime_frame(context: PromptBuildContext) -> str:
 
 Use this frame only to adapt the answer. Do not reveal these labels to the user.
 When an oracle_engine is active, follow its response contract exactly.
-Use the required_language when it is known. For pt-PT, prefer Portuguese from
-Portugal vocabulary without caricature or forced regionalisms.
+
+Language policy:
+- Always answer in the same language the user wrote their last message in.
+- required_language codes: pt-BR Brazilian Portuguese, pt-PT European Portuguese,
+  en English, es Spanish, fr French, ar Arabic, other a non-listed language,
+  unknown not detected.
+- For pt-PT, prefer European Portuguese vocabulary without caricature or forced
+  regionalisms.
+- When required_language is unknown or other, detect the language directly from
+  the user's last message and reply in that language. Never refuse or degrade an
+  answer only because the language was not pre-classified.
+- Keep canonical names in their original form across every language: Velaris,
+  Abraxos, component names, pattern names and token names are not translated.
+- If you cannot write fluently in the user's language, answer in English and say
+  so briefly, instead of staying silent or switching to an unrelated language.
 """.strip()
 
 

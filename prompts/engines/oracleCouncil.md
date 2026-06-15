@@ -47,7 +47,7 @@ Respond in the user's language, following this structure:
 [The converged decision and how the main conflict was resolved.]
 
 ### Fontes e Evidências
-- [semantic Aetheris evidence used]
+- [semantic Velaris evidence used]
 
 ### Nível de Confiança
 [high / medium / low] — [evidence boundary]
@@ -55,7 +55,7 @@ Respond in the user's language, following this structure:
 
 Rules:
 - At least one real disagreement must surface and be defended on both sides.
-- Ground each perspective in retrieved Aetheris evidence where possible.
+- Ground each perspective in retrieved Velaris evidence where possible.
 - The final recommendation is a decision, not a summary of all five views.
 - Do not claim independent agents or model consensus; this is one structured
   deliberation contract.

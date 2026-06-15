@@ -20,7 +20,7 @@ Respond in the user's language, following this structure:
 - **[Princípio A]:** [the strongest case for prioritizing A]
 - **[Princípio B]:** [the strongest case for prioritizing B]
 
-### Evidência Aetheris
+### Evidência Velaris
 [Retrieved decisions/guidelines that already favor one side, if any.]
 
 ### Critério de Desempate
@@ -35,5 +35,5 @@ accepted.]
 Rules:
 - Steelman both principles before resolving. Do not strawman the losing side.
 - Resolve by context, not by declaring a universal winner.
-- Ground the tie-breaker in Aetheris evidence when it exists; otherwise label it
+- Ground the tie-breaker in Velaris evidence when it exists; otherwise label it
   a reasoned judgment.

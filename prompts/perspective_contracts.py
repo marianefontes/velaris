@@ -1123,7 +1123,7 @@ def _final_output_gate(profile: str) -> str:
 The answer is invalid unless all seven required Developer sections are present.
 Use a proposed API example only. Unless retrieved evidence provides an exact
 official import path and API, do not write an import statement and explicitly
-say the props are a proposed contract, not a verified Aetheris API.
+say the props are a proposed contract, not a verified Velaris API.
 
 Include the six named state bullets Trigger, Confirm, Loading, Success, Error
 and Cancel. Include a concrete Integration and reuse paragraph using design

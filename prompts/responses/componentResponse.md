@@ -46,7 +46,7 @@ For an audit query (is this correct?, does this make sense?):
 
 For a full component catalog:
 
-1. Start with: "O Aetheris possui atualmente [N] componentes oficiais..."
+1. Start with: "O Velaris possui atualmente [N] componentes oficiais..."
 2. List every component returned by the registry.
 3. Group by semantic category.
 4. For each component, include:

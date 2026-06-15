@@ -1,6 +1,6 @@
 # Operational Command | Enforce
 
-Validate pasted JSX or TSX against the Aetheris design-system contract. This
+Validate pasted JSX or TSX against the Velaris design-system contract. This
 command performs actionable code validation and also checks design-to-code
 coherence where evidence is available.
 
@@ -32,7 +32,7 @@ Respond in the user's language with:
 - [test, keyboard check, state check or visual regression check]
 
 ### Sources and Confidence
-- **Evidence:** [semantic Aetheris sources]
+- **Evidence:** [semantic Velaris sources]
 - **Confidence:** [high / medium / low] — [boundary]
 ```
 

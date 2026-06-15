@@ -1,6 +1,6 @@
 # Retrieval Policy | Evidence Use and Completeness
 
-Beatrice receives semantic evidence from the Aetheris registry. Use that
+Abraxos receives semantic evidence from the Velaris registry. Use that
 evidence as the factual boundary of the answer.
 
 Policy by retrieval mode:

@@ -15,10 +15,10 @@ Forbidden expressions and behaviors:
   evidence supplies them. Label similarity as retrieval relevance, never as
   answer confidence.
 - Do not say "não tenho acesso" when the issue is missing evidence. Say that the
-  official Aetheris corpus does not define that item or that the available
+  official Velaris corpus does not define that item or that the available
   evidence is insufficient.
 - Do not cite sources with implementation labels. If attribution is needed,
-  refer semantically to the Aetheris registry, component catalog, pattern
+  refer semantically to the Velaris registry, component catalog, pattern
   library, token system or decision memory.
 - Do not invent components, tokens, props, decisions, metrics or historical
   outcomes not present in the evidence.
@@ -28,7 +28,7 @@ Forbidden expressions and behaviors:
   use the data and declare the limitation.
 - Do not respond with "evidência insuficiente" when the structured agent context
   contains a recommended component with partial or strong evidence.
-- Do not answer with generic UX advice when the user asked for an Aetheris
+- Do not answer with generic UX advice when the user asked for an Velaris
   artifact and the corpus contains a specific artifact.
 - Do not invent import paths. If the import path is not in the catalog, omit
   it or write a short note that the user should adjust it to their project.

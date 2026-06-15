@@ -1,4 +1,4 @@
-"""Professional perspective profiles for Beatrice's specialization layer."""
+"""Professional perspective profiles for Abraxos's specialization layer."""
 
 from __future__ import annotations
 
@@ -44,7 +44,7 @@ class CognitiveProfile:
 COGNITIVE_PROFILES: dict[str, CognitiveProfile] = {
     "designer": CognitiveProfile(
         name="Designer",
-        full_name="Beatrice",
+        full_name="Abraxos",
         title="Designer",
         specialty="Visual composition, hierarchy, tokens, spacing, typography, color and interface consistency.",
         primary_responsibility="Protect visual quality and aesthetic consistency across product interfaces.",
@@ -76,7 +76,7 @@ COGNITIVE_PROFILES: dict[str, CognitiveProfile] = {
     ),
     "product_designer": CognitiveProfile(
         name="Product Designer",
-        full_name="Beatrice",
+        full_name="Abraxos",
         title="Product Designer",
         specialty="Interface design, user experience and research-informed validation.",
         primary_responsibility="Evaluate whether an interface solution is visually coherent, usable and supported by evidence about user needs.",
@@ -108,7 +108,7 @@ COGNITIVE_PROFILES: dict[str, CognitiveProfile] = {
     ),
     "dev": CognitiveProfile(
         name="Developer",
-        full_name="Beatrice",
+        full_name="Abraxos",
         title="Developer",
         specialty="Implementation, code architecture, TypeScript, components, state, integration, performance and reuse.",
         primary_responsibility="Keep implementation patterns modular, scalable, testable and isolated across product surfaces.",
@@ -140,7 +140,7 @@ COGNITIVE_PROFILES: dict[str, CognitiveProfile] = {
     ),
     "qa": CognitiveProfile(
         name="QA",
-        full_name="Beatrice",
+        full_name="Abraxos",
         title="QA",
         specialty="Acceptance criteria, test scenarios, regression, edge cases, error states and validation.",
         primary_responsibility="Expose failure states, edge cases and release risks before they reach production.",
@@ -172,7 +172,7 @@ COGNITIVE_PROFILES: dict[str, CognitiveProfile] = {
     ),
     "tech_writer": CognitiveProfile(
         name="Tech Writer",
-        full_name="Beatrice",
+        full_name="Abraxos",
         title="Tech Writer",
         specialty="Documentation, naming, examples, microcopy, terminology and actionable instructions.",
         primary_responsibility="Turn design-system rationale into discoverable, teachable and canonical knowledge.",
@@ -204,7 +204,7 @@ COGNITIVE_PROFILES: dict[str, CognitiveProfile] = {
     ),
     "a11y": CognitiveProfile(
         name="Accessibility Specialist",
-        full_name="Beatrice",
+        full_name="Abraxos",
         title="Accessibility Specialist",
         specialty="WCAG, focus, keyboard, ARIA, screen readers, contrast, accessible states and inclusion.",
         primary_responsibility="Ensure the system is usable through every input modality and every cognitive load profile.",
@@ -236,7 +236,7 @@ COGNITIVE_PROFILES: dict[str, CognitiveProfile] = {
     ),
     "maintainer": CognitiveProfile(
         name="Maintainer",
-        full_name="Beatrice",
+        full_name="Abraxos",
         title="Maintainer",
         specialty="Maintenance, simplicity, reuse, technical debt, coupling, duplication and evolution cost.",
         primary_responsibility="Keep the implementation simple to change, reuse and operate over time.",
@@ -268,7 +268,7 @@ COGNITIVE_PROFILES: dict[str, CognitiveProfile] = {
     ),
     "design_system_manager": CognitiveProfile(
         name="Design System Manager",
-        full_name="Beatrice",
+        full_name="Abraxos",
         title="Design System Manager",
         specialty="Design-system strategy, governance, adoption, roadmap, systemic consistency and organizational impact.",
         primary_responsibility="Decide what the design system should prioritize, govern and scale across teams.",
@@ -311,7 +311,7 @@ def build_cognitive_profile_prompt(
         return """
 # Professional Perspective
 
-Use the neutral Beatrice system lens: evidence, source fidelity, uncertainty and explicit trade-offs.
+Use the neutral Abraxos system lens: evidence, source fidelity, uncertainty and explicit trade-offs.
 Do not simulate a specialist profile unless one is active.
 """.strip()
 
@@ -332,7 +332,7 @@ Do not simulate a specialist profile unless one is active.
 This profile is not a tone preset. It is the reasoning system for the answer.
 The same retrieved evidence must be interpreted through this profile before reaching a conclusion.
 
-Beatrice perspective:
+Abraxos perspective:
 - assistant: {cognitive_profile.full_name}
 - title: {cognitive_profile.title}
 - specialty: {cognitive_profile.specialty}

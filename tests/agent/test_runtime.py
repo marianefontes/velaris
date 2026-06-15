@@ -91,11 +91,8 @@ class AgentFlowEndToEndTests(unittest.TestCase):
             "component_guidance",
         )
         self.assertEqual(context.plan.workflow, "design_audit")
-        self.assertEqual(
-            [result.tool.name for result in context.execution.results],
-            ["validate_against_design_system"],
-        )
-        self.assertTrue(context.execution.evidence)
+        self.assertEqual(context.plan.tools, [])
+        self.assertTrue(context.should_compose)
 
     def test_out_of_scope_never_reaches_composition(self) -> None:
         context = self.prepare("Qual é a previsão do tempo?")

@@ -493,7 +493,60 @@ def _patterns(normalized: str) -> list[str]:
     ]
 
 
+# Arabic script (incl. supplement). Unambiguous: presence means Arabic.
+_ARABIC_SCRIPT = re.compile(r"[؀-ۿݐ-ݿࢠ-ࣿ]")
+# Other non-Latin scripts we can recognize but do not classify in detail.
+# Detecting them lets Abraxos still mirror the language instead of refusing.
+_OTHER_SCRIPT = re.compile(
+    r"[Ѐ-ӿ"   # Cyrillic
+    r"Ͱ-Ͽ"    # Greek
+    r"֐-׿"    # Hebrew
+    r"ऀ-ॿ"    # Devanagari
+    r"฀-๿"    # Thai
+    r"぀-ヿ"    # Hiragana + Katakana
+    r"一-鿿"    # CJK
+    r"가-힯]"   # Hangul
+)
+# High-precision Spanish raw markers (accents and inverted punctuation that
+# Portuguese never uses). Any single hit is a strong Spanish signal.
+_SPANISH_RAW_STRONG = ("ñ", "¿", "¡", "cómo", "qué", "cuál", "dónde", "cuándo", "por qué")
+# Spanish function words that Portuguese does not use the same way. Two or more
+# together indicate Spanish without colliding with Portuguese vocabulary.
+_SPANISH_WORDS = (
+    "tienes", "tiene", "tenes", "puedes", "puede", "necesito", "necesitas",
+    "ventana", "una", "hay", "cuales", "ustedes", "vosotros", "gracias",
+    "boton",
+)
+# High-precision French raw markers.
+_FRENCH_RAW_STRONG = ("où", "qu'", "c'est", "est-ce", "être", "fenêtre", "français")
+# French function words with no Portuguese or Spanish collision.
+_FRENCH_WORDS = (
+    "vous", "avez", "comment", "pouvez", "votre", "bonjour", "merci",
+    "fenetre", "quelle", "je", "bouton",
+)
+# English-distinctive stopwords (no Portuguese collision). Two or more signal
+# English even when the domain markers below are absent (e.g. "do you have a
+# drawer component?").
+_ENGLISH_WORDS = (
+    "you", "the", "is", "are", "have", "does", "can", "with", "this", "that",
+    "your", "which", "what", "how", "should", "when", "where", "not", "and",
+    "there", "do", "want",
+)
+
+
+def _word_hits(normalized: str, words: tuple[str, ...]) -> int:
+    return sum(1 for word in words if _term_present(normalized, word))
+
+
 def _language(query: str, normalized: str) -> UserLanguage:
+    raw = query.lower()
+    # Script detection wins: it is unambiguous and lets Abraxos mirror the
+    # language rather than fall back to a refusal.
+    if _ARABIC_SCRIPT.search(query):
+        return "ar"
+    if _OTHER_SCRIPT.search(query):
+        return "other"
+
     normalized_query = normalize_query(query)
     english_social_terms = {
         term
@@ -509,6 +562,15 @@ def _language(query: str, normalized: str) -> UserLanguage:
         return "pt-PT"
     if any(term in normalized for term in ("pt-br", "portugues do brasil", "brazilian portuguese")):
         return "pt-BR"
+
+    # Spanish and French detection requires strong evidence so Portuguese is
+    # never misread. A single raw accent or punctuation marker is enough; a
+    # single function word is not.
+    if any(marker in raw for marker in _SPANISH_RAW_STRONG) or _word_hits(normalized, _SPANISH_WORDS) >= 2:
+        return "es"
+    if any(marker in raw for marker in _FRENCH_RAW_STRONG) or _word_hits(normalized, _FRENCH_WORDS) >= 2:
+        return "fr"
+
     english_hits = sum(
         marker in normalized
         for marker in (
@@ -525,8 +587,12 @@ def _language(query: str, normalized: str) -> UserLanguage:
     )
     if english_hits > portuguese_hits and english_hits >= 1:
         return "en"
-    if portuguese_hits or re.search(r"[ãõçáéíóúâêô]", query.lower()):
+    if portuguese_hits or re.search(r"[ãõçáéíóúâêô]", raw):
         return "pt-BR"
+    # Last resort before giving up: distinctive English stopwords with no
+    # Portuguese collision (e.g. "do you have a drawer component?").
+    if _word_hits(normalized, _ENGLISH_WORDS) >= 2:
+        return "en"
     return "unknown"
 
 
@@ -651,6 +717,15 @@ def _intent(
         return "legacy_name_query"
     if _contains_any(normalized, _LEGACY_SYSTEM_TERMS):
         return "legacy_name_query"
+    from agent.page_recommendation import resolve_page_recommendation_intent
+
+    page_resolution = resolve_page_recommendation_intent(
+        query,
+        normalized_query=normalized_query,
+        entities=entities,
+    )
+    if page_resolution is not None:
+        return page_resolution.intent
     from agent.intelligence_intents import resolve_intelligence_intent
 
     intelligence_intent = resolve_intelligence_intent(query, normalized)
@@ -825,6 +900,8 @@ def _goal(intent: UserIntent) -> str:
         "simulation": "simulate_design_change",
         "multi_agent_reasoning": "deliberate_across_perspectives",
         "component_recommendation": "select_or_verify_component",
+        "page_architecture": "structure_product_flow",
+        "component_discovery": "discover_catalog_capability",
         "component_comparison": "compare_component_fit",
         "pattern_guidance": "structure_product_flow",
         "token_lookup": "find_semantic_token",
@@ -894,6 +971,18 @@ def analyze_query(query: str) -> QueryUnderstanding:
             update={"components": [match.name for match in exact_matches]},
         )
     intent = _intent(query, normalized, entities, normalized_query=normalized_query)
+    from agent.page_recommendation import resolve_page_recommendation_intent
+
+    page_resolution = resolve_page_recommendation_intent(
+        query,
+        normalized_query=normalized_query,
+        entities=entities,
+    )
+    page_type = ""
+    discovery_capability = ""
+    if page_resolution is not None:
+        page_type = page_resolution.page_type
+        discovery_capability = page_resolution.discovery_capability
     if intent == "concept_query" and resolve_concept_key(query) is None:
         intent = "general_design_system"
     if intent == "entity_lookup" and not exact_matches and not entities.components:
@@ -949,7 +1038,9 @@ def analyze_query(query: str) -> QueryUnderstanding:
         }:
             intent = "unsupported_entity_lookup"
             operational_intent = intent
-    return QueryUnderstanding(
+    from agent.professional_intent import enrich_understanding
+
+    understanding = QueryUnderstanding(
         user_intent=intent,
         operational_intent=intent,
         answer_strategy=_answer_strategy(intent),
@@ -967,4 +1058,7 @@ def analyze_query(query: str) -> QueryUnderstanding:
             or detect_architect_review_mode(query)
         ),
         architect_review_mode=detect_architect_review_mode(query),
+        page_type=page_type,
+        discovery_capability=discovery_capability,
     )
+    return enrich_understanding(understanding, query)

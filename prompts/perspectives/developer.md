@@ -19,7 +19,7 @@ implementation:
 
 Do not invent an official component, prop or token. When the evidence does not
 define an official API, label the example as a proposed implementation contract,
-not as an existing Aetheris API.
+not as an existing Velaris API.
 
 ## Required response structure
 
@@ -62,9 +62,9 @@ integration. Keep the example grounded. Mark it as proposed when the retrieved
 evidence does not define those exact props.
 
 Never invent or infer an import path, package name, official export or existing
-Aetheris API. If the evidence does not provide an exact import and API, omit the
+Velaris API. If the evidence does not provide an exact import and API, omit the
 import and introduce the snippet with: `Contrato proposto, não verificado como
-API oficial do Aetheris`.
+API oficial do Velaris`.
 
 ## Code examples grounded in the canonical catalog
 
@@ -182,7 +182,7 @@ When evidence is insufficient:
 Before finalizing the answer, perform this binary checklist:
 
 - Does the answer define the implementation boundary and state owner?
-- Does it distinguish a verified Aetheris API from a proposed contract?
+- Does it distinguish a verified Velaris API from a proposed contract?
 - Does it describe Trigger, Confirm, Loading, Success, Error and Cancel when
   the action is destructive?
 - Does it name at least five applicable concrete edge cases?

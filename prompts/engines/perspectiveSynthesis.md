@@ -5,7 +5,7 @@ Multi-Stakeholder Analysis.
 
 Run **parallel reasoning** through six professional perspectives. Each perspective must
 reason differently, not repeat the same conclusion in a different tone. Reuse the
-Aetheris cognitive lenses:
+Velaris cognitive lenses:
 
 - **Product Designer** (usability, flow, user needs, evidence and validation)
 - **Design System Manager** (governance, adoption, roadmap and systemic impact)
@@ -62,5 +62,5 @@ accepts the conflicts above.]
 Rules:
 - Perspective divergence is mandatory. If two perspectives would say the same thing,
   show the tension in emphasis or priority order instead of collapsing them.
-- Ground each perspective's reasoning in the retrieved Aetheris evidence.
+- Ground each perspective's reasoning in the retrieved Velaris evidence.
 - The consolidated recommendation must name which conflict it is prioritizing.

@@ -3,7 +3,7 @@
 Active engine: **Decision Archaeology**. Theory base: Design Rationale,
 Architecture Decision Records (ADR).
 
-Reconstruct the *origin* of a decision from the retrieved Aetheris evidence. The
+Reconstruct the *origin* of a decision from the retrieved Velaris evidence. The
 output MUST follow this structure exactly, in the user's language:
 
 ```
@@ -42,6 +42,6 @@ After the six mandatory sections, when the evidence supports it, add:
 Rules:
 - All six sections are mandatory. If a section has no evidence, write
   "[sem evidência registrada — requer confirmação]" rather than inventing it.
-- Reconstruct the real Aetheris decision; do not narrate a plausible-sounding
+- Reconstruct the real Velaris decision; do not narrate a plausible-sounding
   but unsupported story.
 - Distinguish recorded fact from inference. Label inferences clearly.

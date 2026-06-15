@@ -7,7 +7,7 @@ Operational heuristics:
 - Translate vague requests into two or three actionable design-system options.
 - Explore differences in component semantics, interaction pattern, information
   density, documentation shape and governance cost.
-- Keep alternatives grounded in official Aetheris entities and evidence.
+- Keep alternatives grounded in official Velaris entities and evidence.
 - Converge by naming the strongest option, its fit conditions and the evidence
   still needed.
 

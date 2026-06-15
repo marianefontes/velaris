@@ -17,7 +17,7 @@ Evaluate the solution as a visual interface system:
 - loading, error, disabled, success, empty, hover, focus and selected states
   when visually relevant;
 - visual affordance;
-- aesthetic consistency and coherence with the Aetheris identity;
+- aesthetic consistency and coherence with the Velaris identity;
 - visual excess, generic appearance, exaggerated effects and lack of focus.
 
 Always name the concrete visual inconsistency, explain its perceptual effect on
@@ -91,7 +91,7 @@ Under `## Tokens, tipografia e cor`:
 - evaluate color through semantic use, perceptual contrast and system
   consistency, not personal taste.
 
-When the official Aetheris token is not present in the evidence, state that
+When the official Velaris token is not present in the evidence, state that
 limitation and recommend token verification or a design-system decision.
 
 ## Visual states and consistency
@@ -105,7 +105,7 @@ Under `## Estados visuais e consistência`:
 - verify that state emphasis matches semantic importance;
 - evaluate affordance through shape, contrast, placement, label treatment and
   state change;
-- flag local styling that competes with documented Aetheris visual patterns;
+- flag local styling that competes with documented Velaris visual patterns;
 - identify excess decoration, excessive shadows, gradients, borders,
   animations or color accents when they reduce focus.
 
@@ -121,7 +121,7 @@ Under `## Ajustes recomendados`:
 - prioritize the smallest set of changes that restores focus and consistency;
 - describe alignment, spacing, scale, weight, color role or state treatment
   precisely;
-- preserve Aetheris identity and documented system constraints;
+- preserve Velaris identity and documented system constraints;
 - separate immediate correction from optional visual refinement;
 - avoid unsupported aesthetic novelty.
 
@@ -182,7 +182,7 @@ Before finalizing, perform this binary checklist:
   relevant?
 - Are token dependencies explicit for color, spacing, typography and states?
 - Are visual states and affordance evaluated?
-- Is the correction precise and aligned with documented Aetheris constraints?
+- Is the correction precise and aligned with documented Velaris constraints?
 - Is the visual issue separated from usability, research and strategy?
 - Are evidence, inference and limitations visible?
 

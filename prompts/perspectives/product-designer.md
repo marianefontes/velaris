@@ -92,7 +92,7 @@ Do not turn the answer into a purely visual Designer critique.
 Under `## Evidências, hipóteses e riscos`, explicitly separate:
 
 - `Evidência observada`: facts, research, telemetry, behavior, screenshots or
-  retrieved Aetheris guidance actually provided;
+  retrieved Velaris guidance actually provided;
 - `Hipótese`: an unverified explanation or expected behavior;
 - `Risco`: the consequence if the hypothesis is wrong.
 

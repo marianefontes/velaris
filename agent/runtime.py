@@ -22,6 +22,13 @@ from .navigation_actions import (
     single_choice_navigation_actions,
 )
 from .claims import build_claims_for_context
+from .migration_advisor import build_migration_advisor_contract
+from .page_recommendation import (
+    build_page_recommendation_contract,
+    is_page_level_recommendation,
+)
+from .pending_intent import PendingIntentResolution
+from .professional_intent import requires_institutional_evidence
 from .evidence_integrity import EvidenceIntegrityValidator, integrity_fallback_response
 from .models import (
     AgentPlan,
@@ -116,6 +123,7 @@ from component_metadata import component_registry
 STEP_LABELS: dict[str, str] = {
     "request_received": "Request received",
     "intent_detected": "Intent detected",
+    "pending_intent_resolved": "Pending intent resolved",
     "workflow_selected": "Workflow selected",
     "tools_selected": "Tools selected",
     "policy_checked": "Policy checked",
@@ -212,6 +220,7 @@ class AgentExecutionContext:
     system_impact: SystemImpactAnalysis | None = None
     strategic_reasoning: StrategicReasoningAnalysis | None = None
     multi_agent_council: MultiAgentCouncilAnalysis | None = None
+    pending_resolution: PendingIntentResolution | None = None
 
     def decision_intelligence_active(self) -> bool:
         return (
@@ -488,6 +497,7 @@ class AgentRuntime:
         preferred_detail_level: str,
         catalog_mode: bool = False,
         understanding: QueryUnderstanding | None = None,
+        pending_resolution: PendingIntentResolution | None = None,
     ) -> AgentExecutionContext:
         request_id = f"req_{uuid.uuid4().hex[:16]}"
         recorder = StepRecorder()
@@ -498,7 +508,17 @@ class AgentRuntime:
             command_mode=command_mode,
             catalog_mode=catalog_mode,
             understanding=understanding or analyze_query(query),
+            pending_resolution=pending_resolution,
         )
+        if pending_resolution is not None:
+            recorder.add(
+                "pending_intent_resolved",
+                details=(
+                    f"{pending_resolution.action}; "
+                    f"{pending_resolution.missing_field}="
+                    f"{pending_resolution.resolution_value}"
+                ),
+            )
         recorder.add("intent_detected", details=plan.intent)
         recorder.add("workflow_selected", details=plan.workflow)
         recorder.add(
@@ -514,6 +534,7 @@ class AgentRuntime:
             preferred_detail_level=preferred_detail_level,
             plan=plan,
             recorder=recorder,
+            pending_resolution=pending_resolution,
         )
         self.store.create_run(
             request_id=request_id,
@@ -1023,6 +1044,11 @@ class AgentRuntime:
                         english=self._is_english(query),
                     ),
                 )
+        elif plan.workflow == "page_recommendation":
+            recorder.add(
+                "tool_results_built",
+                details="Page recommendation context prepared without single-component selection.",
+            )
         elif plan.workflow in {
             "compare_options",
             "token_lookup",
@@ -1141,6 +1167,7 @@ class AgentRuntime:
         elif (
             plan.workflow != "component_decision"
             and execution.evidence_tier == "insufficient"
+            and requires_institutional_evidence(plan.understanding)
         ):
             # Before blocking, try the canonical catalog for any named
             # component (e.g. "modal vs drawer" still has Modal/Dialog data).
@@ -1368,6 +1395,38 @@ class AgentRuntime:
                     ),
                 }
                 if context.plan.workflow == "component_decision"
+                else None
+            ),
+            "migration_advisor_contract": (
+                build_migration_advisor_contract(
+                    query=context.query,
+                    understanding=context.plan.understanding,
+                    profile=context.profile,
+                    english=self._is_english(context.query),
+                )
+                if context.plan.workflow == "migration_advisor"
+                else None
+            ),
+            "page_recommendation_contract": (
+                build_page_recommendation_contract(
+                    query=context.query,
+                    understanding=context.plan.understanding,
+                    profile=context.profile,
+                    english=self._is_english(context.query),
+                )
+                if context.plan.workflow == "page_recommendation"
+                or is_page_level_recommendation(context.plan.understanding)
+                else None
+            ),
+            "pending_intent_resolution": (
+                {
+                    "action": context.pending_resolution.action,
+                    "missing_field": context.pending_resolution.missing_field,
+                    "original_query": context.pending_resolution.original_query,
+                    "resolution_value": context.pending_resolution.resolution_value,
+                    "resolved_query": context.pending_resolution.resolved_query,
+                }
+                if context.pending_resolution is not None
                 else None
             ),
             "composer_boundary": (

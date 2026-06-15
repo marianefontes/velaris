@@ -144,6 +144,26 @@ class AgentStore:
                     project_id TEXT PRIMARY KEY,
                     next_seq INTEGER NOT NULL DEFAULT 1
                 );
+
+                CREATE TABLE IF NOT EXISTS response_feedback (
+                    feedback_id TEXT PRIMARY KEY,
+                    request_id TEXT,
+                    session_id TEXT NOT NULL DEFAULT 'default-session',
+                    project_id TEXT NOT NULL DEFAULT 'default',
+                    rating TEXT NOT NULL,
+                    reason TEXT NOT NULL DEFAULT '',
+                    user_query TEXT NOT NULL DEFAULT '',
+                    detected_intent TEXT NOT NULL DEFAULT '',
+                    detected_language TEXT NOT NULL DEFAULT '',
+                    corrected_intent TEXT,
+                    created_at TEXT NOT NULL
+                );
+
+                CREATE INDEX IF NOT EXISTS idx_feedback_rating
+                ON response_feedback(rating, created_at DESC);
+
+                CREATE INDEX IF NOT EXISTS idx_feedback_intent
+                ON response_feedback(detected_intent, rating);
                 """
             )
             self._migrate_decisions_schema(connection)
@@ -471,6 +491,138 @@ class AgentStore:
             ).fetchone()
         return self._serialize_run(row) if row else None
 
+    def record_feedback(
+        self,
+        *,
+        rating: str,
+        request_id: str | None = None,
+        session_id: str = "default-session",
+        project_id: str = "default",
+        reason: str = "",
+        user_query: str = "",
+        detected_intent: str = "",
+        detected_language: str = "",
+        corrected_intent: str | None = None,
+    ) -> dict[str, Any]:
+        normalized = rating.strip().lower()
+        if normalized not in {"up", "down"}:
+            raise ValueError("Feedback rating must be 'up' or 'down'")
+        feedback_id = uuid.uuid4().hex
+        now = _now()
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO response_feedback (
+                    feedback_id, request_id, session_id, project_id, rating,
+                    reason, user_query, detected_intent, detected_language,
+                    corrected_intent, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    feedback_id,
+                    request_id,
+                    session_id,
+                    project_id,
+                    normalized,
+                    reason,
+                    user_query,
+                    detected_intent,
+                    detected_language,
+                    corrected_intent,
+                    now,
+                ),
+            )
+        return self.get_feedback(feedback_id) or {}
+
+    def get_feedback(self, feedback_id: str) -> dict[str, Any] | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                "SELECT * FROM response_feedback WHERE feedback_id = ?",
+                (feedback_id,),
+            ).fetchone()
+        return self._serialize_feedback(row) if row else None
+
+    def list_feedback(
+        self,
+        *,
+        rating: str | None = None,
+        limit: int = 200,
+    ) -> list[dict[str, Any]]:
+        query = "SELECT * FROM response_feedback"
+        params: list[Any] = []
+        if rating is not None:
+            query += " WHERE rating = ?"
+            params.append(rating.strip().lower())
+        query += " ORDER BY created_at DESC LIMIT ?"
+        params.append(max(1, limit))
+        with self._connect() as connection:
+            rows = connection.execute(query, tuple(params)).fetchall()
+        return [self._serialize_feedback(row) for row in rows]
+
+    def feedback_summary(self) -> dict[str, Any]:
+        with self._connect() as connection:
+            total = connection.execute(
+                "SELECT COUNT(*) FROM response_feedback"
+            ).fetchone()[0]
+            by_rating = {
+                row["rating"]: row["n"]
+                for row in connection.execute(
+                    "SELECT rating, COUNT(*) AS n FROM response_feedback GROUP BY rating"
+                ).fetchall()
+            }
+            down_by_intent = [
+                {"intent": row["detected_intent"], "count": row["n"]}
+                for row in connection.execute(
+                    """
+                    SELECT detected_intent, COUNT(*) AS n
+                    FROM response_feedback
+                    WHERE rating = 'down'
+                    GROUP BY detected_intent
+                    ORDER BY n DESC
+                    """
+                ).fetchall()
+            ]
+            down_by_language = [
+                {"language": row["detected_language"], "count": row["n"]}
+                for row in connection.execute(
+                    """
+                    SELECT detected_language, COUNT(*) AS n
+                    FROM response_feedback
+                    WHERE rating = 'down'
+                    GROUP BY detected_language
+                    ORDER BY n DESC
+                    """
+                ).fetchall()
+            ]
+            corrected_intents = [
+                {
+                    "from": row["detected_intent"],
+                    "to": row["corrected_intent"],
+                    "count": row["n"],
+                }
+                for row in connection.execute(
+                    """
+                    SELECT detected_intent, corrected_intent, COUNT(*) AS n
+                    FROM response_feedback
+                    WHERE corrected_intent IS NOT NULL AND corrected_intent != ''
+                    GROUP BY detected_intent, corrected_intent
+                    ORDER BY n DESC
+                    """
+                ).fetchall()
+            ]
+        down = int(by_rating.get("down", 0))
+        up = int(by_rating.get("up", 0))
+        satisfaction = round(up / total, 4) if total else 0.0
+        return {
+            "total": int(total),
+            "up": up,
+            "down": down,
+            "satisfaction_ratio": satisfaction,
+            "down_by_intent": down_by_intent,
+            "down_by_language": down_by_language,
+            "suggested_intent_corrections": corrected_intents,
+        }
+
     def update_memory(
         self,
         *,
@@ -674,6 +826,22 @@ class AgentStore:
                 "profile": row["profile"],
             })
         return result
+
+    @staticmethod
+    def _serialize_feedback(row: sqlite3.Row) -> dict[str, Any]:
+        return {
+            "feedback_id": row["feedback_id"],
+            "request_id": row["request_id"],
+            "session_id": row["session_id"],
+            "project_id": row["project_id"],
+            "rating": row["rating"],
+            "reason": row["reason"],
+            "user_query": row["user_query"],
+            "detected_intent": row["detected_intent"],
+            "detected_language": row["detected_language"],
+            "corrected_intent": row["corrected_intent"],
+            "created_at": row["created_at"],
+        }
 
     @staticmethod
     def _serialize_run(row: sqlite3.Row) -> dict[str, Any]:

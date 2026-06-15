@@ -4,6 +4,8 @@ import re
 
 from .models import AgentPlan, QueryUnderstanding
 from .understanding import analyze_query
+from .pending_intent import PendingIntentResolution, apply_pending_resolution_to_route
+from .professional_intent import requires_mandatory_rag, workflow_for_category
 
 
 _AUDIT_TERMS = (
@@ -71,6 +73,7 @@ _WORKFLOW_TOOLS: dict[str, list[str]] = {
     "comparison_rule": [],
     "concept_query": [],
     "component_decision": ["search_component", "search_pattern"],
+    "page_recommendation": ["search_component", "search_pattern"],
     "pattern_guidance": ["search_pattern"],
     "token_lookup": ["search_token"],
     "accessibility_guidance": ["validate_against_design_system"],
@@ -85,6 +88,7 @@ _WORKFLOW_TOOLS: dict[str, list[str]] = {
         "validate_against_design_system",
     ],
     "documentation_help": ["search_component", "search_pattern", "search_token"],
+    "migration_advisor": [],
     "system_health": ["search_explainability"],
     "agent_identity": [],
     "governance_analysis": ["search_design_decision"],
@@ -104,6 +108,60 @@ _DRAFT_WORKFLOWS = {
     "compare_options",
     "decision_analysis",
 }
+
+_PROFESSIONAL_ROUTING_EXEMPT_WORKFLOWS = {
+    "greeting",
+    "navigation_query",
+    "semantic_navigation_query",
+    "perspective_lookup",
+    "entity_lookup",
+    "unsupported_entity_lookup",
+    "unsupported_entity_recommendation",
+    "unknown_entity_lookup",
+    "direct_entity_guidance",
+    "concept_query",
+    "single_choice_recommendation",
+    "decision_rule_recommendation",
+    "comparison_rule",
+    "agent_identity",
+    "out_of_scope",
+    "component_decision",
+    "compare_options",
+    "token_lookup",
+    "migration_advisor",
+    "page_recommendation",
+}
+
+
+def _apply_professional_routing(
+    understanding: QueryUnderstanding,
+    workflow: str,
+    tools: list[str],
+    rationale: str,
+) -> tuple[str, list[str], str]:
+    if understanding.professional_category == "MIGRATION_ADVISOR":
+        return (
+            workflow_for_category("MIGRATION_ADVISOR"),
+            [],
+            (
+                "Migration advisor: produce an adoption and modernization plan; "
+                "institutional RAG is optional enrichment only."
+            ),
+        )
+    if requires_mandatory_rag(understanding):
+        return workflow, tools, rationale
+    if workflow in _PROFESSIONAL_ROUTING_EXEMPT_WORKFLOWS:
+        return workflow, tools, rationale
+    category = understanding.professional_category
+    routed_workflow = workflow_for_category(category)
+    return (
+        routed_workflow,
+        [],
+        (
+            f"Professional category {category}: respond with specialized "
+            "expertise; institutional RAG is optional."
+        ),
+    )
 
 
 def _decision_analysis_tools(
@@ -143,7 +201,40 @@ def build_agent_plan(
     command_mode: str | None = None,
     catalog_mode: bool = False,
     understanding: QueryUnderstanding | None = None,
+    pending_resolution: PendingIntentResolution | None = None,
 ) -> AgentPlan:
+    if pending_resolution is not None:
+        understanding = apply_pending_resolution_to_route(
+            pending_resolution,
+            understanding=analyze_query(pending_resolution.original_query),
+        )
+        workflow = pending_resolution.workflow
+        if pending_resolution.professional_category == "MIGRATION_ADVISOR":
+            workflow = workflow_for_category("MIGRATION_ADVISOR")
+        tools: list[str] = []
+        rationale = (
+            "Pending intent resumed after conversational clarification: "
+            f"{pending_resolution.action}."
+        )
+        steps = [
+            "detect_intent",
+            "resolve_pending_intent",
+            "select_workflow",
+            "select_tools",
+            "check_policies",
+            "compose_response",
+        ]
+        return AgentPlan(
+            intent=pending_resolution.retrieval_intent,
+            workflow=workflow,  # type: ignore[arg-type]
+            tools=tools,
+            steps=steps,
+            needs_confirmation=False,
+            rationale=rationale,
+            creates_decision_draft=workflow in _DRAFT_WORKFLOWS,
+            understanding=understanding,
+        )
+
     understanding = understanding or analyze_query(query)
     normalized = " ".join(query.lower().split())
 
@@ -276,9 +367,25 @@ def build_agent_plan(
     ):
         workflow = "token_lookup"
         rationale = "The request asks for design-token guidance."
+    elif understanding.user_intent == "page_architecture":
+        workflow = "page_recommendation"
+        rationale = "The request needs page architecture and component composition guidance."
+    elif understanding.user_intent == "component_discovery":
+        workflow = "page_recommendation"
+        rationale = "The request needs capability-based component discovery."
     elif (
         understanding.user_intent == "component_recommendation"
-        or _contains_any(normalized, _COMPONENT_TERMS)
+        and understanding.page_type
+        and not understanding.entities.components
+    ):
+        workflow = "page_recommendation"
+        rationale = "The request needs page-level component recommendations."
+    elif (
+        understanding.user_intent == "component_recommendation"
+        or (
+            _contains_any(normalized, _COMPONENT_TERMS)
+            and understanding.user_intent != "general_design_system"
+        )
         or routed_intent in {
         "component_guidance",
         "when_not_to_use",
@@ -373,6 +480,26 @@ def build_agent_plan(
         steps.append("compose_response")
     else:
         steps.append("block_out_of_scope")
+
+    workflow, tools, rationale = _apply_professional_routing(
+        understanding,
+        workflow,
+        tools,
+        rationale,
+    )
+    if not tools and "execute_tools" in steps:
+        steps = [
+            step
+            for step in steps
+            if step
+            not in {
+                "execute_tools",
+                "score_evidence",
+                "build_tool_results",
+            }
+        ]
+        if "compose_response" not in steps:
+            steps.append("compose_response")
 
     return AgentPlan(
         intent=routed_intent,

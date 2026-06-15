@@ -31,7 +31,7 @@ Respond in the user's language with:
 1. [prioritized correction]
 
 ### Fontes e Evidências
-- [semantic Aetheris evidence]
+- [semantic Velaris evidence]
 
 ### Nível de Confiança
 [high / medium / low] — [boundary]

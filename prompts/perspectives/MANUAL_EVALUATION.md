@@ -104,7 +104,7 @@ Depois das correções, todas as perspectivas possuem:
 - Preservado: composição, hierarquia, tokens, espaçamento, tipografia, cor,
   estados, densidade e consistência estética.
 - Antes estava genérico: não forçava grid, alinhamento, ritmo, respiro, peso
-  visual, affordance ou identidade Aetheris.
+  visual, affordance ou identidade Velaris.
 - Critérios que faltavam: causa visual concreta, efeito perceptivo e correção
   ligada ao sistema.
 - Resposta ruim antes permitida: "melhore o layout, use mais hierarquia e
@@ -172,7 +172,7 @@ Depois das correções, todas as perspectivas possuem:
 - Preservado: documentação, naming, exemplos, microcopy, terminologia,
   consistência e instruções acionáveis.
 - Antes estava genérico: não obrigava termo canônico, interpretação errada,
-  glossário ou cobertura do texto de UI do Aetheris.
+  glossário ou cobertura do texto de UI do Velaris.
 - Critérios que faltavam: mensagens de erro, fallback, Audit Drawer, evidência,
   documentação para agentes e onboarding.
 - Resposta ruim antes permitida: "use linguagem clara e consistente com bons
@@ -290,7 +290,7 @@ Para cada pergunta:
 - Tech Writer: decide termos canônicos, diferenças, exemplos e interpretações
   erradas.
 
-### 5. Como testar o fallback da Beatrice?
+### 5. Como testar o fallback do Abraxos?
 
 - Developer: define pontos de integração, contrato técnico e transições de
   estado.

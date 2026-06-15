@@ -299,6 +299,13 @@ class AgentSSEContractTests(unittest.TestCase):
                             "single_choice_recommendation",
                             "unsupported_entity_lookup",
                         }
+                        professional_workflows_without_tools = {
+                            "accessibility_guidance",
+                            "design_audit",
+                            "documentation_help",
+                            "design_decision",
+                            "migration_advisor",
+                        }
                         if expected_workflow in deterministic_workflows:
                             if expected_workflow == "out_of_scope":
                                 self.assertEqual(final["execution_status"], "blocked")
@@ -308,6 +315,11 @@ class AgentSSEContractTests(unittest.TestCase):
                                     [step["id"] for step in final["steps"]],
                                 )
                             self.assertEqual(final["tools_used"], [])
+                        elif expected_workflow in professional_workflows_without_tools:
+                            self.assertIn(
+                                "response_completed",
+                                [step["id"] for step in final["steps"]],
+                            )
                         else:
                             self.assertIn(
                                 "response_completed",

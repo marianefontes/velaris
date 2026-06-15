@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from agent.models import QueryUnderstanding
+from agent.professional_intent import retrieval_intent_for_category
 from agent.understanding import analyze_query, normalize_text
 from prompts.perspective_ids import normalize_profile_id
 
@@ -79,6 +79,43 @@ INTENT_FILTER: dict[str, list[str]] = {
         "engine_contract",
         "reasoning",
     ],
+    "knowledge_explanation": [
+        "foundation",
+        "guideline",
+        "reasoning",
+        "oracle_command",
+    ],
+    "design_rationale": [
+        "foundation",
+        "guideline",
+        "reasoning",
+        "design_decision",
+    ],
+    "design_audit": [
+        "foundation",
+        "guideline",
+        "pattern",
+        "component",
+    ],
+    "architecture_review": [
+        "foundation",
+        "reasoning",
+        "dev_integration",
+        "design_decision",
+    ],
+    "professional_guidance": [
+        "perspective",
+        "foundation",
+        "guideline",
+        "reasoning",
+    ],
+    "migration_advisor": [
+        "component",
+        "pattern",
+        "guideline",
+        "foundation",
+        "dev_integration",
+    ],
     "general": [
         "foundation",
         "guideline",
@@ -94,11 +131,16 @@ INTENT_KEYWORDS: dict[str, list[str]] = {
     "component_guidance": [
         "componente", "component", "qual usar", "which component",
         "que componente", "usar para mostrar", "usar para capturar",
+        "which components should", "quais componentes devo",
+        "que componentes devo", "help me to build", "me ajude a criar",
+        "ajuda-me a criar", "build a home", "criar uma pagina",
+        "criar uma página", "create a dashboard", "criar um dashboard",
     ],
     "pattern_guidance": [
         "padrão", "padrao", "pattern", "tela de", "fluxo de",
         "como estruturar", "como montar", "layout de", "estrutura de",
-        "how to structure",
+        "how to structure", "design a checkout", "projetar um checkout",
+        "criar um fluxo de onboarding", "page architecture",
     ],
     "token_lookup": [
         "token", "tipografia", "typography", "espaçamento", "spacing",
@@ -207,7 +249,21 @@ def classify_intent(query: str) -> str:
         "out_of_scope": "general",
     }
     intent = mapped[understanding.user_intent]
-    normalized = normalize_text(query)
+    if intent in {
+        "system_health",
+        "governance_analysis",
+        "simulation",
+        "multi_agent_reasoning",
+    }:
+        normalized = normalize_text(query)
+    elif not (
+        understanding.knowledge_source == "institutional_knowledge"
+        or understanding.professional_category == "ENTITY_LOOKUP"
+    ):
+        intent = retrieval_intent_for_category(understanding.professional_category)
+        normalized = normalize_text(query)
+    else:
+        normalized = normalize_text(query)
     if (
         intent == "component_guidance"
         and any(
@@ -313,6 +369,12 @@ def route_query(query: str, profile: str = "general", command_mode: str | None =
         "governance_analysis": 7,
         "simulation": 8,
         "multi_agent_reasoning": 8,
+        "knowledge_explanation": 0,
+        "design_rationale": 0,
+        "design_audit": 0,
+        "architecture_review": 0,
+        "professional_guidance": 0,
+        "migration_advisor": 0,
     }.get(intent, 4)
     return RoutingResult(
         retrieval_intent=intent,

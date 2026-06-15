@@ -3,10 +3,10 @@
 Use this when catalog mode is active.
 
 Opening:
-- "O Aetheris possui atualmente [N] componentes oficiais..." for components.
-- "O Aetheris possui atualmente [N] padrões oficiais..." for patterns.
-- "O Aetheris possui atualmente [N] grupos de tokens oficiais..." for tokens.
-- "A memória de decisão do Aetheris registra [N] decisões..." for decisions.
+- "O Velaris possui atualmente [N] componentes oficiais..." for components.
+- "O Velaris possui atualmente [N] padrões oficiais..." for patterns.
+- "O Velaris possui atualmente [N] grupos de tokens oficiais..." for tokens.
+- "A memória de decisão do Velaris registra [N] decisões..." for decisions.
 
 Then:
 1. Show the semantic categories identified.

@@ -30,7 +30,7 @@ Respond in the user's language with:
 1. [ordered migration or validation action]
 
 ### Fontes e Confiança
-- **Evidence:** [semantic Aetheris sources]
+- **Evidence:** [semantic Velaris sources]
 - **Confidence:** [high / medium / low] — [boundary]
 ```
 

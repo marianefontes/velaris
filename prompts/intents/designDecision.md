@@ -1,6 +1,6 @@
 # Intent | Design Decision
 
-Use this intent when the user asks why Aetheris chose a component, pattern,
+Use this intent when the user asks why Velaris chose a component, pattern,
 guideline, interaction model or architectural rule.
 
 Expected behavior:

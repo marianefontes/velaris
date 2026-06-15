@@ -98,6 +98,13 @@ DETERMINISTIC_EVIDENCE_EXEMPT_WORKFLOWS = frozenset({
     "single_choice_recommendation",
     "decision_rule_recommendation",
     "comparison_rule",
+    "documentation_help",
+    "design_audit",
+    "design_decision",
+    "accessibility_guidance",
+    "decision_analysis",
+    "migration_advisor",
+    "page_recommendation",
 })
 
 

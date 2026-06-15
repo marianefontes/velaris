@@ -5,7 +5,7 @@ component, what intents or states a component supports, when to use a component,
 when not to use it, or what components exist.
 
 Expected behavior:
-- Recommend or address the most appropriate Aetheris component first.
+- Recommend or address the most appropriate Velaris component first.
 - When the query asks for implementation ("como implemento", "como usar",
   "implement", "how to use", "como faço", "exemplo de", "show me", "code"):
   - List the relevant intents with a short description of each.
@@ -42,6 +42,6 @@ Persona-specific use of do/dont rules:
 - Accessibility Specialist: surface dont rules that affect focus, contrast, ARIA or
   keyboard; pair with the accessibility field from the component evidence.
 
-Do not answer with generic UI component categories when Aetheris has a named
+Do not answer with generic UI component categories when Velaris has a named
 component for the case.
 Do not invent props, intents, states or API not present in the component catalog.

@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from agent.models import QueryUnderstanding, UserIntent
+from agent.professional_intent import requires_mandatory_rag
 from agent.understanding import analyze_query, normalize_query
 
 
@@ -107,14 +108,25 @@ def comprehend(query: str) -> ComprehensionResult:
     normalized_query = normalize_query(query)
     understanding = analyze_query(query)
     intent = understanding.user_intent
-    rag_required = intent not in NON_RAG_INTENTS and intent not in {
-        "help_request",
-        "catalog",
-        "language_followup",
-        "general_design_system",
-    }
-    if intent in {
+    rag_required = requires_mandatory_rag(understanding)
+    if not rag_required and intent in {
         "component_recommendation",
+        "page_architecture",
+        "component_discovery",
+        "component_comparison",
+        "pattern_guidance",
+        "token_lookup",
+        "accessibility_guidance",
+        "design_decision",
+        "xai_explanation",
+        "general_design_system",
+        "help_request",
+    }:
+        rag_required = False
+    elif intent in {
+        "component_recommendation",
+        "page_architecture",
+        "component_discovery",
         "component_comparison",
         "pattern_guidance",
         "token_lookup",

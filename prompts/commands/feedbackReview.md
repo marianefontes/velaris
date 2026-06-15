@@ -2,7 +2,7 @@
 
 Analyze feedback, outcomes, recurring usage signals or collected evidence and
 produce improvement recommendations. This command does not train, fine-tune or
-automatically update Beatrice.
+automatically update Abraxos.
 
 Respond in the user's language with:
 

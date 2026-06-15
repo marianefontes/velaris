@@ -37,11 +37,13 @@ WorkflowName = Literal[
     "compare_options",
     "decision_analysis",
     "documentation_help",
+    "migration_advisor",
     "system_health",
     "agent_identity",
     "governance_analysis",
     "simulation",
     "multi_agent_reasoning",
+    "page_recommendation",
     "out_of_scope",
 ]
 OperationalIntent = Literal[
@@ -73,8 +75,27 @@ OperationalIntent = Literal[
     "governance_analysis",
     "simulation",
     "multi_agent_reasoning",
+    "page_architecture",
+    "component_discovery",
     "out_of_scope",
 ]
+ProfessionalIntentCategory = Literal[
+    "ENTITY_LOOKUP",
+    "KNOWLEDGE_EXPLANATION",
+    "DESIGN_AUDIT",
+    "DESIGN_RATIONALE",
+    "ACCESSIBILITY_REVIEW",
+    "ARCHITECTURE_REVIEW",
+    "GENERAL_PROFESSIONAL_GUIDANCE",
+    "MIGRATION_ADVISOR",
+]
+
+KnowledgeSource = Literal[
+    "institutional_knowledge",
+    "professional_knowledge",
+    "analytical_capability",
+]
+
 UserIntent = Literal[
     "greeting",
     "small_talk",
@@ -104,6 +125,8 @@ UserIntent = Literal[
     "governance_analysis",
     "simulation",
     "multi_agent_reasoning",
+    "page_architecture",
+    "component_discovery",
     "out_of_scope",
 ]
 AnswerStrategy = Literal[
@@ -130,6 +153,8 @@ AnswerStrategy = Literal[
     "governance_analysis",
     "simulation",
     "multi_agent_reasoning",
+    "page_architecture",
+    "component_discovery",
     "out_of_scope",
 ]
 EntityCatalogStatus = Literal[
@@ -149,7 +174,7 @@ EntityKind = Literal[
     "concept",
     "decision",
 ]
-UserLanguage = Literal["pt-BR", "pt-PT", "en", "unknown"]
+UserLanguage = Literal["pt-BR", "pt-PT", "en", "es", "fr", "ar", "other", "unknown"]
 AnswerConfidence = Literal["high", "medium", "low", "not_determined"]
 ToolPermission = Literal["read_only", "write_action"]
 EvidenceTier = Literal[
@@ -319,6 +344,10 @@ class QueryUnderstanding(StrictModel):
     retrieval_query: str = ""
     decision_analysis_mode: bool = False
     architect_review_mode: bool = False
+    professional_category: ProfessionalIntentCategory = "KNOWLEDGE_EXPLANATION"
+    knowledge_source: KnowledgeSource = "professional_knowledge"
+    page_type: str = ""
+    discovery_capability: str = ""
 
 
 class AgentPlan(StrictModel):

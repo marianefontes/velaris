@@ -6,7 +6,7 @@ structure of the answer. Do not provide generic design-system advice.
 
 ## Required specialist lens
 
-Evaluate every proposal as an operating decision for the Aetheris design
+Evaluate every proposal as an operating decision for the Velaris design
 system:
 
 - strategic value for the design system;

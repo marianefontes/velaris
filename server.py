@@ -18,6 +18,7 @@ import re
 import secrets
 import sqlite3
 from contextlib import asynccontextmanager
+from dataclasses import replace
 from pathlib import Path
 from typing import AsyncGenerator, Literal
 
@@ -33,6 +34,11 @@ from agent.evidence import evidence_tier
 from agent.navigation_actions import serialize_navigation_payload
 from agent.models import AgentChatRequest, CreateDecisionRecordInput, DecisionPatch
 from agent.registry import ToolRegistry
+from agent.pending_intent import (
+    PendingIntentResolution,
+    apply_pending_resolution_to_route,
+    resolve_conversational_reference,
+)
 from agent.runtime import AgentRuntime
 from agent.store import DecisionConflictError, agent_store
 from agent.tools import (
@@ -113,6 +119,12 @@ LABORATORY_AUTOMATION_CASE_SET = os.environ.get(
     "LABORATORY_AUTOMATION_CASE_SET",
     "beatrice-core-v1",
 )
+# Minimum top-chunk similarity for queries that the agent also classified as
+# out_of_scope. Below this threshold the LLM call is skipped entirely and a
+# canned boundary response is returned, saving tokens and avoiding
+# hallucinated design-system answers.  Conservative default (0.22) means only
+# clearly off-topic queries are gated; raise toward 0.30 after reviewing logs.
+DOMAIN_GATE_THRESHOLD = float(os.environ.get("DOMAIN_GATE_THRESHOLD", "0.22"))
 
 # ||| Global state | initialized at startup
 _chroma: chromadb.ClientAPI | None = None
@@ -161,6 +173,39 @@ def _model_query_from_override(raw_query: str, clean_query: str) -> str:
     if raw_query.strip().lower().startswith("/use "):
         return "O usuário ajustou a preferência cognitiva, mas ainda não informou a pergunta ou tarefa."
     return raw_query.strip()
+
+
+_DOMAIN_GATE_MESSAGES: dict[str, str] = {
+    "pt-BR": (
+        "Esta pergunta está fora do meu domínio. "
+        "Abraxos orienta sobre o sistema de design Velaris: "
+        "componentes, tokens, padrões, decisões de design e acessibilidade."
+    ),
+    "pt-PT": (
+        "Esta pergunta está fora do meu domínio. "
+        "Abraxos orienta sobre o sistema de design Velaris: "
+        "componentes, tokens, padrões, decisões de design e acessibilidade."
+    ),
+    "es": (
+        "Esta pregunta está fuera de mi dominio. "
+        "Abraxos orienta sobre el sistema de diseño Velaris: "
+        "componentes, tokens, patrones, decisiones de diseño y accesibilidad."
+    ),
+    "fr": (
+        "Cette question est en dehors de mon domaine. "
+        "Abraxos guide sur le système de design Velaris: "
+        "composants, tokens, patterns, décisions de design et accessibilité."
+    ),
+    "en": (
+        "This question is outside my domain. "
+        "Abraxos guides on the Velaris design system: "
+        "components, tokens, patterns, design decisions and accessibility."
+    ),
+}
+
+
+def _domain_gate_response(language: str) -> str:
+    return _DOMAIN_GATE_MESSAGES.get(language, _DOMAIN_GATE_MESSAGES["en"])
 
 
 def _build_chunks(query: str, route, cognition: CognitiveOrchestrationResult) -> list[dict]:
@@ -609,8 +654,6 @@ async def lifespan(app: FastAPI):
                 _rag_ready = True
                 print("✅ BGE-M3 carregado: retrieval vetorial ativo")
 
-                # Production deploys: skip RAG bootstrap via AETHERIS_SKIP_RAG_STARTUP=1
-                # to keep memory usage under 512MB free tier limit.
                 if _collection.count() == 0 and corpus_available():
                     print("📚 Coleção vazia: reconstruindo índice a partir do corpus versionado...")
                     indexed = bootstrap_collection(_collection, _embedder)
@@ -903,6 +946,18 @@ class LaboratoryNotificationReadPayload(BaseModel):
 
 class LaboratoryRollbackPayload(BaseModel):
     reason: str = Field(min_length=2, max_length=500)
+
+
+class FeedbackPayload(BaseModel):
+    rating: str = Field(pattern="^(up|down)$")
+    request_id: str | None = Field(default=None, max_length=200)
+    session_id: str = Field(default="default-session", min_length=1, max_length=200)
+    project_id: str = Field(default="default", min_length=1, max_length=200)
+    reason: str = Field(default="", max_length=2000)
+    user_query: str = Field(default="", max_length=10_000)
+    detected_intent: str = Field(default="", max_length=120)
+    detected_language: str = Field(default="", max_length=20)
+    corrected_intent: str | None = Field(default=None, max_length=120)
 
 
 ALLOWED_PRIMARY_AREAS = {
@@ -1418,6 +1473,34 @@ def update_decision(decision_id: str, payload: DecisionPatch):
     return decision
 
 
+@app.post("/api/feedback", status_code=201)
+def create_feedback(payload: FeedbackPayload):
+    try:
+        return agent_store.record_feedback(
+            rating=payload.rating,
+            request_id=payload.request_id,
+            session_id=payload.session_id,
+            project_id=payload.project_id,
+            reason=payload.reason,
+            user_query=payload.user_query,
+            detected_intent=payload.detected_intent,
+            detected_language=payload.detected_language,
+            corrected_intent=payload.corrected_intent,
+        )
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@app.get("/api/feedback")
+def list_feedback(rating: str | None = None, limit: int = 200):
+    return {"feedback": agent_store.list_feedback(rating=rating, limit=limit)}
+
+
+@app.get("/api/feedback/summary")
+def feedback_summary():
+    return agent_store.feedback_summary()
+
+
 @app.post("/api/chat")
 async def chat(payload: AgentChatRequest) -> StreamingResponse:
     messages = _trim_history([
@@ -1432,7 +1515,19 @@ async def chat(payload: AgentChatRequest) -> StreamingResponse:
     query = _model_query_from_override(raw_query, manual_override.clean_query)
     if query != raw_query:
         messages = _replace_last_user_query(messages, query)
-    route = route_query(query, profile=profile, command_mode=command_mode)
+    pending_resolution = resolve_conversational_reference(messages)
+    routing_query = pending_resolution.resolved_query if pending_resolution else query
+    route = route_query(routing_query, profile=profile, command_mode=command_mode)
+    if pending_resolution is not None:
+        route = replace(
+            route,
+            retrieval_intent=pending_resolution.retrieval_intent,
+            response_intent=pending_resolution.retrieval_intent,
+            understanding=apply_pending_resolution_to_route(
+                pending_resolution,
+                understanding=route.understanding,
+            ),
+        )
     active_calibration = laboratory_store.active_calibration()
     calibration_override = merge_profile_calibration(
         route.persona_profile,
@@ -1452,7 +1547,7 @@ async def chat(payload: AgentChatRequest) -> StreamingResponse:
         rule_scorer=_rule_similarity_scorer,
     )
     agent_context = runtime.prepare(
-        query=query,
+        query=routing_query,
         profile=route.persona_profile,
         routed_intent=route.response_intent,
         command_mode=route.active_command_mode,
@@ -1461,6 +1556,7 @@ async def chat(payload: AgentChatRequest) -> StreamingResponse:
         preferred_detail_level=payload.preferred_detail_level,
         catalog_mode=route.catalog_mode,
         understanding=route.understanding,
+        pending_resolution=pending_resolution,
     )
     active_engine = resolve_engine(route.active_command_mode)
 
@@ -1536,6 +1632,29 @@ async def chat(payload: AgentChatRequest) -> StreamingResponse:
 
         runtime.start_composition(agent_context)
         chunks = _agent_chunks(agent_context)
+
+        top_similarity = chunks[0]["similarity"] if chunks else 0.0
+        if (
+            top_similarity < DOMAIN_GATE_THRESHOLD
+            and route.understanding.user_intent == "out_of_scope"
+        ):
+            gate_text = _domain_gate_response(route.understanding.language)
+            perspective_audit = _build_response_audit_metadata(
+                route.persona_profile, gate_text, cognition
+            )
+            yield _sse_payload({"delta": gate_text})
+            yield _sse_payload({
+                "final": True,
+                "cognitive_skills": [],
+                "audit_metadata": _merge_audit_metadata(
+                    agent_context.audit_metadata(execution_status="completed"),
+                    perspective_audit,
+                ),
+                **serialize_navigation_payload(None, None),
+            })
+            yield "data: [DONE]\n\n"
+            return
+
         groq_messages = _build_groq_messages(
             messages,
             query,

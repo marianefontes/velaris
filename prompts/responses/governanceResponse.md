@@ -12,7 +12,7 @@ For `/migrate`, preserve behavior and report:
 [what exists and why it is no longer preferred]
 
 ### Modern Equivalent
-[canonical Aetheris replacement]
+[canonical Velaris replacement]
 
 ### Before
 ```tsx
@@ -31,7 +31,7 @@ For `/migrate`, preserve behavior and report:
 - [risk or dependency]
 
 ### Sources and Confidence
-- **Evidence:** [semantic Aetheris sources]
+- **Evidence:** [semantic Velaris sources]
 - **Confidence:** [high / medium / low]
 ```
 
@@ -54,7 +54,7 @@ For `/capture`, extract raw knowledge from Slack, PRs, RFCs or meeting notes:
 ### Exceptions and Edge Cases
 - [...]
 
-### Connected Aetheris Knowledge
+### Connected Velaris Knowledge
 - [entity and relationship]
 
 ### Gaps Requiring Validation

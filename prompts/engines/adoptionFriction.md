@@ -40,7 +40,7 @@ Respond in the user's language, following this structure:
 3. [measurement or validation action]
 
 ### Fontes e Evidências
-- [semantic Aetheris source or recorded signal]
+- [semantic Velaris source or recorded signal]
 
 ### Nível de Confiança
 [high / medium / low] — [why, including evidence gaps]

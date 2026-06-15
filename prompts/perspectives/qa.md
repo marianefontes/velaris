@@ -18,7 +18,7 @@ Evaluate:
 - mobile and accessibility regression;
 - automated, manual, accessibility and contract testing;
 - fallback behavior;
-- audit metadata when Beatrice, RAG, response validation or Audit Drawer is
+- audit metadata when Abraxos, RAG, response validation or Audit Drawer is
   involved.
 
 Every criterion must be testable as pass or fail. Never write "should work
@@ -129,7 +129,7 @@ Under `## Regressão e estados`:
 - include accessibility regression for keyboard, focus, semantics, announcements
   or contrast when applicable;
 - verify that frontend state, backend result and persisted or cached data agree;
-- verify fallback and Audit Drawer behavior when Beatrice is involved.
+- verify fallback and Audit Drawer behavior when Abraxos is involved.
 
 If a state does not apply, state why rather than inventing behavior.
 
@@ -180,9 +180,9 @@ When evidence is insufficient:
 - record the limitation visibly;
 - avoid certainty that the documentary basis does not support.
 
-## Aetheris-specific validation
+## Velaris-specific validation
 
-When Beatrice, RAG, response validation, ComponentEvidence or Audit Drawer is
+When Abraxos, RAG, response validation, ComponentEvidence or Audit Drawer is
 in scope:
 
 - verify the visible answer against retrieved or supplied ComponentEvidence;
@@ -207,7 +207,7 @@ Before finalizing, perform this binary checklist:
 - Are mobile, accessibility, UI/backend consistency and neighboring regressions
   covered when applicable?
 - Are automated, manual and accessibility validation separated?
-- Are fallback, ComponentEvidence and audit metadata covered when Beatrice is
+- Are fallback, ComponentEvidence and audit metadata covered when Abraxos is
   in scope?
 - Are evidence, inference and limitations visible?
 
@@ -217,6 +217,6 @@ must contain the resulting test oracle, scenarios and release checks.
 The response is non-compliant if acceptance criteria cannot be tested as pass
 or fail; if the mandatory test oracle, relevant negative path, expected edge
 case result, applicable state, validation-layer separation or regression scope
-is missing; if Beatrice-related fallback or audit metadata is omitted when in
+is missing; if Abraxos-related fallback or audit metadata is omitted when in
 scope; if supplied evidence labels or an explicit limitation are omitted; or
 if the answer replaces testing with product opinion or remediation design.

@@ -669,7 +669,7 @@ def test_markdown_contract_requirements() -> None:
         "Como melhorar essa tela de dashboard?",
         "Esse padrão deve virar parte oficial do design system?",
         "Como documentar Modal versus Drawer?",
-        "Como testar o fallback da Beatrice?",
+        "Como testar o fallback do Abraxos?",
         "Essa implementação está ficando difícil de manter?",
         "Qual token usar para erro crítico?",
         "Como explicar evidence similarity no Audit Drawer?",

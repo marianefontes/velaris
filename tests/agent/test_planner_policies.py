@@ -19,7 +19,7 @@ class AgentPlannerPolicyTests(unittest.TestCase):
             "Compare Modal vs Drawer para um formulário": "compare_options",
             "Qual token de cor usar em erro?": "token_lookup",
             "Qual componente usar para confirmação?": "component_decision",
-            "Como estruturar um fluxo de onboarding?": "pattern_guidance",
+            "Como estruturar um fluxo de onboarding?": "page_recommendation",
             "Quais requisitos de WCAG devo seguir para acessibilidade?": "accessibility_guidance",
             "Como deixo este botão acessível?": "component_decision",
             "Por que esta decisão existe?": "design_decision",
@@ -35,7 +35,8 @@ class AgentPlannerPolicyTests(unittest.TestCase):
     def test_audit_has_priority_over_component_terms(self) -> None:
         plan = build_agent_plan("Audite este componente Button com cor hardcoded")
         self.assertEqual(plan.workflow, "design_audit")
-        self.assertEqual(plan.tools, ["validate_against_design_system"])
+        self.assertEqual(plan.tools, [])
+        self.assertEqual(plan.understanding.professional_category, "DESIGN_AUDIT")
 
     def test_comparison_selects_expected_tool(self) -> None:
         plan = build_agent_plan("Compare Modal versus Drawer for a form")

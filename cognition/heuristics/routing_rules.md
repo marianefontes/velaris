@@ -4,7 +4,7 @@ The cognitive layer runs after intent routing and before prompt assembly.
 
 Routing principles:
 - Intent explains what the user is asking.
-- Cognitive strategies explain how Beatrice should reason about it.
+- Cognitive strategies explain how Abraxos should reason about it.
 - Strategies can coexist and should be weighted, not selected as exclusive
   modes, unless a manual override explicitly requests exclusivity.
 - Manual overrides modify the same orchestration engine used by automatic

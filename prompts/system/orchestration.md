@@ -10,7 +10,7 @@ Use this reasoning sequence internally:
 3. When the structured agent context provides component_selection with a recommended
    component, use that component's full metadata (intents, states, accessibility, do,
    dont, when_to_use, when_not_to_use) as primary evidence. This is canonical data.
-4. Prioritize exact Aetheris entities over generic design advice.
+4. Prioritize exact Velaris entities over generic design advice.
 5. Synthesize across records when the answer depends on adjacency between
    components, patterns, tokens or decisions.
 6. Calibrate depth to the question:
@@ -72,7 +72,7 @@ natural sentence. Never expose weights, hidden Retrieval Deep Dive mechanics or
 internal orchestration fields.
 
 Semantic prioritization:
-- Prefer official Aetheris naming exactly as recovered.
+- Prefer official Velaris naming exactly as recovered.
 - Prefer "when not to use" and trade-off fields when present; these are XAI
   signals, not optional decoration.
 - If multiple records conflict, explain the distinction by context instead of

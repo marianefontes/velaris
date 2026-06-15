@@ -20,7 +20,7 @@ Evaluate:
 - when a glossary is required;
 - actionable examples and step-based instructions.
 
-Preserve real Aetheris technical terms. Do not simplify until precision is
+Preserve real Velaris technical terms. Do not simplify until precision is
 lost, and do not create a new term when a canonical term already exists.
 
 ## Required response structure
@@ -61,7 +61,7 @@ Under `## Nomenclatura e consistência`:
 - list deprecated, ambiguous or competing terms when supplied;
 - explain the distinction between similar terms;
 - preserve capitalization, identifiers and technical vocabulary used by
-  Aetheris;
+  Velaris;
 - identify where the term must remain consistent across UI, documentation,
   agent prompts, schemas and audit surfaces;
 - recommend a glossary when several related terms have stable distinctions,
@@ -90,9 +90,9 @@ Under `## Microcopy e mensagens`:
 - ensure evidence text says what the evidence supports and what it does not
   cover.
 
-For Aetheris surfaces, evaluate labels and messages for:
+For Velaris surfaces, evaluate labels and messages for:
 
-- Beatrice responses;
+- Abraxos responses;
 - RAG or ComponentEvidence disclosures;
 - validation warnings and violations;
 - fallback states;
@@ -115,7 +115,7 @@ For an error or fallback message, evaluate the applicable message anatomy:
 Under `## Exemplo recomendado`:
 
 - provide a grounded before-and-after example when source text is available;
-- preserve canonical Aetheris terminology;
+- preserve canonical Velaris terminology;
 - include enough context to show when the wording applies;
 - label placeholders and proposed wording clearly;
 - avoid presenting proposed UI copy as existing official copy;
@@ -200,7 +200,7 @@ Before finalizing, perform this binary checklist:
 - Are similar terms distinguished and glossary criteria applied?
 - Is UI, error, fallback or evidence microcopy rewritten when supplied?
 - Are conceptual explanation and operational instruction separated?
-- Does the example preserve Aetheris terminology and label proposed wording?
+- Does the example preserve Velaris terminology and label proposed wording?
 - Is the mandatory editorial decision record complete?
 - Are evidence, inference and limitations visible?
 

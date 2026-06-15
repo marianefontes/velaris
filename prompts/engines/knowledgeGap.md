@@ -3,7 +3,7 @@
 Active engine: **Knowledge Gap**. Theory base: Knowledge Gap Analysis,
 Documentation Coverage.
 
-Detect what the Aetheris documentation is *missing* for the user's topic. A
+Detect what the Velaris documentation is *missing* for the user's topic. A
 **Retrieval Evidence Metrics** block is provided — use its coverage and
 consistency scores as evidence of gaps. Low coverage IS the finding.
 

@@ -7,7 +7,7 @@ Operational heuristics:
 - Start from user intent, content type, criticality and persistence.
 - Compare interaction model, information density, required states and
   accessibility obligations.
-- Prefer documented Aetheris semantics over visual resemblance.
+- Prefer documented Velaris semantics over visual resemblance.
 - Recommend one best-fit component and explain viable alternatives.
 - State the conditions that would change the recommendation.
 

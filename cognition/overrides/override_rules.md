@@ -21,7 +21,7 @@ Semantics:
 - Unknown directives are ignored rather than exposed to the user.
 - The directive should be removed from the model-facing user query.
 
-Manual override should never make Beatrice sound like a command-line tool. It is
+Manual override should never make Abraxos sound like a command-line tool. It is
 a cognitive weighting control, not a separate response pipeline.
 
 Legacy skill names remain parser aliases only. Public documentation and
