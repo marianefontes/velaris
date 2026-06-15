@@ -1,4 +1,9 @@
 # ||| Beatrice Chat Server | Python dependencies
+#
+# Render Standard (2GB) has no GPU. Pin CPU-only PyTorch *before* FlagEmbedding
+# so pip does not pull CUDA wheels (nvidia-*, triton) that OOM the instance.
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch>=2.2.0
 
 fastapi>=0.111.0
 uvicorn[standard]>=0.29.0

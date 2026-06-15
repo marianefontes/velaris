@@ -650,7 +650,8 @@ async def lifespan(app: FastAPI):
             try:
                 from FlagEmbedding import BGEM3FlagModel
 
-                _embedder = BGEM3FlagModel("BAAI/bge-m3", use_fp16=True)
+                use_fp16 = os.environ.get("AETHERIS_EMBEDDER_FP16", "0") == "1"
+                _embedder = BGEM3FlagModel("BAAI/bge-m3", use_fp16=use_fp16)
                 _rag_ready = True
                 print("✅ BGE-M3 carregado: retrieval vetorial ativo")
 
