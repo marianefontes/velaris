@@ -7,6 +7,7 @@ from rag.embedding_provider import (
     _mean_pool,
     _normalize_hf_response,
     create_embedding_provider,
+    default_hf_api_url,
     dense_vectors,
     embedder_label,
 )
@@ -45,13 +46,20 @@ class EmbeddingProviderTests(unittest.TestCase):
             [0.4, 0.5, 0.6],
         ]
 
-        provider = create_embedding_provider()
-        result = provider.encode(["alpha", "beta"], batch_size=2)
+        provider = HuggingFaceEmbeddingProvider(
+            model="BAAI/bge-m3",
+            token="hf_test",
+            api_url=default_hf_api_url("BAAI/bge-m3"),
+        )
+        with patch.object(provider, "_embed_batch_hub", side_effect=ImportError):
+            result = provider.encode(["alpha", "beta"], batch_size=2)
         self.assertEqual(
             dense_vectors(result),
             [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]],
         )
-        self.assertEqual(embedder_label(provider), "api:BAAI/bge-m3")
+        self.assertTrue(
+            mock_post.call_args.args[0].startswith("https://router.huggingface.co/")
+        )
 
     def test_hf_provider_requires_token(self) -> None:
         with patch.dict(os.environ, {"AETHERIS_EMBEDDING_MODE": "api"}, clear=False):
