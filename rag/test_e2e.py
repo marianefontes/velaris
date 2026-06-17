@@ -19,6 +19,9 @@ import sys
 import time
 from pathlib import Path
 
+from chroma_config import chroma_db_path
+from embedding_provider import create_embedding_provider, dense_vectors, embedder_label
+
 # ── Args ──────────────────────────────────────────────────────────────────────
 parser = argparse.ArgumentParser(description="Aetheris RAG E2E Test Suite")
 parser.add_argument("--json",    action="store_true", help="JSON output")
@@ -27,7 +30,7 @@ args = parser.parse_args()
 
 # ── Paths ──────────────────────────────────────────────────────────────────────
 RAG_DIR    = Path(__file__).parent
-DB_PATH    = RAG_DIR / "chroma_db"
+DB_PATH    = chroma_db_path()
 COLLECTION = "aetheris_design_system"
 
 # ── Intent classifier (mirror of server.py) ────────────────────────────────────
@@ -163,12 +166,6 @@ except ImportError:
     print("[ERRO] chromadb não instalado. Execute: pip install chromadb")
     sys.exit(1)
 
-try:
-    from FlagEmbedding import BGEM3FlagModel
-except ImportError:
-    print("[ERRO] FlagEmbedding não instalado. Execute: pip install FlagEmbedding")
-    sys.exit(1)
-
 # ── Connect ────────────────────────────────────────────────────────────────────
 if not args.json:
     print("\n── Aetheris RAG E2E Test Suite ─────────────────────────")
@@ -180,14 +177,14 @@ total      = collection.count()
 
 if not args.json:
     print(f"  Chunks: {total}")
-    print("  Carregando BAAI/bge-m3…")
+    print("  Carregando provider de embeddings…")
 
 t_load = time.time()
-model  = BGEM3FlagModel("BAAI/bge-m3", use_fp16=True)
+model  = create_embedding_provider()
 load_ms = round((time.time() - t_load) * 1000)
 
 if not args.json:
-    print(f"  Modelo pronto em {load_ms}ms\n")
+    print(f"  Provider pronto em {load_ms}ms ({embedder_label(model)})\n")
 
 # ── Run tests ──────────────────────────────────────────────────────────────────
 results = []
@@ -205,12 +202,12 @@ for tc in TEST_CASES:
         return_dense=True,
         return_sparse=False,
         return_colbert_vecs=False,
-    )["dense_vecs"][0].tolist()
+    )
 
     # 3. ChromaDB query with intent filter
     page_types = _INTENT_FILTER.get(detected_intent, [])
     query_kwargs = {
-        "query_embeddings": [vec],
+        "query_embeddings": dense_vectors(vec),
         "n_results": 3,
         "include": ["documents", "metadatas", "distances"],
     }
@@ -221,7 +218,7 @@ for tc in TEST_CASES:
         res = collection.query(**query_kwargs)
     except Exception:
         res = collection.query(
-            query_embeddings=[vec], n_results=3,
+            query_embeddings=dense_vectors(vec), n_results=3,
             include=["documents", "metadatas", "distances"],
         )
 

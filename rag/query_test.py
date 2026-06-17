@@ -17,8 +17,11 @@ import sys
 import time
 from pathlib import Path
 
+from chroma_config import chroma_db_path
+from embedding_provider import create_embedding_provider, dense_vectors, embedder_label
+
 RAG_DIR    = Path(__file__).parent
-DB_PATH    = RAG_DIR / "chroma_db"
+DB_PATH    = chroma_db_path()
 COLLECTION = "aetheris_design_system"
 PRODUCT_NAME = "Aetheris"
 
@@ -62,11 +65,10 @@ total      = collection.count()
 # ─── Carrega modelo ───────────────────────────────────────────────────────────
 print(f"\n── Aetheris RAG Query ──────────────────────────")
 print(f"  Coleção: '{COLLECTION}' | {total} documentos indexados")
-print("  Carregando BAAI/bge-m3 para encoding de query…")
+print("  Carregando provider de embeddings para encoding de query…")
 
-FlagEmbedding = require("FlagEmbedding")
-model = FlagEmbedding.BGEM3FlagModel("BAAI/bge-m3", use_fp16=True)
-print("  Modelo pronto.\n")
+model = create_embedding_provider()
+print(f"  Provider pronto: {embedder_label(model)}.\n")
 
 
 # ─── Função de busca ──────────────────────────────────────────────────────────
@@ -81,13 +83,13 @@ def search(query: str, top_k: int = 3, page_type_filter: str = None) -> list[dic
         return_dense=True,
         return_sparse=False,
         return_colbert_vecs=False,
-    )["dense_vecs"].tolist()
+    )
 
     # Filtro opcional por tipo de página
     where = {"page_type": page_type_filter} if page_type_filter else None
 
     results = collection.query(
-        query_embeddings=q_embed,
+        query_embeddings=dense_vectors(q_embed),
         n_results=min(top_k, total),
         include=["documents", "metadatas", "distances"],
         where=where,

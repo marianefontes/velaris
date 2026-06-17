@@ -38,6 +38,11 @@ def _chunk_metadata(chunk: dict) -> dict:
         "component_id": chunk.get("component_id", ""),
         "status": chunk["status"],
         "section": chunk.get("section", ""),
+        "kind": chunk.get("kind", ""),
+        "command": chunk.get("command", ""),
+        "capability": chunk.get("capability", ""),
+        "route": chunk.get("route", ""),
+        "tags": chunk.get("tags", ""),
         "schema_version": chunk.get("schema_version", ""),
         "char_count": chunk["char_count"],
     }

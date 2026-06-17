@@ -1,8 +1,8 @@
 """
 setup_vectordb.py
 -----------------
-Lê aetheris-docs-dump.json, gera embeddings com BAAI/bge-m3
-e popula uma coleção ChromaDB persistente em rag/chroma_db/.
+Lê aetheris-docs-dump.json, gera embeddings com o provider configurado
+e popula uma coleção ChromaDB persistente.
 
 MODO DE RETRIEVAL: Dense (cosine similarity) — única opção ativa na v1.
 O BAAI/bge-m3 suporta também Sparse (BM25 neural) e ColBERT (multi-vector),
@@ -10,7 +10,8 @@ mas esta implementação usa apenas dense. Hybrid retrieval (dense + sparse)
 é um upgrade direto sem trocar de modelo — ver embedding-model-justification.md.
 
 Uso:
-  pip install FlagEmbedding chromadb
+  pip install chromadb huggingface_hub
+  AETHERIS_EMBEDDING_MODE=api HF_API_TOKEN=hf_... python3 rag/setup_vectordb.py
   python3 rag/setup_vectordb.py
 
 Flags opcionais:
@@ -24,10 +25,18 @@ import sys
 import time
 from pathlib import Path
 
+from chroma_config import chroma_db_path, chroma_db_path_source
+from embedding_provider import (
+    create_embedding_provider,
+    dense_vectors,
+    embedder_label,
+    embedding_mode,
+)
+
 # ─── Caminhos ────────────────────────────────────────────────────────────────
 RAG_DIR    = Path(__file__).parent
 DUMP_PATH  = RAG_DIR / "aetheris-docs-dump.json"
-DB_PATH    = RAG_DIR / "chroma_db"
+DB_PATH    = chroma_db_path()
 COLLECTION = "aetheris_design_system"
 PRODUCT_NAME = "Aetheris"
 
@@ -69,6 +78,7 @@ print(f"✓ Dump carregado: {len(chunks)} chunks de {DUMP_PATH.name}")
 
 # ─── Inicializa ChromaDB ──────────────────────────────────────────────────────
 chromadb = require("chromadb", "chromadb")
+DB_PATH.mkdir(parents=True, exist_ok=True)
 client   = chromadb.PersistentClient(path=str(DB_PATH))
 
 if args.reset:
@@ -88,6 +98,7 @@ collection = client.get_or_create_collection(
     }
 )
 print(f"✓ Coleção ChromaDB: '{COLLECTION}' ({DB_PATH})")
+print(f"  Fonte do caminho: {chroma_db_path_source()}")
 
 
 # ─── Verifica itens já indexados (evita re-embedding desnecessário) ───────────
@@ -100,19 +111,15 @@ if not to_index:
     sys.exit(0)
 
 
-# ─── Carrega modelo BGE-M3 ────────────────────────────────────────────────────
-print("\n── Carregando BAAI/bge-m3 ──────────────────────")
-print("  (primeira execução pode demorar ~2-5 min para download ~2.5 GB)")
-
-FlagEmbedding = require("FlagEmbedding", "FlagEmbedding")
-BGEM3FlagModel = FlagEmbedding.BGEM3FlagModel
-
+# ─── Carrega provider de embeddings ───────────────────────────────────────────
+print(f"\n── Carregando provider de embeddings ({embedding_mode()}) ─")
+if embedding_mode() == "api":
+    print("  Usando Hugging Face Inference Providers; PyTorch local não é carregado.")
+else:
+    print("  Modo local para desenvolvimento; não usar em produção Standard 2 GB.")
 t0 = time.time()
-model = BGEM3FlagModel(
-    "BAAI/bge-m3",
-    use_fp16=True,   # ~50% menos memória, qualidade mantida
-)
-print(f"✓ Modelo carregado em {time.time() - t0:.1f}s")
+model = create_embedding_provider()
+print(f"✓ Provider pronto em {time.time() - t0:.1f}s ({embedder_label(model)})")
 
 
 # ─── Encoding em batches ──────────────────────────────────────────────────────
@@ -154,7 +161,7 @@ for i in range(0, len(texts), args.batch):
         return_sparse=False,
         return_colbert_vecs=False,
     )
-    vecs = result["dense_vecs"].tolist()
+    vecs = dense_vectors(result)
     all_embeddings.extend(vecs)
     print(f"  Batch {b_num:>3}/{total_batches} — {len(batch)} chunks encodados")
 
@@ -190,10 +197,10 @@ q_embed = model.encode(
     return_dense=True,
     return_sparse=False,
     return_colbert_vecs=False,
-)["dense_vecs"].tolist()
+)
 
 results = collection.query(
-    query_embeddings=q_embed,
+    query_embeddings=dense_vectors(q_embed),
     n_results=3,
     include=["documents", "metadatas", "distances"],
 )
