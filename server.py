@@ -15,8 +15,10 @@ import json
 import math
 import os
 import re
+import resource
 import secrets
 import sqlite3
+import sys
 from contextlib import asynccontextmanager
 from dataclasses import replace
 from pathlib import Path
@@ -111,6 +113,7 @@ RAG_DIR = Path(__file__).parent / "rag"
 DB_PATH = Path(os.environ.get("CHROMA_DB_PATH", str(RAG_DIR / "chroma_db")))
 COLLECTION_NAME = "aetheris_design_system"
 MAX_HISTORY_MESSAGES = 16
+GROQ_MAX_REQUEST_BYTES = int(os.environ.get("GROQ_MAX_REQUEST_BYTES", "120000"))
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 RESEARCH_ADMIN_KEY = os.environ.get("RESEARCH_ADMIN_KEY", "")
 LABORATORY_AUTOMATION_ENABLED = os.environ.get(
@@ -131,6 +134,26 @@ LABORATORY_AUTOMATION_CASE_SET = os.environ.get(
 # hallucinated design-system answers.  Conservative default (0.22) means only
 # clearly off-topic queries are gated; raise toward 0.30 after reviewing logs.
 DOMAIN_GATE_THRESHOLD = float(os.environ.get("DOMAIN_GATE_THRESHOLD", "0.22"))
+
+def _log_memory(label: str) -> None:
+    """Print live RSS (Linux /proc) or peak RSS (macOS resource module) in MB."""
+    try:
+        rss_mb: float | None = None
+        try:
+            text = Path("/proc/self/status").read_text()
+            for line in text.splitlines():
+                if line.startswith("VmRSS:"):
+                    rss_mb = int(line.split()[1]) / 1024
+                    break
+        except OSError:
+            pass
+        if rss_mb is None:
+            usage = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+            rss_mb = usage / (1024 * 1024) if sys.platform == "darwin" else usage / 1024
+        print(f"[mem:{label}] {rss_mb:.0f} MB")
+    except Exception:
+        pass
+
 
 # ||| Global state | initialized at startup
 _chroma: chromadb.ClientAPI | None = None
@@ -159,6 +182,57 @@ def _trim_history(messages: list[dict]) -> list[dict]:
     if len(messages) <= MAX_HISTORY_MESSAGES:
         return messages
     return messages[-MAX_HISTORY_MESSAGES:]
+
+
+def _query_with_surface_context(query: str, surface_context: dict | None) -> str:
+    if not surface_context:
+        return query
+    entity_name = str(surface_context.get("entity_name") or "").strip()
+    if not entity_name:
+        return query
+    from agent.entity_validation_gate import is_deictic_artifact_reference
+    from agent.understanding import normalize_query
+
+    normalized = normalize_query(query)
+    if not is_deictic_artifact_reference(normalized):
+        return query
+    if entity_name.lower() in normalized:
+        return query
+    entity_type = str(surface_context.get("entity_type") or "component").strip()
+    return f"{query}\n\nContexto de superfície: {entity_type}={entity_name}"
+
+
+def _fit_groq_messages(
+    messages: list[dict],
+    *,
+    max_bytes: int = GROQ_MAX_REQUEST_BYTES,
+) -> list[dict]:
+    def payload_size(msgs: list[dict]) -> int:
+        return len(
+            json.dumps({"messages": msgs}, ensure_ascii=False).encode("utf-8")
+        )
+
+    fitted = [dict(message) for message in messages]
+    while payload_size(fitted) > max_bytes and len(fitted) > 2:
+        if fitted[1].get("role") != "user":
+            break
+        fitted.pop(1)
+        if len(fitted) > 1 and fitted[1].get("role") == "assistant":
+            fitted.pop(1)
+
+    if payload_size(fitted) <= max_bytes:
+        return fitted
+
+    system = dict(fitted[0])
+    content = str(system.get("content", ""))
+    budget = max(8_000, max_bytes // 2)
+    if len(content) > budget:
+        system["content"] = (
+            content[:budget]
+            + "\n\n[contexto truncado para caber no limite da API Groq]"
+        )
+        fitted[0] = system
+    return fitted
 
 
 def _last_user_query(messages: list[dict]) -> str:
@@ -622,6 +696,7 @@ async def _bootstrap_corpus_background() -> None:
         print(
             f"✅ Bootstrap concluído: {indexed} chunks indexados ({total} no total)"
         )
+        _log_memory("bootstrap-done")
     except Exception as error:
         print(
             f"⚠️  Falha no bootstrap do corpus "
@@ -674,16 +749,22 @@ async def lifespan(app: FastAPI):
                 metadata={"hnsw:space": "cosine"},
             )
             print(f"✅ ChromaDB: {_collection.count()} chunks indexados")
+            _log_memory("chroma-ready")
 
             _embedding_mode = embedding_mode()
             try:
                 if _embedding_mode == "api":
                     print("🔗 Modo de embeddings: Hugging Face Inference API")
+                    print(
+                        "[production-lite] FlagEmbedding/torch nao carregados "
+                        "-- embeddings via HF API, RAG dentro de 2 GB"
+                    )
                 else:
                     print("🧠 Modo de embeddings: BGE-M3 local (FlagEmbedding)...")
                 _embedder = create_embedding_provider()
                 _rag_ready = True
                 print(f"✅ Embedding provider pronto ({embedder_label(_embedder)})")
+                _log_memory("embedder-ready")
 
                 if _collection.count() == 0 and corpus_available():
                     if _embedding_mode == "api":
@@ -702,6 +783,7 @@ async def lifespan(app: FastAPI):
                             f"✅ Bootstrap concluído: {indexed} chunks indexados "
                             f"({_collection.count()} no total)"
                         )
+                        _log_memory("bootstrap-done")
             except ImportError:
                 _embedder = None
                 _rag_ready = False
@@ -1559,6 +1641,7 @@ async def chat(payload: AgentChatRequest) -> StreamingResponse:
     raw_query = _last_user_query(messages)
     manual_override = parse_manual_override(raw_query)
     query = _model_query_from_override(raw_query, manual_override.clean_query)
+    query = _query_with_surface_context(query, payload.surface_context)
     if query != raw_query:
         messages = _replace_last_user_query(messages, query)
     pending_resolution = resolve_conversational_reference(messages)
@@ -1677,7 +1760,9 @@ async def chat(payload: AgentChatRequest) -> StreamingResponse:
             return
 
         runtime.start_composition(agent_context)
+        _log_memory("pre-retrieval")
         chunks = _agent_chunks(agent_context)
+        _log_memory("post-retrieval")
 
         top_similarity = chunks[0]["similarity"] if chunks else 0.0
         if (
@@ -1701,15 +1786,17 @@ async def chat(payload: AgentChatRequest) -> StreamingResponse:
             yield "data: [DONE]\n\n"
             return
 
-        groq_messages = _build_groq_messages(
-            messages,
-            query,
-            route,
-            cognition,
-            chunks,
-            calibration_override=calibration_override,
-            agent_context=runtime.structured_context(agent_context),
-            surface_context=payload.surface_context,
+        groq_messages = _fit_groq_messages(
+            _build_groq_messages(
+                messages,
+                query,
+                route,
+                cognition,
+                chunks,
+                calibration_override=calibration_override,
+                agent_context=runtime.structured_context(agent_context),
+                surface_context=payload.surface_context,
+            )
         )
         generated_text: list[str] = []
         buffer_until_validation = (
@@ -1772,7 +1859,10 @@ async def chat(payload: AgentChatRequest) -> StreamingResponse:
                             cognition=cognition,
                             limitation=f"Groq returned HTTP {resp.status_code}.",
                             error_message=(
-                                f"Erro Groq HTTP {resp.status_code}. Tente novamente."
+                                "Erro Groq HTTP 413 (contexto muito grande). "
+                                "Inicie uma conversa nova ou faça uma pergunta mais curta."
+                                if resp.status_code == 413
+                                else f"Erro Groq HTTP {resp.status_code}. Tente novamente."
                             ),
                         ):
                             yield event
