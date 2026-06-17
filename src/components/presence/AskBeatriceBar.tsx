@@ -5,35 +5,56 @@
 
 import { ArrowRight, RefreshCw } from "lucide-react";
 import { AbraxosMark } from "../../beatrice/components/assistant/AbraxosMark";
-import { useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { getHeroSuggestions } from "../../beatrice/domain/perspective/heroSuggestions";
+import { usePersonaContext } from "../../beatrice/hooks/usePersonaContext";
 import { buildOracleHref } from "../../beatrice/navigation/oracleNavigation";
+import { writeAskPrefill } from "../../beatrice/storage/beatriceStorage";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useI18n } from "../../i18n/I18nProvider";
 import { emitPresence } from "./presenceBus";
 import { StardustEngine } from "./stardustEngine";
 import { usePrefersReducedMotion } from "./usePrefersReducedMotion";
 
 const VISIBLE_SUGGESTIONS = 3;
 
+const REFRESH_LABEL: Record<string, string> = {
+  "pt-BR": "Ver outras sugestões",
+  "pt-PT": "Ver outras sugestões",
+  "en-US": "Show other suggestions",
+};
+
 export function AskBeatriceBar({
   label,
   placeholder,
   submitLabel,
-  suggestions,
-  refreshLabel,
 }: {
   label: string;
   placeholder: string;
   submitLabel: string;
-  suggestions: string[];
-  refreshLabel: string;
 }) {
   const navigate = useNavigate();
+  const { locale } = useI18n();
+  const { profileId } = usePersonaContext();
   const reduced = usePrefersReducedMotion();
   const [value, setValue] = useState("");
   const [offset, setOffset] = useState(0);
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<StardustEngine | null>(null);
+
+  const suggestions = useMemo(
+    () => getHeroSuggestions(profileId, locale),
+    [locale, profileId],
+  );
+
+  useEffect(() => {
+    if (suggestions.length <= VISIBLE_SUGGESTIONS) {
+      setOffset(0);
+      return;
+    }
+    setOffset(Math.floor(Math.random() * suggestions.length));
+  }, [profileId, suggestions.length]);
 
   const visible = Array.from(
     { length: Math.min(VISIBLE_SUGGESTIONS, suggestions.length) },
@@ -43,6 +64,7 @@ export function AskBeatriceBar({
   const ask = (question: string) => {
     const trimmed = question.trim();
     if (!trimmed) return;
+    writeAskPrefill(trimmed);
     navigate(buildOracleHref(trimmed));
   };
 
@@ -106,7 +128,7 @@ export function AskBeatriceBar({
             onFocus={handleFocus}
             placeholder={placeholder}
             autoComplete="off"
-            className="h-11 min-w-0 flex-1 bg-transparent text-[15px] text-white outline-none placeholder:text-slate-500"
+            className="h-11 min-w-0 flex-1 bg-transparent text-[15px] text-white outline-none focus-visible:outline-none placeholder:text-slate-500"
           />
           <button
             type="submit"
@@ -134,7 +156,7 @@ export function AskBeatriceBar({
           <button
             type="button"
             onClick={() => setOffset((current) => (current + VISIBLE_SUGGESTIONS) % suggestions.length)}
-            aria-label={refreshLabel}
+            aria-label={REFRESH_LABEL[locale] ?? REFRESH_LABEL["pt-BR"]}
             className="focus-ring flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.09] bg-white/[0.03] text-slate-400 transition-colors hover:border-primary/30 hover:text-white"
           >
             <RefreshCw aria-hidden="true" className="h-3.5 w-3.5" />

@@ -46,6 +46,7 @@ export function useWorkspaceState({ content, locale, profileId }: UseWorkspaceSt
   }, []);
   const [input, setInput] = useState(initialComposer.input);
   const [deferredAskSubmit, setDeferredAskSubmit] = useState<string | null>(null);
+  const dispatchedPrefillRef = useRef("");
   const [isLoading, setIsLoading] = useState(false);
   const [healthData, setHealthData] = useState<HealthData | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -107,21 +108,37 @@ export function useWorkspaceState({ content, locale, profileId }: UseWorkspaceSt
   }, [importHandoffConversation, initialComposer.handoff]);
 
   const askPrefillHandledRef = useRef(false);
-  useEffect(() => {
-    const askPrefill = initialComposer.askPrefill.trim();
-    if (askPrefillHandledRef.current || !askPrefill) return;
-    askPrefillHandledRef.current = true;
+  const dispatchAskPrefill = useCallback((askPrefill: string) => {
+    const trimmed = askPrefill.trim();
+    if (!trimmed || dispatchedPrefillRef.current === trimmed) return;
+    dispatchedPrefillRef.current = trimmed;
     lockAskPrefillDispatch();
 
     const hasPriorTurns = history.some((entry) => entry.role === "user") || hasVisibleUserTurn(messages);
     if (hasPriorTurns) {
-      setDeferredAskSubmit(askPrefill);
+      setDeferredAskSubmit(trimmed);
       createConversation();
       return;
     }
 
-    void submitPrompt(askPrefill);
-  }, [createConversation, history, initialComposer.askPrefill, messages, submitPrompt]);
+    void submitPrompt(trimmed);
+  }, [createConversation, history, messages, submitPrompt]);
+
+  useEffect(() => {
+    const askPrefill = initialComposer.askPrefill.trim();
+    if (askPrefillHandledRef.current || !askPrefill) return;
+    askPrefillHandledRef.current = true;
+    dispatchAskPrefill(askPrefill);
+  }, [dispatchAskPrefill, initialComposer.askPrefill]);
+
+  useEffect(() => {
+    const queryPrefill = searchParams.get(ORACLE_QUERY_PARAM)?.trim() ?? "";
+    if (!queryPrefill) return;
+    dispatchAskPrefill(queryPrefill);
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete(ORACLE_QUERY_PARAM);
+    setSearchParams(nextParams, { replace: true });
+  }, [dispatchAskPrefill, searchParams, setSearchParams]);
 
   useEffect(() => {
     if (!deferredAskSubmit) return;
@@ -129,13 +146,6 @@ export function useWorkspaceState({ content, locale, profileId }: UseWorkspaceSt
     setDeferredAskSubmit(null);
     void submitPrompt(text);
   }, [activeConversationId, deferredAskSubmit, submitPrompt]);
-
-  useEffect(() => {
-    if (!searchParams.has(ORACLE_QUERY_PARAM)) return;
-    const nextParams = new URLSearchParams(searchParams);
-    nextParams.delete(ORACLE_QUERY_PARAM);
-    setSearchParams(nextParams, { replace: true });
-  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     fetchHealthData()

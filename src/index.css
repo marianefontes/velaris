@@ -80,6 +80,11 @@ body {
   outline-offset: 3px;
 }
 
+#velaris-ask-input:focus,
+#velaris-ask-input:focus-visible {
+  outline: none;
+}
+
 @layer components {
   .glass-panel {
     @apply border border-white/[0.08] bg-surface-container-high/65 backdrop-blur-2xl;

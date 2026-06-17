@@ -32,8 +32,6 @@ const COPY: Record<Locale, {
   askLabel: string;
   askPlaceholder: string;
   askSubmit: string;
-  refreshSuggestions: string;
-  suggestions: string[];
   orbitNodes: { icon: React.ElementType; label: string; to: string }[];
   cards: { title: string; desc: string; icon: React.ElementType; to: string }[];
   flowTitle: string;
@@ -51,15 +49,6 @@ const COPY: Record<Locale, {
     askLabel: "Consultar Abraxos",
     askPlaceholder: "Consulte Abraxos sobre componentes, padrões, diretrizes...",
     askSubmit: "Enviar pergunta",
-    refreshSuggestions: "Ver outras sugestões",
-    suggestions: [
-      "Qual componente usar para tabela?",
-      "Quando usar um drawer?",
-      "Como justificar uma decisão?",
-      "Qual padrão para um onboarding?",
-      "Como documentar acessibilidade?",
-      "Quando usar modal em pagamentos?",
-    ],
     orbitNodes: [
       { icon: Boxes, label: "Componentes", to: "/components" },
       { icon: Shield, label: "Diretrizes", to: "/foundations?focus=manifesto" },
@@ -93,15 +82,6 @@ const COPY: Record<Locale, {
     askLabel: "Consultar Abraxos",
     askPlaceholder: "Consulte Abraxos sobre componentes, padrões, diretrizes...",
     askSubmit: "Enviar pergunta",
-    refreshSuggestions: "Ver outras sugestões",
-    suggestions: [
-      "Que componente utilizar para tabela?",
-      "Quando utilizar um drawer?",
-      "Como justificar uma decisão?",
-      "Que padrão para um onboarding?",
-      "Como documentar acessibilidade?",
-      "Quando utilizar modal em pagamentos?",
-    ],
     orbitNodes: [
       { icon: Boxes, label: "Componentes", to: "/components" },
       { icon: Shield, label: "Diretrizes", to: "/foundations?focus=manifesto" },
@@ -135,15 +115,6 @@ const COPY: Record<Locale, {
     askLabel: "Consult Abraxos",
     askPlaceholder: "Ask Abraxos about components, patterns, guidelines...",
     askSubmit: "Send question",
-    refreshSuggestions: "Show other suggestions",
-    suggestions: [
-      "Which component for a table?",
-      "When should I use a drawer?",
-      "How do I justify a decision?",
-      "Which pattern for onboarding?",
-      "How do I document accessibility?",
-      "When to use a modal in payments?",
-    ],
     orbitNodes: [
       { icon: Boxes, label: "Components", to: "/components" },
       { icon: Shield, label: "Guidelines", to: "/foundations?focus=manifesto" },
@@ -285,8 +256,6 @@ export function OracleHomePage() {
                 label={copy.askLabel}
                 placeholder={copy.askPlaceholder}
                 submitLabel={copy.askSubmit}
-                suggestions={copy.suggestions}
-                refreshLabel={copy.refreshSuggestions}
               />
             </div>
 

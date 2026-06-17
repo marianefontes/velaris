@@ -6,3 +6,4 @@ export * from "./lenses";
 export * from "./transformers";
 export * from "./types";
 export * from "./calibration";
+export * from "./heroSuggestions";

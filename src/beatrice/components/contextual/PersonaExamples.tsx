@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useI18n } from "../../../i18n/I18nProvider";
 import { usePersonaContext } from "../../hooks/usePersonaContext";
 import { buildOracleHref } from "../../navigation/oracleNavigation";
+import { writeAskPrefill } from "../../storage/beatriceStorage";
 
 export function PersonaExamples() {
   const { t } = useI18n();
@@ -10,6 +11,7 @@ export function PersonaExamples() {
   const { activePersonaContext: strategy } = usePersonaContext();
 
   const askExample = (example: string) => {
+    writeAskPrefill(example);
     navigate(buildOracleHref(example));
   };
 
