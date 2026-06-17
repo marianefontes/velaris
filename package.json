@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "python3 scripts/check_primary_navigation.py && tsc -b && vite build",
+    "deploy:hostinger": "bash scripts/deploy_hostinger.sh",
     "check:i18n": "node scripts/check_i18n.mjs",
     "check:i18n:strict": "node scripts/check_i18n.mjs --strict",
     "preview": "vite preview",
