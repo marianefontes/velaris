@@ -19,8 +19,10 @@ import resource
 import secrets
 import sqlite3
 import sys
+import traceback
 from contextlib import asynccontextmanager
 from dataclasses import replace
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import AsyncGenerator, Literal
 
@@ -72,6 +74,7 @@ from prompts.prompt_builder import (
     build_system_prompt,
 )
 from rag.bootstrap import bootstrap_collection, corpus_available
+from rag.chroma_config import chroma_db_path, chroma_runtime_paths
 from rag.embedding_provider import (
     create_embedding_provider,
     dense_vectors,
@@ -110,7 +113,7 @@ LABORATORY_RATE_LIMIT_RETRIES = max(
 RAG_DIR = Path(__file__).parent / "rag"
 # Persist the vector store on a durable path in production (e.g. a mounted disk)
 # so the startup bootstrap runs once instead of on every restart.
-DB_PATH = Path(os.environ.get("CHROMA_DB_PATH", str(RAG_DIR / "chroma_db")))
+DB_PATH = chroma_db_path()
 COLLECTION_NAME = "aetheris_design_system"
 MAX_HISTORY_MESSAGES = 16
 GROQ_MAX_REQUEST_BYTES = int(os.environ.get("GROQ_MAX_REQUEST_BYTES", "120000"))
@@ -162,6 +165,14 @@ _embedder = None
 _rag_ready = False
 _embedding_mode = "local"
 _bootstrap_running = False
+_bootstrap_status: dict[str, object] = {
+    "state": "not_started",
+    "started_at": None,
+    "finished_at": None,
+    "last_error": None,
+    "last_indexed": 0,
+    "attempts": 0,
+}
 _laboratory_runner: LaboratoryRunner | None = None
 _laboratory_automation: LaboratoryAutomation | None = None
 
@@ -686,22 +697,47 @@ async def _generate_laboratory_answer(item: dict) -> dict:
 
 
 async def _bootstrap_corpus_background() -> None:
-    global _bootstrap_running
+    global _bootstrap_running, _bootstrap_status
     if _collection is None or _embedder is None:
         return
     _bootstrap_running = True
+    _bootstrap_status = {
+        **_bootstrap_status,
+        "state": "running",
+        "started_at": datetime.now(tz=timezone.utc).isoformat(timespec="seconds"),
+        "finished_at": None,
+        "last_error": None,
+        "last_indexed": 0,
+        "attempts": int(_bootstrap_status.get("attempts", 0) or 0) + 1,
+    }
     try:
         indexed = await asyncio.to_thread(bootstrap_collection, _collection, _embedder)
         total = _collection.count()
+        _bootstrap_status = {
+            **_bootstrap_status,
+            "state": "ready" if total > 0 else "empty",
+            "finished_at": datetime.now(tz=timezone.utc).isoformat(timespec="seconds"),
+            "last_error": None,
+            "last_indexed": indexed,
+        }
         print(
             f"✅ Bootstrap concluído: {indexed} chunks indexados ({total} no total)"
         )
         _log_memory("bootstrap-done")
     except Exception as error:
+        stack_trace = traceback.format_exc()
+        _bootstrap_status = {
+            **_bootstrap_status,
+            "state": "failed",
+            "finished_at": datetime.now(tz=timezone.utc).isoformat(timespec="seconds"),
+            "last_error": stack_trace,
+            "last_indexed": 0,
+        }
         print(
             f"⚠️  Falha no bootstrap do corpus "
             f"({type(error).__name__}): {error}"
         )
+        print(stack_trace)
     finally:
         _bootstrap_running = False
 
@@ -709,7 +745,7 @@ async def _bootstrap_corpus_background() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global _chroma, _collection, _embedder, _rag_ready
-    global _embedding_mode, _bootstrap_running
+    global _embedding_mode, _bootstrap_running, _bootstrap_status
     global _laboratory_runner, _laboratory_automation
 
     study_store.initialize()
@@ -741,14 +777,30 @@ async def lifespan(app: FastAPI):
     try:
         if os.environ.get("AETHERIS_SKIP_RAG_STARTUP") == "1":
             print("RAG startup skipped by AETHERIS_SKIP_RAG_STARTUP")
+            _bootstrap_status = {**_bootstrap_status, "state": "skipped"}
         else:
             print("🗄️  Carregando ChromaDB...")
+            print(f"   DB_PATH={DB_PATH}")
+            print(
+                "   CHROMA_DB_PATH="
+                f"{os.environ.get('CHROMA_DB_PATH') or '<unset; using default>'}"
+            )
+            DB_PATH.mkdir(parents=True, exist_ok=True)
             _chroma = chromadb.PersistentClient(path=str(DB_PATH))
             _collection = _chroma.get_or_create_collection(
                 COLLECTION_NAME,
                 metadata={"hnsw:space": "cosine"},
             )
-            print(f"✅ ChromaDB: {_collection.count()} chunks indexados")
+            collection_count = _collection.count()
+            print(f"✅ ChromaDB: {collection_count} chunks indexados")
+            if collection_count > 0:
+                _bootstrap_status = {
+                    **_bootstrap_status,
+                    "state": "ready",
+                    "finished_at": datetime.now(tz=timezone.utc).isoformat(timespec="seconds"),
+                    "last_error": None,
+                    "last_indexed": 0,
+                }
             _log_memory("chroma-ready")
 
             _embedding_mode = embedding_mode()
@@ -778,15 +830,58 @@ async def lifespan(app: FastAPI):
                             "📚 Coleção vazia: reconstruindo índice a partir "
                             "do corpus versionado..."
                         )
-                        indexed = bootstrap_collection(_collection, _embedder)
-                        print(
-                            f"✅ Bootstrap concluído: {indexed} chunks indexados "
-                            f"({_collection.count()} no total)"
-                        )
-                        _log_memory("bootstrap-done")
+                        _bootstrap_running = True
+                        _bootstrap_status = {
+                            **_bootstrap_status,
+                            "state": "running",
+                            "started_at": datetime.now(tz=timezone.utc).isoformat(timespec="seconds"),
+                            "finished_at": None,
+                            "last_error": None,
+                            "last_indexed": 0,
+                            "attempts": int(_bootstrap_status.get("attempts", 0) or 0) + 1,
+                        }
+                        try:
+                            indexed = bootstrap_collection(_collection, _embedder)
+                            total = _collection.count()
+                            _bootstrap_status = {
+                                **_bootstrap_status,
+                                "state": "ready" if total > 0 else "empty",
+                                "finished_at": datetime.now(tz=timezone.utc).isoformat(timespec="seconds"),
+                                "last_error": None,
+                                "last_indexed": indexed,
+                            }
+                            print(
+                                f"✅ Bootstrap concluído: {indexed} chunks indexados "
+                                f"({total} no total)"
+                            )
+                            _log_memory("bootstrap-done")
+                        except Exception as error:
+                            stack_trace = traceback.format_exc()
+                            _bootstrap_status = {
+                                **_bootstrap_status,
+                                "state": "failed",
+                                "finished_at": datetime.now(tz=timezone.utc).isoformat(timespec="seconds"),
+                                "last_error": stack_trace,
+                                "last_indexed": 0,
+                            }
+                            print(
+                                f"⚠️  Falha no bootstrap do corpus "
+                                f"({type(error).__name__}): {error}"
+                            )
+                            print(stack_trace)
+                        finally:
+                            _bootstrap_running = False
+                elif _collection.count() == 0:
+                    _bootstrap_status = {**_bootstrap_status, "state": "no_corpus"}
             except ImportError:
                 _embedder = None
                 _rag_ready = False
+                _bootstrap_status = {
+                    **_bootstrap_status,
+                    "state": "embedding_unavailable",
+                    "last_error": traceback.format_exc(),
+                    "finished_at": datetime.now(tz=timezone.utc).isoformat(timespec="seconds"),
+                }
                 print(
                     "⚠️  FlagEmbedding não instalado: use AETHERIS_EMBEDDING_MODE=api "
                     "ou pip install FlagEmbedding"
@@ -794,11 +889,18 @@ async def lifespan(app: FastAPI):
             except Exception as error:
                 _embedder = None
                 _rag_ready = False
+                _bootstrap_status = {
+                    **_bootstrap_status,
+                    "state": "embedding_failed",
+                    "last_error": traceback.format_exc(),
+                    "finished_at": datetime.now(tz=timezone.utc).isoformat(timespec="seconds"),
+                }
                 print(
                     "⚠️  Falha ao inicializar embeddings "
                     f"({type(error).__name__}): {error}. "
                     "RAG desativado; respostas usarão o catálogo canônico."
                 )
+                print(_bootstrap_status["last_error"])
         yield
     finally:
         if _laboratory_automation:
@@ -842,11 +944,14 @@ def _last_indexed_at() -> str | None:
     dump_path = RAG_DIR / "aetheris-docs-dump.json"
     if not dump_path.exists():
         return None
-    from datetime import datetime, timezone
 
     return datetime.fromtimestamp(
         dump_path.stat().st_mtime, tz=timezone.utc
     ).isoformat(timespec="seconds")
+
+
+def _bootstrap_snapshot() -> dict[str, object]:
+    return dict(_bootstrap_status)
 
 
 def _health_payload() -> dict:
@@ -864,15 +969,32 @@ def _health_payload() -> dict:
         "next_slot": None,
         "active_calibration_version_id": None,
     }
+    runtime_paths = chroma_runtime_paths()
+    bootstrap = _bootstrap_snapshot()
     return {
         "status": "ok",
         "service": "beatrice-chat-server",
+        **runtime_paths,
         "model": MODEL,
         "laboratory_model": LABORATORY_MODEL,
         "corpus_chunks": count,
         "rag_active": _rag_ready and count > 0,
         "embedder": embedder_label(_embedder) if _rag_ready else "none",
         "embedding_mode": _embedding_mode,
+        "embedding_provider": os.environ.get("HF_INFERENCE_PROVIDER", "hf-inference")
+        if _embedding_mode == "api"
+        else "local",
+        "hf_api_token_present": bool(
+            os.environ.get("HF_API_TOKEN", "").strip()
+            or os.environ.get("HF_TOKEN", "").strip()
+            or os.environ.get("HUGGINGFACE_API_KEY", "").strip()
+        ),
+        "bootstrap_status": bootstrap.get("state"),
+        "bootstrap_last_error": bootstrap.get("last_error"),
+        "bootstrap_started_at": bootstrap.get("started_at"),
+        "bootstrap_finished_at": bootstrap.get("finished_at"),
+        "bootstrap_last_indexed": bootstrap.get("last_indexed"),
+        "bootstrap_attempts": bootstrap.get("attempts"),
         "corpus_bootstrap_running": _bootstrap_running,
         "catalog_loaded": catalog_loaded,
         "total_components": total_components,
