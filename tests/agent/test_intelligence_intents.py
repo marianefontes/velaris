@@ -5,7 +5,7 @@ import unittest
 from agent.intelligence_intents import resolve_intelligence_intent
 from agent.understanding import analyze_query, normalize_text
 from cognition.engines.registry import resolve_engine
-from prompts.intent_router import classify_intent, route_query
+from prompts.intent_router import INTENT_FILTER, classify_intent, route_query
 
 
 class IntelligenceIntentTests(unittest.TestCase):
@@ -39,6 +39,12 @@ class IntelligenceIntentTests(unittest.TestCase):
             resolve_intelligence_intent(query, normalize_text(query)),
             "multi_agent_reasoning",
         )
+
+    def test_comparison_retrieval_filters_to_evidence(self) -> None:
+        self.assertEqual(classify_intent("compare Modal e Drawer"), "comparison_query")
+        self.assertIn("design_decision", INTENT_FILTER["comparison_query"])
+        self.assertNotIn("oracle_command", INTENT_FILTER["comparison_query"])
+        self.assertNotIn("automatic_skill", INTENT_FILTER["comparison_query"])
 
     def test_health_engine_resolves(self) -> None:
         engine = resolve_engine("health")

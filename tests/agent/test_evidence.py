@@ -18,6 +18,14 @@ class AgentEvidenceTests(unittest.TestCase):
         items = evidence_from_chunks([chunk, dict(chunk)])
         self.assertEqual(len(items), 1)
 
+    def test_normalizes_chunk_status_values(self) -> None:
+        chunk = {
+            **FIXTURE_CHUNKS["comparison_query"][0],
+            "status": "Stable",
+        }
+        items = evidence_from_chunks([chunk])
+        self.assertEqual(items[0].status, "stable")
+
     def test_preserves_full_semantic_text_separately_from_excerpt(self) -> None:
         items = evidence_from_chunks(FIXTURE_CHUNKS["component_guidance"])
         self.assertEqual(top_similarity(items), 0.82)

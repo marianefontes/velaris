@@ -27,7 +27,7 @@ from rag.retrieval import retrieve_chunks
 COLLECTION_NAME = "aetheris_design_system"
 DEFAULT_QUERIES = [
     "why use a side drawer instead of a modal?",
-    "Modal vs Drawer: quando usar cada um?",
+    "compare Modal e Drawer",
     "qual componente usar para mostrar uma predição da IA com explicação?",
 ]
 

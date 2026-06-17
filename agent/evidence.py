@@ -29,6 +29,7 @@ ALTERNATIVE_LIMIT = 3
 SELECTION_POLICY = (
     "highest_weighted_score_among_active_candidates_with_partial_or_strong_evidence"
 )
+_VALID_COMPONENT_STATUSES = {"draft", "experimental", "stable", "deprecated", "legacy"}
 
 
 def evidence_tier(top_similarity: float | None, *, has_results: bool) -> EvidenceTier:
@@ -103,6 +104,8 @@ def evidence_from_chunks(chunks: Iterable[dict[str, Any]]) -> list[EvidenceItem]
             continue
         seen.add(key)
         similarity = max(0.0, min(1.0, float(chunk.get("similarity", 0.0) or 0.0)))
+        raw_status = str(chunk.get("status") or "").strip().lower()
+        status = raw_status if raw_status in _VALID_COMPONENT_STATUSES else None
         items.append(EvidenceItem(
             title=str(chunk.get("title", "")),
             source=str(chunk.get("source", "")),
@@ -110,7 +113,7 @@ def evidence_from_chunks(chunks: Iterable[dict[str, Any]]) -> list[EvidenceItem]
             excerpt=excerpt,
             semantic_text=semantic_text,
             component_id=str(chunk.get("component_id", "")).strip() or None,
-            status=chunk.get("status") or None,
+            status=status,
             section=str(chunk.get("section", "")).strip() or None,
             when_to_use=chunk.get("when_to_use"),
             when_not_to_use=chunk.get("when_not_to_use"),

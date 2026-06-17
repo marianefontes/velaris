@@ -51,7 +51,14 @@ INTENT_FILTER: dict[str, list[str]] = {
     "when_not_to_use": ["component", "guideline", "xai_component"],
     "xai_explanation": ["xai_component", "foundation", "reasoning"],
     "new_product_scaffolding": ["pattern", "component", "xai_component", "guideline", "dev_integration"],
-    "comparison_query": [],
+    "comparison_query": [
+        "design_decision",
+        "component",
+        "xai_component",
+        "pattern",
+        "guideline",
+        "foundation",
+    ],
     "system_health": [
         "system_health",
         "oracle_command",
