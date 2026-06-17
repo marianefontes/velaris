@@ -408,7 +408,11 @@ def detect_catalog_unknown_intent(
     entities: ExtractedEntities | None = None,
 ) -> str | None:
     """Route explicit citations of unknown catalog entities before RAG."""
+    from agent.entity_validation_gate import is_deictic_artifact_reference
+
     normalized_query = normalized_query or normalize_query(query)
+    if is_deictic_artifact_reference(normalized_query):
+        return None
     resolution = resolve_catalog_entity(
         query,
         normalized_query=normalized_query,

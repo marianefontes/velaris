@@ -412,6 +412,36 @@ class Round2AcceptanceTests(unittest.TestCase):
         self.assertNotIn("fora do escopo", response.lower())
         self.assertIn("oráculo contextual", response)
 
+    def test_abraxos_concept_query_reversed_word_order(self) -> None:
+        understanding = analyze_query("abraxos o que é?")
+        self.assertEqual(understanding.user_intent, "concept_query")
+        context = self.prepare("abraxos o que é?")
+        response = context.deterministic_response or ""
+        self.assertIn("agente cognitivo", response.lower())
+
+    def test_abraxos_typo_alias_stays_in_scope(self) -> None:
+        understanding = analyze_query("o que é o abraços?")
+        self.assertEqual(understanding.user_intent, "concept_query")
+
+    def test_deictic_accessibility_prompt_asks_for_component(self) -> None:
+        query = "Gere checks de acessibilidade para este estado de componente."
+        understanding = analyze_query(query)
+        self.assertEqual(understanding.user_intent, "component_recommendation")
+        context = self.prepare(query)
+        response = context.deterministic_response or ""
+        self.assertIn("nome do componente", response.lower())
+
+    def test_deictic_usage_guidance_does_not_match_pattern_intent(self) -> None:
+        query = (
+            "Escreva orientação de uso correto e anti-pattern para este componente."
+        )
+        understanding = analyze_query(query)
+        self.assertEqual(understanding.user_intent, "direct_entity_guidance")
+        context = self.prepare(query)
+        response = context.deterministic_response or ""
+        self.assertIn("nome do componente", response.lower())
+        self.assertNotIn("Correspondência parcial", response)
+
     def test_aetheris_navigation_legacy_alias(self) -> None:
         understanding = analyze_query("onde fica Aetheris?")
         self.assertEqual(understanding.user_intent, "navigation_query")

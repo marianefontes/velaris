@@ -973,6 +973,7 @@ class AgentRuntime:
             context.deterministic_response = dedupe_response(
                 entity_clarification_response(
                     english=self._is_english(query),
+                    workflow=plan.workflow,
                 )
             )
             context.limitations.append(entity_validation.reason)
@@ -2124,6 +2125,15 @@ class AgentRuntime:
                 if component is not None:
                     break
         if component is None:
+            from agent.entity_validation_gate import is_deictic_artifact_reference
+            from agent.understanding import normalize_query
+
+            if is_deictic_artifact_reference(normalize_query(query)):
+                return dedupe_response(
+                    entity_clarification_response(
+                        english=self._is_english(query),
+                    )
+                )
             return dedupe_response(self._component_not_found_response(query))
         return dedupe_response(
             direct_entity_guidance_response(

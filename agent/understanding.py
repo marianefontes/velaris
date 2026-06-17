@@ -303,6 +303,8 @@ _DIRECT_GUIDANCE_TERMS = (
     "when not to use", "para que serve", "what is it for", "como usar",
     "how to use", "como funciona", "how does", "quando devo usar",
     "when should i use",
+    "orientacao de uso", "orientação de uso", "usage guidance",
+    "anti-pattern", "anti pattern", "antipattern",
     "quais estados", "what states", "estados do", "states of",
     "acessibilidade do", "accessibility of", "a11y do",
 )
@@ -439,6 +441,22 @@ def _social_intent(normalized_query: str) -> UserIntent | None:
 
 def _contains_any(value: str, terms: tuple[str, ...]) -> bool:
     return any(normalize_text(term) in value for term in terms)
+
+
+def _contains_pattern_terms(normalized: str) -> bool:
+    if re.search(r"anti[- ]pattern", normalized):
+        return False
+    return any(_term_present(normalized, term) for term in _PATTERN_TERMS)
+
+
+def _references_component(query: str, normalized: str, entities: ExtractedEntities) -> bool:
+    from agent.catalog_registries import extract_cited_component_names
+
+    if entities.components:
+        return True
+    if extract_cited_component_names(query):
+        return True
+    return _term_present(normalized, "componente") or _term_present(normalized, "component")
 
 
 def _term_present(normalized: str, alias: str) -> bool:
@@ -664,9 +682,16 @@ def _resolve_location_intent(query: str, normalized: str) -> UserIntent | None:
     return None
 
 
-def _is_direct_entity_guidance(normalized: str, entities: ExtractedEntities) -> bool:
-    if not entities.components:
-        return False
+def _is_direct_entity_guidance(
+    query: str,
+    normalized: str,
+    entities: ExtractedEntities,
+) -> bool:
+    if not _references_component(query, normalized, entities):
+        from agent.entity_validation_gate import is_deictic_artifact_reference
+
+        if not is_deictic_artifact_reference(normalized):
+            return False
     return _contains_any(normalized, _DIRECT_GUIDANCE_TERMS)
 
 
@@ -767,7 +792,7 @@ def _intent(
         and not _contains_any(normalized, _RECOMMENDATION_TERMS)
     ):
         return "catalog"
-    if _is_direct_entity_guidance(normalized, entities):
+    if _is_direct_entity_guidance(query, normalized, entities):
         return "direct_entity_guidance"
 
     from agent.comparison_entity_validator import validate_comparison_entities
@@ -782,10 +807,7 @@ def _intent(
 
     from agent.catalog_registries import extract_cited_component_names
 
-    has_component_reference = bool(entities.components) or any(
-        marker in f" {normalized} "
-        for marker in (" componente ", " component ")
-    ) or bool(extract_cited_component_names(query))
+    has_component_reference = _references_component(query, normalized, entities)
     has_implementation_signal = _contains_any(normalized, _IMPLEMENTATION_SIGNALS)
     has_component_request = has_component_reference and (
         _contains_any(normalized, _RECOMMENDATION_TERMS)
@@ -824,7 +846,7 @@ def _intent(
         ) is not None:
             return "unsupported_entity_lookup"
         return "component_comparison"
-    if _contains_any(normalized, _PATTERN_TERMS) or entities.patterns:
+    if _contains_pattern_terms(normalized) or entities.patterns:
         return "pattern_guidance"
     if _contains_any(normalized, _TOKEN_TERMS) or entities.tokens:
         return "token_lookup"

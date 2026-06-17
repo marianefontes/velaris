@@ -41,6 +41,26 @@ STATE_CITATION_PATTERN = re.compile(
     re.I,
 )
 
+_STATE_CITATION_STOPWORDS = frozenset({
+    "componente",
+    "componentes",
+    "component",
+    "components",
+    "pattern",
+    "padrao",
+    "padrão",
+    "token",
+    "tokens",
+    "o",
+    "a",
+    "the",
+    "do",
+    "da",
+    "de",
+    "of",
+    "for",
+})
+
 GUIDELINE_CITATION_PATTERN = re.compile(
     r"\b(?:guideline|guidelines|diretriz|diretrizes|principio|princípio|principle|regra)\s+"
     r"(?:[\w-]+\s+)?(?:define|definem|defines|sobre|about|for)?\s*"
@@ -292,11 +312,16 @@ def extract_state_citations(text: str) -> list[str]:
     )
     if any(marker in normalized for marker in listing_markers):
         return []
+    if re.search(
+        r"\b(?:este|esta|esse|essa|this|that)\s+estado\b",
+        normalized,
+    ):
+        return []
 
     citations: list[str] = []
     for match in STATE_CITATION_PATTERN.finditer(text):
         candidate = match.group(1).strip().lower()
-        if candidate and candidate not in {"o", "a", "the", "do", "da", "de", "of", "for"}:
+        if candidate and candidate not in _STATE_CITATION_STOPWORDS:
             citations.append(candidate)
     for candidate in re.findall(r"\b[a-z]+(?:-[a-z0-9]+)+\b", text.lower()):
         if any(

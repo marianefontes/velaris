@@ -24,6 +24,7 @@ ARTIFACT_DEPENDENT_WORKFLOWS = frozenset({
     "comparison_rule",
     "direct_entity_guidance",
     "accessibility_guidance",
+    "component_decision",
 })
 
 _DEICTIC_MARKERS = (
@@ -31,8 +32,14 @@ _DEICTIC_MARKERS = (
     "esta componente",
     "esse componente",
     "essa componente",
+    "este estado de componente",
+    "esta estado de componente",
+    "esse estado de componente",
+    "essa estado de componente",
     "this component",
     "that component",
+    "this component state",
+    "that component state",
     "this legacy",
     "that legacy",
     "este legado",
@@ -83,6 +90,10 @@ class EntityValidationResult:
 
 def _contains_any(normalized: str, terms: tuple[str, ...]) -> bool:
     return any(term in normalized for term in terms)
+
+
+def is_deictic_artifact_reference(normalized: str) -> bool:
+    return _is_deictic_only_reference(normalized)
 
 
 def _is_deictic_only_reference(normalized: str) -> bool:
@@ -286,45 +297,63 @@ def requires_entity_clarification(
     )
 
 
-def entity_clarification_response(*, english: bool = False) -> str:
-    if english:
+def entity_clarification_response(
+    *,
+    english: bool = False,
+    workflow: str | None = None,
+) -> str:
+    if workflow == "migration_advisor":
+        if english:
+            return (
+                "I cannot generate a migration plan because the source component was "
+                "not specified.\n\n"
+                "Please provide:\n"
+                "• component name\n"
+                "• screenshot\n"
+                "• behavior description\n\n"
+                "Examples:\n"
+                "- Legacy Modal\n"
+                "- Custom Button\n"
+                "- Old Table\n"
+                "- Side Drawer\n\n"
+                "With that information I can generate:\n"
+                "- replacement recommendation\n"
+                "- migration plan\n"
+                "- risks\n"
+                "- compatibility notes\n"
+                "- required validations"
+            )
         return (
-            "I cannot generate a migration plan because the source component was "
-            "not specified.\n\n"
-            "Please provide:\n"
-            "• component name\n"
+            "Não consigo gerar um plano de migração porque o componente de origem "
+            "não foi informado.\n\n"
+            "Informe:\n"
+            "• nome do componente\n"
             "• screenshot\n"
-            "• behavior description\n\n"
-            "Examples:\n"
+            "• descrição do comportamento\n\n"
+            "Exemplos:\n"
             "- Legacy Modal\n"
             "- Custom Button\n"
             "- Old Table\n"
             "- Side Drawer\n\n"
-            "With that information I can generate:\n"
-            "- replacement recommendation\n"
-            "- migration plan\n"
-            "- risks\n"
-            "- compatibility notes\n"
-            "- required validations"
+            "Com essa informação posso gerar:\n"
+            "- recomendação de substituição\n"
+            "- plano de migração\n"
+            "- riscos\n"
+            "- compatibilidade\n"
+            "- validações necessárias"
+        )
+    if english:
+        return (
+            "I need the component name to answer about this artifact.\n\n"
+            "Please name a documented Velaris component — for example Button, "
+            "Modal, Drawer or Select — or open Abraxos from the component page "
+            "you are reviewing."
         )
     return (
-        "Não consigo gerar um plano de migração porque o componente de origem "
-        "não foi informado.\n\n"
-        "Informe:\n"
-        "• nome do componente\n"
-        "• screenshot\n"
-        "• descrição do comportamento\n\n"
-        "Exemplos:\n"
-        "- Legacy Modal\n"
-        "- Custom Button\n"
-        "- Old Table\n"
-        "- Side Drawer\n\n"
-        "Com essa informação posso gerar:\n"
-        "- recomendação de substituição\n"
-        "- plano de migração\n"
-        "- riscos\n"
-        "- compatibilidade\n"
-        "- validações necessárias"
+        "Preciso do nome do componente para responder sobre este artefato.\n\n"
+        "Informe um componente documentado do Velaris — por exemplo Button, "
+        "Modal, Drawer ou Select — ou abra o Abraxos a partir da página do "
+        "componente que você está revisando."
     )
 
 

@@ -8,7 +8,8 @@ from agent.understanding import normalize_text
 
 
 _CONCEPT_ALIASES: dict[str, tuple[str, ...]] = {
-    "abraxos": ("abraxos",),
+    # "abracos" covers the common typo "abraços" after accent folding.
+    "abraxos": ("abraxos", "abracos"),
     "velaris": ("velaris",),
     "beatrice": ("beatrice",),
     "aetheris": ("aetheris",),
@@ -32,9 +33,20 @@ _CONCEPT_PROMPT_MARKERS = (
 )
 
 
+def _has_concept_prompt(normalized: str) -> bool:
+    if any(marker in normalized for marker in _CONCEPT_PROMPT_MARKERS):
+        return True
+    return bool(
+        re.search(
+            r"(?:o que e|what is|quem e|who is|para que serve|what does)\s*\??\s*$",
+            normalized,
+        )
+    )
+
+
 def resolve_concept_key(query: str) -> str | None:
     normalized = normalize_text(query)
-    if not any(marker in normalized for marker in _CONCEPT_PROMPT_MARKERS):
+    if not _has_concept_prompt(normalized):
         return None
     for concept_key, aliases in _CONCEPT_ALIASES.items():
         for alias in aliases:
