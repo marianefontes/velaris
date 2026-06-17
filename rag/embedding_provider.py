@@ -10,12 +10,15 @@ from __future__ import annotations
 import os
 import time
 from typing import Any, Protocol
+from urllib.parse import urlparse
 
 import httpx
 
 DEFAULT_EMBEDDING_MODEL = "BAAI/bge-m3"
 DEFAULT_API_BATCH_SIZE = 4
 DEFAULT_API_DELAY_SECONDS = 0.35
+DEFAULT_HF_PROVIDER = "hf-inference"
+LEGACY_HF_INFERENCE_HOST = "api-inference.huggingface.co"
 
 
 class EmbeddingProvider(Protocol):
@@ -43,6 +46,19 @@ def default_hf_api_url(model: str) -> str:
         f"https://router.huggingface.co/hf-inference/models/"
         f"{model}/pipeline/feature-extraction"
     )
+
+
+def _validate_hf_api_url(api_url: str) -> str:
+    parsed = urlparse(api_url)
+    if parsed.hostname == LEGACY_HF_INFERENCE_HOST:
+        raise ValueError(
+            "AETHERIS_EMBEDDING_API_URL points to the legacy "
+            "api-inference.huggingface.co host. Use Hugging Face Inference "
+            "Providers through huggingface_hub or router.huggingface.co."
+        )
+    if parsed.scheme != "https" or not parsed.netloc:
+        raise ValueError("AETHERIS_EMBEDDING_API_URL must be an absolute https URL.")
+    return api_url
 
 
 def _mean_pool(nested: list[Any]) -> list[float]:
@@ -73,6 +89,8 @@ def _vector_from_payload(payload: Any) -> list[float]:
 
 
 def _normalize_hf_response(payload: Any, expected: int) -> list[list[float]]:
+    if hasattr(payload, "tolist"):
+        payload = payload.tolist()
     if isinstance(payload, list):
         if not payload:
             return []
@@ -80,6 +98,8 @@ def _normalize_hf_response(payload: Any, expected: int) -> list[list[float]]:
             return [_mean_pool(payload)]
         if all(isinstance(row, list) for row in payload):
             if payload and all(isinstance(value, (int, float)) for value in payload[0]):
+                if expected == 1:
+                    return [_mean_pool(payload)]
                 return [_mean_pool(row) for row in payload]
             return [_mean_pool(row) for row in payload]
     raise ValueError(f"Unexpected Hugging Face embedding payload: {type(payload).__name__}")
@@ -119,6 +139,7 @@ class HuggingFaceEmbeddingProvider:
             or os.environ.get("AETHERIS_EMBEDDING_API_URL", "").strip()
             or default_hf_api_url(model)
         )
+        self.api_url = _validate_hf_api_url(self.api_url)
         self._hub_client = None
 
     def encode(self, texts: list[str], **kwargs: Any) -> dict[str, Any]:
@@ -139,8 +160,12 @@ class HuggingFaceEmbeddingProvider:
             return self._hub_client
         from huggingface_hub import InferenceClient
 
-        provider = os.environ.get("HF_INFERENCE_PROVIDER", "auto").strip() or "auto"
-        self._hub_client = InferenceClient(token=self.token, provider=provider)
+        provider = os.environ.get("HF_INFERENCE_PROVIDER", DEFAULT_HF_PROVIDER).strip()
+        self._hub_client = InferenceClient(
+            provider=provider or DEFAULT_HF_PROVIDER,
+            api_key=self.token,
+            timeout=90,
+        )
         return self._hub_client
 
     def _embed_batch(self, texts: list[str]) -> list[list[float]]:
@@ -157,48 +182,42 @@ class HuggingFaceEmbeddingProvider:
 
     def _embed_batch_hub(self, texts: list[str]) -> list[list[float]]:
         client = self._hub_inference_client()
-        return [
-            _vector_from_payload(
-                client.feature_extraction(text, model=self.model)
-            )
-            for text in texts
-        ]
+        payload = client.feature_extraction(
+            texts[0] if len(texts) == 1 else texts,
+            model=self.model,
+        )
+        return _normalize_hf_response(payload, len(texts))
 
     def _embed_batch_http(self, texts: list[str]) -> list[list[float]]:
         payload = {"inputs": texts[0]} if len(texts) == 1 else {"inputs": texts}
         headers = {"Authorization": f"Bearer {self.token}"}
-        urls = [self.api_url]
-        legacy = f"https://api-inference.huggingface.co/pipeline/feature-extraction/{self.model}"
-        if legacy not in urls:
-            urls.append(legacy)
 
         last_error = "unknown error"
-        for api_url in urls:
-            for attempt in range(self.max_retries):
-                try:
-                    response = httpx.post(
-                        api_url,
-                        headers=headers,
-                        json=payload,
-                        timeout=httpx.Timeout(90.0, connect=20.0),
-                    )
-                except httpx.HTTPError as error:
-                    last_error = f"{api_url}: {error}"
-                    time.sleep(min(2 ** attempt, 20))
-                    continue
+        for attempt in range(self.max_retries):
+            try:
+                response = httpx.post(
+                    self.api_url,
+                    headers=headers,
+                    json=payload,
+                    timeout=httpx.Timeout(90.0, connect=20.0),
+                )
+            except httpx.HTTPError as error:
+                last_error = f"{self.api_url}: {error}"
+                time.sleep(min(2 ** attempt, 20))
+                continue
 
-                if response.status_code == 200:
-                    return _normalize_hf_response(response.json(), len(texts))
+            if response.status_code == 200:
+                return _normalize_hf_response(response.json(), len(texts))
 
-                if response.status_code in {429, 503, 504}:
-                    retry_after = response.headers.get("retry-after")
-                    wait_seconds = float(retry_after) if retry_after else min(2 ** attempt, 30)
-                    last_error = f"{api_url}: HTTP {response.status_code}: {response.text[:240]}"
-                    time.sleep(wait_seconds)
-                    continue
+            if response.status_code in {429, 503, 504}:
+                retry_after = response.headers.get("retry-after")
+                wait_seconds = float(retry_after) if retry_after else min(2 ** attempt, 30)
+                last_error = f"{self.api_url}: HTTP {response.status_code}: {response.text[:240]}"
+                time.sleep(wait_seconds)
+                continue
 
-                last_error = f"{api_url}: HTTP {response.status_code}: {response.text[:240]}"
-                break
+            last_error = f"{self.api_url}: HTTP {response.status_code}: {response.text[:240]}"
+            break
 
         raise RuntimeError(
             f"Hugging Face embedding request failed for {self.model}: {last_error}"
@@ -229,6 +248,7 @@ class LocalBGEM3Provider:
 def huggingface_api_token() -> str:
     return (
         os.environ.get("HF_API_TOKEN", "").strip()
+        or os.environ.get("HF_TOKEN", "").strip()
         or os.environ.get("HUGGINGFACE_API_KEY", "").strip()
     )
 

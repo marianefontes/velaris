@@ -6,6 +6,7 @@ from rag.embedding_provider import (
     HuggingFaceEmbeddingProvider,
     _mean_pool,
     _normalize_hf_response,
+    _validate_hf_api_url,
     create_embedding_provider,
     default_hf_api_url,
     dense_vectors,
@@ -22,6 +23,11 @@ class EmbeddingProviderTests(unittest.TestCase):
         payload = [[0.1, 0.2], [0.3, 0.4]]
         vectors = _normalize_hf_response(payload, 2)
         self.assertEqual(vectors, payload)
+
+    def test_normalize_single_token_rows(self) -> None:
+        payload = [[1.0, 3.0], [3.0, 5.0]]
+        vectors = _normalize_hf_response(payload, 1)
+        self.assertEqual(vectors, [[2.0, 4.0]])
 
     def test_dense_vectors_from_numpy_like(self) -> None:
         array_like = MagicMock()
@@ -61,9 +67,45 @@ class EmbeddingProviderTests(unittest.TestCase):
             mock_post.call_args.args[0].startswith("https://router.huggingface.co/")
         )
 
+    @patch.dict(
+        os.environ,
+        {"HF_INFERENCE_PROVIDER": "hf-inference"},
+        clear=False,
+    )
+    @patch("huggingface_hub.InferenceClient")
+    def test_hf_provider_uses_official_client_with_api_key(self, mock_client) -> None:
+        mock_client.return_value.feature_extraction.return_value = [
+            [0.1, 0.2, 0.3],
+            [0.4, 0.5, 0.6],
+        ]
+
+        provider = HuggingFaceEmbeddingProvider(model="BAAI/bge-m3", token="hf_test")
+        result = provider.encode(["alpha", "beta"], batch_size=2)
+
+        mock_client.assert_called_once_with(
+            provider="hf-inference",
+            api_key="hf_test",
+            timeout=90,
+        )
+        mock_client.return_value.feature_extraction.assert_called_once_with(
+            ["alpha", "beta"],
+            model="BAAI/bge-m3",
+        )
+        self.assertEqual(
+            dense_vectors(result),
+            [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]],
+        )
+
+    def test_rejects_legacy_huggingface_inference_api_url(self) -> None:
+        with self.assertRaises(ValueError):
+            _validate_hf_api_url(
+                "https://api-inference.huggingface.co/pipeline/feature-extraction/BAAI/bge-m3"
+            )
+
     def test_hf_provider_requires_token(self) -> None:
         with patch.dict(os.environ, {"AETHERIS_EMBEDDING_MODE": "api"}, clear=False):
             os.environ.pop("HF_API_TOKEN", None)
+            os.environ.pop("HF_TOKEN", None)
             os.environ.pop("HUGGINGFACE_API_KEY", None)
             with self.assertRaises(ValueError):
                 create_embedding_provider()
@@ -82,8 +124,9 @@ class EmbeddingProviderTests(unittest.TestCase):
 
         mock_post.side_effect = [waiting, ready]
         provider = HuggingFaceEmbeddingProvider(model="BAAI/bge-m3", token="hf_test")
-        with patch("rag.embedding_provider.time.sleep"):
-            vectors = dense_vectors(provider.encode(["query"]))
+        with patch.object(provider, "_embed_batch_hub", side_effect=ImportError):
+            with patch("rag.embedding_provider.time.sleep"):
+                vectors = dense_vectors(provider.encode(["query"]))
         self.assertEqual(vectors, [[0.1, 0.2]])
         self.assertEqual(mock_post.call_count, 2)
 
