@@ -232,6 +232,36 @@ def validate_entity_for_capability(
 
     normalized = normalize_query(query)
 
+    if workflow == "component_decision" and command_mode != "contract-check":
+        open_recommendation = any(
+            marker in normalized
+            for marker in (
+                "qual componente",
+                "que componente",
+                "which component",
+                "what component",
+                "recomende",
+                "recommend",
+                "devo usar",
+                "should i use",
+            )
+        )
+        if (
+            open_recommendation
+            and not understanding.entities.components
+            and not understanding.exact_entity_matches
+            and not _is_deictic_only_reference(normalized)
+            and not _contains_any(normalized, _GENERIC_ARTIFACT_MARKERS)
+        ):
+            return EntityValidationResult(
+                status="not_required",
+                confidence=1.0,
+                entity_label=None,
+                catalog_component_id=None,
+                source="open_component_recommendation",
+                reason="Open recommendation query asks the agent to select the component.",
+            )
+
     if workflow == "accessibility_guidance":
         if not understanding.entities.components and not understanding.exact_entity_matches:
             if not any(
@@ -301,6 +331,7 @@ def entity_clarification_response(
     *,
     english: bool = False,
     workflow: str | None = None,
+    command_mode: str | None = None,
 ) -> str:
     if workflow == "migration_advisor":
         if english:
@@ -341,6 +372,40 @@ def entity_clarification_response(
             "- riscos\n"
             "- compatibilidade\n"
             "- validações necessárias"
+        )
+    if command_mode == "contract-check":
+        if english:
+            return (
+                "Which component should I run the contract check against?\n\n"
+                "Name a documented Velaris component, for example Button, "
+                "Modal, Drawer or Select."
+            )
+        return (
+            "Qual componente devo auditar no contract check?\n\n"
+            "Informe um componente documentado do Velaris, por exemplo Button, "
+            "Modal, Drawer ou Select."
+        )
+    if workflow in {"compare_options", "comparison_rule"}:
+        if english:
+            return (
+                "Which components or options should I compare?\n\n"
+                "Send both names in one message, for example Modal and Drawer."
+            )
+        return (
+            "Quais componentes ou opções devo comparar?\n\n"
+            "Envie os dois nomes na mesma mensagem, por exemplo Modal e Drawer."
+        )
+    if workflow == "accessibility_guidance":
+        if english:
+            return (
+                "Which component should I review for accessibility?\n\n"
+                "Name a documented Velaris component, for example Button, "
+                "Modal, Drawer or Select."
+            )
+        return (
+            "Qual componente devo revisar em acessibilidade?\n\n"
+            "Informe um componente documentado do Velaris, por exemplo Button, "
+            "Modal, Drawer ou Select."
         )
     if english:
         return (

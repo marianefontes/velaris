@@ -130,6 +130,10 @@ _PROFESSIONAL_ROUTING_EXEMPT_WORKFLOWS = {
     "token_lookup",
     "migration_advisor",
     "page_recommendation",
+    "governance_analysis",
+    "simulation",
+    "multi_agent_reasoning",
+    "system_health",
 }
 
 
@@ -211,7 +215,7 @@ def build_agent_plan(
         workflow = pending_resolution.workflow
         if pending_resolution.professional_category == "MIGRATION_ADVISOR":
             workflow = workflow_for_category("MIGRATION_ADVISOR")
-        tools: list[str] = []
+        tools = list(_WORKFLOW_TOOLS.get(workflow, []))
         rationale = (
             "Pending intent resumed after conversational clarification: "
             f"{pending_resolution.action}."
@@ -222,8 +226,16 @@ def build_agent_plan(
             "select_workflow",
             "select_tools",
             "check_policies",
-            "compose_response",
         ]
+        if tools:
+            steps.extend([
+                "execute_tools",
+                "score_evidence",
+                "build_tool_results",
+                "compose_response",
+            ])
+        else:
+            steps.append("compose_response")
         return AgentPlan(
             intent=pending_resolution.retrieval_intent,
             workflow=workflow,  # type: ignore[arg-type]

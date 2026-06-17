@@ -41,6 +41,7 @@ from agent.registry import ToolRegistry
 from agent.pending_intent import (
     PendingIntentResolution,
     apply_pending_resolution_to_route,
+    infer_command_mode_from_query,
     resolve_conversational_reference,
 )
 from agent.runtime import AgentRuntime
@@ -187,6 +188,13 @@ def _max_tokens_for_response(catalog_mode: bool, command_mode: str | None) -> in
 
 def _sse_payload(payload: dict) -> str:
     return f"data: {json.dumps(payload)}\n\n"
+
+
+def _conversation_state_log(tag: str, payload: dict) -> None:
+    print(
+        f"{tag} "
+        + json.dumps(payload, ensure_ascii=False, sort_keys=True, default=str)
+    )
 
 
 def _trim_history(messages: list[dict]) -> list[dict]:
@@ -1766,9 +1774,62 @@ async def chat(payload: AgentChatRequest) -> StreamingResponse:
     query = _query_with_surface_context(query, payload.surface_context)
     if query != raw_query:
         messages = _replace_last_user_query(messages, query)
+    if command_mode is None:
+        command_mode = infer_command_mode_from_query(query)
     pending_resolution = resolve_conversational_reference(messages)
     routing_query = pending_resolution.resolved_query if pending_resolution else query
-    route = route_query(routing_query, profile=profile, command_mode=command_mode)
+    effective_command_mode = (
+        pending_resolution.command_mode
+        if pending_resolution and pending_resolution.command_mode
+        else command_mode
+    )
+    if pending_resolution is not None:
+        _conversation_state_log(
+            "[conversation-state]",
+            {
+                "session_id": payload.session_id,
+                "history_messages": len(messages),
+                "has_pending_resolution": True,
+                "command_mode": effective_command_mode,
+            },
+        )
+        pending_payload = {
+            "workflow": (
+                pending_resolution.clarification.workflow
+                if pending_resolution.clarification
+                else pending_resolution.workflow
+            ),
+            "runtime_workflow": pending_resolution.workflow,
+            "awaiting": pending_resolution.missing_field,
+            "expires_after": (
+                pending_resolution.clarification.expires_after
+                if pending_resolution.clarification
+                else None
+            ),
+            "command_mode": pending_resolution.command_mode,
+        }
+        _conversation_state_log("[pending-clarification]", pending_payload)
+        _conversation_state_log(
+            "[slot-filled]",
+            {
+                "awaiting": pending_resolution.missing_field,
+                "value": pending_resolution.resolution_value,
+            },
+        )
+        _conversation_state_log(
+            "[workflow-resume]",
+            {
+                "workflow": pending_payload["workflow"],
+                "runtime_workflow": pending_resolution.workflow,
+                "retrieval_intent": pending_resolution.retrieval_intent,
+                "command_mode": pending_resolution.command_mode,
+            },
+        )
+    route = route_query(
+        routing_query,
+        profile=profile,
+        command_mode=effective_command_mode,
+    )
     if pending_resolution is not None:
         route = replace(
             route,

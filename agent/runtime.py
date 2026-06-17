@@ -165,6 +165,13 @@ def _debug(message: str) -> None:
         print(f"[beatrice:runtime] {message}")
 
 
+def _conversation_audit_log(tag: str, payload: dict) -> None:
+    print(
+        f"{tag} "
+        + json.dumps(payload, ensure_ascii=False, sort_keys=True, default=str)
+    )
+
+
 def _evidence_basis_payload(tier: str) -> dict[str, str]:
     basis = evidence_basis(tier)
     return {
@@ -964,6 +971,26 @@ class AgentRuntime:
         )
         context.entity_validation = entity_validation
         if entity_validation.status == "needs_clarification":
+            awaiting = (
+                "comparison_target"
+                if plan.workflow in {"compare_options", "comparison_rule"}
+                else "component_name"
+            )
+            _conversation_audit_log(
+                "[pending-clarification]",
+                {
+                    "workflow": (
+                        "contract_check"
+                        if command_mode == "contract-check"
+                        else plan.workflow
+                    ),
+                    "runtime_workflow": plan.workflow,
+                    "awaiting": awaiting,
+                    "expires_after": 2,
+                    "command_mode": command_mode,
+                    "source": entity_validation.source,
+                },
+            )
             recorder.add(
                 "entity_validation_blocked",
                 details=entity_validation.reason,
@@ -974,6 +1001,7 @@ class AgentRuntime:
                 entity_clarification_response(
                     english=self._is_english(query),
                     workflow=plan.workflow,
+                    command_mode=command_mode,
                 )
             )
             context.limitations.append(entity_validation.reason)
@@ -1480,6 +1508,16 @@ class AgentRuntime:
                     "original_query": context.pending_resolution.original_query,
                     "resolution_value": context.pending_resolution.resolution_value,
                     "resolved_query": context.pending_resolution.resolved_query,
+                    "workflow": context.pending_resolution.workflow,
+                    "retrieval_intent": context.pending_resolution.retrieval_intent,
+                    "command_mode": context.pending_resolution.command_mode,
+                    "pending_clarification": (
+                        context.pending_resolution.clarification.model_dump(
+                            mode="json"
+                        )
+                        if context.pending_resolution.clarification is not None
+                        else None
+                    ),
                 }
                 if context.pending_resolution is not None
                 else None
