@@ -1,13 +1,13 @@
 # Aetheris Design System — Corpus Dump (TSX Source)
 
-> **Total chunks:** 308
-> **Extractor:** v3.0.0-intelligence-layer (React/TypeScript source)
+> **Total chunks:** 377
+> **Extractor:** 3.0.0-intelligence-layer + institutional knowledge supplement
 > **Embedding model:** BAAI/bge-m3
 
 ---
 
 ## [COMPONENT] Button
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5762
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 8961
 
 **Structure:** Rótulo curto, alvo mínimo de 44px e ícone opcional.
 **Logic:** Use uma ação primária por região focal e rebaixe escolhas concorrentes.
@@ -15,12 +15,14 @@
 **When To Use:** Use apenas uma ação primária por região visual para manter a hierarquia clara. Use loading quando a ação disparar uma operação assíncrona. Use positive para confirmar conclusão, aprovação, restauração ou uma ação benéfica inequívoca. Use negative apenas para ações críticas, como excluir, cancelar definitivamente ou remover dados. Mantenha o texto do botão curto, direto e orientado à ação.
 **When Not To Use:** Não use Button para navegação textual simples; use Link quando a ação for apenas navegar. Não coloque múltiplos botões primary competindo na mesma área. Não use disabled sem explicar por que a ação está indisponível. Não use intents positive ou negative como decoração; a aparência deve corresponder à consequência real. Não altere estilos manualmente fora dos tokens do design system.
 **Trade Offs:** Excesso de botões primários dilui a hierarquia e aumenta hesitação.
+**Accessibility:** Use o botão nativo do HTML (<button>) para ações. Não simule clique com div ou span. Enter e Espaço disparam a ação. O indicador de foco permanece visível antes e depois do clique. O texto do botão deve dizer o que acontece ao clicar. Se só houver ícone, inclua aria-label equivalente.
+**Rag Relation:** Permite que Abraxos recomende hierarquia de ações com evidência de uso e estado.
 **Aetheris Insight:** Uma ação primária deve tornar a decisão mais óbvia, não apenas mais colorida.
 
 ---
 
 ## [COMPONENT] Toggle/Switch
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5925
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 9437
 
 **Structure:** Trilho, indicador móvel, rótulo persistente e estado textual quando necessário.
 **Logic:** Off e On definem o valor. Focus demonstra foco de teclado sem alterar esse valor. Preference aplica uma escolha pessoal, Visibility mostra ou oculta conteúdo e Mode alterna o comportamento operacional.
@@ -28,12 +30,14 @@
 **When To Use:** Use Switch para configurações binárias que entram em vigor imediatamente. Escreva o rótulo como a condição controlada, por exemplo, “Reduzir animações”. Mostre o estado atual por posição, contraste e texto quando a consequência não for óbvia. Posicione o Switch próximo da configuração ou conteúdo que ele altera. Confirme persistência ou falha sem reverter o estado silenciosamente.
 **When Not To Use:** Não use Switch quando a alteração depender de um botão Salvar ou Confirmar. Não use Switch para escolher entre três ou mais alternativas; use Radio ou Select. Não use rótulos vagos como “Ativar” sem indicar o que será ativado. Não use Switch para uma mudança destrutiva sem uma etapa de confirmação adequada. Não mantenha o estado otimista quando a atualização falhar; explique e restaure o valor anterior.
 **Trade Offs:** Sem rótulo explícito, o usuário pode não entender o que o estado controla.
+**Accessibility:** Use o controle nativo de switch ou equivalente com estado ligado/desligado anunciável ao leitor de tela. Espaço alterna entre ligado e desligado. Enter confirma quando o switch está dentro de um formulário. O rótulo deve dizer o que muda ao alternar — por exemplo, "Notificações por e-mail", não só "Ligado".
+**Rag Relation:** Evita que Abraxos confunda alternância imediata com checkbox de confirmação.
 **Aetheris Insight:** O estado deve ser compreensível antes e depois da interação.
 
 ---
 
 ## [COMPONENT] Checkbox
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5647
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 8912
 
 **Structure:** Caixa, indicador de seleção, rótulo clicável e apoio opcional.
 **Logic:** Cada opção deve continuar válida mesmo quando as demais não são selecionadas.
@@ -41,12 +45,14 @@
 **When To Use:** Use Checkbox quando cada opção puder ser selecionada de forma independente. Amplie a área clicável incluindo o rótulo e preserve um alvo mínimo de 44px. Use indeterminate apenas para representar seleção parcial em grupos hierárquicos. Explique como o estado indeterminate se relaciona com os itens filhos do grupo. Mantenha consentimentos desmarcados até uma ação explícita do usuário.
 **When Not To Use:** Não use Checkbox para opções mutuamente exclusivas; use Radio Button. Não use Checkbox para uma configuração com efeito imediato quando Switch comunicar melhor a mudança. Não pré-selecione consentimento ou aceite obrigatório em nome do usuário. Não trate indeterminate como uma terceira resposta persistente. Não esconda se a seleção é obrigatória ou opcional.
 **Trade Offs:** Listas longas sem agrupamento elevam custo de leitura e comparação.
+**Accessibility:** Use o checkbox nativo do HTML ou equivalente com estado marcado/desmarcado coerente. Espaço marca ou desmarca. Em formulários, Enter envia sem alternar a caixa por acidente. Quando parte de um grupo está marcada, comunique o estado "parcialmente selecionado" ao leitor de tela.
+**Rag Relation:** Oferece evidência sobre seleção múltipla e consentimento em respostas do Abraxos.
 **Aetheris Insight:** Checkbox representa inclusão independente, não mudança de modo.
 
 ---
 
 ## [COMPONENT] Radio Button
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5753
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 8986
 
 **Structure:** Grupo nomeado, círculos de seleção e rótulos completos.
 **Logic:** Expor todas as opções reduz memória de trabalho e facilita comparação direta.
@@ -54,12 +60,14 @@
 **When To Use:** Use Radio Button para duas a cinco alternativas mutuamente exclusivas. Mantenha todas as opções visíveis quando a comparação entre elas ajudar a decisão. Agrupe opções relacionadas com legend e navegação por setas. Defina uma opção inicial apenas quando ela for segura, reversível e realmente recomendada. Escreva rótulos paralelos para que as diferenças entre alternativas sejam fáceis de comparar.
 **When Not To Use:** Não use Radio Button para seleção múltipla. Não apresente uma lista extensa que torne a página difícil de percorrer; use Select. Não deixe o grupo sem contexto ou pergunta que explique a escolha. Não pré-selecione uma alternativa que implique consentimento, custo ou risco. Não use Radio Button para uma configuração binária com efeito imediato; prefira Switch.
 **Trade Offs:** Muitas opções ocupam espaço e tornam o grupo difícil de escanear.
+**Accessibility:** As opções devem estar dentro de um grupo com título visível — a pergunta à qual o usuário responde. Setas movem o foco entre opções do mesmo grupo. Tab leva para o próximo campo fora do grupo. Espaço seleciona a opção focada. Apenas uma opção pode estar marcada por vez no grupo.
+**Rag Relation:** Ajuda Abraxos a distinguir escolha exclusiva de seleção múltipla.
 **Aetheris Insight:** Se as alternativas precisam ser comparadas, mantenha-as visíveis.
 
 ---
 
 ## [COMPONENT] Selectable Chip / Badge
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5859
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 9099
 
 **Structure:** Pílula compacta com rótulo, ícone opcional e indicador de seleção.
 **Logic:** Chips funcionam melhor com rótulos curtos, conjunto pequeno e estado selecionado evidente.
@@ -67,12 +75,14 @@
 **When To Use:** Use chips selecionáveis para filtros rápidos, tags ou atributos curtos. Mantenha o estado selecionado evidente por preenchimento, borda e aria-pressed. Limite o conjunto para que todas as opções continuem fáceis de escanear. Permita quebra de linha e remoção previsível quando vários chips estiverem selecionados. Forneça um rótulo para o grupo quando os chips representarem uma pergunta ou filtro comum.
 **When Not To Use:** Não use Chip como ação primária ou substituto de Button. Não misture badges informativos e chips interativos com aparência idêntica. Não use rótulos longos nem dezenas de chips em uma única linha. Não dependa apenas da cor para diferenciar chips selecionados e não selecionados. Não use uma nuvem extensa de chips quando busca ou Select oferecer melhor descoberta.
 **Trade Offs:** Muitos chips criam ruído e quebram a hierarquia da página.
+**Accessibility:** Chips que ligam/desligam um filtro devem comunicar se estão selecionados ou não ao leitor de tela. Quando só uma opção pode ser escolhida, prefira radio buttons em vez de chips independentes. Enter e Espaço alternam seleção. Foco visível deve ser distinto de hover e de selecionado.
+**Rag Relation:** Documenta filtros compactos que Abraxos pode sugerir em superfícies densas.
 **Aetheris Insight:** Chip é uma escolha compacta; badge passivo não deve parecer clicável.
 
 ---
 
 ## [COMPONENT] Input / Text Input
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5549
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 8878
 
 **Structure:** Label, controle, apoio, indicador opcional e mensagem de erro.
 **Logic:** O rótulo define o dado esperado; placeholder oferece exemplo, nunca substitui instrução.
@@ -80,12 +90,14 @@
 **When To Use:** Use Text Input para valores curtos que cabem em uma linha. Mantenha label persistente e use placeholder apenas como exemplo. Escolha type, inputMode e autocomplete de acordo com o dado solicitado. Apresente helper text antes da validação quando formato ou restrição puderem evitar erro. Preserve o valor informado quando a validação ou o envio falhar.
 **When Not To Use:** Não use Input para descrições extensas; use Text Area. Não substitua o label por placeholder, pois ele desaparece durante a digitação. Não apresente erro sem explicar como o valor pode ser corrigido. Não valide cada caractere de forma agressiva quando o valor ainda estiver incompleto. Não peça dois conceitos diferentes no mesmo campo.
 **Trade Offs:** Validação tardia pode obrigar o usuário a reconstruir todo o contexto.
+**Accessibility:** Todo campo precisa de rótulo visível acima ou ao lado. Placeholder não substitui rótulo. Texto de ajuda e mensagem de erro ficam ligados ao campo para o leitor de tela anunciar junto. Indique obrigatoriedade no rótulo (ex.: asterisco + texto) e no atributo required quando aplicável.
+**Rag Relation:** Fornece ao Abraxos regras de entrada textual e validação contextual.
 **Aetheris Insight:** O campo deve explicar o formato antes de apontar o erro.
 
 ---
 
 ## [COMPONENT] Text Area
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5382
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 8629
 
 **Structure:** Label, área redimensionável, apoio e contador opcional.
 **Logic:** A altura inicial comunica a profundidade esperada da resposta.
@@ -93,12 +105,14 @@
 **When To Use:** Use Text Area para descrições, justificativas, comentários e prompts extensos. Dimensione a altura inicial de acordo com a profundidade esperada da resposta. Ofereça contador ou limite apenas quando ele afetar a tarefa. Mantenha label e instruções visíveis durante toda a edição. Preserve rascunhos quando envio, conexão ou validação falharem.
 **When Not To Use:** Não use Text Area para valores curtos ou dados estruturados. Não bloqueie redimensionamento quando o usuário puder precisar de mais espaço. Não use um campo muito alto sem necessidade, pois ele domina a página. Não dependa de placeholder para explicar o objetivo do texto. Não corte conteúdo silenciosamente quando houver limite de caracteres.
 **Trade Offs:** Campos muito altos dominam a página; campos baixos escondem a expectativa.
+**Accessibility:** Rótulo visível descrevendo o que o usuário deve escrever — ex.: "Descrição do problema". Limite de caracteres e orientações ficam ligados ao campo, não como texto solto sem relação. Enter cria nova linha. Se Enter enviar o formulário, documente isso perto do campo.
+**Rag Relation:** Ajuda Abraxos a orientar captura de contexto sem confundir com chat.
 **Aetheris Insight:** O tamanho inicial do campo é parte da instrução.
 
 ---
 
 ## [COMPONENT] Select/Dropdown
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5642
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 8923
 
 **Structure:** Label, trigger, valor atual, lista e indicadores de seleção.
 **Logic:** Economiza espaço, mas transfere a comparação para um painel temporário.
@@ -106,12 +120,14 @@
 **When To Use:** Use Select para escolha única em listas médias ou longas com opções conhecidas. Mostre o valor selecionado no trigger e preserve busca quando a lista for extensa. Ordene as opções por frequência, lógica ou sequência reconhecível. Mostre um estado inicial claro quando nenhuma opção estiver selecionada. Preserve navegação por teclado, typeahead e foco previsível na lista.
 **When Not To Use:** Não use Select para duas opções simples que cabem em Radio Button. Não esconda alternativas importantes que precisam ser comparadas lado a lado. Não use uma opção desabilitada como substituto de label ou instrução. Não esconda o motivo de uma opção indisponível. Não misture ações, navegação e valores selecionáveis na mesma lista.
 **Trade Offs:** Esconder opções reduz descoberta e torna comparação mais lenta.
+**Accessibility:** Para listas simples, prefira o select nativo do HTML — já funciona com teclado e leitor de tela. Se customizar, implemente abertura/fechamento, navegação por setas e opção selecionada anunciável. Setas navegam opções; Enter confirma; Escape fecha sem perder o valor já selecionado.
+**Rag Relation:** Permite recomendações calibradas entre Select e Radio Button.
 **Aetheris Insight:** Use Select para escala, não para esconder decisões importantes.
 
 ---
 
 ## [COMPONENT] Date Picker
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5649
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 8876
 
 **Structure:** Campo formatado, botão de calendário, grade mensal e navegação temporal.
 **Logic:** Entrada digitável acelera especialistas; calendário apoia descoberta e contexto.
@@ -119,12 +135,14 @@
 **When To Use:** Use Date Picker quando calendário, disponibilidade ou intervalo ajudarem a escolha. Permita entrada digitada para usuários que já conhecem a data. Comunique formato, limites e datas indisponíveis antes da confirmação. Respeite locale, fuso horário e convenções de formato do contexto. Preserve valores digitados válidos ao alternar entre campo e calendário.
 **When Not To Use:** Não force navegação mensal para datas muito distantes. Não use apenas um calendário visual sem suporte completo a teclado. Não aceite uma data inválida sem indicar o formato ou limite correto. Não normalize uma data ambígua sem informar o valor interpretado. Não aceite um intervalo cuja data final anteceda a inicial sem explicar o erro.
 **Trade Offs:** Calendários complexos penalizam teclado e telas pequenas sem uma entrada direta.
+**Accessibility:** Permita digitar a data diretamente no campo — não force uso exclusivo do calendário ou mouse. Mostre o formato esperado (ex.: DD/MM/AAAA) e valide com mensagem clara quando a data for inválida. No calendário, setas navegam dias; hoje, selecionado e desabilitado devem ser anunciáveis.
+**Rag Relation:** Dá ao Abraxos evidência sobre escolha temporal e restrições de intervalo.
 **Aetheris Insight:** Calendário e texto devem ser caminhos complementares.
 
 ---
 
 ## [COMPONENT] Form Field
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5606
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 8916
 
 **Structure:** Label, controle filho, texto de apoio, erro e indicador de obrigatoriedade.
 **Logic:** Centralizar o contrato evita que cada formulário reconstrua acessibilidade e espaçamento.
@@ -132,12 +150,14 @@
 **When To Use:** Use Form Field para manter label, controle, ajuda e validação como uma unidade. Associe hint e erro ao controle com ids estáveis e aria-describedby. Reserve espaço para mensagens quando mudanças de layout prejudicarem a leitura. Comunique obrigatoriedade e opcionalidade de forma consistente antes do controle. Após envio inválido, leve foco ao resumo ou primeiro campo com erro de forma previsível.
 **When Not To Use:** Não duplique labels ou mensagens já fornecidas pelo controle filho. Não comunique erro apenas pela cor da borda. Não use Form Field para conteúdo somente leitura sem comportamento de formulário. Não apresente erro antes que o usuário tenha oportunidade razoável de preencher o campo. Não apague valores válidos ou inválidos quando o formulário falhar.
 **Trade Offs:** Abstração rígida pode limitar layouts especiais; preserve slots claros.
+**Accessibility:** Rótulo e input devem estar ligados — clicar no rótulo foca o campo correspondente. Instrução, contador de caracteres e erro ficam associados ao campo na ordem que faz sentido ler. Tab segue a ordem visual. Campos que aparecem condicionalmente entram sem pular etapas.
+**Rag Relation:** Funciona como evidência estrutural para Abraxos montar formulários coerentes.
 **Aetheris Insight:** A validação pertence ao campo como conjunto, não apenas ao input.
 
 ---
 
 ## [COMPONENT] Link
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5474
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 8696
 
 **Structure:** Texto descritivo, indicador opcional de destino externo e foco visível.
 **Logic:** Destino é navegação; mudança no estado atual é ação e deve usar Button.
@@ -145,12 +165,14 @@
 **When To Use:** Use Link quando o resultado da interação for navegar para outro destino. Escreva um rótulo que descreva o destino mesmo fora do parágrafo. Sinalize download, nova janela ou destino externo quando isso afetar a expectativa. Mantenha o destino válido e previsível mesmo quando o texto aparecer fora do contexto original. Use alvo confortável em links isolados ou usados como ação recorrente em touch.
 **When Not To Use:** Não use Link para enviar formulários ou alterar apenas o estado local. Não use textos genéricos como “clique aqui” ou “saiba mais” sem contexto. Não remova sublinhado ou foco sem oferecer outra indicação clara de interatividade. Não abra nova janela sem sinalizar essa mudança no rótulo ou contexto próximo. Não simule disabled removendo href; explique indisponibilidade com outro padrão.
 **Trade Offs:** Links genéricos como 'saiba mais' perdem contexto fora do parágrafo.
+**Accessibility:** Use o link nativo do HTML (<a href>). Não simule navegação com botão ou span clicável. O texto descreve para onde vai ou o que acontece — evite "clique aqui" ou "saiba mais" soltos. Enter ativa o link. Foco visível distingue o link do texto normal ao redor.
+**Rag Relation:** Ajuda Abraxos a separar navegação semântica de comandos de interface.
 **Aetheris Insight:** O rótulo do link deve continuar fazendo sentido isoladamente.
 
 ---
 
 ## [COMPONENT] Tabs
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5223
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 8376
 
 **Structure:** Tablist, tabs, indicador ativo e painéis associados.
 **Logic:** Cada aba representa uma visão irmã, não uma etapa sequencial.
@@ -158,12 +180,14 @@
 **When To Use:** Use Tabs para alternar entre duas a seis visões irmãs no mesmo contexto. Mantenha rótulos curtos e coloque primeiro a aba mais útil ou frequente. Implemente tablist, aria-selected, painéis associados e navegação por setas. Preserve a aba ativa e o foco quando o conteúdo for atualizado ou reordenado. Atualize o painel associado sem mover foco inesperadamente.
 **When Not To Use:** Não use Tabs para etapas sequenciais; use um fluxo passo a passo. Não use Tabs como navegação global do produto. Não esconda conteúdo que precisa ser comparado simultaneamente. Não comprima rótulos até ficarem ilegíveis; ofereça rolagem ou outra estrutura. Não mantenha conteúdo de painéis ocultos exposto à ordem de foco.
 **Trade Offs:** Muitas abas escondem conteúdo e prejudicam responsividade.
+**Accessibility:** Cada aba controla um painel de conteúdo. O leitor de tela precisa saber qual aba está ativa e qual painel ela mostra. Setas movem entre abas. Tab entra no conteúdo do painel ativo. A aba selecionada deve ser anunciada — não dependa só de cor, peso ou sublinhado.
+**Rag Relation:** Permite que Abraxos recomende estrutura local sem promover tabs a navegação global.
 **Aetheris Insight:** Abas trocam perspectiva; etapas avançam processo.
 
 ---
 
 ## [COMPONENT] Card
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5843
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 9006
 
 **Structure:** Container, título, metadados, corpo e ações opcionais.
 **Logic:** A borda visual deve refletir uma fronteira semântica real.
@@ -171,12 +195,14 @@
 **When To Use:** Use Card para agrupar conteúdo e ações pertencentes à mesma entidade. Mantenha título, metadados e ações em uma hierarquia previsível. Torne o card inteiro clicável apenas quando houver um único destino inequívoco. Agrupe ações relacionadas à mesma entidade sem competir com o conteúdo principal. Permita que títulos, metadados e ações reorganizem sem truncar conteúdo essencial.
 **When Not To Use:** Não envolva toda seção em Card apenas para criar bordas. Não aninhe cards dentro de cards. Não misture várias ações concorrentes sem indicar qual é a principal. Não faça o card parecer clicável quando apenas controles internos são interativos. Não remova headings necessários para identificar a entidade na ordem de leitura.
 **Trade Offs:** Card excessivo fragmenta a leitura e cria falsa prioridade.
+**Accessibility:** Cada card precisa de um título real (heading h2–h4), não só texto grande ou negrito. Assim quem usa leitor de tela entende do que se trata o conteúdo agrupado. Se o card inteiro for clicável, transforme-o em um único link ou botão com nome claro da ação. Respeite a hierarquia de títulos da página (h2 antes de h3). Evite vários botões ou links competindo sem ordem clara.
+**Rag Relation:** Ajuda Abraxos a recomendar agrupamento baseado em entidade e não decoração.
 **Aetheris Insight:** Um card deve responder: o que pertence junto aqui?
 
 ---
 
 ## [COMPONENT] Modal/Dialog
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5820
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 9065
 
 **Structure:** Backdrop, dialog nomeado, conteúdo, ação primária, cancelamento e fechar.
 **Logic:** A interrupção só se justifica quando concluir ou cancelar é necessário antes de continuar.
@@ -184,12 +210,14 @@
 **When To Use:** Use Dialog para decisões curtas que precisam ser concluídas ou canceladas antes de continuar. Forneça título claro, ação principal, cancelamento e fechamento previsível. Prenda o foco, aceite Escape e restaure o foco ao elemento de origem. Mantenha conteúdo e ações curtos o bastante para preservar a decisão focal. Mostre erros dentro do Dialog sem fechar ou apagar o trabalho do usuário.
 **When Not To Use:** Não use Dialog para conteúdo longo, navegação ou tarefas com várias etapas. Não empilhe modais nem abra um segundo dialog sobre o primeiro. Não feche automaticamente enquanto o usuário estiver corrigindo um erro. Não use Dialog para informação não crítica que pode aparecer no fluxo da página. Não perca a relação com o trigger ao fechar, cancelar ou concluir a ação.
 **Trade Offs:** Interrupções frequentes destroem fluxo e acumulam problemas de foco.
+**Accessibility:** Modal informativo usa dialog padrão; avisos urgentes usam alertdialog para o leitor de tela priorizar. Exiba um título claro no topo do modal — é como o leitor de tela anuncia a janela ao abrir. Enquanto aberto, o foco fica dentro do modal. O conteúdo atrás não recebe interação.
+**Rag Relation:** Dá ao Abraxos critérios explícitos para evitar modais em tarefas inadequadas.
 **Aetheris Insight:** Modal é custo cognitivo deliberado, não atalho de layout.
 
 ---
 
 ## [COMPONENT] Table/Data Table
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5826
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 9113
 
 **Structure:** Caption, cabeçalhos, corpo, ordenação e ações de linha opcionais.
 **Logic:** Tabela é ideal quando cruzar valores por cabeçalho é a tarefa principal.
@@ -197,12 +225,14 @@
 **When To Use:** Use Data Table quando comparar valores por linha e coluna for a tarefa principal. Mantenha cabeçalhos visíveis, alinhamento consistente e ordenação explícita. Priorize colunas no mobile e ofereça uma alternativa para dados menos importantes. Comunique ordenação, seleção e escopo de linhas com texto e semântica programática. Ofereça rolagem controlada ou visualização alternativa sem criar overflow na página.
 **When Not To Use:** Não use Table para narrativas ou poucos pares de rótulo e valor. Não transforme cada célula em uma ação concorrente. Não remova caption, cabeçalhos ou semântica para reproduzir um layout visual. Não trunque identificadores ou valores críticos sem uma forma acessível de leitura completa. Não comunique status de linhas apenas por cor ou posição.
 **Trade Offs:** Densidade alta melhora comparação, mas exige hierarquia e responsividade cuidadosas.
+**Accessibility:** Use tabela HTML com cabeçalhos de coluna marcados. Inclua título ou descrição do que a tabela mostra. Coluna ordenada deve ser anunciada — ex.: "Nome, ordenado crescente" — não só indicada por seta. Ordenar colunas e selecionar linhas deve funcionar por teclado, não só por clique.
+**Rag Relation:** Permite que Abraxos recomende visualização tabular com critérios de densidade.
 **Aetheris Insight:** Se a relação entre coluna e linha importa, preserve a semântica de tabela.
 
 ---
 
 ## [COMPONENT] Alert
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5429
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 8608
 
 **Structure:** Ícone semântico, título, mensagem e ação ou dismiss opcional.
 **Logic:** A severidade deve refletir consequência real, não preferência visual.
@@ -210,12 +240,14 @@
 **When To Use:** Use Alert para feedback importante que deve permanecer visível no contexto. Escolha severidade pela consequência real e inclua texto além da cor. Inclua uma ação apenas quando ela ajudar a resolver ou compreender a mensagem. Posicione a mensagem próxima da condição ou tarefa que ela explica. Permita dispensar apenas mensagens que continuem recuperáveis ou deixem de ser relevantes.
 **When Not To Use:** Não use role alert para mensagens informativas sem urgência. Não exiba vários alertas concorrentes sem consolidar prioridades. Não use Alert para confirmações transitórias que cabem em Toast. Não repita a mesma mensagem em alertas globais e locais ao mesmo tempo. Não use títulos vagos que obriguem o usuário a interpretar a consequência.
 **Trade Offs:** Alertas demais causam cegueira e reduzem o valor da hierarquia semântica.
+**Accessibility:** Alertas urgentes interrompem leitura; informativos aguardam pausa natural — escolha conforme criticidade. A mensagem descreve a severidade em palavras. Cor reforça, mas nunca substitui o texto. Botões dentro do alerta (fechar, desfazer) acessíveis por teclado com foco visível.
+**Rag Relation:** Ajuda Abraxos a calibrar severidade e persistência de feedback.
 **Aetheris Insight:** A interrupção visual deve ser proporcional ao custo de ignorar a mensagem.
 
 ---
 
 ## [COMPONENT] Toast/Notification
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5697
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 8885
 
 **Structure:** Container flutuante, mensagem, ícone e ação curta opcional.
 **Logic:** A mensagem deve ser curta, autossuficiente e dispensável após poucos segundos.
@@ -223,12 +255,14 @@
 **When To Use:** Use Toast para confirmar uma mudança recente sem interromper o fluxo. Mantenha a mensagem curta e use live region compatível com a urgência. Pause o tempo ou mantenha o toast visível quando houver uma ação como Desfazer. Anuncie cada atualização uma única vez e sem interromper a leitura atual. Limite a quantidade visível e consolide notificações repetidas.
 **When Not To Use:** Não use Toast para erros que exigem correção imediata. Não coloque conteúdo longo ou várias ações dentro da notificação. Não dependa apenas de auto-dismiss para informação que o usuário precisará consultar. Não desapareça antes que a mensagem ou ação possa ser percebida e operada. Não mova foco para o Toast quando ele apenas confirma uma atualização.
 **Trade Offs:** Auto-dismiss pode ocultar informação antes da leitura, especialmente com ações.
+**Accessibility:** Mensagens importantes são lidas pelo leitor de tela ao aparecer — urgente interrompe, informativo aguarda. Não desapareça rápido demais. Respeite tempo de leitura e permita pausar quando houver ação. Erros e avisos críticos permanecem ou ficam acessíveis em histórico recuperável.
+**Rag Relation:** Permite que Abraxos escolha feedback transitório apenas quando seguro.
 **Aetheris Insight:** Se a pessoa precisa agir, provavelmente não é um toast.
 
 ---
 
 ## [COMPONENT] Skeleton Loader
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5601
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 8801
 
 **Structure:** Blocos neutros com dimensões próximas do conteúdo final e animação moderada.
 **Logic:** Imitar a forma final reduz mudança de layout e melhora percepção de velocidade.
@@ -236,12 +270,14 @@
 **When To Use:** Use Skeleton quando a geometria final do conteúdo for previsível. Faça os blocos provisórios refletirem a estrutura que será carregada. Marque a região como busy e respeite prefers-reduced-motion. Anuncie o carregamento na região de conteúdo, mantendo os blocos visuais decorativos ocultos. Reserve dimensões próximas do conteúdo final para evitar mudança de layout.
 **When Not To Use:** Não use Skeleton para operações instantâneas ou duração totalmente desconhecida. Não simule uma estrutura diferente do conteúdo final. Não mantenha animação depois que o conteúdo estiver disponível. Não anuncie cada linha ou bloco do Skeleton separadamente. Não mantenha o Skeleton indefinidamente quando houver erro ou estado vazio conhecido.
 **Trade Offs:** Skeleton incorreto cria expectativa falsa e pode aumentar instabilidade percebida.
+**Accessibility:** O container pai informa que o conteúdo ainda está carregando — não cada bloco cinza individualmente. Placeholders visuais ficam ocultos do leitor de tela — são decoração, não conteúdo real. Skeletons não entram na ordem de Tab e não simulam botões ou campos reais.
+**Rag Relation:** Dá ao Abraxos critérios para feedback de carregamento sem sugerir spinner genérico.
 **Aetheris Insight:** O skeleton deve prometer a mesma forma que o conteúdo entregará.
 
 ---
 
 ## [COMPONENT] Explanation Bubble / Tooltip
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5644
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 8904
 
 **Structure:** Trigger nomeado, bolha curta, seta opcional e posicionamento adaptativo.
 **Logic:** A explicação complementa o conteúdo visível; informação essencial não pode depender dela.
@@ -249,12 +285,14 @@
 **When To Use:** Use Tooltip para definições curtas, atalhos ou explicações complementares. Abra por hover e foco e conecte o conteúdo com aria-describedby. Mantenha o texto breve e permita fechamento quando ele permanecer aberto. Posicione o Tooltip sem cobrir o trigger ou impedir a próxima interação. Permita fechar com Escape quando o conteúdo permanecer aberto.
 **When Not To Use:** Não esconda instruções essenciais apenas dentro do Tooltip. Não coloque formulários, links complexos ou conteúdo longo na bolha. Não dependa exclusivamente de hover, pois ele não existe em toque. Não use Tooltip como substituto do nome acessível de um controle. Não esconda ajuda essencial em um controle disabled que não recebe foco.
 **Trade Offs:** Hover exclusivo falha em toque, teclado e tecnologias assistivas.
+**Accessibility:** Tooltip aparece também ao focar por teclado — não dependa só de passar o mouse. Informação necessária para concluir a tarefa não pode existir só dentro do tooltip. Tooltip fica ligado ao ícone ou botão que o abre para o leitor de tela ler em sequência.
+**Rag Relation:** É uma superfície XAI para explicar termos de confiança e raciocínio sem sobrecarregar.
 **Aetheris Insight:** Tooltip esclarece; não deve esconder a instrução necessária.
 
 ---
 
 ## [XAI_COMPONENT] Confidence Badge
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5674
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 8981
 
 **Structure:** Percentual ou faixa, rótulo semântico e acesso à explicação da calibração.
 **Logic:** Confiança deriva da qualidade da evidência, não do tom assertivo da resposta.
@@ -262,12 +300,14 @@
 **When To Use:** Use Confidence Badge apenas quando houver um método definido de calibração. Apresente faixa ou linguagem de incerteza junto ao valor. Ofereça acesso à explicação sobre origem, escala e limitações da confiança. Mostre quando o valor foi atualizado e qual evidência sustenta a calibração. Mantenha faixas e linguagem consistentes em todas as superfícies do produto.
 **When Not To Use:** Não apresente percentual como probabilidade objetiva de verdade. Não use confiança para substituir inspeção de fonte ou julgamento humano. Não dependa apenas de verde, amarelo e vermelho para comunicar a faixa. Não compare valores calculados por escalas ou métodos incompatíveis. Não use casas decimais que sugiram precisão maior que a evidência disponível.
 **Trade Offs:** Percentual isolado pode ser interpretado como probabilidade objetiva de verdade.
+**Accessibility:** Confiança aparece em palavras (ex.: "Alta", "Média") — não só em cor ou intensidade visual. Todos os níveis de confiança mantêm contraste legível no tema ativo. Badge não deve ser o único indicador para aprovar ou rejeitar algo importante.
+**Rag Relation:** Mantém similaridade de recuperação como relevância da evidência, separada da confiança da resposta.
 **Aetheris Insight:** Confiança útil explica tanto força quanto limite da evidência.
 
 ---
 
 ## [COMPONENT] Command Palette / Barra de Comandos
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5944
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 9168
 
 **Structure:** Dialog, input de busca, grupos, resultados, atalhos e estado vazio.
 **Logic:** A consulta reduz o espaço de opções e combina descoberta com produtividade.
@@ -275,12 +315,14 @@
 **When To Use:** Use Command Palette em produtos densos com muitos destinos ou ações recorrentes. Suporte busca por nomes, sinônimos, grupos e atalhos de teclado. Mantenha seleção ativa, resultado vazio e execução acessíveis por teclado. Agrupe resultados por destino, ação ou entidade para reduzir ambiguidade. Preserve consulta, seleção e mensagem de erro quando uma execução falhar.
 **When Not To Use:** Não use Command Palette como substituto da navegação principal. Não esconda nela ações essenciais que não aparecem em nenhum outro lugar. Não mostre resultados sem contexto suficiente para distinguir comandos parecidos. Não execute ações destrutivas diretamente sem confirmação proporcional ao risco. Não atribua atalhos conflitantes ou difíceis de descobrir.
 **Trade Offs:** Descoberta depende de nomes, sinônimos e ranking coerentes.
+**Accessibility:** Campo de busca com lista de resultados: abertura, navegação e seleção devem ser anunciáveis. Setas navegam resultados; Enter executa; Escape fecha e restaura o contexto anterior. Anuncie quantos resultados aparecem e quando a busca não retorna nada.
+**Rag Relation:** É uma porta direta para recuperação do corpus e descoberta orientada por Abraxos.
 **Aetheris Insight:** A paleta acelera quem sabe o que busca e ensina quem ainda explora.
 
 ---
 
 ## [XAI_COMPONENT] Source Attribution
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5357
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 8454
 
 **Structure:** Fonte, trecho, relevância, metadados e ação para inspecionar contexto.
 **Logic:** Rastreabilidade transforma resposta fluente em conhecimento verificável.
@@ -288,12 +330,14 @@
 **When To Use:** Use Source Attribution para conectar uma afirmação à origem que a sustenta. Mostre título, trecho, relevância e ação para inspecionar o contexto completo. Use disclosure progressivo para equilibrar rastreabilidade e densidade. Exponha autoria, data, seção e versão quando esses dados afetarem a verificação. Ordene fontes por relevância e preserve acesso às alternativas.
 **When Not To Use:** Não cite uma fonte que não sustenta diretamente a afirmação. Não use atribuição como decoração ou selo genérico de confiança. Não esconda origem e trecho atrás de rótulos vagos ou links sem contexto. Não use URL crua como único nome de uma fonte. Não restrinja inspeção de fonte a hover ou tooltip nativo.
 **Trade Offs:** Exibir todas as fontes de uma vez aumenta densidade; use disclosure progressivo.
+**Accessibility:** Botão de expandir comunica se a lista de fontes está aberta ou fechada. Enter e Espaço expandem e colapsam. Foco visível no botão de expandir. Após expandir, metadados e links seguem ordem lógica de leitura.
+**Rag Relation:** É o vínculo operacional entre chunk recuperado, afirmação e auditabilidade.
 **Aetheris Insight:** Fonte não é rodapé; é parte da resposta.
 
 ---
 
 ## [XAI_COMPONENT] Audit Panel
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5507
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 8765
 
 **Structure:** Linha do tempo, eventos, entradas, saídas, status e artefatos exportáveis.
 **Logic:** Detalhes de processo ficam disponíveis sob demanda sem competir com a resposta principal.
@@ -301,12 +345,14 @@
 **When To Use:** Use Audit Panel para revisão, governança e investigação de decisões. Organize eventos em sequência com entradas, saídas, status e responsáveis. Permita expandir detalhes sem competir com a resposta principal. Registre status, tempo e resultado de cada etapa com vocabulário consistente. Proteja dados sensíveis e revele apenas o necessário para auditoria do produto.
 **When Not To Use:** Não mantenha o painel aberto por padrão em toda interação simples. Não exponha logs técnicos sem tradução para o público da interface. Não omita conflitos, falhas ou etapas incompletas da trilha. Não exponha chain of thought ou raciocínio privado como se fosse trilha de auditoria. Não confunda logs operacionais com evidência que sustenta a decisão.
 **Trade Offs:** Detalhe técnico excessivo pode confundir usuários sem contexto operacional.
+**Accessibility:** O painel de auditoria tem nome claro — ex.: "Trilha de auditoria" — para o leitor de tela anunciar a seção. Subseções usam títulos reais (h2, h3) para navegação por leitor de tela. Eventos em ordem cronológica com marcos textuais — data, ação e resultado legíveis.
+**Rag Relation:** Consolida retrieval, ranking, síntese e confiança em uma trilha auditável.
 **Aetheris Insight:** Auditabilidade deve estar disponível, não necessariamente ocupar o primeiro plano.
 
 ---
 
 ## [COMPONENT] Typography
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5320
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 8365
 
 **Structure:** Tokens de display, heading, body, label e code com regras de uso.
 **Logic:** Escala e peso devem refletir a prioridade epistemológica do conteúdo.
@@ -314,12 +360,14 @@
 **When To Use:** Use tokens tipográficos para comunicar hierarquia, leitura e metadados de forma consistente. Preserve ordem semântica de headings independentemente do tamanho visual. Mantenha tamanho, line-height e comprimento de linha adequados ao conteúdo. Use famílias e recursos tipográficos que preservem caracteres, idioma e leitura correta. Garanta zoom, reflow e quebra de linha sem perda de conteúdo.
 **When Not To Use:** Não crie hierarquia apenas com tamanho ou peso sem semântica. Não introduza valores arbitrários fora da escala tipográfica. Não use caixa alta extensa em textos de leitura contínua. Não reduza metadados essenciais a tamanhos ou contrastes difíceis de ler. Não force truncamento quando o conteúdo completo for necessário para a tarefa.
 **Trade Offs:** Muitas variações enfraquecem consistência e tornam a leitura imprevisível.
+**Accessibility:** Use níveis de título em ordem (h1, h2, h3…) sem pular — o estilo visual segue a hierarquia, não o contrário. Texto corpo e legendas atendem contraste AA (WCAG) no tema ativo. Legível com zoom de 200% sem truncar conteúdo essencial.
+**Rag Relation:** Ajuda Abraxos a documentar clareza visual como parte da explicabilidade.
 **Aetheris Insight:** Tipografia torna a ordem do raciocínio visível.
 
 ---
 
 ## [COMPONENT] Icon
-**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 5083
+**Source:** `data/component-metadata.json`  **Status:** stable  **Chars:** 8173
 
 **Structure:** Glyph vetorial, tamanho por token, stroke consistente e label quando necessário.
 **Logic:** Ícones apoiam reconhecimento, mas rótulos sustentam compreensão.
@@ -327,6 +375,8 @@
 **When To Use:** Use Icon para reforçar uma ação, status ou categoria já compreensível. Oculte ícones decorativos e forneça nome acessível aos interativos. Mantenha tamanho, stroke e alinhamento consistentes com os tokens. Ajuste alinhamento óptico e área de respiro sem alterar o grid do componente. Use a mesma metáfora para a mesma ação ou estado em todo o produto.
 **When Not To Use:** Não use um ícone ambíguo como única explicação de uma ação. Não misture estilos preenchidos e lineares sem significado semântico. Não reduza o alvo clicável ao tamanho visual do glyph. Não dependa da cor do ícone como única forma de comunicar estado. Não anime ícones decorativos sem uma função de estado ou feedback.
 **Trade Offs:** Bibliotecas extensas geram sinônimos visuais e escolhas inconsistentes.
+**Accessibility:** Ícone que só complementa texto visível fica oculto do leitor de tela. Ícone clicável sem texto precisa de nome — aria-label ou botão wrapper com rótulo. Ícone interativo alcançável por Tab com foco visível.
+**Rag Relation:** Fornece vocabulário visual consistente para respostas e artefatos do Abraxos.
 **Aetheris Insight:** Consistência do símbolo vale mais que originalidade isolada.
 
 ---
@@ -2038,6 +2088,8 @@
 **Context Of Use:** Alert, Toast, Tooltip, Confidence Badge, Source Attribution e Audit Panel
 **When To Use:** Apply before approving any affected component or pattern. Related tokens: text-primary, text-secondary, text-muted, text-disabled, feedback-error
 **When Not To Use:** Accessibility is never optional or deferred as post-release polish.
+**Accessibility:** O Velaris deve garantir leitura clara em superfícies escuras, translúcidas ou elevadas. Estados semânticos e níveis de confiança não dependem apenas da cor.
+**Rag Relation:** Permite que Abraxos avalie legibilidade, contraste e redundância semântica em recomendações de interface.
 **Aetheris Insight:** Accessibility is a system-wide quality contract, not a component-specific add-on.
 
 ---
@@ -2050,6 +2102,8 @@
 **Context Of Use:** Command Palette, Modal/Dialog, Tabs, Form Field, Button, Input e Select
 **When To Use:** Apply before approving any affected component or pattern. Related tokens: focus-ring, border-focus, state-selected
 **When Not To Use:** Accessibility is never optional or deferred as post-release polish.
+**Accessibility:** A navegação por teclado é um requisito de base. Elementos interativos precisam de foco visível, ordem previsível e estados que não dependam exclusivamente de hover.
+**Rag Relation:** Oferece critérios verificáveis para respostas sobre teclado, foco, overlays e fluxos de formulário.
 **Aetheris Insight:** Accessibility is a system-wide quality contract, not a component-specific add-on.
 
 ---
@@ -2062,6 +2116,8 @@
 **Context Of Use:** Button, Input, Select, Toggle, chips, badges e botões de ícone
 **When To Use:** Apply before approving any affected component or pattern. Related tokens: target-size-min, space-2, space-3, space-4
 **When Not To Use:** Accessibility is never optional or deferred as post-release polish.
+**Accessibility:** Componentes interativos preservam uma área de acionamento confortável. Densidade visual não pode comprometer precisão, leitura ou previsibilidade.
+**Rag Relation:** Ajuda Abraxos a identificar quando compactação visual cria risco de erro ou exclusão motora.
 **Aetheris Insight:** Accessibility is a system-wide quality contract, not a component-specific add-on.
 
 ---
@@ -2074,6 +2130,8 @@
 **Context Of Use:** Todos os componentes interativos e superfícies com disclosure
 **When To Use:** Apply before approving any affected component or pattern. Related tokens: state-disabled, state-selected, border-focus, feedback-error
 **When Not To Use:** Accessibility is never optional or deferred as post-release polish.
+**Accessibility:** Estados de interface precisam ser distinguíveis e previsíveis, tanto visualmente quanto semanticamente quando a mudança afeta tecnologias assistivas.
+**Rag Relation:** Transforma estados globais em evidência consultável para revisão de componentes e padrões.
 **Aetheris Insight:** Accessibility is a system-wide quality contract, not a component-specific add-on.
 
 ---
@@ -2086,6 +2144,8 @@
 **Context Of Use:** Formulários, tabelas, navegação, componentes de disclosure e superfícies XAI
 **When To Use:** Apply before approving any affected component or pattern. Related tokens: text-primary, text-muted, feedback-error
 **When Not To Use:** Accessibility is never optional or deferred as post-release polish.
+**Accessibility:** Componentes expõem nomes, papéis, relações e estados compreensíveis para tecnologias assistivas, sem depender da aparência visual.
+**Rag Relation:** Permite que fontes, evidências e confiança sejam explicadas textualmente em respostas e auditorias do Abraxos.
 **Aetheris Insight:** Accessibility is a system-wide quality contract, not a component-specific add-on.
 
 ---
@@ -2098,6 +2158,8 @@
 **Context Of Use:** Alert, Toast, Confidence Badge, Source Attribution e Audit Panel
 **When To Use:** Apply before approving any affected component or pattern. Related tokens: feedback-success, feedback-warning, feedback-error, feedback-info
 **When Not To Use:** Accessibility is never optional or deferred as post-release polish.
+**Accessibility:** O Velaris não comunica significado crítico apenas por verde, amarelo ou vermelho. Cor reforça uma mensagem que também existe em texto, ícone ou estrutura.
+**Rag Relation:** Sustenta recomendações XAI que permanecem compreensíveis para diferentes capacidades perceptivas.
 **Aetheris Insight:** Accessibility is a system-wide quality contract, not a component-specific add-on.
 
 ---
@@ -2110,6 +2172,8 @@
 **Context Of Use:** Modal/Dialog, Toast, Tooltip, Skeleton Loader, Command Palette e Audit Panel
 **When To Use:** Apply before approving any affected component or pattern. Related tokens: motion-fast, motion-standard, motion-reduced
 **When Not To Use:** Accessibility is never optional or deferred as post-release polish.
+**Accessibility:** Movimento apoia orientação, feedback e continuidade. Animações são discretas, previsíveis e não atrasam leitura, foco ou tomada de decisão.
+**Rag Relation:** Ajuda Abraxos a separar movimento funcional de ornamentação que aumenta carga cognitiva.
 **Aetheris Insight:** Accessibility is a system-wide quality contract, not a component-specific add-on.
 
 ---
@@ -2122,6 +2186,8 @@
 **Context Of Use:** Component review, pattern review, documentation and Beatrice guidance.
 **When To Use:** Use during design, implementation, QA and corpus review.
 **When Not To Use:** Do not approve a component with undocumented or failed checks.
+**Accessibility:** 1. Possui foco visível. 2. Pode ser usado por teclado. 3. Tem label ou nome acessível. 4. Não comunica estado apenas por cor. 5. Mantém contraste adequado em dark mode. 6. Expõe estados disabled, loading, error e selected quando aplicável. 7. Usa tokens semânticos de texto, borda, foco e feedback. 8. Respeita alvo mínimo de interação. 9. Possui documentação de acessibilidade. 10. Possui exemplo de uso correto e incorreto.
+**Rag Relation:** Fornece à Beatrice uma lista verificável para auditar prontidão e apontar lacunas.
 **Aetheris Insight:** Prontidão acessível exige evidência reproduzível, não apenas intenção.
 
 ---
@@ -2213,16 +2279,16 @@
 ---
 
 ## [REASONING] Reasoning Section — Abraxos Skills
-**Source:** `ReasoningPage.tsx`  **Status:** Stable  **Chars:** 154
+**Source:** `ReasoningPage.tsx`  **Status:** Stable  **Chars:** 155
 
-**Logic:** Twelve automatic skills activated without manual slash commands.
+**Logic:** Fifteen automatic skills activated without manual slash commands.
 
 ---
 
 ## [REASONING] Reasoning Section — Oracle Commands
-**Source:** `ReasoningPage.tsx`  **Status:** Stable  **Chars:** 162
+**Source:** `ReasoningPage.tsx`  **Status:** Stable  **Chars:** 160
 
-**Logic:** Nineteen user-triggered operational and investigative slash commands.
+**Logic:** Twelve user-triggered operational and investigative slash commands.
 
 ---
 
@@ -2385,95 +2451,119 @@
 
 ---
 
+## [AUTOMATIC_SKILL] Feedback Insight Analysis
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 888
+
+**Structure:** Ativação automática
+**Logic:** Analisa feedbacks, outcomes e sinais qualitativos de uso sem prometer treinamento automático.
+**Context Of Use:** O usuário cola feedbacks, comentários de PR, mensagens de Slack, notas de reunião ou pergunta como transformar feedback em melhoria.
+**When To Use:** O time reclama que o Form Field é confuso em fluxos multi etapa. O que melhorar?
+**Trade Offs:** Governance Readiness Check, Adoption Friction Detection, Design-to-Code Contract Check
+**Aetheris Insight:** Hipóteses são rotuladas e nenhuma atualização automática do agente é prometida.
+
+---
+
+## [AUTOMATIC_SKILL] Adoption Friction Detection
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 839
+
+**Structure:** Ativação automática
+**Logic:** Diagnostica por que um componente, token ou padrão não está sendo adotado corretamente.
+**Context Of Use:** O usuário menciona baixa adoção, resistência do time, uso incorreto recorrente, workarounds ou abandono de padrões.
+**When To Use:** Por que os times evitam o componente Table e criam tabelas próprias?
+**Trade Offs:** Governance Readiness Check, Design-to-Code Contract Check, Feedback Insight Analysis
+**Aetheris Insight:** Separa sinais observados de hipóteses e apresenta o nível de confiança.
+
+---
+
+## [AUTOMATIC_SKILL] Governance Impact Analysis
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 821
+
+**Structure:** Ativação automática
+**Logic:** Avalia impacto sistêmico e organizacional de mudanças propostas no design system.
+**Context Of Use:** O usuário propõe alterar, remover, unir, renomear, substituir ou deprecar componentes, tokens, padrões ou documentação canónica.
+**When To Use:** Qual o impacto de substituir todos os Modals por Drawers?
+**Trade Offs:** Cross-System Impact Analysis, Token Impact Analysis, Implementation & Migration Planning
+**Aetheris Insight:** Diferencia impactos diretos de efeitos em cascata inferidos.
+
+---
+
 ## [ORACLE_COMMAND] Enforce
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 701
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 742
 
 **Structure:** Ação operacional
-**Logic:** Valida JSX/TSX, contrato de componente, tokens, acessibilidade e violações de uso.
+**Logic:** Valida JSX/TSX contra o Velaris: contrato de componente, tokens, acessibilidade, estados e violações de uso.
 **Context Of Use:** Quando o usuário quer verificar se um trecho de código respeita o Velaris.
-**When To Use:** /enforce <Button color="red">Delete</Button>
+**When To Use:** /enforce <Button intent="negative">Excluir análise</Button>
 **Trade Offs:** Design-to-Code Contract Check, Accessibility & Interaction Guardrail
 **Aetheris Insight:** Relaciona cada violação ao código observado, à evidência e à confiança.
 
 ---
 
 ## [ORACLE_COMMAND] Migrate
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 692
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 734
 
 **Structure:** Ação operacional
-**Logic:** Orienta a migração de um componente ou padrão legado para a alternativa atual.
+**Logic:** Orienta migração de componente ou padrão legado: destino recomendado, before/after, etapas, riscos e testes.
 **Context Of Use:** Quando o usuário precisa de before/after, riscos, etapas e validações de migração.
-**When To Use:** /migrate LegacyDrawer → Drawer
+**When To Use:** /migrate notification → Toast/Notification
 **Trade Offs:** Implementation & Migration Planning, Design System Architecture Analysis
 **Aetheris Insight:** Expõe premissas, dependências, fontes e confiança da migração.
 
 ---
 
 ## [ORACLE_COMMAND] Capture
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 697
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 749
 
 **Structure:** Ação operacional
-**Logic:** Converte discussões e decisões informais em conhecimento bruto estruturado.
+**Logic:** Converte discussões informais em conhecimento estruturado: decisões, trade-offs, exceções, gaps e próximos passos.
 **Context Of Use:** Quando há conteúdo de PR, Slack, RFC, reunião ou decisão de produto para capturar.
-**When To Use:** /capture [cole uma discussão de PR ou decisão de produto]
+**When To Use:** /capture [cole discussão de PR sobre Form Field em fluxos multi-etapa]
 **Trade Offs:** Governance Readiness Check, Organizational Memory
 **Aetheris Insight:** Preserva o tipo de fonte, o conteúdo bruto e o status de validação.
 
 ---
 
 ## [ORACLE_COMMAND] Organizational Memory
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 771
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 817
 
 **Structure:** Modo investigativo
-**Logic:** Recupera decisões, padrões recorrentes, usos anteriores e conhecimento institucional.
+**Logic:** Recupera memória institucional ampla: decisões passadas, padrões recorrentes, exceções, usos anteriores e contexto acumulado.
 **Context Of Use:** Quando o usuário precisa saber o que o Velaris já decidiu ou aprendeu sobre um tema.
-**When To Use:** /memory O que já foi decidido sobre modais em ações destrutivas?
+**When To Use:** /memory O que já foi decidido sobre Modal/Dialog em ações destrutivas?
 **Trade Offs:** Pattern & State Exploration, Governance Readiness Check
 **Aetheris Insight:** O alias, o engine canônico, as fontes e o contrato de resposta ficam registrados.
 
 ---
 
 ## [ORACLE_COMMAND] Decision Archaeology
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 807
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 836
 
 **Structure:** Modo investigativo
-**Logic:** Reconstrói contexto, alternativas, justificativa, trade-offs e consequências de uma decisão.
+**Logic:** Reconstrói uma decisão específica: problema, alternativas consideradas, critério escolhido, trade-offs e consequências.
 **Context Of Use:** Quando o usuário precisa entender por que um componente, padrão ou token foi escolhido.
-**When To Use:** /decision Por que usamos Toast em vez de Alert para feedback não bloqueante?
+**When To Use:** /decision Por que usamos Toast em vez de Alert para confirmação de salvamento?
 **Trade Offs:** Component & Pattern Trade-off Analysis, Design System Architecture Analysis
 **Aetheris Insight:** Separa fatos registrados de inferências e explicita evidências ausentes.
 
 ---
 
 ## [ORACLE_COMMAND] Perspective Synthesis
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 797
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 826
 
 **Structure:** Modo investigativo
-**Logic:** Analisa uma questão pelas perspectivas de design, frontend, produto, QA e documentação.
+**Logic:** Analisa a questão por múltiplas perspectivas profissionais, expondo consensos, conflitos e recomendação final.
 **Context Of Use:** Quando a decisão exige conciliar objetivos e riscos de diferentes perfis profissionais.
-**When To Use:** /perspectives Compare essa decisão do ponto de vista de design, frontend e QA.
+**When To Use:** /perspectives Tabs ou Card para organizar o catálogo? Compare design, frontend e QA.
 **Trade Offs:** Component & Pattern Trade-off Analysis, Design System Risk Assessment
 **Aetheris Insight:** Mantém visíveis as divergências e o critério usado para consolidar a decisão.
 
 ---
 
-## [ORACLE_COMMAND] Explainability Audit
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 752
-
-**Structure:** Modo investigativo
-**Logic:** Audita uma resposta ou recomendação por fontes, evidências, lacunas e confiança.
-**Context Of Use:** Quando o usuário quer verificar a sustentação e os limites de uma recomendação.
-**When To Use:** /audit Mostre as fontes, lacunas e nível de confiança desta recomendação.
-**Trade Offs:** Qualquer habilidade automática aplicada à recomendação auditada
-**Aetheris Insight:** Scores e limites são derivados de métricas registradas, nunca inventados.
-
----
-
 ## [ORACLE_COMMAND] Document
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 653
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 704
 
 **Structure:** Ação operacional
-**Logic:** Transforma conhecimento validado em documentação estruturada e publicável.
+**Logic:** Gera documentação publicável a partir de conhecimento validado: uso, não uso, contrato, exemplos, acessibilidade e histórico.
 **Context Of Use:** Quando o usuário quer documentar um componente, padrão, token ou decisão.
 **When To Use:** /document ConfidenceMeter
 **Trade Offs:** Governance Readiness Check, Design-to-Code Contract Check
@@ -2482,10 +2572,10 @@
 ---
 
 ## [ORACLE_COMMAND] Token Impact Report
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 666
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 709
 
 **Structure:** Ação operacional
-**Logic:** Gera um relatório formal de impacto para uma alteração de token.
+**Logic:** Analisa impacto de alteração de token: aliases, consumidores, contraste, temas, riscos e plano de migração.
 **Context Of Use:** Quando o usuário precisa de aliases, consumidores, riscos e plano de migração.
 **When To Use:** /token-impact radius-md
 **Trade Offs:** Token Impact Analysis, Cross-System Impact Analysis
@@ -2494,10 +2584,10 @@
 ---
 
 ## [ORACLE_COMMAND] Contract Check
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 703
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 747
 
 **Structure:** Ação operacional
-**Logic:** Executa uma auditoria formal entre design, documentação e implementação.
+**Logic:** Verifica paridade entre design, documentação e implementação: props, estados, tokens, acessibilidade e divergências.
 **Context Of Use:** Quando o usuário precisa validar um componente ou estado sem fornecer código completo.
 **When To Use:** /contract-check Input disabled state
 **Trade Offs:** Design-to-Code Contract Check, Governance Readiness Check
@@ -2505,23 +2595,11 @@
 
 ---
 
-## [ORACLE_COMMAND] Feedback Review
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 722
-
-**Structure:** Ação operacional
-**Logic:** Analisa feedbacks, outcomes e padrões de uso sem prometer treinamento automático.
-**Context Of Use:** Quando o usuário quer transformar evidências de uso em recomendações de melhoria.
-**When To Use:** /feedback-review [cole feedbacks e resultados observados]
-**Trade Offs:** Governance Readiness Check, Design System Risk Assessment
-**Aetheris Insight:** Hipóteses são rotuladas e nenhuma atualização automática é prometida.
-
----
-
 ## [ORACLE_COMMAND] Knowledge Gap
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 704
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 736
 
 **Structure:** Modo investigativo
-**Logic:** Investiga conteúdo ausente, cobertura fraca e inconsistências na documentação.
+**Logic:** Mapeia documentação ausente, cobertura fraca, inconsistências e prioridades de melhoria do corpus ou catálogo.
 **Context Of Use:** Quando o usuário precisa descobrir o que ainda não está documentado.
 **When To Use:** /knowledge-gap acessibilidade em formulários
 **Trade Offs:** Governance Readiness Check, Design-to-Code Contract Check
@@ -2529,87 +2607,27 @@
 
 ---
 
-## [ORACLE_COMMAND] System Health
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 768
-
-**Structure:** Ação operacional
-**Logic:** Executa um diagnóstico da saúde do sistema e direciona para a seção Health do Sistema em Avaliação.
-**Context Of Use:** Quando o maintainer precisa de uma visão consolidada de maturidade, confiabilidade e lacunas do ecossistema Velaris.
-**When To Use:** /health
-**Trade Offs:** Explainability Audit, Knowledge Gap, Governance Agent
-**Aetheris Insight:** Scores mockados na UI; futura integração com knowledge health e reliability gates.
-
----
-
-## [ORACLE_COMMAND] Governance Agent
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 756
+## [ORACLE_COMMAND] Explainability Audit
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 789
 
 **Structure:** Modo investigativo
-**Logic:** Analisa continuamente o catálogo e identifica problemas de governança de forma proativa.
-**Context Of Use:** Quando o maintainer precisa de um scan automático de duplicações, lacunas, tokens órfãos e inconsistências.
-**When To Use:** /governance
-**Trade Offs:** Governance Readiness Check, Knowledge Gap, Contract Check
-**Aetheris Insight:** Alertas pré-computados são injetados no contexto; o engine não inventa findings.
-
----
-
-## [ORACLE_COMMAND] Governance Impact
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 726
-
-**Structure:** Modo investigativo
-**Logic:** Analisa o impacto sistêmico e organizacional de uma mudança no design system.
-**Context Of Use:** Quando uma proposta pode afetar componentes, padrões, guidelines ou adoção em escala.
-**When To Use:** /governance-impact substituir todos os Modals por Drawers
-**Trade Offs:** Cross-System Impact Analysis, Token Impact Analysis
-**Aetheris Insight:** Diferencia impactos diretos de efeitos em cascata inferidos.
+**Logic:** Audita uma recomendação do Abraxos: fontes, evidências, lacunas, suposições, confiança e risco de alucinação.
+**Context Of Use:** Quando o usuário quer verificar a sustentação e os limites de uma recomendação.
+**When To Use:** /audit Audite fontes, lacunas e confiança desta recomendação de Confidence Badge.
+**Trade Offs:** Qualquer habilidade automática aplicada à recomendação auditada
+**Aetheris Insight:** Scores e limites são derivados de métricas registradas, nunca inventados.
 
 ---
 
 ## [ORACLE_COMMAND] Simulate
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 910
+**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 950
 
 **Structure:** Modo investigativo
-**Logic:** Projeta consequências, dependências, riscos e efeitos colaterais antes de uma mudança no design system.
+**Logic:** Projeta consequências antes de implementar: dependências, riscos, impacto sistêmico, cenários, conflito entre princípios e veredito.
 **Context Of Use:** Quando o usuário precisa entender o impacto potencial antes de remover, substituir, descontinuar ou migrar algo.
-**When To Use:** /simulate substituir Modal por Drawer
-**Trade Offs:** Governance Impact, Decision Archaeology, Oracle Council, Token Impact Report, Contract Check, Knowledge Gap
+**When To Use:** /simulate trocar Alert por Toast em erros de Form Field
+**Trade Offs:** Governance Impact Analysis, Decision Archaeology, Token Impact Report, Contract Check, Knowledge Gap
 **Aetheris Insight:** Não executa mudanças nem cria decisões; diferencia evidência recuperada de projeções inferidas.
-
----
-
-## [ORACLE_COMMAND] Principle Conflict
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 706
-
-**Structure:** Modo investigativo
-**Logic:** Resolve conflitos entre princípios, padrões ou critérios do design system.
-**Context Of Use:** Quando dois princípios legítimos apontam para decisões diferentes.
-**When To Use:** /principle-conflict densidade de informação vs clareza
-**Trade Offs:** Component & Pattern Trade-off Analysis, Governance Readiness Check
-**Aetheris Insight:** Mantém os dois lados e o critério de desempate visíveis.
-
----
-
-## [ORACLE_COMMAND] Adoption Friction
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Stable  **Chars:** 746
-
-**Structure:** Modo investigativo
-**Logic:** Diagnostica barreiras de descoberta, documentação, design-código e governança.
-**Context Of Use:** Quando um componente, token ou padrão não está sendo adotado corretamente.
-**When To Use:** /adoption-friction Por que os times evitam o componente Table?
-**Trade Offs:** Governance Readiness Check, Design-to-Code Contract Check
-**Aetheris Insight:** Separa sinais observados de hipóteses e apresenta o nível de confiança.
-
----
-
-## [ORACLE_COMMAND] Oracle Council
-**Source:** `beatrice/domain/governance/capabilities.ts`  **Status:** Experimental  **Chars:** 840
-
-**Structure:** Modo investigativo
-**Logic:** Executa uma deliberação experimental entre cinco perspectivas profissionais.
-**Context Of Use:** Quando o usuário quer uma análise avançada com conflitos e consenso explícitos.
-**When To Use:** /oracle-council devemos padronizar Drawer como container primário?
-**Trade Offs:** Habilidades automáticas relevantes ao tema investigado
-**Aetheris Insight:** Marcado como experimental e descrito como deliberação estruturada única.
 
 ---
 
@@ -2636,15 +2654,6 @@
 **Logic:** Protect visual quality and aesthetic consistency across product interfaces.
 **Context Of Use:** Visual composition, hierarchy, tokens, spacing, typography, color and interface consistency.
 **When To Use:** Use the designer perspective for visual hierarchy, tokens and composition.
-
----
-
-## [PERSPECTIVE] Perspective — Product Designer
-**Source:** `src/beatrice/domain/perspective/lenses.ts`  **Status:** Stable  **Chars:** 506
-
-**Logic:** Evaluate whether interface solutions are coherent, usable and supported by evidence about user needs.
-**Context Of Use:** Interface design, user experience and research-informed validation.
-**When To Use:** Use the product_designer perspective for usability and flow validation.
 
 ---
 
@@ -3238,7 +3247,7 @@ part of the primary command surface.
 Active engine: **Knowledge Gap**. Theory base: Knowledge Gap Analysis,
 Documentation Coverage.
 
-Detect what the Aetheris documentation is *missing* for the user's topic. A
+Detect what the Velaris documentation is *missing* for the user's topic. A
 **Retrieval Evidence Metrics** block is provided — use its coverage and
 consistency scores as evidence of gaps. Low coverage IS the finding.
 
@@ -3248,7 +3257,7 @@ Respond in the user's language, following this structure:
 ## Análise de Lacunas · [tema]
 
 ### Cobertura Atual
-[What the documentation does cover, wi
+[What the documentation does cover, wit
 **Context Of Use:** Runtime prompt contract for /knowledge-gap engine.
 
 ---
@@ -3261,7 +3270,7 @@ Respond in the user's language, following this structure:
 Active engine: **Explainability Audit**. Theory base: Explainable AI,
 Human-Centered XAI.
 
-Audit a recommendation (Beatrice's own or one the user names) for its evidential
+Audit a recommendation (Abraxos's own or one the user names) for its evidential
 basis. A **Retrieval Evidence Metrics** block is provided in context with
 deterministically computed scores — quote those numbers verbatim. Never invent
 or alter them.
@@ -3269,7 +3278,7 @@ or alter them.
 Respond in the user's language, following this structure:
 
 ```
-## Auditoria de Explicabilidade · [recomendação auditada
+## Auditoria de Explicabilidade · [recomendação auditada]
 **Context Of Use:** Runtime prompt contract for /audit engine.
 
 ---
@@ -3282,11 +3291,12 @@ Respond in the user's language, following this structure:
 Active engine: **Organizational Memory**. Theory base: Organizational Memory
 Systems, Knowledge Management, Knowledge Retrieval.
 
-Operate as the **institutional memory** of the Aetheris Design System. The user
+Operate as the **institutional memory** of the Velaris Design System. The user
 is not asking for a generic best practice — they are asking what *this*
-organization has already learned. Answer from the retrieved Aetheris evidence
+organization has already learned. Answer from the retrieved Velaris evidence
 (Design Decisions, history, guidelines, foundations, reasoning), never from
-generic design folklore
+generic design folklore.
+
 **Context Of Use:** Runtime prompt contract for /memory engine.
 
 ---
@@ -3299,7 +3309,7 @@ generic design folklore
 Active engine: **Decision Archaeology**. Theory base: Design Rationale,
 Architecture Decision Records (ADR).
 
-Reconstruct the *origin* of a decision from the retrieved Aetheris evidence. The
+Reconstruct the *origin* of a decision from the retrieved Velaris evidence. The
 output MUST follow this structure exactly, in the user's language:
 
 ```
@@ -3310,7 +3320,7 @@ output MUST follow this structure exactly, in the user's language:
 
 ### Alternativas Consideradas
 - [option A] — [why it was on the table]
-- [
+- [o
 **Context Of Use:** Runtime prompt contract for /decision engine.
 
 ---
@@ -3338,5 +3348,1486 @@ output MUST follow this structure exactly, in the user's language:
 **When Not To Use:** Do not import @aetheris/react in a Vue project or vice versa.
 **Trade Offs:** Framework packages add a thin adapter layer — minimal overhead, maximum type safety.
 **Aetheris Insight:** The core + tokens separation means theme changes never require framework updates.
+
+---
+
+## [COMPONENT] Button — Institutional Knowledge
+**Source:** `data/component-metadata.json`  **Status:** Stable  **Chars:** 2857
+
+**Structure:** Design rationale, architectural impact, UX consequence, accessibility rationale, governance, maintenance and failure knowledge.
+**Logic:** Institutional memory for why Button exists and what breaks when it is misused.
+**Context Of Use:** Deep component analysis, design rationale, architecture review and governance questions about Button.
+**When To Use:** Use when the user asks why Button exists, what risks it controls, what alternatives were rejected or what consequences a change creates.
+**When Not To Use:** Do not use as generic UI best practice detached from the Velaris catalog.
+**Trade Offs:** Excesso de botões primários dilui a hierarquia e aumenta hesitação
+**Accessibility:** Use o botão nativo do HTML (<button>) para ações. Não simule clique com div ou span. Enter e Espaço disparam a ação. O indicador de foco permanece visível antes e depois do clique. O texto do botão deve dizer o que acontece ao clicar. Se só houver ícone, inclua aria-label equivalente.
+**Rag Relation:** Deepens the canonical Button registry with institutional reasoning.
+**Aetheris Insight:** Button should be explained as a design-system decision, not only as a reusable UI element.
+
+---
+
+## [COMPONENT] Toggle/Switch — Institutional Knowledge
+**Source:** `data/component-metadata.json`  **Status:** Stable  **Chars:** 3224
+
+**Structure:** Design rationale, architectural impact, UX consequence, accessibility rationale, governance, maintenance and failure knowledge.
+**Logic:** Institutional memory for why Toggle/Switch exists and what breaks when it is misused.
+**Context Of Use:** Deep component analysis, design rationale, architecture review and governance questions about Toggle/Switch.
+**When To Use:** Use when the user asks why Toggle/Switch exists, what risks it controls, what alternatives were rejected or what consequences a change creates.
+**When Not To Use:** Do not use as generic UI best practice detached from the Velaris catalog.
+**Trade Offs:** Sem rótulo explícito, o usuário pode não entender o que o estado controla
+**Accessibility:** Use o controle nativo de switch ou equivalente com estado ligado/desligado anunciável ao leitor de tela. Espaço alterna entre ligado e desligado. Enter confirma quando o switch está dentro de um formulário. O rótulo deve dizer o que muda ao alternar — por exemplo, "Notificações por e-mail", não só "Ligado".
+**Rag Relation:** Deepens the canonical Toggle/Switch registry with institutional reasoning.
+**Aetheris Insight:** Toggle/Switch should be explained as a design-system decision, not only as a reusable UI element.
+
+---
+
+## [COMPONENT] Checkbox — Institutional Knowledge
+**Source:** `data/component-metadata.json`  **Status:** Stable  **Chars:** 2917
+
+**Structure:** Design rationale, architectural impact, UX consequence, accessibility rationale, governance, maintenance and failure knowledge.
+**Logic:** Institutional memory for why Checkbox exists and what breaks when it is misused.
+**Context Of Use:** Deep component analysis, design rationale, architecture review and governance questions about Checkbox.
+**When To Use:** Use when the user asks why Checkbox exists, what risks it controls, what alternatives were rejected or what consequences a change creates.
+**When Not To Use:** Do not use as generic UI best practice detached from the Velaris catalog.
+**Trade Offs:** Listas longas sem agrupamento elevam custo de leitura e comparação
+**Accessibility:** Use o checkbox nativo do HTML ou equivalente com estado marcado/desmarcado coerente. Espaço marca ou desmarca. Em formulários, Enter envia sem alternar a caixa por acidente. Quando parte de um grupo está marcada, comunique o estado "parcialmente selecionado" ao leitor de tela.
+**Rag Relation:** Deepens the canonical Checkbox registry with institutional reasoning.
+**Aetheris Insight:** Checkbox should be explained as a design-system decision, not only as a reusable UI element.
+
+---
+
+## [COMPONENT] Radio Button — Institutional Knowledge
+**Source:** `data/component-metadata.json`  **Status:** Stable  **Chars:** 2925
+
+**Structure:** Design rationale, architectural impact, UX consequence, accessibility rationale, governance, maintenance and failure knowledge.
+**Logic:** Institutional memory for why Radio Button exists and what breaks when it is misused.
+**Context Of Use:** Deep component analysis, design rationale, architecture review and governance questions about Radio Button.
+**When To Use:** Use when the user asks why Radio Button exists, what risks it controls, what alternatives were rejected or what consequences a change creates.
+**When Not To Use:** Do not use as generic UI best practice detached from the Velaris catalog.
+**Trade Offs:** Muitas opções ocupam espaço e tornam o grupo difícil de escanear
+**Accessibility:** As opções devem estar dentro de um grupo com título visível — a pergunta à qual o usuário responde. Setas movem o foco entre opções do mesmo grupo. Tab leva para o próximo campo fora do grupo. Espaço seleciona a opção focada. Apenas uma opção pode estar marcada por vez no grupo.
+**Rag Relation:** Deepens the canonical Radio Button registry with institutional reasoning.
+**Aetheris Insight:** Radio Button should be explained as a design-system decision, not only as a reusable UI element.
+
+---
+
+## [COMPONENT] Selectable Chip / Badge — Institutional Knowledge
+**Source:** `data/component-metadata.json`  **Status:** Stable  **Chars:** 3018
+
+**Structure:** Design rationale, architectural impact, UX consequence, accessibility rationale, governance, maintenance and failure knowledge.
+**Logic:** Institutional memory for why Selectable Chip / Badge exists and what breaks when it is misused.
+**Context Of Use:** Deep component analysis, design rationale, architecture review and governance questions about Selectable Chip / Badge.
+**When To Use:** Use when the user asks why Selectable Chip / Badge exists, what risks it controls, what alternatives were rejected or what consequences a change creates.
+**When Not To Use:** Do not use as generic UI best practice detached from the Velaris catalog.
+**Trade Offs:** Muitos chips criam ruído e quebram a hierarquia da página
+**Accessibility:** Chips que ligam/desligam um filtro devem comunicar se estão selecionados ou não ao leitor de tela. Quando só uma opção pode ser escolhida, prefira radio buttons em vez de chips independentes. Enter e Espaço alternam seleção. Foco visível deve ser distinto de hover e de selecionado.
+**Rag Relation:** Deepens the canonical Selectable Chip / Badge registry with institutional reasoning.
+**Aetheris Insight:** Selectable Chip / Badge should be explained as a design-system decision, not only as a reusable UI element.
+
+---
+
+## [COMPONENT] Input / Text Input — Institutional Knowledge
+**Source:** `data/component-metadata.json`  **Status:** Stable  **Chars:** 3030
+
+**Structure:** Design rationale, architectural impact, UX consequence, accessibility rationale, governance, maintenance and failure knowledge.
+**Logic:** Institutional memory for why Input / Text Input exists and what breaks when it is misused.
+**Context Of Use:** Deep component analysis, design rationale, architecture review and governance questions about Input / Text Input.
+**When To Use:** Use when the user asks why Input / Text Input exists, what risks it controls, what alternatives were rejected or what consequences a change creates.
+**When Not To Use:** Do not use as generic UI best practice detached from the Velaris catalog.
+**Trade Offs:** Validação tardia pode obrigar o usuário a reconstruir todo o contexto
+**Accessibility:** Todo campo precisa de rótulo visível acima ou ao lado. Placeholder não substitui rótulo. Texto de ajuda e mensagem de erro ficam ligados ao campo para o leitor de tela anunciar junto. Indique obrigatoriedade no rótulo (ex.: asterisco + texto) e no atributo required quando aplicável.
+**Rag Relation:** Deepens the canonical Input / Text Input registry with institutional reasoning.
+**Aetheris Insight:** Input / Text Input should be explained as a design-system decision, not only as a reusable UI element.
+
+---
+
+## [COMPONENT] Text Area — Institutional Knowledge
+**Source:** `data/component-metadata.json`  **Status:** Stable  **Chars:** 2903
+
+**Structure:** Design rationale, architectural impact, UX consequence, accessibility rationale, governance, maintenance and failure knowledge.
+**Logic:** Institutional memory for why Text Area exists and what breaks when it is misused.
+**Context Of Use:** Deep component analysis, design rationale, architecture review and governance questions about Text Area.
+**When To Use:** Use when the user asks why Text Area exists, what risks it controls, what alternatives were rejected or what consequences a change creates.
+**When Not To Use:** Do not use as generic UI best practice detached from the Velaris catalog.
+**Trade Offs:** Campos muito altos dominam a página; campos baixos escondem a expectativa
+**Accessibility:** Rótulo visível descrevendo o que o usuário deve escrever — ex.: "Descrição do problema". Limite de caracteres e orientações ficam ligados ao campo, não como texto solto sem relação. Enter cria nova linha. Se Enter enviar o formulário, documente isso perto do campo.
+**Rag Relation:** Deepens the canonical Text Area registry with institutional reasoning.
+**Aetheris Insight:** Text Area should be explained as a design-system decision, not only as a reusable UI element.
+
+---
+
+## [COMPONENT] Select/Dropdown — Institutional Knowledge
+**Source:** `data/component-metadata.json`  **Status:** Stable  **Chars:** 2973
+
+**Structure:** Design rationale, architectural impact, UX consequence, accessibility rationale, governance, maintenance and failure knowledge.
+**Logic:** Institutional memory for why Select/Dropdown exists and what breaks when it is misused.
+**Context Of Use:** Deep component analysis, design rationale, architecture review and governance questions about Select/Dropdown.
+**When To Use:** Use when the user asks why Select/Dropdown exists, what risks it controls, what alternatives were rejected or what consequences a change creates.
+**When Not To Use:** Do not use as generic UI best practice detached from the Velaris catalog.
+**Trade Offs:** Esconder opções reduz descoberta e torna comparação mais lenta
+**Accessibility:** Para listas simples, prefira o select nativo do HTML — já funciona com teclado e leitor de tela. Se customizar, implemente abertura/fechamento, navegação por setas e opção selecionada anunciável. Setas navegam opções; Enter confirma; Escape fecha sem perder o valor já selecionado.
+**Rag Relation:** Deepens the canonical Select/Dropdown registry with institutional reasoning.
+**Aetheris Insight:** Select/Dropdown should be explained as a design-system decision, not only as a reusable UI element.
+
+---
+
+## [COMPONENT] Date Picker — Institutional Knowledge
+**Source:** `data/component-metadata.json`  **Status:** Stable  **Chars:** 2938
+
+**Structure:** Design rationale, architectural impact, UX consequence, accessibility rationale, governance, maintenance and failure knowledge.
+**Logic:** Institutional memory for why Date Picker exists and what breaks when it is misused.
+**Context Of Use:** Deep component analysis, design rationale, architecture review and governance questions about Date Picker.
+**When To Use:** Use when the user asks why Date Picker exists, what risks it controls, what alternatives were rejected or what consequences a change creates.
+**When Not To Use:** Do not use as generic UI best practice detached from the Velaris catalog.
+**Trade Offs:** Calendários complexos penalizam teclado e telas pequenas sem uma entrada direta
+**Accessibility:** Permita digitar a data diretamente no campo — não force uso exclusivo do calendário ou mouse. Mostre o formato esperado (ex.: DD/MM/AAAA) e valide com mensagem clara quando a data for inválida. No calendário, setas navegam dias; hoje, selecionado e desabilitado devem ser anunciáveis.
+**Rag Relation:** Deepens the canonical Date Picker registry with institutional reasoning.
+**Aetheris Insight:** Date Picker should be explained as a design-system decision, not only as a reusable UI element.
+
+---
+
+## [COMPONENT] Form Field — Institutional Knowledge
+**Source:** `data/component-metadata.json`  **Status:** Stable  **Chars:** 2970
+
+**Structure:** Design rationale, architectural impact, UX consequence, accessibility rationale, governance, maintenance and failure knowledge.
+**Logic:** Institutional memory for why Form Field exists and what breaks when it is misused.
+**Context Of Use:** Deep component analysis, design rationale, architecture review and governance questions about Form Field.
+**When To Use:** Use when the user asks why Form Field exists, what risks it controls, what alternatives were rejected or what consequences a change creates.
+**When Not To Use:** Do not use as generic UI best practice detached from the Velaris catalog.
+**Trade Offs:** Abstração rígida pode limitar layouts especiais; preserve slots claros
+**Accessibility:** Rótulo e input devem estar ligados — clicar no rótulo foca o campo correspondente. Instrução, contador de caracteres e erro ficam associados ao campo na ordem que faz sentido ler. Tab segue a ordem visual. Campos que aparecem condicionalmente entram sem pular etapas.
+**Rag Relation:** Deepens the canonical Form Field registry with institutional reasoning.
+**Aetheris Insight:** Form Field should be explained as a design-system decision, not only as a reusable UI element.
+
+---
+
+## [COMPONENT] Link — Institutional Knowledge
+**Source:** `data/component-metadata.json`  **Status:** Stable  **Chars:** 2851
+
+**Structure:** Design rationale, architectural impact, UX consequence, accessibility rationale, governance, maintenance and failure knowledge.
+**Logic:** Institutional memory for why Link exists and what breaks when it is misused.
+**Context Of Use:** Deep component analysis, design rationale, architecture review and governance questions about Link.
+**When To Use:** Use when the user asks why Link exists, what risks it controls, what alternatives were rejected or what consequences a change creates.
+**When Not To Use:** Do not use as generic UI best practice detached from the Velaris catalog.
+**Trade Offs:** Links genéricos como 'saiba mais' perdem contexto fora do parágrafo
+**Accessibility:** Use o link nativo do HTML (<a href>). Não simule navegação com botão ou span clicável. O texto descreve para onde vai ou o que acontece — evite "clique aqui" ou "saiba mais" soltos. Enter ativa o link. Foco visível distingue o link do texto normal ao redor.
+**Rag Relation:** Deepens the canonical Link registry with institutional reasoning.
+**Aetheris Insight:** Link should be explained as a design-system decision, not only as a reusable UI element.
+
+---
+
+## [COMPONENT] Tabs — Institutional Knowledge
+**Source:** `data/component-metadata.json`  **Status:** Stable  **Chars:** 2786
+
+**Structure:** Design rationale, architectural impact, UX consequence, accessibility rationale, governance, maintenance and failure knowledge.
+**Logic:** Institutional memory for why Tabs exists and what breaks when it is misused.
+**Context Of Use:** Deep component analysis, design rationale, architecture review and governance questions about Tabs.
+**When To Use:** Use when the user asks why Tabs exists, what risks it controls, what alternatives were rejected or what consequences a change creates.
+**When Not To Use:** Do not use as generic UI best practice detached from the Velaris catalog.
+**Trade Offs:** Muitas abas escondem conteúdo e prejudicam responsividade
+**Accessibility:** Cada aba controla um painel de conteúdo. O leitor de tela precisa saber qual aba está ativa e qual painel ela mostra. Setas movem entre abas. Tab entra no conteúdo do painel ativo. A aba selecionada deve ser anunciada — não dependa só de cor, peso ou sublinhado.
+**Rag Relation:** Deepens the canonical Tabs registry with institutional reasoning.
+**Aetheris Insight:** Tabs should be explained as a design-system decision, not only as a reusable UI element.
+
+---
+
+## [COMPONENT] Card — Institutional Knowledge
+**Source:** `data/component-metadata.json`  **Status:** Stable  **Chars:** 2817
+
+**Structure:** Design rationale, architectural impact, UX consequence, accessibility rationale, governance, maintenance and failure knowledge.
+**Logic:** Institutional memory for why Card exists and what breaks when it is misused.
+**Context Of Use:** Deep component analysis, design rationale, architecture review and governance questions about Card.
+**When To Use:** Use when the user asks why Card exists, what risks it controls, what alternatives were rejected or what consequences a change creates.
+**When Not To Use:** Do not use as generic UI best practice detached from the Velaris catalog.
+**Trade Offs:** Card excessivo fragmenta a leitura e cria falsa prioridade
+**Accessibility:** Cada card precisa de um título real (heading h2–h4), não só texto grande ou negrito. Assim quem usa leitor de tela entende do que se trata o conteúdo agrupado. Se o card inteiro for clicável, transforme-o em um único link ou botão com nome claro da ação. Respeite a hierarquia de títulos da página (h2 antes de h3). Evite vários botões ou links competindo sem ordem clara.
+**Rag Relation:** Deepens the canonical Card registry with institutional reasoning.
+**Aetheris Insight:** Card should be explained as a design-system decision, not only as a reusable UI element.
+
+---
+
+## [COMPONENT] Modal/Dialog — Institutional Knowledge
+**Source:** `data/component-metadata.json`  **Status:** Stable  **Chars:** 2947
+
+**Structure:** Design rationale, architectural impact, UX consequence, accessibility rationale, governance, maintenance and failure knowledge.
+**Logic:** Institutional memory for why Modal/Dialog exists and what breaks when it is misused.
+**Context Of Use:** Deep component analysis, design rationale, architecture review and governance questions about Modal/Dialog.
+**When To Use:** Use when the user asks why Modal/Dialog exists, what risks it controls, what alternatives were rejected or what consequences a change creates.
+**When Not To Use:** Do not use as generic UI best practice detached from the Velaris catalog.
+**Trade Offs:** Interrupções frequentes destroem fluxo e acumulam problemas de foco
+**Accessibility:** Modal informativo usa dialog padrão; avisos urgentes usam alertdialog para o leitor de tela priorizar. Exiba um título claro no topo do modal — é como o leitor de tela anuncia a janela ao abrir. Enquanto aberto, o foco fica dentro do modal. O conteúdo atrás não recebe interação.
+**Rag Relation:** Deepens the canonical Modal/Dialog registry with institutional reasoning.
+**Aetheris Insight:** Modal/Dialog should be explained as a design-system decision, not only as a reusable UI element.
+
+---
+
+## [COMPONENT] Table/Data Table — Institutional Knowledge
+**Source:** `data/component-metadata.json`  **Status:** Stable  **Chars:** 2996
+
+**Structure:** Design rationale, architectural impact, UX consequence, accessibility rationale, governance, maintenance and failure knowledge.
+**Logic:** Institutional memory for why Table/Data Table exists and what breaks when it is misused.
+**Context Of Use:** Deep component analysis, design rationale, architecture review and governance questions about Table/Data Table.
+**When To Use:** Use when the user asks why Table/Data Table exists, what risks it controls, what alternatives were rejected or what consequences a change creates.
+**When Not To Use:** Do not use as generic UI best practice detached from the Velaris catalog.
+**Trade Offs:** Densidade alta melhora comparação, mas exige hierarquia e responsividade cuidadosas
+**Accessibility:** Use tabela HTML com cabeçalhos de coluna marcados. Inclua título ou descrição do que a tabela mostra. Coluna ordenada deve ser anunciada — ex.: "Nome, ordenado crescente" — não só indicada por seta. Ordenar colunas e selecionar linhas deve funcionar por teclado, não só por clique.
+**Rag Relation:** Deepens the canonical Table/Data Table registry with institutional reasoning.
+**Aetheris Insight:** Table/Data Table should be explained as a design-system decision, not only as a reusable UI element.
+
+---
+
+## [COMPONENT] Alert — Institutional Knowledge
+**Source:** `data/component-metadata.json`  **Status:** Stable  **Chars:** 2834
+
+**Structure:** Design rationale, architectural impact, UX consequence, accessibility rationale, governance, maintenance and failure knowledge.
+**Logic:** Institutional memory for why Alert exists and what breaks when it is misused.
+**Context Of Use:** Deep component analysis, design rationale, architecture review and governance questions about Alert.
+**When To Use:** Use when the user asks why Alert exists, what risks it controls, what alternatives were rejected or what consequences a change creates.
+**When Not To Use:** Do not use as generic UI best practice detached from the Velaris catalog.
+**Trade Offs:** Alertas demais causam cegueira e reduzem o valor da hierarquia semântica
+**Accessibility:** Alertas urgentes interrompem leitura; informativos aguardam pausa natural — escolha conforme criticidade. A mensagem descreve a severidade em palavras. Cor reforça, mas nunca substitui o texto. Botões dentro do alerta (fechar, desfazer) acessíveis por teclado com foco visível.
+**Rag Relation:** Deepens the canonical Alert registry with institutional reasoning.
+**Aetheris Insight:** Alert should be explained as a design-system decision, not only as a reusable UI element.
+
+---
+
+## [COMPONENT] Toast/Notification — Institutional Knowledge
+**Source:** `data/component-metadata.json`  **Status:** Stable  **Chars:** 2939
+
+**Structure:** Design rationale, architectural impact, UX consequence, accessibility rationale, governance, maintenance and failure knowledge.
+**Logic:** Institutional memory for why Toast/Notification exists and what breaks when it is misused.
+**Context Of Use:** Deep component analysis, design rationale, architecture review and governance questions about Toast/Notification.
+**When To Use:** Use when the user asks why Toast/Notification exists, what risks it controls, what alternatives were rejected or what consequences a change creates.
+**When Not To Use:** Do not use as generic UI best practice detached from the Velaris catalog.
+**Trade Offs:** Auto-dismiss pode ocultar informação antes da leitura, especialmente com ações
+**Accessibility:** Mensagens importantes são lidas pelo leitor de tela ao aparecer — urgente interrompe, informativo aguarda. Não desapareça rápido demais. Respeite tempo de leitura e permita pausar quando houver ação. Erros e avisos críticos permanecem ou ficam acessíveis em histórico recuperável.
+**Rag Relation:** Deepens the canonical Toast/Notification registry with institutional reasoning.
+**Aetheris Insight:** Toast/Notification should be explained as a design-system decision, not only as a reusable UI element.
+
+---
+
+## [COMPONENT] Skeleton Loader — Institutional Knowledge
+**Source:** `data/component-metadata.json`  **Status:** Stable  **Chars:** 2947
+
+**Structure:** Design rationale, architectural impact, UX consequence, accessibility rationale, governance, maintenance and failure knowledge.
+**Logic:** Institutional memory for why Skeleton Loader exists and what breaks when it is misused.
+**Context Of Use:** Deep component analysis, design rationale, architecture review and governance questions about Skeleton Loader.
+**When To Use:** Use when the user asks why Skeleton Loader exists, what risks it controls, what alternatives were rejected or what consequences a change creates.
+**When Not To Use:** Do not use as generic UI best practice detached from the Velaris catalog.
+**Trade Offs:** Skeleton incorreto cria expectativa falsa e pode aumentar instabilidade percebida
+**Accessibility:** O container pai informa que o conteúdo ainda está carregando — não cada bloco cinza individualmente. Placeholders visuais ficam ocultos do leitor de tela — são decoração, não conteúdo real. Skeletons não entram na ordem de Tab e não simulam botões ou campos reais.
+**Rag Relation:** Deepens the canonical Skeleton Loader registry with institutional reasoning.
+**Aetheris Insight:** Skeleton Loader should be explained as a design-system decision, not only as a reusable UI element.
+
+---
+
+## [COMPONENT] Explanation Bubble / Tooltip — Institutional Knowledge
+**Source:** `data/component-metadata.json`  **Status:** Stable  **Chars:** 3048
+
+**Structure:** Design rationale, architectural impact, UX consequence, accessibility rationale, governance, maintenance and failure knowledge.
+**Logic:** Institutional memory for why Explanation Bubble / Tooltip exists and what breaks when it is misused.
+**Context Of Use:** Deep component analysis, design rationale, architecture review and governance questions about Explanation Bubble / Tooltip.
+**When To Use:** Use when the user asks why Explanation Bubble / Tooltip exists, what risks it controls, what alternatives were rejected or what consequences a change creates.
+**When Not To Use:** Do not use as generic UI best practice detached from the Velaris catalog.
+**Trade Offs:** Hover exclusivo falha em toque, teclado e tecnologias assistivas
+**Accessibility:** Tooltip aparece também ao focar por teclado — não dependa só de passar o mouse. Informação necessária para concluir a tarefa não pode existir só dentro do tooltip. Tooltip fica ligado ao ícone ou botão que o abre para o leitor de tela ler em sequência.
+**Rag Relation:** Deepens the canonical Explanation Bubble / Tooltip registry with institutional reasoning.
+**Aetheris Insight:** Explanation Bubble / Tooltip should be explained as a design-system decision, not only as a reusable UI element.
+
+---
+
+## [COMPONENT] Confidence Badge — Institutional Knowledge
+**Source:** `data/component-metadata.json`  **Status:** Stable  **Chars:** 3003
+
+**Structure:** Design rationale, architectural impact, UX consequence, accessibility rationale, governance, maintenance and failure knowledge.
+**Logic:** Institutional memory for why Confidence Badge exists and what breaks when it is misused.
+**Context Of Use:** Deep component analysis, design rationale, architecture review and governance questions about Confidence Badge.
+**When To Use:** Use when the user asks why Confidence Badge exists, what risks it controls, what alternatives were rejected or what consequences a change creates.
+**When Not To Use:** Do not use as generic UI best practice detached from the Velaris catalog.
+**Trade Offs:** Percentual isolado pode ser interpretado como probabilidade objetiva de verdade
+**Accessibility:** Confiança aparece em palavras (ex.: "Alta", "Média") — não só em cor ou intensidade visual. Todos os níveis de confiança mantêm contraste legível no tema ativo. Badge não deve ser o único indicador para aprovar ou rejeitar algo importante.
+**Rag Relation:** Deepens the canonical Confidence Badge registry with institutional reasoning.
+**Aetheris Insight:** Confidence Badge should be explained as a design-system decision, not only as a reusable UI element.
+
+---
+
+## [COMPONENT] Command Palette / Barra de Comandos — Institutional Knowledge
+**Source:** `data/component-metadata.json`  **Status:** Stable  **Chars:** 3067
+
+**Structure:** Design rationale, architectural impact, UX consequence, accessibility rationale, governance, maintenance and failure knowledge.
+**Logic:** Institutional memory for why Command Palette / Barra de Comandos exists and what breaks when it is misused.
+**Context Of Use:** Deep component analysis, design rationale, architecture review and governance questions about Command Palette / Barra de Comandos.
+**When To Use:** Use when the user asks why Command Palette / Barra de Comandos exists, what risks it controls, what alternatives were rejected or what consequences a change creates.
+**When Not To Use:** Do not use as generic UI best practice detached from the Velaris catalog.
+**Trade Offs:** Descoberta depende de nomes, sinônimos e ranking coerentes
+**Accessibility:** Campo de busca com lista de resultados: abertura, navegação e seleção devem ser anunciáveis. Setas navegam resultados; Enter executa; Escape fecha e restaura o contexto anterior. Anuncie quantos resultados aparecem e quando a busca não retorna nada.
+**Rag Relation:** Deepens the canonical Command Palette / Barra de Comandos registry with institutional reasoning.
+**Aetheris Insight:** Command Palette / Barra de Comandos should be explained as a design-system decision, not only as a reusable UI element.
+
+---
+
+## [COMPONENT] Source Attribution — Institutional Knowledge
+**Source:** `data/component-metadata.json`  **Status:** Stable  **Chars:** 2859
+
+**Structure:** Design rationale, architectural impact, UX consequence, accessibility rationale, governance, maintenance and failure knowledge.
+**Logic:** Institutional memory for why Source Attribution exists and what breaks when it is misused.
+**Context Of Use:** Deep component analysis, design rationale, architecture review and governance questions about Source Attribution.
+**When To Use:** Use when the user asks why Source Attribution exists, what risks it controls, what alternatives were rejected or what consequences a change creates.
+**When Not To Use:** Do not use as generic UI best practice detached from the Velaris catalog.
+**Trade Offs:** Exibir todas as fontes de uma vez aumenta densidade; use disclosure progressivo
+**Accessibility:** Botão de expandir comunica se a lista de fontes está aberta ou fechada. Enter e Espaço expandem e colapsam. Foco visível no botão de expandir. Após expandir, metadados e links seguem ordem lógica de leitura.
+**Rag Relation:** Deepens the canonical Source Attribution registry with institutional reasoning.
+**Aetheris Insight:** Source Attribution should be explained as a design-system decision, not only as a reusable UI element.
+
+---
+
+## [COMPONENT] Audit Panel — Institutional Knowledge
+**Source:** `data/component-metadata.json`  **Status:** Stable  **Chars:** 2949
+
+**Structure:** Design rationale, architectural impact, UX consequence, accessibility rationale, governance, maintenance and failure knowledge.
+**Logic:** Institutional memory for why Audit Panel exists and what breaks when it is misused.
+**Context Of Use:** Deep component analysis, design rationale, architecture review and governance questions about Audit Panel.
+**When To Use:** Use when the user asks why Audit Panel exists, what risks it controls, what alternatives were rejected or what consequences a change creates.
+**When Not To Use:** Do not use as generic UI best practice detached from the Velaris catalog.
+**Trade Offs:** Detalhe técnico excessivo pode confundir usuários sem contexto operacional
+**Accessibility:** O painel de auditoria tem nome claro — ex.: "Trilha de auditoria" — para o leitor de tela anunciar a seção. Subseções usam títulos reais (h2, h3) para navegação por leitor de tela. Eventos em ordem cronológica com marcos textuais — data, ação e resultado legíveis.
+**Rag Relation:** Deepens the canonical Audit Panel registry with institutional reasoning.
+**Aetheris Insight:** Audit Panel should be explained as a design-system decision, not only as a reusable UI element.
+
+---
+
+## [COMPONENT] Typography — Institutional Knowledge
+**Source:** `data/component-metadata.json`  **Status:** Stable  **Chars:** 2769
+
+**Structure:** Design rationale, architectural impact, UX consequence, accessibility rationale, governance, maintenance and failure knowledge.
+**Logic:** Institutional memory for why Typography exists and what breaks when it is misused.
+**Context Of Use:** Deep component analysis, design rationale, architecture review and governance questions about Typography.
+**When To Use:** Use when the user asks why Typography exists, what risks it controls, what alternatives were rejected or what consequences a change creates.
+**When Not To Use:** Do not use as generic UI best practice detached from the Velaris catalog.
+**Trade Offs:** Muitas variações enfraquecem consistência e tornam a leitura imprevisível
+**Accessibility:** Use níveis de título em ordem (h1, h2, h3…) sem pular — o estilo visual segue a hierarquia, não o contrário. Texto corpo e legendas atendem contraste AA (WCAG) no tema ativo. Legível com zoom de 200% sem truncar conteúdo essencial.
+**Rag Relation:** Deepens the canonical Typography registry with institutional reasoning.
+**Aetheris Insight:** Typography should be explained as a design-system decision, not only as a reusable UI element.
+
+---
+
+## [COMPONENT] Icon — Institutional Knowledge
+**Source:** `data/component-metadata.json`  **Status:** Stable  **Chars:** 2753
+
+**Structure:** Design rationale, architectural impact, UX consequence, accessibility rationale, governance, maintenance and failure knowledge.
+**Logic:** Institutional memory for why Icon exists and what breaks when it is misused.
+**Context Of Use:** Deep component analysis, design rationale, architecture review and governance questions about Icon.
+**When To Use:** Use when the user asks why Icon exists, what risks it controls, what alternatives were rejected or what consequences a change creates.
+**When Not To Use:** Do not use as generic UI best practice detached from the Velaris catalog.
+**Trade Offs:** Bibliotecas extensas geram sinônimos visuais e escolhas inconsistentes
+**Accessibility:** Ícone que só complementa texto visível fica oculto do leitor de tela. Ícone clicável sem texto precisa de nome — aria-label ou botão wrapper com rótulo. Ícone interativo alcançável por Tab com foco visível.
+**Rag Relation:** Deepens the canonical Icon registry with institutional reasoning.
+**Aetheris Insight:** Icon should be explained as a design-system decision, not only as a reusable UI element.
+
+---
+
+## [COMPONENT] Button — Perspective Matrix
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 1208
+
+**Structure:** Nine-perspective component interpretation matrix.
+**Logic:** Different professional lenses ask different questions about Button.
+**Context Of Use:** Perspective-specific guidance, component critique, QA planning and governance review for Button.
+**When To Use:** Use when the user asks how Button looks from a designer, UX, developer, architect, QA, accessibility, maintainer, writer or manager perspective.
+**Trade Offs:** Perspective depth improves specialist answers but must remain grounded in the canonical component contract.
+**Aetheris Insight:** Button becomes institutional knowledge when each discipline can explain its risk and responsibility.
+
+**Institutional Text:**
+VELARIS COMPONENT PERSPECTIVE MATRIX: Button | Component logic: Use uma ação primária por região focal e rebaixe
+escolhas concorrentes. Structure: Rótulo curto, alvo mínimo de 44px e ícone opcional. Designer: inspeciona hierarquia
+visual, densidade e alinhamento de Button com tokens e composição. | UX Specialist: avalia o comportamento humano que
+Button incentiva, a hesitação que reduz e a confusão que ainda pode criar. | Developer: protege contrato de API,
+estados, semântica DOM e integração com componentes relacionados. | Solution Architect: mede acoplamento, impacto
+sistêmico e custo de extensão de Button em superfícies de action. | QA: cria cenários para default, foco, erro,
+indisponibilidade, regressão visual e combinações com dados extremos. | Accessibility: valida teclado, foco, anúncio,
+nome acessível, contraste e perda de informação quando a semântica é removida. | Maintainer: observa fragilidade em
+tokens, estados e exceções locais que podem virar variantes paralelas. | Tech Writer: transforma o racional de Button em
+linguagem de decisão, exemplos, limites e migração. | Design System Manager: decide se a divergência é exceção
+governada, evolução do componente ou dívida de adoção.
+
+---
+
+## [COMPONENT] Toggle/Switch — Perspective Matrix
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 1401
+
+**Structure:** Nine-perspective component interpretation matrix.
+**Logic:** Different professional lenses ask different questions about Toggle/Switch.
+**Context Of Use:** Perspective-specific guidance, component critique, QA planning and governance review for Toggle/Switch.
+**When To Use:** Use when the user asks how Toggle/Switch looks from a designer, UX, developer, architect, QA, accessibility, maintainer, writer or manager perspective.
+**Trade Offs:** Perspective depth improves specialist answers but must remain grounded in the canonical component contract.
+**Aetheris Insight:** Toggle/Switch becomes institutional knowledge when each discipline can explain its risk and responsibility.
+
+**Institutional Text:**
+VELARIS COMPONENT PERSPECTIVE MATRIX: Toggle/Switch | Component logic: Off e On definem o valor. Focus demonstra foco de
+teclado sem alterar esse valor. Preference aplica uma escolha pessoal, Visibility mostra ou oculta conteúdo e Mode
+alterna o comportamento operacional. Structure: Trilho, indicador móvel, rótulo persistente e estado textual quando
+necessário. Designer: inspeciona hierarquia visual, densidade e alinhamento de Toggle/Switch com tokens e composição. |
+UX Specialist: avalia o comportamento humano que Toggle/Switch incentiva, a hesitação que reduz e a confusão que ainda
+pode criar. | Developer: protege contrato de API, estados, semântica DOM e integração com componentes relacionados. |
+Solution Architect: mede acoplamento, impacto sistêmico e custo de extensão de Toggle/Switch em superfícies de action. |
+QA: cria cenários para default, foco, erro, indisponibilidade, regressão visual e combinações com dados extremos. |
+Accessibility: valida teclado, foco, anúncio, nome acessível, contraste e perda de informação quando a semântica é
+removida. | Maintainer: observa fragilidade em tokens, estados e exceções locais que podem virar variantes paralelas. |
+Tech Writer: transforma o racional de Toggle/Switch em linguagem de decisão, exemplos, limites e migração. | Design
+System Manager: decide se a divergência é exceção governada, evolução do componente ou dívida de adoção.
+
+---
+
+## [COMPONENT] Checkbox — Perspective Matrix
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 1235
+
+**Structure:** Nine-perspective component interpretation matrix.
+**Logic:** Different professional lenses ask different questions about Checkbox.
+**Context Of Use:** Perspective-specific guidance, component critique, QA planning and governance review for Checkbox.
+**When To Use:** Use when the user asks how Checkbox looks from a designer, UX, developer, architect, QA, accessibility, maintainer, writer or manager perspective.
+**Trade Offs:** Perspective depth improves specialist answers but must remain grounded in the canonical component contract.
+**Aetheris Insight:** Checkbox becomes institutional knowledge when each discipline can explain its risk and responsibility.
+
+**Institutional Text:**
+VELARIS COMPONENT PERSPECTIVE MATRIX: Checkbox | Component logic: Cada opção deve continuar válida mesmo quando as
+demais não são selecionadas. Structure: Caixa, indicador de seleção, rótulo clicável e apoio opcional. Designer:
+inspeciona hierarquia visual, densidade e alinhamento de Checkbox com tokens e composição. | UX Specialist: avalia o
+comportamento humano que Checkbox incentiva, a hesitação que reduz e a confusão que ainda pode criar. | Developer:
+protege contrato de API, estados, semântica DOM e integração com componentes relacionados. | Solution Architect: mede
+acoplamento, impacto sistêmico e custo de extensão de Checkbox em superfícies de action. | QA: cria cenários para
+default, foco, erro, indisponibilidade, regressão visual e combinações com dados extremos. | Accessibility: valida
+teclado, foco, anúncio, nome acessível, contraste e perda de informação quando a semântica é removida. | Maintainer:
+observa fragilidade em tokens, estados e exceções locais que podem virar variantes paralelas. | Tech Writer: transforma
+o racional de Checkbox em linguagem de decisão, exemplos, limites e migração. | Design System Manager: decide se a
+divergência é exceção governada, evolução do componente ou dívida de adoção.
+
+---
+
+## [COMPONENT] Radio Button — Perspective Matrix
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 1248
+
+**Structure:** Nine-perspective component interpretation matrix.
+**Logic:** Different professional lenses ask different questions about Radio Button.
+**Context Of Use:** Perspective-specific guidance, component critique, QA planning and governance review for Radio Button.
+**When To Use:** Use when the user asks how Radio Button looks from a designer, UX, developer, architect, QA, accessibility, maintainer, writer or manager perspective.
+**Trade Offs:** Perspective depth improves specialist answers but must remain grounded in the canonical component contract.
+**Aetheris Insight:** Radio Button becomes institutional knowledge when each discipline can explain its risk and responsibility.
+
+**Institutional Text:**
+VELARIS COMPONENT PERSPECTIVE MATRIX: Radio Button | Component logic: Expor todas as opções reduz memória de trabalho e
+facilita comparação direta. Structure: Grupo nomeado, círculos de seleção e rótulos completos. Designer: inspeciona
+hierarquia visual, densidade e alinhamento de Radio Button com tokens e composição. | UX Specialist: avalia o
+comportamento humano que Radio Button incentiva, a hesitação que reduz e a confusão que ainda pode criar. | Developer:
+protege contrato de API, estados, semântica DOM e integração com componentes relacionados. | Solution Architect: mede
+acoplamento, impacto sistêmico e custo de extensão de Radio Button em superfícies de action. | QA: cria cenários para
+default, foco, erro, indisponibilidade, regressão visual e combinações com dados extremos. | Accessibility: valida
+teclado, foco, anúncio, nome acessível, contraste e perda de informação quando a semântica é removida. | Maintainer:
+observa fragilidade em tokens, estados e exceções locais que podem virar variantes paralelas. | Tech Writer: transforma
+o racional de Radio Button em linguagem de decisão, exemplos, limites e migração. | Design System Manager: decide se a
+divergência é exceção governada, evolução do componente ou dívida de adoção.
+
+---
+
+## [COMPONENT] Selectable Chip / Badge — Perspective Matrix
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 1327
+
+**Structure:** Nine-perspective component interpretation matrix.
+**Logic:** Different professional lenses ask different questions about Selectable Chip / Badge.
+**Context Of Use:** Perspective-specific guidance, component critique, QA planning and governance review for Selectable Chip / Badge.
+**When To Use:** Use when the user asks how Selectable Chip / Badge looks from a designer, UX, developer, architect, QA, accessibility, maintainer, writer or manager perspective.
+**Trade Offs:** Perspective depth improves specialist answers but must remain grounded in the canonical component contract.
+**Aetheris Insight:** Selectable Chip / Badge becomes institutional knowledge when each discipline can explain its risk and responsibility.
+
+**Institutional Text:**
+VELARIS COMPONENT PERSPECTIVE MATRIX: Selectable Chip / Badge | Component logic: Chips funcionam melhor com rótulos
+curtos, conjunto pequeno e estado selecionado evidente. Structure: Pílula compacta com rótulo, ícone opcional e
+indicador de seleção. Designer: inspeciona hierarquia visual, densidade e alinhamento de Selectable Chip / Badge com
+tokens e composição. | UX Specialist: avalia o comportamento humano que Selectable Chip / Badge incentiva, a hesitação
+que reduz e a confusão que ainda pode criar. | Developer: protege contrato de API, estados, semântica DOM e integração
+com componentes relacionados. | Solution Architect: mede acoplamento, impacto sistêmico e custo de extensão de
+Selectable Chip / Badge em superfícies de action. | QA: cria cenários para default, foco, erro, indisponibilidade,
+regressão visual e combinações com dados extremos. | Accessibility: valida teclado, foco, anúncio, nome acessível,
+contraste e perda de informação quando a semântica é removida. | Maintainer: observa fragilidade em tokens, estados e
+exceções locais que podem virar variantes paralelas. | Tech Writer: transforma o racional de Selectable Chip / Badge em
+linguagem de decisão, exemplos, limites e migração. | Design System Manager: decide se a divergência é exceção
+governada, evolução do componente ou dívida de adoção.
+
+---
+
+## [COMPONENT] Input / Text Input — Perspective Matrix
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 1295
+
+**Structure:** Nine-perspective component interpretation matrix.
+**Logic:** Different professional lenses ask different questions about Input / Text Input.
+**Context Of Use:** Perspective-specific guidance, component critique, QA planning and governance review for Input / Text Input.
+**When To Use:** Use when the user asks how Input / Text Input looks from a designer, UX, developer, architect, QA, accessibility, maintainer, writer or manager perspective.
+**Trade Offs:** Perspective depth improves specialist answers but must remain grounded in the canonical component contract.
+**Aetheris Insight:** Input / Text Input becomes institutional knowledge when each discipline can explain its risk and responsibility.
+
+**Institutional Text:**
+VELARIS COMPONENT PERSPECTIVE MATRIX: Input / Text Input | Component logic: O rótulo define o dado esperado; placeholder
+oferece exemplo, nunca substitui instrução. Structure: Label, controle, apoio, indicador opcional e mensagem de erro.
+Designer: inspeciona hierarquia visual, densidade e alinhamento de Input / Text Input com tokens e composição. | UX
+Specialist: avalia o comportamento humano que Input / Text Input incentiva, a hesitação que reduz e a confusão que ainda
+pode criar. | Developer: protege contrato de API, estados, semântica DOM e integração com componentes relacionados. |
+Solution Architect: mede acoplamento, impacto sistêmico e custo de extensão de Input / Text Input em superfícies de
+input. | QA: cria cenários para default, foco, erro, indisponibilidade, regressão visual e combinações com dados
+extremos. | Accessibility: valida teclado, foco, anúncio, nome acessível, contraste e perda de informação quando a
+semântica é removida. | Maintainer: observa fragilidade em tokens, estados e exceções locais que podem virar variantes
+paralelas. | Tech Writer: transforma o racional de Input / Text Input em linguagem de decisão, exemplos, limites e
+migração. | Design System Manager: decide se a divergência é exceção governada, evolução do componente ou dívida de
+adoção.
+
+---
+
+## [COMPONENT] Text Area — Perspective Matrix
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 1217
+
+**Structure:** Nine-perspective component interpretation matrix.
+**Logic:** Different professional lenses ask different questions about Text Area.
+**Context Of Use:** Perspective-specific guidance, component critique, QA planning and governance review for Text Area.
+**When To Use:** Use when the user asks how Text Area looks from a designer, UX, developer, architect, QA, accessibility, maintainer, writer or manager perspective.
+**Trade Offs:** Perspective depth improves specialist answers but must remain grounded in the canonical component contract.
+**Aetheris Insight:** Text Area becomes institutional knowledge when each discipline can explain its risk and responsibility.
+
+**Institutional Text:**
+VELARIS COMPONENT PERSPECTIVE MATRIX: Text Area | Component logic: A altura inicial comunica a profundidade esperada da
+resposta. Structure: Label, área redimensionável, apoio e contador opcional. Designer: inspeciona hierarquia visual,
+densidade e alinhamento de Text Area com tokens e composição. | UX Specialist: avalia o comportamento humano que Text
+Area incentiva, a hesitação que reduz e a confusão que ainda pode criar. | Developer: protege contrato de API, estados,
+semântica DOM e integração com componentes relacionados. | Solution Architect: mede acoplamento, impacto sistêmico e
+custo de extensão de Text Area em superfícies de input. | QA: cria cenários para default, foco, erro, indisponibilidade,
+regressão visual e combinações com dados extremos. | Accessibility: valida teclado, foco, anúncio, nome acessível,
+contraste e perda de informação quando a semântica é removida. | Maintainer: observa fragilidade em tokens, estados e
+exceções locais que podem virar variantes paralelas. | Tech Writer: transforma o racional de Text Area em linguagem de
+decisão, exemplos, limites e migração. | Design System Manager: decide se a divergência é exceção governada, evolução do
+componente ou dívida de adoção.
+
+---
+
+## [COMPONENT] Select/Dropdown — Perspective Matrix
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 1261
+
+**Structure:** Nine-perspective component interpretation matrix.
+**Logic:** Different professional lenses ask different questions about Select/Dropdown.
+**Context Of Use:** Perspective-specific guidance, component critique, QA planning and governance review for Select/Dropdown.
+**When To Use:** Use when the user asks how Select/Dropdown looks from a designer, UX, developer, architect, QA, accessibility, maintainer, writer or manager perspective.
+**Trade Offs:** Perspective depth improves specialist answers but must remain grounded in the canonical component contract.
+**Aetheris Insight:** Select/Dropdown becomes institutional knowledge when each discipline can explain its risk and responsibility.
+
+**Institutional Text:**
+VELARIS COMPONENT PERSPECTIVE MATRIX: Select/Dropdown | Component logic: Economiza espaço, mas transfere a comparação
+para um painel temporário. Structure: Label, trigger, valor atual, lista e indicadores de seleção. Designer: inspeciona
+hierarquia visual, densidade e alinhamento de Select/Dropdown com tokens e composição. | UX Specialist: avalia o
+comportamento humano que Select/Dropdown incentiva, a hesitação que reduz e a confusão que ainda pode criar. |
+Developer: protege contrato de API, estados, semântica DOM e integração com componentes relacionados. | Solution
+Architect: mede acoplamento, impacto sistêmico e custo de extensão de Select/Dropdown em superfícies de input. | QA:
+cria cenários para default, foco, erro, indisponibilidade, regressão visual e combinações com dados extremos. |
+Accessibility: valida teclado, foco, anúncio, nome acessível, contraste e perda de informação quando a semântica é
+removida. | Maintainer: observa fragilidade em tokens, estados e exceções locais que podem virar variantes paralelas. |
+Tech Writer: transforma o racional de Select/Dropdown em linguagem de decisão, exemplos, limites e migração. | Design
+System Manager: decide se a divergência é exceção governada, evolução do componente ou dívida de adoção.
+
+---
+
+## [COMPONENT] Date Picker — Perspective Matrix
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 1262
+
+**Structure:** Nine-perspective component interpretation matrix.
+**Logic:** Different professional lenses ask different questions about Date Picker.
+**Context Of Use:** Perspective-specific guidance, component critique, QA planning and governance review for Date Picker.
+**When To Use:** Use when the user asks how Date Picker looks from a designer, UX, developer, architect, QA, accessibility, maintainer, writer or manager perspective.
+**Trade Offs:** Perspective depth improves specialist answers but must remain grounded in the canonical component contract.
+**Aetheris Insight:** Date Picker becomes institutional knowledge when each discipline can explain its risk and responsibility.
+
+**Institutional Text:**
+VELARIS COMPONENT PERSPECTIVE MATRIX: Date Picker | Component logic: Entrada digitável acelera especialistas; calendário
+apoia descoberta e contexto. Structure: Campo formatado, botão de calendário, grade mensal e navegação temporal.
+Designer: inspeciona hierarquia visual, densidade e alinhamento de Date Picker com tokens e composição. | UX Specialist:
+avalia o comportamento humano que Date Picker incentiva, a hesitação que reduz e a confusão que ainda pode criar. |
+Developer: protege contrato de API, estados, semântica DOM e integração com componentes relacionados. | Solution
+Architect: mede acoplamento, impacto sistêmico e custo de extensão de Date Picker em superfícies de input. | QA: cria
+cenários para default, foco, erro, indisponibilidade, regressão visual e combinações com dados extremos. |
+Accessibility: valida teclado, foco, anúncio, nome acessível, contraste e perda de informação quando a semântica é
+removida. | Maintainer: observa fragilidade em tokens, estados e exceções locais que podem virar variantes paralelas. |
+Tech Writer: transforma o racional de Date Picker em linguagem de decisão, exemplos, limites e migração. | Design System
+Manager: decide se a divergência é exceção governada, evolução do componente ou dívida de adoção.
+
+---
+
+## [COMPONENT] Form Field — Perspective Matrix
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 1269
+
+**Structure:** Nine-perspective component interpretation matrix.
+**Logic:** Different professional lenses ask different questions about Form Field.
+**Context Of Use:** Perspective-specific guidance, component critique, QA planning and governance review for Form Field.
+**When To Use:** Use when the user asks how Form Field looks from a designer, UX, developer, architect, QA, accessibility, maintainer, writer or manager perspective.
+**Trade Offs:** Perspective depth improves specialist answers but must remain grounded in the canonical component contract.
+**Aetheris Insight:** Form Field becomes institutional knowledge when each discipline can explain its risk and responsibility.
+
+**Institutional Text:**
+VELARIS COMPONENT PERSPECTIVE MATRIX: Form Field | Component logic: Centralizar o contrato evita que cada formulário
+reconstrua acessibilidade e espaçamento. Structure: Label, controle filho, texto de apoio, erro e indicador de
+obrigatoriedade. Designer: inspeciona hierarquia visual, densidade e alinhamento de Form Field com tokens e composição.
+| UX Specialist: avalia o comportamento humano que Form Field incentiva, a hesitação que reduz e a confusão que ainda
+pode criar. | Developer: protege contrato de API, estados, semântica DOM e integração com componentes relacionados. |
+Solution Architect: mede acoplamento, impacto sistêmico e custo de extensão de Form Field em superfícies de input. | QA:
+cria cenários para default, foco, erro, indisponibilidade, regressão visual e combinações com dados extremos. |
+Accessibility: valida teclado, foco, anúncio, nome acessível, contraste e perda de informação quando a semântica é
+removida. | Maintainer: observa fragilidade em tokens, estados e exceções locais que podem virar variantes paralelas. |
+Tech Writer: transforma o racional de Form Field em linguagem de decisão, exemplos, limites e migração. | Design System
+Manager: decide se a divergência é exceção governada, evolução do componente ou dívida de adoção.
+
+---
+
+## [COMPONENT] Link — Perspective Matrix
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 1222
+
+**Structure:** Nine-perspective component interpretation matrix.
+**Logic:** Different professional lenses ask different questions about Link.
+**Context Of Use:** Perspective-specific guidance, component critique, QA planning and governance review for Link.
+**When To Use:** Use when the user asks how Link looks from a designer, UX, developer, architect, QA, accessibility, maintainer, writer or manager perspective.
+**Trade Offs:** Perspective depth improves specialist answers but must remain grounded in the canonical component contract.
+**Aetheris Insight:** Link becomes institutional knowledge when each discipline can explain its risk and responsibility.
+
+**Institutional Text:**
+VELARIS COMPONENT PERSPECTIVE MATRIX: Link | Component logic: Destino é navegação; mudança no estado atual é ação e deve
+usar Button. Structure: Texto descritivo, indicador opcional de destino externo e foco visível. Designer: inspeciona
+hierarquia visual, densidade e alinhamento de Link com tokens e composição. | UX Specialist: avalia o comportamento
+humano que Link incentiva, a hesitação que reduz e a confusão que ainda pode criar. | Developer: protege contrato de
+API, estados, semântica DOM e integração com componentes relacionados. | Solution Architect: mede acoplamento, impacto
+sistêmico e custo de extensão de Link em superfícies de navigation. | QA: cria cenários para default, foco, erro,
+indisponibilidade, regressão visual e combinações com dados extremos. | Accessibility: valida teclado, foco, anúncio,
+nome acessível, contraste e perda de informação quando a semântica é removida. | Maintainer: observa fragilidade em
+tokens, estados e exceções locais que podem virar variantes paralelas. | Tech Writer: transforma o racional de Link em
+linguagem de decisão, exemplos, limites e migração. | Design System Manager: decide se a divergência é exceção
+governada, evolução do componente ou dívida de adoção.
+
+---
+
+## [COMPONENT] Tabs — Perspective Matrix
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 1193
+
+**Structure:** Nine-perspective component interpretation matrix.
+**Logic:** Different professional lenses ask different questions about Tabs.
+**Context Of Use:** Perspective-specific guidance, component critique, QA planning and governance review for Tabs.
+**When To Use:** Use when the user asks how Tabs looks from a designer, UX, developer, architect, QA, accessibility, maintainer, writer or manager perspective.
+**Trade Offs:** Perspective depth improves specialist answers but must remain grounded in the canonical component contract.
+**Aetheris Insight:** Tabs becomes institutional knowledge when each discipline can explain its risk and responsibility.
+
+**Institutional Text:**
+VELARIS COMPONENT PERSPECTIVE MATRIX: Tabs | Component logic: Cada aba representa uma visão irmã, não uma etapa
+sequencial. Structure: Tablist, tabs, indicador ativo e painéis associados. Designer: inspeciona hierarquia visual,
+densidade e alinhamento de Tabs com tokens e composição. | UX Specialist: avalia o comportamento humano que Tabs
+incentiva, a hesitação que reduz e a confusão que ainda pode criar. | Developer: protege contrato de API, estados,
+semântica DOM e integração com componentes relacionados. | Solution Architect: mede acoplamento, impacto sistêmico e
+custo de extensão de Tabs em superfícies de navigation. | QA: cria cenários para default, foco, erro, indisponibilidade,
+regressão visual e combinações com dados extremos. | Accessibility: valida teclado, foco, anúncio, nome acessível,
+contraste e perda de informação quando a semântica é removida. | Maintainer: observa fragilidade em tokens, estados e
+exceções locais que podem virar variantes paralelas. | Tech Writer: transforma o racional de Tabs em linguagem de
+decisão, exemplos, limites e migração. | Design System Manager: decide se a divergência é exceção governada, evolução do
+componente ou dívida de adoção.
+
+---
+
+## [COMPONENT] Card — Perspective Matrix
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 1188
+
+**Structure:** Nine-perspective component interpretation matrix.
+**Logic:** Different professional lenses ask different questions about Card.
+**Context Of Use:** Perspective-specific guidance, component critique, QA planning and governance review for Card.
+**When To Use:** Use when the user asks how Card looks from a designer, UX, developer, architect, QA, accessibility, maintainer, writer or manager perspective.
+**Trade Offs:** Perspective depth improves specialist answers but must remain grounded in the canonical component contract.
+**Aetheris Insight:** Card becomes institutional knowledge when each discipline can explain its risk and responsibility.
+
+**Institutional Text:**
+VELARIS COMPONENT PERSPECTIVE MATRIX: Card | Component logic: A borda visual deve refletir uma fronteira semântica real.
+Structure: Container, título, metadados, corpo e ações opcionais. Designer: inspeciona hierarquia visual, densidade e
+alinhamento de Card com tokens e composição. | UX Specialist: avalia o comportamento humano que Card incentiva, a
+hesitação que reduz e a confusão que ainda pode criar. | Developer: protege contrato de API, estados, semântica DOM e
+integração com componentes relacionados. | Solution Architect: mede acoplamento, impacto sistêmico e custo de extensão
+de Card em superfícies de layout. | QA: cria cenários para default, foco, erro, indisponibilidade, regressão visual e
+combinações com dados extremos. | Accessibility: valida teclado, foco, anúncio, nome acessível, contraste e perda de
+informação quando a semântica é removida. | Maintainer: observa fragilidade em tokens, estados e exceções locais que
+podem virar variantes paralelas. | Tech Writer: transforma o racional de Card em linguagem de decisão, exemplos, limites
+e migração. | Design System Manager: decide se a divergência é exceção governada, evolução do componente ou dívida de
+adoção.
+
+---
+
+## [COMPONENT] Modal/Dialog — Perspective Matrix
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 1280
+
+**Structure:** Nine-perspective component interpretation matrix.
+**Logic:** Different professional lenses ask different questions about Modal/Dialog.
+**Context Of Use:** Perspective-specific guidance, component critique, QA planning and governance review for Modal/Dialog.
+**When To Use:** Use when the user asks how Modal/Dialog looks from a designer, UX, developer, architect, QA, accessibility, maintainer, writer or manager perspective.
+**Trade Offs:** Perspective depth improves specialist answers but must remain grounded in the canonical component contract.
+**Aetheris Insight:** Modal/Dialog becomes institutional knowledge when each discipline can explain its risk and responsibility.
+
+**Institutional Text:**
+VELARIS COMPONENT PERSPECTIVE MATRIX: Modal/Dialog | Component logic: A interrupção só se justifica quando concluir ou
+cancelar é necessário antes de continuar. Structure: Backdrop, dialog nomeado, conteúdo, ação primária, cancelamento e
+fechar. Designer: inspeciona hierarquia visual, densidade e alinhamento de Modal/Dialog com tokens e composição. | UX
+Specialist: avalia o comportamento humano que Modal/Dialog incentiva, a hesitação que reduz e a confusão que ainda pode
+criar. | Developer: protege contrato de API, estados, semântica DOM e integração com componentes relacionados. |
+Solution Architect: mede acoplamento, impacto sistêmico e custo de extensão de Modal/Dialog em superfícies de overlay. |
+QA: cria cenários para default, foco, erro, indisponibilidade, regressão visual e combinações com dados extremos. |
+Accessibility: valida teclado, foco, anúncio, nome acessível, contraste e perda de informação quando a semântica é
+removida. | Maintainer: observa fragilidade em tokens, estados e exceções locais que podem virar variantes paralelas. |
+Tech Writer: transforma o racional de Modal/Dialog em linguagem de decisão, exemplos, limites e migração. | Design
+System Manager: decide se a divergência é exceção governada, evolução do componente ou dívida de adoção.
+
+---
+
+## [COMPONENT] Table/Data Table — Perspective Matrix
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 1279
+
+**Structure:** Nine-perspective component interpretation matrix.
+**Logic:** Different professional lenses ask different questions about Table/Data Table.
+**Context Of Use:** Perspective-specific guidance, component critique, QA planning and governance review for Table/Data Table.
+**When To Use:** Use when the user asks how Table/Data Table looks from a designer, UX, developer, architect, QA, accessibility, maintainer, writer or manager perspective.
+**Trade Offs:** Perspective depth improves specialist answers but must remain grounded in the canonical component contract.
+**Aetheris Insight:** Table/Data Table becomes institutional knowledge when each discipline can explain its risk and responsibility.
+
+**Institutional Text:**
+VELARIS COMPONENT PERSPECTIVE MATRIX: Table/Data Table | Component logic: Tabela é ideal quando cruzar valores por
+cabeçalho é a tarefa principal. Structure: Caption, cabeçalhos, corpo, ordenação e ações de linha opcionais. Designer:
+inspeciona hierarquia visual, densidade e alinhamento de Table/Data Table com tokens e composição. | UX Specialist:
+avalia o comportamento humano que Table/Data Table incentiva, a hesitação que reduz e a confusão que ainda pode criar. |
+Developer: protege contrato de API, estados, semântica DOM e integração com componentes relacionados. | Solution
+Architect: mede acoplamento, impacto sistêmico e custo de extensão de Table/Data Table em superfícies de data_display. |
+QA: cria cenários para default, foco, erro, indisponibilidade, regressão visual e combinações com dados extremos. |
+Accessibility: valida teclado, foco, anúncio, nome acessível, contraste e perda de informação quando a semântica é
+removida. | Maintainer: observa fragilidade em tokens, estados e exceções locais que podem virar variantes paralelas. |
+Tech Writer: transforma o racional de Table/Data Table em linguagem de decisão, exemplos, limites e migração. | Design
+System Manager: decide se a divergência é exceção governada, evolução do componente ou dívida de adoção.
+
+---
+
+## [COMPONENT] Alert — Perspective Matrix
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 1213
+
+**Structure:** Nine-perspective component interpretation matrix.
+**Logic:** Different professional lenses ask different questions about Alert.
+**Context Of Use:** Perspective-specific guidance, component critique, QA planning and governance review for Alert.
+**When To Use:** Use when the user asks how Alert looks from a designer, UX, developer, architect, QA, accessibility, maintainer, writer or manager perspective.
+**Trade Offs:** Perspective depth improves specialist answers but must remain grounded in the canonical component contract.
+**Aetheris Insight:** Alert becomes institutional knowledge when each discipline can explain its risk and responsibility.
+
+**Institutional Text:**
+VELARIS COMPONENT PERSPECTIVE MATRIX: Alert | Component logic: A severidade deve refletir consequência real, não
+preferência visual. Structure: Ícone semântico, título, mensagem e ação ou dismiss opcional. Designer: inspeciona
+hierarquia visual, densidade e alinhamento de Alert com tokens e composição. | UX Specialist: avalia o comportamento
+humano que Alert incentiva, a hesitação que reduz e a confusão que ainda pode criar. | Developer: protege contrato de
+API, estados, semântica DOM e integração com componentes relacionados. | Solution Architect: mede acoplamento, impacto
+sistêmico e custo de extensão de Alert em superfícies de feedback. | QA: cria cenários para default, foco, erro,
+indisponibilidade, regressão visual e combinações com dados extremos. | Accessibility: valida teclado, foco, anúncio,
+nome acessível, contraste e perda de informação quando a semântica é removida. | Maintainer: observa fragilidade em
+tokens, estados e exceções locais que podem virar variantes paralelas. | Tech Writer: transforma o racional de Alert em
+linguagem de decisão, exemplos, limites e migração. | Design System Manager: decide se a divergência é exceção
+governada, evolução do componente ou dívida de adoção.
+
+---
+
+## [COMPONENT] Toast/Notification — Perspective Matrix
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 1285
+
+**Structure:** Nine-perspective component interpretation matrix.
+**Logic:** Different professional lenses ask different questions about Toast/Notification.
+**Context Of Use:** Perspective-specific guidance, component critique, QA planning and governance review for Toast/Notification.
+**When To Use:** Use when the user asks how Toast/Notification looks from a designer, UX, developer, architect, QA, accessibility, maintainer, writer or manager perspective.
+**Trade Offs:** Perspective depth improves specialist answers but must remain grounded in the canonical component contract.
+**Aetheris Insight:** Toast/Notification becomes institutional knowledge when each discipline can explain its risk and responsibility.
+
+**Institutional Text:**
+VELARIS COMPONENT PERSPECTIVE MATRIX: Toast/Notification | Component logic: A mensagem deve ser curta, autossuficiente e
+dispensável após poucos segundos. Structure: Container flutuante, mensagem, ícone e ação curta opcional. Designer:
+inspeciona hierarquia visual, densidade e alinhamento de Toast/Notification com tokens e composição. | UX Specialist:
+avalia o comportamento humano que Toast/Notification incentiva, a hesitação que reduz e a confusão que ainda pode criar.
+| Developer: protege contrato de API, estados, semântica DOM e integração com componentes relacionados. | Solution
+Architect: mede acoplamento, impacto sistêmico e custo de extensão de Toast/Notification em superfícies de feedback. |
+QA: cria cenários para default, foco, erro, indisponibilidade, regressão visual e combinações com dados extremos. |
+Accessibility: valida teclado, foco, anúncio, nome acessível, contraste e perda de informação quando a semântica é
+removida. | Maintainer: observa fragilidade em tokens, estados e exceções locais que podem virar variantes paralelas. |
+Tech Writer: transforma o racional de Toast/Notification em linguagem de decisão, exemplos, limites e migração. | Design
+System Manager: decide se a divergência é exceção governada, evolução do componente ou dívida de adoção.
+
+---
+
+## [COMPONENT] Skeleton Loader — Perspective Matrix
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 1288
+
+**Structure:** Nine-perspective component interpretation matrix.
+**Logic:** Different professional lenses ask different questions about Skeleton Loader.
+**Context Of Use:** Perspective-specific guidance, component critique, QA planning and governance review for Skeleton Loader.
+**When To Use:** Use when the user asks how Skeleton Loader looks from a designer, UX, developer, architect, QA, accessibility, maintainer, writer or manager perspective.
+**Trade Offs:** Perspective depth improves specialist answers but must remain grounded in the canonical component contract.
+**Aetheris Insight:** Skeleton Loader becomes institutional knowledge when each discipline can explain its risk and responsibility.
+
+**Institutional Text:**
+VELARIS COMPONENT PERSPECTIVE MATRIX: Skeleton Loader | Component logic: Imitar a forma final reduz mudança de layout e
+melhora percepção de velocidade. Structure: Blocos neutros com dimensões próximas do conteúdo final e animação moderada.
+Designer: inspeciona hierarquia visual, densidade e alinhamento de Skeleton Loader com tokens e composição. | UX
+Specialist: avalia o comportamento humano que Skeleton Loader incentiva, a hesitação que reduz e a confusão que ainda
+pode criar. | Developer: protege contrato de API, estados, semântica DOM e integração com componentes relacionados. |
+Solution Architect: mede acoplamento, impacto sistêmico e custo de extensão de Skeleton Loader em superfícies de
+feedback. | QA: cria cenários para default, foco, erro, indisponibilidade, regressão visual e combinações com dados
+extremos. | Accessibility: valida teclado, foco, anúncio, nome acessível, contraste e perda de informação quando a
+semântica é removida. | Maintainer: observa fragilidade em tokens, estados e exceções locais que podem virar variantes
+paralelas. | Tech Writer: transforma o racional de Skeleton Loader em linguagem de decisão, exemplos, limites e
+migração. | Design System Manager: decide se a divergência é exceção governada, evolução do componente ou dívida de
+adoção.
+
+---
+
+## [COMPONENT] Explanation Bubble / Tooltip — Perspective Matrix
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 1359
+
+**Structure:** Nine-perspective component interpretation matrix.
+**Logic:** Different professional lenses ask different questions about Explanation Bubble / Tooltip.
+**Context Of Use:** Perspective-specific guidance, component critique, QA planning and governance review for Explanation Bubble / Tooltip.
+**When To Use:** Use when the user asks how Explanation Bubble / Tooltip looks from a designer, UX, developer, architect, QA, accessibility, maintainer, writer or manager perspective.
+**Trade Offs:** Perspective depth improves specialist answers but must remain grounded in the canonical component contract.
+**Aetheris Insight:** Explanation Bubble / Tooltip becomes institutional knowledge when each discipline can explain its risk and responsibility.
+
+**Institutional Text:**
+VELARIS COMPONENT PERSPECTIVE MATRIX: Explanation Bubble / Tooltip | Component logic: A explicação complementa o
+conteúdo visível; informação essencial não pode depender dela. Structure: Trigger nomeado, bolha curta, seta opcional e
+posicionamento adaptativo. Designer: inspeciona hierarquia visual, densidade e alinhamento de Explanation Bubble /
+Tooltip com tokens e composição. | UX Specialist: avalia o comportamento humano que Explanation Bubble / Tooltip
+incentiva, a hesitação que reduz e a confusão que ainda pode criar. | Developer: protege contrato de API, estados,
+semântica DOM e integração com componentes relacionados. | Solution Architect: mede acoplamento, impacto sistêmico e
+custo de extensão de Explanation Bubble / Tooltip em superfícies de feedback. | QA: cria cenários para default, foco,
+erro, indisponibilidade, regressão visual e combinações com dados extremos. | Accessibility: valida teclado, foco,
+anúncio, nome acessível, contraste e perda de informação quando a semântica é removida. | Maintainer: observa
+fragilidade em tokens, estados e exceções locais que podem virar variantes paralelas. | Tech Writer: transforma o
+racional de Explanation Bubble / Tooltip em linguagem de decisão, exemplos, limites e migração. | Design System Manager:
+decide se a divergência é exceção governada, evolução do componente ou dívida de adoção.
+
+---
+
+## [COMPONENT] Confidence Badge — Perspective Matrix
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 1289
+
+**Structure:** Nine-perspective component interpretation matrix.
+**Logic:** Different professional lenses ask different questions about Confidence Badge.
+**Context Of Use:** Perspective-specific guidance, component critique, QA planning and governance review for Confidence Badge.
+**When To Use:** Use when the user asks how Confidence Badge looks from a designer, UX, developer, architect, QA, accessibility, maintainer, writer or manager perspective.
+**Trade Offs:** Perspective depth improves specialist answers but must remain grounded in the canonical component contract.
+**Aetheris Insight:** Confidence Badge becomes institutional knowledge when each discipline can explain its risk and responsibility.
+
+**Institutional Text:**
+VELARIS COMPONENT PERSPECTIVE MATRIX: Confidence Badge | Component logic: Confiança deriva da qualidade da evidência,
+não do tom assertivo da resposta. Structure: Percentual ou faixa, rótulo semântico e acesso à explicação da calibração.
+Designer: inspeciona hierarquia visual, densidade e alinhamento de Confidence Badge com tokens e composição. | UX
+Specialist: avalia o comportamento humano que Confidence Badge incentiva, a hesitação que reduz e a confusão que ainda
+pode criar. | Developer: protege contrato de API, estados, semântica DOM e integração com componentes relacionados. |
+Solution Architect: mede acoplamento, impacto sistêmico e custo de extensão de Confidence Badge em superfícies de
+feedback. | QA: cria cenários para default, foco, erro, indisponibilidade, regressão visual e combinações com dados
+extremos. | Accessibility: valida teclado, foco, anúncio, nome acessível, contraste e perda de informação quando a
+semântica é removida. | Maintainer: observa fragilidade em tokens, estados e exceções locais que podem virar variantes
+paralelas. | Tech Writer: transforma o racional de Confidence Badge em linguagem de decisão, exemplos, limites e
+migração. | Design System Manager: decide se a divergência é exceção governada, evolução do componente ou dívida de
+adoção.
+
+---
+
+## [COMPONENT] Command Palette / Barra de Comandos — Perspective Matrix
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 1377
+
+**Structure:** Nine-perspective component interpretation matrix.
+**Logic:** Different professional lenses ask different questions about Command Palette / Barra de Comandos.
+**Context Of Use:** Perspective-specific guidance, component critique, QA planning and governance review for Command Palette / Barra de Comandos.
+**When To Use:** Use when the user asks how Command Palette / Barra de Comandos looks from a designer, UX, developer, architect, QA, accessibility, maintainer, writer or manager perspective.
+**Trade Offs:** Perspective depth improves specialist answers but must remain grounded in the canonical component contract.
+**Aetheris Insight:** Command Palette / Barra de Comandos becomes institutional knowledge when each discipline can explain its risk and responsibility.
+
+**Institutional Text:**
+VELARIS COMPONENT PERSPECTIVE MATRIX: Command Palette / Barra de Comandos | Component logic: A consulta reduz o espaço
+de opções e combina descoberta com produtividade. Structure: Dialog, input de busca, grupos, resultados, atalhos e
+estado vazio. Designer: inspeciona hierarquia visual, densidade e alinhamento de Command Palette / Barra de Comandos com
+tokens e composição. | UX Specialist: avalia o comportamento humano que Command Palette / Barra de Comandos incentiva, a
+hesitação que reduz e a confusão que ainda pode criar. | Developer: protege contrato de API, estados, semântica DOM e
+integração com componentes relacionados. | Solution Architect: mede acoplamento, impacto sistêmico e custo de extensão
+de Command Palette / Barra de Comandos em superfícies de navigation. | QA: cria cenários para default, foco, erro,
+indisponibilidade, regressão visual e combinações com dados extremos. | Accessibility: valida teclado, foco, anúncio,
+nome acessível, contraste e perda de informação quando a semântica é removida. | Maintainer: observa fragilidade em
+tokens, estados e exceções locais que podem virar variantes paralelas. | Tech Writer: transforma o racional de Command
+Palette / Barra de Comandos em linguagem de decisão, exemplos, limites e migração. | Design System Manager: decide se a
+divergência é exceção governada, evolução do componente ou dívida de adoção.
+
+---
+
+## [COMPONENT] Source Attribution — Perspective Matrix
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 1289
+
+**Structure:** Nine-perspective component interpretation matrix.
+**Logic:** Different professional lenses ask different questions about Source Attribution.
+**Context Of Use:** Perspective-specific guidance, component critique, QA planning and governance review for Source Attribution.
+**When To Use:** Use when the user asks how Source Attribution looks from a designer, UX, developer, architect, QA, accessibility, maintainer, writer or manager perspective.
+**Trade Offs:** Perspective depth improves specialist answers but must remain grounded in the canonical component contract.
+**Aetheris Insight:** Source Attribution becomes institutional knowledge when each discipline can explain its risk and responsibility.
+
+**Institutional Text:**
+VELARIS COMPONENT PERSPECTIVE MATRIX: Source Attribution | Component logic: Rastreabilidade transforma resposta fluente
+em conhecimento verificável. Structure: Fonte, trecho, relevância, metadados e ação para inspecionar contexto. Designer:
+inspeciona hierarquia visual, densidade e alinhamento de Source Attribution com tokens e composição. | UX Specialist:
+avalia o comportamento humano que Source Attribution incentiva, a hesitação que reduz e a confusão que ainda pode criar.
+| Developer: protege contrato de API, estados, semântica DOM e integração com componentes relacionados. | Solution
+Architect: mede acoplamento, impacto sistêmico e custo de extensão de Source Attribution em superfícies de content. |
+QA: cria cenários para default, foco, erro, indisponibilidade, regressão visual e combinações com dados extremos. |
+Accessibility: valida teclado, foco, anúncio, nome acessível, contraste e perda de informação quando a semântica é
+removida. | Maintainer: observa fragilidade em tokens, estados e exceções locais que podem virar variantes paralelas. |
+Tech Writer: transforma o racional de Source Attribution em linguagem de decisão, exemplos, limites e migração. | Design
+System Manager: decide se a divergência é exceção governada, evolução do componente ou dívida de adoção.
+
+---
+
+## [COMPONENT] Audit Panel — Perspective Matrix
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 1280
+
+**Structure:** Nine-perspective component interpretation matrix.
+**Logic:** Different professional lenses ask different questions about Audit Panel.
+**Context Of Use:** Perspective-specific guidance, component critique, QA planning and governance review for Audit Panel.
+**When To Use:** Use when the user asks how Audit Panel looks from a designer, UX, developer, architect, QA, accessibility, maintainer, writer or manager perspective.
+**Trade Offs:** Perspective depth improves specialist answers but must remain grounded in the canonical component contract.
+**Aetheris Insight:** Audit Panel becomes institutional knowledge when each discipline can explain its risk and responsibility.
+
+**Institutional Text:**
+VELARIS COMPONENT PERSPECTIVE MATRIX: Audit Panel | Component logic: Detalhes de processo ficam disponíveis sob demanda
+sem competir com a resposta principal. Structure: Linha do tempo, eventos, entradas, saídas, status e artefatos
+exportáveis. Designer: inspeciona hierarquia visual, densidade e alinhamento de Audit Panel com tokens e composição. |
+UX Specialist: avalia o comportamento humano que Audit Panel incentiva, a hesitação que reduz e a confusão que ainda
+pode criar. | Developer: protege contrato de API, estados, semântica DOM e integração com componentes relacionados. |
+Solution Architect: mede acoplamento, impacto sistêmico e custo de extensão de Audit Panel em superfícies de
+data_display. | QA: cria cenários para default, foco, erro, indisponibilidade, regressão visual e combinações com dados
+extremos. | Accessibility: valida teclado, foco, anúncio, nome acessível, contraste e perda de informação quando a
+semântica é removida. | Maintainer: observa fragilidade em tokens, estados e exceções locais que podem virar variantes
+paralelas. | Tech Writer: transforma o racional de Audit Panel em linguagem de decisão, exemplos, limites e migração. |
+Design System Manager: decide se a divergência é exceção governada, evolução do componente ou dívida de adoção.
+
+---
+
+## [COMPONENT] Typography — Perspective Matrix
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 1241
+
+**Structure:** Nine-perspective component interpretation matrix.
+**Logic:** Different professional lenses ask different questions about Typography.
+**Context Of Use:** Perspective-specific guidance, component critique, QA planning and governance review for Typography.
+**When To Use:** Use when the user asks how Typography looks from a designer, UX, developer, architect, QA, accessibility, maintainer, writer or manager perspective.
+**Trade Offs:** Perspective depth improves specialist answers but must remain grounded in the canonical component contract.
+**Aetheris Insight:** Typography becomes institutional knowledge when each discipline can explain its risk and responsibility.
+
+**Institutional Text:**
+VELARIS COMPONENT PERSPECTIVE MATRIX: Typography | Component logic: Escala e peso devem refletir a prioridade
+epistemológica do conteúdo. Structure: Tokens de display, heading, body, label e code com regras de uso. Designer:
+inspeciona hierarquia visual, densidade e alinhamento de Typography com tokens e composição. | UX Specialist: avalia o
+comportamento humano que Typography incentiva, a hesitação que reduz e a confusão que ainda pode criar. | Developer:
+protege contrato de API, estados, semântica DOM e integração com componentes relacionados. | Solution Architect: mede
+acoplamento, impacto sistêmico e custo de extensão de Typography em superfícies de content. | QA: cria cenários para
+default, foco, erro, indisponibilidade, regressão visual e combinações com dados extremos. | Accessibility: valida
+teclado, foco, anúncio, nome acessível, contraste e perda de informação quando a semântica é removida. | Maintainer:
+observa fragilidade em tokens, estados e exceções locais que podem virar variantes paralelas. | Tech Writer: transforma
+o racional de Typography em linguagem de decisão, exemplos, limites e migração. | Design System Manager: decide se a
+divergência é exceção governada, evolução do componente ou dívida de adoção.
+
+---
+
+## [COMPONENT] Icon — Perspective Matrix
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 1221
+
+**Structure:** Nine-perspective component interpretation matrix.
+**Logic:** Different professional lenses ask different questions about Icon.
+**Context Of Use:** Perspective-specific guidance, component critique, QA planning and governance review for Icon.
+**When To Use:** Use when the user asks how Icon looks from a designer, UX, developer, architect, QA, accessibility, maintainer, writer or manager perspective.
+**Trade Offs:** Perspective depth improves specialist answers but must remain grounded in the canonical component contract.
+**Aetheris Insight:** Icon becomes institutional knowledge when each discipline can explain its risk and responsibility.
+
+**Institutional Text:**
+VELARIS COMPONENT PERSPECTIVE MATRIX: Icon | Component logic: Ícones apoiam reconhecimento, mas rótulos sustentam
+compreensão. Structure: Glyph vetorial, tamanho por token, stroke consistente e label quando necessário. Designer:
+inspeciona hierarquia visual, densidade e alinhamento de Icon com tokens e composição. | UX Specialist: avalia o
+comportamento humano que Icon incentiva, a hesitação que reduz e a confusão que ainda pode criar. | Developer: protege
+contrato de API, estados, semântica DOM e integração com componentes relacionados. | Solution Architect: mede
+acoplamento, impacto sistêmico e custo de extensão de Icon em superfícies de content. | QA: cria cenários para default,
+foco, erro, indisponibilidade, regressão visual e combinações com dados extremos. | Accessibility: valida teclado, foco,
+anúncio, nome acessível, contraste e perda de informação quando a semântica é removida. | Maintainer: observa
+fragilidade em tokens, estados e exceções locais que podem virar variantes paralelas. | Tech Writer: transforma o
+racional de Icon em linguagem de decisão, exemplos, limites e migração. | Design System Manager: decide se a divergência
+é exceção governada, evolução do componente ou dívida de adoção.
+
+---
+
+## [DESIGN_DECISION] Button vs Link
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 666
+
+**Structure:** Difference, advantages, limitations, context and user impact.
+**Logic:** Button changes state or submits an explicit action; Link moves the user to another destination.
+**Context Of Use:** Use this comparison when deciding between command and destination behavior.
+**When To Use:** Use when asked to compare Button and Link.
+**When Not To Use:** Do not collapse the pair into generic preference; preserve semantic consequences.
+**Trade Offs:** A button used for navigation hides routing semantics; a link used for mutation weakens accessibility and user trust.
+**Aetheris Insight:** The wrong choice teaches users the wrong mental model and creates QA ambiguity around Enter/Space, href, disabled and history behavior.
+
+**Institutional Text:**
+VELARIS COMPARATIVE DECISION: Button vs Link | Difference: Button changes state or submits an explicit action; Link
+moves the user to another destination. | Advantages: Button carries consequence, priority and async state. Link carries
+destination, shareability and navigation expectation. | Limitations: A button used for navigation hides routing
+semantics; a link used for mutation weakens accessibility and user trust. | Context of use: Use this comparison when
+deciding between command and destination behavior. | User impact: The wrong choice teaches users the wrong mental model
+and creates QA ambiguity around Enter/Space, href, disabled and history behavior.
+
+---
+
+## [DESIGN_DECISION] Modal/Dialog vs Drawer
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 732
+
+**Structure:** Difference, advantages, limitations, context and user impact.
+**Logic:** Dialog isolates attention and blocks continuation; Drawer preserves more spatial context but is not currently a canonical Velaris component.
+**Context Of Use:** Use for overlay decisions, especially confirmation, creation and contextual editing flows.
+**When To Use:** Use when asked to compare Modal/Dialog and Drawer.
+**When Not To Use:** Do not collapse the pair into generic preference; preserve semantic consequences.
+**Trade Offs:** Dialog overuse creates interruption fatigue. Drawer without governance can become a hidden second page with weak focus policy.
+**Aetheris Insight:** Choosing Dialog asserts that the user must decide now; choosing Drawer asserts that surrounding context remains relevant.
+
+**Institutional Text:**
+VELARIS COMPARATIVE DECISION: Modal/Dialog vs Drawer | Difference: Dialog isolates attention and blocks continuation;
+Drawer preserves more spatial context but is not currently a canonical Velaris component. | Advantages: Dialog is strong
+for short blocking decisions. Drawer is better for contextual editing when future governance approves it. | Limitations:
+Dialog overuse creates interruption fatigue. Drawer without governance can become a hidden second page with weak focus
+policy. | Context of use: Use for overlay decisions, especially confirmation, creation and contextual editing flows. |
+User impact: Choosing Dialog asserts that the user must decide now; choosing Drawer asserts that surrounding context
+remains relevant.
+
+---
+
+## [DESIGN_DECISION] Tooltip vs Popover
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 717
+
+**Structure:** Difference, advantages, limitations, context and user impact.
+**Logic:** Tooltip offers short supplemental explanation; Popover implies richer interactive content and is not canonical yet.
+**Context Of Use:** Use when deciding whether help belongs inline, in a tooltip, or in a future richer disclosure component.
+**When To Use:** Use when asked to compare Explanation Bubble / Tooltip and Popover.
+**When Not To Use:** Do not collapse the pair into generic preference; preserve semantic consequences.
+**Trade Offs:** Tooltip cannot hold essential instructions or complex controls. Popover adds focus, dismissal and mobile complexity.
+**Aetheris Insight:** Hiding essential information in a tooltip creates touch and assistive-technology failures; promoting it to Popover requires a new contract.
+
+**Institutional Text:**
+VELARIS COMPARATIVE DECISION: Tooltip vs Popover | Difference: Tooltip offers short supplemental explanation; Popover
+implies richer interactive content and is not canonical yet. | Advantages: Tooltip is lightweight and tied to a trigger.
+Popover can support richer help if promoted to a governed component. | Limitations: Tooltip cannot hold essential
+instructions or complex controls. Popover adds focus, dismissal and mobile complexity. | Context of use: Use when
+deciding whether help belongs inline, in a tooltip, or in a future richer disclosure component. | User impact: Hiding
+essential information in a tooltip creates touch and assistive-technology failures; promoting it to Popover requires a
+new contract.
+
+---
+
+## [DESIGN_DECISION] Toast vs Alert
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 611
+
+**Structure:** Difference, advantages, limitations, context and user impact.
+**Logic:** Toast is transient confirmation; Alert is persistent contextual feedback with consequence.
+**Context Of Use:** Use for status messages, save confirmations, failures and recoverable warnings.
+**When To Use:** Use when asked to compare Toast/Notification and Alert.
+**When Not To Use:** Do not collapse the pair into generic preference; preserve semantic consequences.
+**Trade Offs:** Toast disappears and is poor for required action. Alert can create noise if severity is inflated.
+**Aetheris Insight:** The wrong choice either hides necessary recovery or interrupts users for messages they did not need to stop for.
+
+**Institutional Text:**
+VELARIS COMPARATIVE DECISION: Toast vs Alert | Difference: Toast is transient confirmation; Alert is persistent
+contextual feedback with consequence. | Advantages: Toast preserves flow after low-risk updates. Alert keeps high-
+importance information visible and actionable. | Limitations: Toast disappears and is poor for required action. Alert
+can create noise if severity is inflated. | Context of use: Use for status messages, save confirmations, failures and
+recoverable warnings. | User impact: The wrong choice either hides necessary recovery or interrupts users for messages
+they did not need to stop for.
+
+---
+
+## [DESIGN_DECISION] Skeleton Loader vs Spinner
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 689
+
+**Structure:** Difference, advantages, limitations, context and user impact.
+**Logic:** Skeleton predicts the shape of incoming content; Spinner only says work is happening and is not a canonical Velaris component here.
+**Context Of Use:** Use when deciding how to represent loading for cards, tables, text regions and unknown operations.
+**When To Use:** Use when asked to compare Skeleton Loader and Spinner.
+**When Not To Use:** Do not collapse the pair into generic preference; preserve semantic consequences.
+**Trade Offs:** Skeleton is misleading when final geometry is unknown. Spinner gives no progress, structure or recovery signal.
+**Aetheris Insight:** A bad loading pattern trains users to doubt whether content, error or empty state is coming next.
+
+**Institutional Text:**
+VELARIS COMPARATIVE DECISION: Skeleton Loader vs Spinner | Difference: Skeleton predicts the shape of incoming content;
+Spinner only says work is happening and is not a canonical Velaris component here. | Advantages: Skeleton reduces layout
+shift and perceived waiting. Spinner can fit unknown-duration operations if later governed. | Limitations: Skeleton is
+misleading when final geometry is unknown. Spinner gives no progress, structure or recovery signal. | Context of use:
+Use when deciding how to represent loading for cards, tables, text regions and unknown operations. | User impact: A bad
+loading pattern trains users to doubt whether content, error or empty state is coming next.
+
+---
+
+## [DESIGN_DECISION] Accordion vs Tabs
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 686
+
+**Structure:** Difference, advantages, limitations, context and user impact.
+**Logic:** Tabs switch between sibling views in the same context; Accordion exposes collapsible sections and is not canonical yet.
+**Context Of Use:** Use for navigation inside a page, content organization and progressive disclosure decisions.
+**When To Use:** Use when asked to compare Accordion and Tabs.
+**When Not To Use:** Do not collapse the pair into generic preference; preserve semantic consequences.
+**Trade Offs:** Tabs hide simultaneous comparison. Accordion can bury content and create ambiguous heading/focus behavior.
+**Aetheris Insight:** Using Tabs for steps misleads users; using Accordion for critical choices can hide important decisions from scanning.
+
+**Institutional Text:**
+VELARIS COMPARATIVE DECISION: Accordion vs Tabs | Difference: Tabs switch between sibling views in the same context;
+Accordion exposes collapsible sections and is not canonical yet. | Advantages: Tabs support direct view switching and
+stateful panels. Accordion can reduce vertical density if introduced with governance. | Limitations: Tabs hide
+simultaneous comparison. Accordion can bury content and create ambiguous heading/focus behavior. | Context of use: Use
+for navigation inside a page, content organization and progressive disclosure decisions. | User impact: Using Tabs for
+steps misleads users; using Accordion for critical choices can hide important decisions from scanning.
+
+---
+
+## [DESIGN_DECISION] Checkbox vs Radio Button
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 560
+
+**Structure:** Difference, advantages, limitations, context and user impact.
+**Logic:** Checkbox supports independent inclusion; Radio Button supports exactly one choice in a known set.
+**Context Of Use:** Use for preferences, filters, consent, settings and selection groups.
+**When To Use:** Use when asked to compare Checkbox and Radio Button.
+**When Not To Use:** Do not collapse the pair into generic preference; preserve semantic consequences.
+**Trade Offs:** Checkbox fails for exclusive choices. Radio becomes heavy for long lists.
+**Aetheris Insight:** Wrong selection semantics create invalid data and make validation feel arbitrary.
+
+**Institutional Text:**
+VELARIS COMPARATIVE DECISION: Checkbox vs Radio Button | Difference: Checkbox supports independent inclusion; Radio
+Button supports exactly one choice in a known set. | Advantages: Checkbox allows multiple valid selections. Radio keeps
+comparison visible for mutually exclusive options. | Limitations: Checkbox fails for exclusive choices. Radio becomes
+heavy for long lists. | Context of use: Use for preferences, filters, consent, settings and selection groups. | User
+impact: Wrong selection semantics create invalid data and make validation feel arbitrary.
+
+---
+
+## [DESIGN_DECISION] Select/Dropdown vs Radio Button
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 532
+
+**Structure:** Difference, advantages, limitations, context and user impact.
+**Logic:** Select hides a larger option set behind a trigger; Radio exposes a small set for comparison.
+**Context Of Use:** Use for choice-count and discoverability decisions.
+**When To Use:** Use when asked to compare Select/Dropdown and Radio Button.
+**When Not To Use:** Do not collapse the pair into generic preference; preserve semantic consequences.
+**Trade Offs:** Select slows comparison. Radio consumes space and breaks down with many options.
+**Aetheris Insight:** Overusing Select hides important tradeoffs; overusing Radio makes forms long and noisy.
+
+**Institutional Text:**
+VELARIS COMPARATIVE DECISION: Select/Dropdown vs Radio Button | Difference: Select hides a larger option set behind a
+trigger; Radio exposes a small set for comparison. | Advantages: Select saves space and handles scale. Radio improves
+recognition and comparison. | Limitations: Select slows comparison. Radio consumes space and breaks down with many
+options. | Context of use: Use for choice-count and discoverability decisions. | User impact: Overusing Select hides
+important tradeoffs; overusing Radio makes forms long and noisy.
+
+---
+
+## [DESIGN_DECISION] Input / Text Input vs Text Area
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 597
+
+**Structure:** Difference, advantages, limitations, context and user impact.
+**Logic:** Input captures short structured values; Text Area captures longer prose, rationale or prompts.
+**Context Of Use:** Use for forms, prompts, comments, justifications and search-like inputs.
+**When To Use:** Use when asked to compare Input / Text Input and Text Area.
+**When Not To Use:** Do not collapse the pair into generic preference; preserve semantic consequences.
+**Trade Offs:** Input truncates thinking when used for long answers. Text Area overstates effort for simple data.
+**Aetheris Insight:** The field size silently communicates expected effort; wrong sizing changes answer quality.
+
+**Institutional Text:**
+VELARIS COMPARATIVE DECISION: Input / Text Input vs Text Area | Difference: Input captures short structured values; Text
+Area captures longer prose, rationale or prompts. | Advantages: Input optimizes speed and format validation. Text Area
+supports reflection, detail and longer editing. | Limitations: Input truncates thinking when used for long answers. Text
+Area overstates effort for simple data. | Context of use: Use for forms, prompts, comments, justifications and search-
+like inputs. | User impact: The field size silently communicates expected effort; wrong sizing changes answer quality.
+
+---
+
+## [DESIGN_DECISION] Source Attribution vs Audit Panel
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 634
+
+**Structure:** Difference, advantages, limitations, context and user impact.
+**Logic:** Source Attribution explains where a claim came from; Audit Panel exposes process, sequence and evidence quality.
+**Context Of Use:** Use for XAI, evidence disclosure, governance and debugging the reasoning chain.
+**When To Use:** Use when asked to compare Source Attribution and Audit Panel.
+**When Not To Use:** Do not collapse the pair into generic preference; preserve semantic consequences.
+**Trade Offs:** Attribution alone cannot explain a multi-step decision. Audit Panel is too heavy for every answer.
+**Aetheris Insight:** Confusing the two either overburdens simple evidence or under-explains consequential AI decisions.
+
+**Institutional Text:**
+VELARIS COMPARATIVE DECISION: Source Attribution vs Audit Panel | Difference: Source Attribution explains where a claim
+came from; Audit Panel exposes process, sequence and evidence quality. | Advantages: Source Attribution is concise and
+local. Audit Panel supports inspection, accountability and debugging. | Limitations: Attribution alone cannot explain a
+multi-step decision. Audit Panel is too heavy for every answer. | Context of use: Use for XAI, evidence disclosure,
+governance and debugging the reasoning chain. | User impact: Confusing the two either overburdens simple evidence or
+under-explains consequential AI decisions.
+
+---
+
+## [GUIDELINE] Knowledge Relationships — Action Controls
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 377
+
+**Structure:** Button ↔ Link ↔ IconButton candidate ↔ Floating Action Button candidate ↔ Form Actions ↔ Command Palette
+**Logic:** Action controls differ by consequence, destination, visibility and command density.
+**Context Of Use:** Semantic relationship questions, alternative selection and governance review.
+**When To Use:** Use when the user asks what a component is related to or which neighboring pattern should be considered.
+**Trade Offs:** Relationship knowledge improves recall but must distinguish canonical components from candidates or legacy references.
+**Aetheris Insight:** This relation prevents teams from treating every clickable element as a styled button.
+
+**Institutional Text:**
+VELARIS KNOWLEDGE RELATIONSHIP: Knowledge Relationships — Action Controls | Graph: Button ↔ Link ↔ IconButton candidate
+↔ Floating Action Button candidate ↔ Form Actions ↔ Command Palette | Logic: Action controls differ by consequence,
+destination, visibility and command density. | Impact: This relation prevents teams from treating every clickable
+element as a styled button.
+
+---
+
+## [GUIDELINE] Knowledge Relationships — Overlay And Interruption
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 439
+
+**Structure:** Modal/Dialog ↔ Drawer candidate ↔ SideDrawer legacy reference ↔ Overlay ↔ Confirmation Pattern ↔ Alert
+**Logic:** Interruption patterns are governed by how much focus isolation and page context the decision requires.
+**Context Of Use:** Semantic relationship questions, alternative selection and governance review.
+**When To Use:** Use when the user asks what a component is related to or which neighboring pattern should be considered.
+**Trade Offs:** Relationship knowledge improves recall but must distinguish canonical components from candidates or legacy references.
+**Aetheris Insight:** This relation keeps blocking decisions, contextual editing and feedback severity from collapsing into one overlay pattern.
+
+**Institutional Text:**
+VELARIS KNOWLEDGE RELATIONSHIP: Knowledge Relationships — Overlay And Interruption | Graph: Modal/Dialog ↔ Drawer
+candidate ↔ SideDrawer legacy reference ↔ Overlay ↔ Confirmation Pattern ↔ Alert | Logic: Interruption patterns are
+governed by how much focus isolation and page context the decision requires. | Impact: This relation keeps blocking
+decisions, contextual editing and feedback severity from collapsing into one overlay pattern.
+
+---
+
+## [GUIDELINE] Knowledge Relationships — Help And Validation
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 373
+
+**Structure:** Explanation Bubble / Tooltip ↔ Popover candidate ↔ HelpText ↔ Inline Validation ↔ Form Field ↔ Alert
+**Logic:** Help belongs near the question, while validation belongs near the correction path.
+**Context Of Use:** Semantic relationship questions, alternative selection and governance review.
+**When To Use:** Use when the user asks what a component is related to or which neighboring pattern should be considered.
+**Trade Offs:** Relationship knowledge improves recall but must distinguish canonical components from candidates or legacy references.
+**Aetheris Insight:** This relation prevents essential guidance from being hidden behind hover-only help.
+
+**Institutional Text:**
+VELARIS KNOWLEDGE RELATIONSHIP: Knowledge Relationships — Help And Validation | Graph: Explanation Bubble / Tooltip ↔
+Popover candidate ↔ HelpText ↔ Inline Validation ↔ Form Field ↔ Alert | Logic: Help belongs near the question, while
+validation belongs near the correction path. | Impact: This relation prevents essential guidance from being hidden
+behind hover-only help.
+
+---
+
+## [GUIDELINE] Knowledge Relationships — Feedback And Loading
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 397
+
+**Structure:** Toast ↔ Alert ↔ Skeleton Loader ↔ Empty State Pattern ↔ Source Attribution
+**Logic:** Feedback patterns vary by persistence, urgency, reversibility and whether content is pending or failed.
+**Context Of Use:** Semantic relationship questions, alternative selection and governance review.
+**When To Use:** Use when the user asks what a component is related to or which neighboring pattern should be considered.
+**Trade Offs:** Relationship knowledge improves recall but must distinguish canonical components from candidates or legacy references.
+**Aetheris Insight:** This relation avoids using transient feedback for required recovery or using loading UI for known empty states.
+
+**Institutional Text:**
+VELARIS KNOWLEDGE RELATIONSHIP: Knowledge Relationships — Feedback And Loading | Graph: Toast ↔ Alert ↔ Skeleton Loader
+↔ Empty State Pattern ↔ Source Attribution | Logic: Feedback patterns vary by persistence, urgency, reversibility and
+whether content is pending or failed. | Impact: This relation avoids using transient feedback for required recovery or
+using loading UI for known empty states.
+
+---
+
+## [GUIDELINE] Knowledge Relationships — Selection And Forms
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 408
+
+**Structure:** Checkbox ↔ Radio Button ↔ Selectable Chip ↔ Select/Dropdown ↔ Form Field ↔ Date Picker
+**Logic:** Selection controls differ by independence, exclusivity, option count, format and validation burden.
+**Context Of Use:** Semantic relationship questions, alternative selection and governance review.
+**When To Use:** Use when the user asks what a component is related to or which neighboring pattern should be considered.
+**Trade Offs:** Relationship knowledge improves recall but must distinguish canonical components from candidates or legacy references.
+**Aetheris Insight:** This relation reduces invalid data and helps teams choose controls by decision shape rather than visual preference.
+
+**Institutional Text:**
+VELARIS KNOWLEDGE RELATIONSHIP: Knowledge Relationships — Selection And Forms | Graph: Checkbox ↔ Radio Button ↔
+Selectable Chip ↔ Select/Dropdown ↔ Form Field ↔ Date Picker | Logic: Selection controls differ by independence,
+exclusivity, option count, format and validation burden. | Impact: This relation reduces invalid data and helps teams
+choose controls by decision shape rather than visual preference.
+
+---
+
+## [GUIDELINE] Knowledge Relationships — Data And Explainability
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 392
+
+**Structure:** Data Table ↔ Confidence Badge ↔ Source Attribution ↔ Audit Panel ↔ Typography
+**Logic:** Dense information and AI evidence need structure, provenance and auditability to remain trustworthy.
+**Context Of Use:** Semantic relationship questions, alternative selection and governance review.
+**When To Use:** Use when the user asks what a component is related to or which neighboring pattern should be considered.
+**Trade Offs:** Relationship knowledge improves recall but must distinguish canonical components from candidates or legacy references.
+**Aetheris Insight:** This relation keeps explanation artifacts connected to the data surfaces where users inspect decisions.
+
+**Institutional Text:**
+VELARIS KNOWLEDGE RELATIONSHIP: Knowledge Relationships — Data And Explainability | Graph: Data Table ↔ Confidence Badge
+↔ Source Attribution ↔ Audit Panel ↔ Typography | Logic: Dense information and AI evidence need structure, provenance
+and auditability to remain trustworthy. | Impact: This relation keeps explanation artifacts connected to the data
+surfaces where users inspect decisions.
+
+---
+
+## [GUIDELINE] Knowledge Relationships — Navigation And Discovery
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 377
+
+**Structure:** Tabs ↔ Link ↔ Command Palette ↔ Card ↔ Typography ↔ Icon
+**Logic:** Navigation patterns vary by destination, sibling view, discovery mode and content grouping.
+**Context Of Use:** Semantic relationship questions, alternative selection and governance review.
+**When To Use:** Use when the user asks what a component is related to or which neighboring pattern should be considered.
+**Trade Offs:** Relationship knowledge improves recall but must distinguish canonical components from candidates or legacy references.
+**Aetheris Insight:** This relation prevents global navigation, local view switching and command search from sharing ambiguous affordances.
+
+**Institutional Text:**
+VELARIS KNOWLEDGE RELATIONSHIP: Knowledge Relationships — Navigation And Discovery | Graph: Tabs ↔ Link ↔ Command
+Palette ↔ Card ↔ Typography ↔ Icon | Logic: Navigation patterns vary by destination, sibling view, discovery mode and
+content grouping. | Impact: This relation prevents global navigation, local view switching and command search from
+sharing ambiguous affordances.
+
+---
+
+## [GUIDELINE] Legacy Modal to Modal/Dialog
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 493
+
+**Structure:** Legacy to modern migration strategy with risks, effort and validation.
+**Logic:** Inventory all legacy modals, classify by blocking decision, long task or contextual edit, then keep only short blocking decisions as Dialog.
+**Context Of Use:** Migration advisor, governance cleanup and design-system adoption planning.
+**When To Use:** Use when modernizing legacy modal to modal/dialog.
+**When Not To Use:** Do not treat migration as a visual swap; preserve behavior, accessibility and evidence.
+**Trade Offs:** Nested modals, lost focus return, hidden form errors and unclear cancel paths.
+**Aetheris Insight:** Keyboard trap, Escape, focus restoration, accessible name, cancel action and error recovery.
+
+**Institutional Text:**
+VELARIS MIGRATION KNOWLEDGE: Legacy Modal to Modal/Dialog | Strategy: Inventory all legacy modals, classify by blocking
+decision, long task or contextual edit, then keep only short blocking decisions as Dialog. | Risks: Nested modals, lost
+focus return, hidden form errors and unclear cancel paths. | Effort: Medium: interaction review, focus tests, content
+reduction and regression QA. | Validation: Keyboard trap, Escape, focus restoration, accessible name, cancel action and
+error recovery.
+
+---
+
+## [GUIDELINE] Legacy Table to Table/Data Table
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 523
+
+**Structure:** Legacy to modern migration strategy with risks, effort and validation.
+**Logic:** Map columns to user comparison tasks, restore caption/header semantics, define sorting and mobile priority before styling.
+**Context Of Use:** Migration advisor, governance cleanup and design-system adoption planning.
+**When To Use:** Use when modernizing legacy table to table/data table.
+**When Not To Use:** Do not treat migration as a visual swap; preserve behavior, accessibility and evidence.
+**Trade Offs:** Decorative grid markup, truncated critical identifiers, row actions competing with scanability.
+**Aetheris Insight:** Header association, sort announcement, row action labels, overflow behavior and empty/error/loading states.
+
+**Institutional Text:**
+VELARIS MIGRATION KNOWLEDGE: Legacy Table to Table/Data Table | Strategy: Map columns to user comparison tasks, restore
+caption/header semantics, define sorting and mobile priority before styling. | Risks: Decorative grid markup, truncated
+critical identifiers, row actions competing with scanability. | Effort: High for dense products: data modeling,
+responsive behavior and QA fixtures are required. | Validation: Header association, sort announcement, row action
+labels, overflow behavior and empty/error/loading states.
+
+---
+
+## [GUIDELINE] Custom Input to Canonical Input / Text Input
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 535
+
+**Structure:** Legacy to modern migration strategy with risks, effort and validation.
+**Logic:** Replace visual-only fields with Form Field plus canonical Input, preserving labels, helper text, errors and autocomplete.
+**Context Of Use:** Migration advisor, governance cleanup and design-system adoption planning.
+**When To Use:** Use when modernizing custom input to canonical input / text input.
+**When Not To Use:** Do not treat migration as a visual swap; preserve behavior, accessibility and evidence.
+**Trade Offs:** Placeholder-as-label, lost aria-describedby, aggressive validation and wiped values after failed submit.
+**Aetheris Insight:** Label persistence, inputMode/type, helper text, error message, preserved value and screen-reader announcement.
+
+**Institutional Text:**
+VELARIS MIGRATION KNOWLEDGE: Custom Input to Canonical Input / Text Input | Strategy: Replace visual-only fields with
+Form Field plus canonical Input, preserving labels, helper text, errors and autocomplete. | Risks: Placeholder-as-label,
+lost aria-describedby, aggressive validation and wiped values after failed submit. | Effort: Medium: mechanical
+replacement is simple, but validation and copy need review. | Validation: Label persistence, inputMode/type, helper
+text, error message, preserved value and screen-reader announcement.
+
+---
+
+## [GUIDELINE] Styled Link Button to Button or Link
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 477
+
+**Structure:** Legacy to modern migration strategy with risks, effort and validation.
+**Logic:** Classify each interaction by outcome: state mutation becomes Button; navigation becomes Link.
+**Context Of Use:** Migration advisor, governance cleanup and design-system adoption planning.
+**When To Use:** Use when modernizing styled link button to button or link.
+**When Not To Use:** Do not treat migration as a visual swap; preserve behavior, accessibility and evidence.
+**Trade Offs:** Broken keyboard expectations, disabled links without explanation, submit actions hidden behind href.
+**Aetheris Insight:** Enter/Space behavior, href/history behavior, disabled policy and destination/action label clarity.
+
+**Institutional Text:**
+VELARIS MIGRATION KNOWLEDGE: Styled Link Button to Button or Link | Strategy: Classify each interaction by outcome:
+state mutation becomes Button; navigation becomes Link. | Risks: Broken keyboard expectations, disabled links without
+explanation, submit actions hidden behind href. | Effort: Low to medium: semantic cleanup plus visual parity and
+analytics checks. | Validation: Enter/Space behavior, href/history behavior, disabled policy and destination/action
+label clarity.
+
+---
+
+## [GUIDELINE] Hover Help to Explanation Bubble / Tooltip
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 504
+
+**Structure:** Legacy to modern migration strategy with risks, effort and validation.
+**Logic:** Move essential instructions inline, keep only supplemental microcopy in Tooltip, and wire focus plus aria-describedby.
+**Context Of Use:** Migration advisor, governance cleanup and design-system adoption planning.
+**When To Use:** Use when modernizing hover help to explanation bubble / tooltip.
+**When Not To Use:** Do not treat migration as a visual swap; preserve behavior, accessibility and evidence.
+**Trade Offs:** Touch users cannot access help, disabled triggers cannot receive focus, long help becomes unreadable.
+**Aetheris Insight:** Hover, focus, Escape, positioning, mobile fallback and whether the page still works without the tooltip.
+
+**Institutional Text:**
+VELARIS MIGRATION KNOWLEDGE: Hover Help to Explanation Bubble / Tooltip | Strategy: Move essential instructions inline,
+keep only supplemental microcopy in Tooltip, and wire focus plus aria-describedby. | Risks: Touch users cannot access
+help, disabled triggers cannot receive focus, long help becomes unreadable. | Effort: Medium: content triage is usually
+harder than implementation. | Validation: Hover, focus, Escape, positioning, mobile fallback and whether the page still
+works without the tooltip.
+
+---
+
+## [GUIDELINE] Spinner-Heavy Loading to Skeleton Loader
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 475
+
+**Structure:** Legacy to modern migration strategy with risks, effort and validation.
+**Logic:** Use Skeleton only where final geometry is predictable; otherwise define a governed loading or progress pattern.
+**Context Of Use:** Migration advisor, governance cleanup and design-system adoption planning.
+**When To Use:** Use when modernizing spinner-heavy loading to skeleton loader.
+**When Not To Use:** Do not treat migration as a visual swap; preserve behavior, accessibility and evidence.
+**Trade Offs:** False shape promises, endless loading, motion sensitivity and confusion with empty state.
+**Aetheris Insight:** Reserved dimensions, prefers-reduced-motion, busy region, error transition and layout shift.
+
+**Institutional Text:**
+VELARIS MIGRATION KNOWLEDGE: Spinner-Heavy Loading to Skeleton Loader | Strategy: Use Skeleton only where final geometry
+is predictable; otherwise define a governed loading or progress pattern. | Risks: False shape promises, endless loading,
+motion sensitivity and confusion with empty state. | Effort: Medium: each surface needs geometry mapping and failure
+fallback. | Validation: Reserved dimensions, prefers-reduced-motion, busy region, error transition and layout shift.
+
+---
+
+## [GUIDELINE] Mixed Notifications to Alert and Toast
+**Source:** `rag/institutional-knowledge.md`  **Status:** Stable  **Chars:** 484
+
+**Structure:** Legacy to modern migration strategy with risks, effort and validation.
+**Logic:** Separate transient confirmations into Toast and persistent consequence-bearing messages into Alert.
+**Context Of Use:** Migration advisor, governance cleanup and design-system adoption planning.
+**When To Use:** Use when modernizing mixed notifications to alert and toast.
+**When Not To Use:** Do not treat migration as a visual swap; preserve behavior, accessibility and evidence.
+**Trade Offs:** Critical messages vanish, low-risk messages interrupt flow, duplicate global/local feedback.
+**Aetheris Insight:** Persistence, dismissibility, live region urgency, action availability and duplicate-message suppression.
+
+**Institutional Text:**
+VELARIS MIGRATION KNOWLEDGE: Mixed Notifications to Alert and Toast | Strategy: Separate transient confirmations into
+Toast and persistent consequence-bearing messages into Alert. | Risks: Critical messages vanish, low-risk messages
+interrupt flow, duplicate global/local feedback. | Effort: Low to medium: severity taxonomy and message inventory are
+the main cost. | Validation: Persistence, dismissibility, live region urgency, action availability and duplicate-message
+suppression.
 
 ---
