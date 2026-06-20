@@ -37,13 +37,8 @@ services:
         value: api
       - key: AETHERIS_EMBEDDING_MODEL
         value: BAAI/bge-m3
-      # Persist ChromaDB on the mounted disk so API bootstrap runs once.
-      - key: CHROMA_DB_PATH
-        value: /var/data/chroma_db
-      - key: STUDY_DB_PATH
-        value: /var/data/aetheris-study.sqlite3
-      - key: LABORATORY_DB_PATH
-        value: /var/data/aetheris-laboratory.sqlite3
+      # ChromaDB + SQLite paths auto-detect /var/data when the disk below is mounted.
+      # Do not hardcode CHROMA_DB_PATH here — an unmounted disk would crash startup.
       - key: LABORATORY_AUTOMATION_ENABLED
         value: "true"
       - key: LABORATORY_SCHEDULE_TIMEZONE
