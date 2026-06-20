@@ -1,5 +1,2 @@
-import { PersonaSidebarPanel } from "../persona/PersonaSidebarPanel";
-
-export function ChatArtifacts() {
-  return <PersonaSidebarPanel />;
-}
+// Legacy export — contextual panel now lives in ContextPanel.tsx
+export { ContextPanelRail as ChatArtifacts } from "./ContextPanel";

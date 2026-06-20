@@ -105,7 +105,7 @@ export function SettingsPanel({ isOpen, onClose }: SettingsPanelProps) {
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-50 flex justify-end bg-black/55 backdrop-blur-[6px]"
+          className="beatrice-overlay-scrim fixed inset-0 z-50 flex justify-end bg-black/55 backdrop-blur-[6px]"
           initial={shouldReduceMotion ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}

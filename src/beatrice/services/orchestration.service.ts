@@ -97,9 +97,6 @@ export function getPromptStats(messageCount: number): PromptStats {
 function personaChatLabels(locale: Locale) {
   if (locale === "en-US") {
     return {
-      activeThrough: "is active through",
-      operationalPain: "Operational pain",
-      thinkingStructure: "Thinking structure",
       operator: "Operator",
       primaryPain: "Primary pain",
       metricsPrioritized: "Metrics prioritized",
@@ -108,22 +105,71 @@ function personaChatLabels(locale: Locale) {
       mentalStructure: "Mental structure",
       retrievalWeighting: "Retrieval weighting",
       active: "active",
+      activated: "activated.",
+      context: "Context",
+      canHelpWith: "I can help with",
+      whatToAnalyze: "What would you like to analyze?",
     };
   }
 
   return {
-    activeThrough: locale === "pt-PT" ? "está ativa através de" : "está ativa por meio de",
-    operationalPain: "Dor operacional",
-    thinkingStructure: "Estrutura de pensamento",
     operator: "Operador",
-    primaryPain: "Dor principal",
+    primaryPain: "Problema principal",
     metricsPrioritized: "Métricas priorizadas",
     operationalFears: "Medos operacionais",
     vocabulary: "Vocabulário",
     mentalStructure: "Estrutura mental",
     retrievalWeighting: "Peso do retrieval",
     active: "ativa",
+    activated: locale === "pt-PT" ? "ativada." : "ativada.",
+    context: "Contexto",
+    canHelpWith: "Posso ajudar com",
+    whatToAnalyze: locale === "pt-PT" ? "O que deseja analisar?" : "O que deseja analisar?",
   };
+}
+
+function titleCase(value: string) {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function buildPersonaCapabilityBullets(strategy: PersonaStrategy): string[] {
+  const profile = strategy.operationalProfile;
+  const cognitive = strategy.cognitiveProfile;
+  const titles = [
+    profile.title,
+    profile.prioritizedMetrics[0],
+    profile.operationalFears[0],
+    cognitive.decisionCriteria[0],
+    ...strategy.navigationFocus.map((item) => item.label),
+    ...profile.tools.slice(0, 2),
+  ]
+    .filter(Boolean)
+    .map((item) => titleCase(item));
+
+  return [...new Set(titles)].slice(0, 6);
+}
+
+export function buildPersonaWelcomeMessage(strategy: PersonaStrategy, locale: Locale): string {
+  const labels = personaChatLabels(locale);
+  const profile = strategy.operationalProfile;
+  const capabilities = buildPersonaCapabilityBullets(strategy)
+    .map((item) => `• ${item}`)
+    .join("\n");
+
+  return [
+    "**Abraxos**",
+    "",
+    `${strategy.sessionTitle} ${labels.activated}`,
+    "",
+    `**${labels.context}:**`,
+    profile.specialty,
+    "",
+    `**${labels.canHelpWith}:**`,
+    "",
+    capabilities,
+    "",
+    labels.whatToAnalyze,
+  ].join("\n");
 }
 
 export function getPersonaChatContent(content: ChatContent, strategy: PersonaStrategy, locale: Locale): ChatContent {
@@ -147,9 +193,6 @@ export function getPersonaChatContent(content: ChatContent, strategy: PersonaStr
     };
   });
 
-  const primaryInsight = strategy.insights[0];
-  const secondaryInsight = strategy.insights[1] ?? strategy.insights[0];
-
   return {
     ...content,
     suggestedPrompts,
@@ -157,21 +200,8 @@ export function getPersonaChatContent(content: ChatContent, strategy: PersonaStr
       {
         id: `assistant-persona-${strategy.id}`,
         role: "assistant",
-        decisionId: strategy.operationalMode,
-        content: `${strategy.sessionTitle} ${labels.activeThrough} ${operationalProfile.fullName}, ${operationalProfile.title}. ${operationalProfile.primaryResponsibility}`,
-        responseCards: [
-          {
-            title: labels.operationalPain,
-            text: operationalProfile.primaryPain,
-            accent: "primary",
-          },
-          {
-            title: labels.thinkingStructure,
-            text: operationalProfile.mentalStructure.join(" → "),
-            accent: "secondary",
-          },
-        ],
-        conclusion: `${primaryInsight.detail} ${secondaryInsight.detail}`,
+        content: buildPersonaWelcomeMessage(strategy, locale),
+        isWelcome: true,
       },
     ],
     activeContext: [

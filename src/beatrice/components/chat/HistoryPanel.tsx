@@ -75,7 +75,7 @@ export function HistoryPanel({ isOpen, onClose }: HistoryPanelProps) {
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-50 flex justify-end bg-black/55 backdrop-blur-[6px]"
+          className="beatrice-overlay-scrim fixed inset-0 z-50 flex justify-end bg-black/55 backdrop-blur-[6px]"
           initial={shouldReduceMotion ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -88,7 +88,7 @@ export function HistoryPanel({ isOpen, onClose }: HistoryPanelProps) {
             aria-modal="true"
             aria-labelledby="beatrice-history-title"
             tabIndex={-1}
-            className="flex h-full w-full max-w-[28rem] flex-col overflow-hidden border-l border-white/10 bg-[linear-gradient(145deg,rgba(31,31,34,0.96),rgba(10,10,12,0.98))] shadow-[0_0_90px_rgba(222,204,253,0.14)] outline-none backdrop-blur-3xl sm:rounded-l-[28px]"
+            className="flex h-full w-full max-w-[min(28rem,100vw)] flex-col overflow-hidden border-l border-white/10 bg-[linear-gradient(145deg,rgba(31,31,34,0.96),rgba(10,10,12,0.98))] pb-[env(safe-area-inset-bottom,0px)] shadow-[0_0_90px_rgba(222,204,253,0.14)] outline-none backdrop-blur-3xl sm:rounded-l-[28px]"
             initial={shouldReduceMotion ? false : { x: 420 }}
             animate={{ x: 0 }}
             exit={{ x: 420 }}

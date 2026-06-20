@@ -1,72 +1,87 @@
 import type { ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { usePersonaContext } from "../../hooks/usePersonaContext";
 import { useWorkspacePreferences } from "../../providers/WorkspaceProvider";
+import { ContextPanelDrawer, ContextPanelRail } from "./ContextPanel";
+
+export function useChatViewport() {
+  const [isDesktop, setIsDesktop] = useState(() =>
+    typeof window !== "undefined" ? window.matchMedia("(min-width: 1024px)").matches : false,
+  );
+
+  useEffect(() => {
+    const media = window.matchMedia("(min-width: 1024px)");
+    const sync = () => setIsDesktop(media.matches);
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, []);
+
+  return { isDesktop };
+}
 
 export function ChatLayout({
-  artifacts,
   composer,
+  contextOpen,
+  onContextOpenChange,
+  isDesktop,
   overlay,
   stream,
   toolbar,
 }: {
-  artifacts: ReactNode;
   composer: ReactNode;
+  contextOpen: boolean;
+  onContextOpenChange: (open: boolean) => void;
+  isDesktop: boolean;
   overlay: ReactNode;
   stream: ReactNode;
   toolbar: ReactNode;
 }) {
   const { activePersonaContext: strategy } = usePersonaContext();
   const { settings } = useWorkspacePreferences();
+
   const density = {
     compact: {
-      shell: "gap-5",
-      stream: "px-5 py-6 sm:px-6",
-      inner: "gap-5",
-      composer: "px-5 py-3 sm:px-6",
+      shell: "gap-0",
+      stream: "px-4 py-4 sm:px-6 lg:px-8",
+      inner: "gap-5 pb-4",
     },
     comfortable: {
-      shell: "gap-6",
-      stream: "px-5 py-7 sm:px-8 sm:py-8",
-      inner: "gap-6",
-      composer: "px-5 py-3.5 sm:px-8",
+      shell: "gap-0",
+      stream: "px-4 py-5 sm:px-8 lg:px-10",
+      inner: "gap-6 pb-6",
     },
     dense: {
-      shell: "gap-4",
-      stream: "px-4 py-4 sm:px-5",
-      inner: "gap-4",
-      composer: "px-4 py-2.5 sm:px-5",
+      shell: "gap-0",
+      stream: "px-3 py-3 sm:px-5 lg:px-6",
+      inner: "gap-4 pb-4",
     },
   }[settings.density];
-  const blur = {
-    low: "backdrop-blur-lg",
-    medium: "backdrop-blur-2xl",
-    high: "backdrop-blur-3xl",
-  }[settings.blurIntensity];
+
+  const showRail = contextOpen && isDesktop;
 
   return (
-    <div className={`beatrice-chat grid min-h-0 flex-1 ${density.shell} min-[1360px]:grid-cols-[minmax(0,1fr)_14rem]`}>
+    <div className={`beatrice-chat grid min-h-0 flex-1 ${density.shell} ${showRail ? "lg:grid-cols-[minmax(0,1fr)_19rem]" : "grid-cols-1"}`}>
       <section
         aria-labelledby="beatrice-chat-title"
-        className={`beatrice-chat-shell relative flex min-w-0 flex-col overflow-hidden overflow-x-clip rounded-[22px] border sm:rounded-[28px] ${blur} ${strategy.theme.shell}`}
+        className="beatrice-chat-shell relative grid min-h-0 min-w-0 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden overflow-x-clip bg-background"
         style={{ isolation: "isolate" }}
       >
-        <div className={`pointer-events-none absolute inset-x-0 top-0 h-36 opacity-70 ${strategy.theme.backdrop}`} />
-
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background/30 to-transparent" />
+        <div className={`pointer-events-none absolute inset-x-0 top-0 z-0 h-32 opacity-40 ${strategy.theme.backdrop}`} />
 
         {overlay}
-        {toolbar}
 
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div className={`beatrice-scrollbar min-h-0 flex-1 overscroll-contain overflow-y-auto ${density.stream}`}>
-            <div className={`mx-auto flex w-full max-w-[54rem] flex-col ${density.inner}`}>{stream}</div>
-          </div>
-          <div className={`beatrice-composer shrink-0 border-t border-white/[0.07] bg-background/80 ${density.composer} ${blur}`}>
-            <div className="mx-auto w-full max-w-[50rem]">{composer}</div>
-          </div>
+        <div className="relative z-20 shrink-0 bg-background/90">{toolbar}</div>
+
+        <div className={`beatrice-scrollbar beatrice-chat-stream relative z-10 min-h-0 overflow-y-auto overscroll-contain ${density.stream}`}>
+          <div className={`mx-auto flex min-h-full w-full max-w-[52rem] flex-col ${density.inner}`}>{stream}</div>
         </div>
+
+        <div className="relative z-30 shrink-0">{composer}</div>
       </section>
-      {artifacts}
+
+      {showRail ? <ContextPanelRail onClose={() => onContextOpenChange(false)} /> : null}
+      <ContextPanelDrawer isOpen={contextOpen && !isDesktop} onClose={() => onContextOpenChange(false)} />
     </div>
   );
 }

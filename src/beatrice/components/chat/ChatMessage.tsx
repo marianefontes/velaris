@@ -13,6 +13,7 @@ import {
 import { AbraxosMark } from "../assistant/AbraxosMark";
 import { COMMAND_META } from "../../domain/governance";
 import { useI18n } from "../../../i18n/I18nProvider";
+import { CommandIcon } from "./CommandIcon";
 import type {
   BeatriceSettings,
   ChatContent,
@@ -180,13 +181,13 @@ function ChatMessageComponent({
   message: ChatMessageModel;
   content: ChatContent;
   settings: BeatriceSettings;
-  onOpenAudit?: () => void;
-  onRetry?: () => void;
+  onOpenAudit?: (messageId: string) => void;
+  onRetry?: (messageId: string) => void;
   onUpdateDecision?: (
     decisionId: string,
     status: Exclude<DecisionRecordStatus, "draft">,
   ) => Promise<void>;
-  onFeedback?: (rating: "up" | "down") => void;
+  onFeedback?: (messageId: string, rating: "up" | "down") => void;
   feedbackRating?: "up" | "down";
   decisionUpdating?: boolean;
   evidenceLabel: string;
@@ -216,8 +217,8 @@ function ChatMessageComponent({
 
   if (message.role === "user") {
     return (
-      <article className="flex justify-end motion-safe:animate-message-in">
-        <div className={`max-w-[32rem] rounded-[18px_18px_6px_18px] border border-primary/15 bg-primary/[0.075] shadow-[0_8px_24px_rgba(0,0,0,0.16)] ${density.user}`}>
+      <article className="flex justify-end motion-safe:animate-message-in beatrice-message-settled">
+        <div className={`max-w-[min(32rem,100%)] rounded-[18px_18px_6px_18px] border border-primary/15 bg-primary/[0.075] shadow-[0_8px_24px_rgba(0,0,0,0.16)] ${density.user}`}>
           <p className={`${density.text} whitespace-pre-wrap text-on-surface`}>{message.content}</p>
           <p className="mt-2 text-right text-[11px] text-slate-500">{content.justNow}</p>
         </div>
@@ -226,12 +227,17 @@ function ChatMessageComponent({
   }
 
   return (
-    <article className={`group/message flex min-w-0 ${density.gap} motion-safe:animate-message-in`}>
+    <article className={`group/message flex min-w-0 ${density.gap} motion-safe:animate-message-in ${message.isStreaming ? "" : "beatrice-message-settled"}`}>
       <AbraxosMark variant="consult" size="sm" className="mt-1 hidden shrink-0 sm:block" />
       <div className="min-w-0 flex-1">
         {message.commandMode && !message.isStreaming && (
           <div className={`mb-2 flex min-h-10 flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border px-3 py-2 ${COMMAND_META[message.commandMode].borderClass} ${COMMAND_META[message.commandMode].bgClass}`}>
-            <span aria-hidden="true" className={`text-sm font-bold ${COMMAND_META[message.commandMode].colorClass}`}>{COMMAND_META[message.commandMode].icon}</span>
+            <span
+              aria-hidden="true"
+              className={`flex h-4 w-4 shrink-0 items-center justify-center ${COMMAND_META[message.commandMode].colorClass}`}
+            >
+              <CommandIcon icon={COMMAND_META[message.commandMode].icon} size="md" />
+            </span>
             <span className={`text-[11px] font-semibold ${COMMAND_META[message.commandMode].colorClass}`}>
               {COMMAND_META[message.commandMode].label}: {t(message.engine ? "beatrice.chat.investigativeMode" : "beatrice.chat.operationalAction")}
             </span>
@@ -302,7 +308,7 @@ function ChatMessageComponent({
           <div className="mt-3 flex flex-wrap gap-2 px-4 sm:px-5">
             <SecondaryButton
               disabled={message.isStreaming}
-              onClick={onRetry}
+              onClick={() => onRetry(message.id)}
               className="min-h-11 gap-2 rounded-lg px-3 py-2"
             >
               <RefreshCw aria-hidden="true" className="h-3.5 w-3.5" />
@@ -372,7 +378,7 @@ function ChatMessageComponent({
                   disabled={!!feedbackRating}
                   aria-label={t("chat.helpful")}
                   aria-pressed={feedbackRating === "up"}
-                  onClick={() => onFeedback("up")}
+                  onClick={() => onFeedback(message.id, "up")}
                   className={`focus-ring flex min-h-11 items-center gap-2 rounded-lg px-3 transition-colors disabled:cursor-default ${
                     feedbackRating === "up"
                       ? "text-success"
@@ -387,7 +393,7 @@ function ChatMessageComponent({
                   disabled={!!feedbackRating}
                   aria-label={t("chat.notHelpful")}
                   aria-pressed={feedbackRating === "down"}
-                  onClick={() => onFeedback("down")}
+                  onClick={() => onFeedback(message.id, "down")}
                   className={`focus-ring flex min-h-11 items-center gap-2 rounded-lg px-3 transition-colors disabled:cursor-default ${
                     feedbackRating === "down"
                       ? "text-red-400"
@@ -399,7 +405,7 @@ function ChatMessageComponent({
               </>
             )}
             {message.auditMetadata && onOpenAudit && (
-              <button type="button" onClick={onOpenAudit} className="focus-ring flex min-h-11 items-center gap-2 rounded-lg px-3 transition-colors hover:bg-white/[0.035] hover:text-primary">
+              <button type="button" onClick={() => onOpenAudit(message.id)} className="focus-ring flex min-h-11 items-center gap-2 rounded-lg px-3 transition-colors hover:bg-white/[0.035] hover:text-primary">
                 <FileSearch aria-hidden="true" className="h-4 w-4" />
                 {t("beatrice.chat.auditMetadata")}
               </button>

@@ -157,6 +157,31 @@ export function useWorkspaceState({ content, locale, profileId }: UseWorkspaceSt
       .catch(() => undefined);
   }, [clearOfflineMessages]);
 
+  useEffect(() => {
+    const hasUserTurn = messages.some((message) => message.role === "user");
+    if (hasUserTurn || content.initialMessages.length === 0) return;
+
+    const welcome = messages.find(
+      (message) => message.isWelcome || message.id.startsWith("assistant-persona-"),
+    );
+    const nextWelcome = content.initialMessages[0];
+    if (!nextWelcome) return;
+
+    if (!welcome) {
+      setMessages(content.initialMessages);
+      return;
+    }
+
+    if (welcome.responseCards || welcome.content !== nextWelcome.content) {
+      setMessages((current) => {
+        const withoutLegacyWelcome = current.filter(
+          (message) => !message.isWelcome && !message.id.startsWith("assistant-persona-"),
+        );
+        return [nextWelcome, ...withoutLegacyWelcome];
+      });
+    }
+  }, [content.initialMessages, messages, profileId, setMessages]);
+
   // Clear the composer when *switching* conversations — not on the initial
   // mount, which would discard a prefilled question from the home hero.
   const previousConversationRef = useRef(activeConversationId);
@@ -167,15 +192,33 @@ export function useWorkspaceState({ content, locale, profileId }: UseWorkspaceSt
   }, [activeConversationId]);
 
   useEffect(() => {
-    if (!settings.autoScroll) return;
-    const scrollContainer = bottomRef.current?.closest<HTMLElement>(".beatrice-scrollbar");
-    if (!scrollContainer) return;
-    const streamingActive = isLoading || messages.some((message) => message.isStreaming);
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    scrollContainer.scrollTo({
-      top: scrollContainer.scrollHeight,
-      behavior: streamingActive || reduceMotion ? "auto" : "smooth",
+    let frameId = 0;
+
+    frameId = window.requestAnimationFrame(() => {
+      const scrollContainer = bottomRef.current?.closest<HTMLElement>(".beatrice-scrollbar");
+      if (!scrollContainer) return;
+
+      const hasUserMessages = messages.some(
+        (message) => message.role === "user" && !message.id.startsWith("assistant-persona-"),
+      );
+
+      if (!hasUserMessages) {
+        scrollContainer.scrollTo({ top: 0, behavior: "auto" });
+        return;
+      }
+
+      if (!settings.autoScroll) return;
+      const streamingActive = isLoading || messages.some((message) => message.isStreaming);
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      scrollContainer.scrollTo({
+        top: scrollContainer.scrollHeight,
+        behavior: streamingActive || reduceMotion ? "auto" : "smooth",
+      });
     });
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
   }, [isLoading, messages, settings.autoScroll]);
 
   return {

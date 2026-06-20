@@ -533,7 +533,7 @@ export interface PersonaActivity {
 }
 
 export interface CommandMeta {
-  icon: string;
+  icon: LucideIcon;
   label: string;
   colorClass: string;
   borderClass: string;

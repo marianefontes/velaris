@@ -25,6 +25,7 @@ describe("ChatInput", () => {
         label: "Accessibility Specialist",
         examples: ["Revise este fluxo"],
         theme: { panel: "border-white/10" },
+        operationalProfile: { title: "Acessibilidade" },
       },
     } as unknown as ReturnType<typeof usePersonaContext>);
     vi.mocked(useWorkspacePreferences).mockReturnValue({

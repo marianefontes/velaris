@@ -15,7 +15,7 @@ export function NewChatAction({
   variant = "toolbar",
 }: {
   onAfterStart?: () => void;
-  variant?: "toolbar" | "panel";
+  variant?: "toolbar" | "panel" | "primary";
 }) {
   const { t } = useI18n();
   const { activePersonaContext: strategy } = usePersonaContext();
@@ -119,11 +119,13 @@ export function NewChatAction({
         className={
           variant === "panel"
             ? `focus-ring flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border px-4 py-3 text-xs font-bold text-background transition-[opacity,transform] duration-200 hover:opacity-90 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-40 ${strategy.theme.signal}`
-            : `focus-ring flex h-11 min-w-11 items-center justify-center gap-2 rounded-xl border px-3 text-xs font-semibold transition-[background-color,border-color,color,opacity] duration-200 ease-luxe hover:border-white/20 disabled:cursor-not-allowed disabled:opacity-40 ${strategy.theme.accentBorder} ${strategy.theme.accentBg} ${strategy.theme.accentText}`
+            : variant === "primary"
+              ? `focus-ring flex h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-lg px-2.5 text-[11px] font-semibold text-background transition-[opacity,transform,background-color] duration-200 ease-luxe hover:opacity-90 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-40 sm:h-10 sm:min-w-10 sm:px-3 ${strategy.theme.signal}`
+              : `focus-ring flex h-11 min-w-11 items-center justify-center gap-2 rounded-xl border px-3 text-xs font-semibold transition-[background-color,border-color,color,opacity] duration-200 ease-luxe hover:border-white/20 disabled:cursor-not-allowed disabled:opacity-40 ${strategy.theme.accentBorder} ${strategy.theme.accentBg} ${strategy.theme.accentText}`
         }
       >
         <MessageSquarePlus aria-hidden="true" className="h-4 w-4" />
-        <span className={variant === "toolbar" ? "hidden xl:inline" : undefined}>
+        <span className={variant === "toolbar" || variant === "primary" ? "hidden lg:inline" : undefined}>
           {variant === "toolbar" ? t("chat.newChatShort") : t("chat.newChat")}
         </span>
       </button>
