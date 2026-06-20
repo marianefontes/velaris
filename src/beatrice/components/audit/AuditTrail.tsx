@@ -1,5 +1,7 @@
 import { AlertTriangle, Database, FileText, ListChecks, ShieldCheck, Wrench, X } from "lucide-react";
+import { useRef } from "react";
 import { useAuditTrail } from "../../hooks/useAuditTrail";
+import { usePanelFocusTrap } from "../../hooks/usePanelFocusTrap";
 import type { AuditSelectedRule } from "../../types/beatrice";
 import { useI18n } from "../../../i18n/I18nProvider";
 import { ExecutionTrace } from "./ExecutionTrace";
@@ -10,6 +12,7 @@ function percent(value: number | undefined, notAvailable: string) {
 
 export function AuditTrail() {
   const { locale, t } = useI18n();
+  const panelRef = useRef<HTMLElement>(null);
   const {
     close,
     isOpen,
@@ -18,6 +21,7 @@ export function AuditTrail() {
     updateDecisionStatus,
     updatingDecisionId,
   } = useAuditTrail();
+  usePanelFocusTrap(isOpen, panelRef, close);
 
   if (!isOpen) return null;
 
@@ -35,17 +39,19 @@ export function AuditTrail() {
 
   return (
     <div
-      className="absolute inset-0 z-30 flex justify-end overflow-hidden rounded-[28px] bg-black/55 backdrop-blur-[5px]"
+      className="beatrice-audit-scrim absolute inset-0 z-30 flex justify-end overflow-hidden bg-black/55 backdrop-blur-[5px]"
       onMouseDown={close}
     >
       <aside
+        ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="execution-trace-title"
-        className="beatrice-scrollbar h-full w-full max-w-[32rem] overflow-y-auto border-l border-white/10 bg-surface-container-low/95 shadow-cognitive-lg backdrop-blur-3xl"
+        tabIndex={-1}
+        className="beatrice-scrollbar beatrice-audit-panel h-full w-full max-w-[min(32rem,100vw)] overflow-y-auto border-l border-white/10 bg-surface-container-low/95 shadow-cognitive-lg backdrop-blur-3xl outline-none"
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <header className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-white/8 bg-surface-container-low/90 px-6 py-5 backdrop-blur-2xl">
+        <header className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-white/8 bg-surface-container-low/90 px-4 py-4 backdrop-blur-2xl sm:px-6 sm:py-5">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
               <ListChecks className="h-5 w-5 text-primary" />
@@ -63,7 +69,7 @@ export function AuditTrail() {
             type="button"
             onClick={close}
             aria-label={t("beatrice.audit.close")}
-            className="glass-panel flex h-9 w-9 items-center justify-center rounded-xl text-slate-500 transition-colors hover:text-white"
+            className="focus-ring glass-panel flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-slate-500 transition-colors hover:text-white"
           >
             <X className="h-4 w-4" />
           </button>
