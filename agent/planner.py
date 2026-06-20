@@ -91,6 +91,8 @@ _WORKFLOW_TOOLS: dict[str, list[str]] = {
     "migration_advisor": [],
     "system_health": ["search_explainability"],
     "agent_identity": [],
+    "agent_capability": [],
+    "roadmap_capability": [],
     "governance_analysis": ["search_design_decision"],
     "simulation": [
         "search_design_decision",
@@ -124,6 +126,8 @@ _PROFESSIONAL_ROUTING_EXEMPT_WORKFLOWS = {
     "decision_rule_recommendation",
     "comparison_rule",
     "agent_identity",
+    "agent_capability",
+    "roadmap_capability",
     "out_of_scope",
     "component_decision",
     "compare_options",
@@ -308,6 +312,16 @@ def build_agent_plan(
     elif understanding.user_intent == "agent_identity":
         workflow = "agent_identity"
         rationale = "The request asks how Abraxos differs from a chatbot or generic oracle."
+    elif understanding.user_intent == "roadmap_capability":
+        workflow = "roadmap_capability"
+        rationale = (
+            "The request asks about a capability not yet implemented in Abraxos."
+        )
+    elif understanding.user_intent == "agent_capability":
+        workflow = "agent_capability"
+        rationale = (
+            "The request asks about Abraxos operational capabilities or limitations."
+        )
     elif understanding.user_intent == "system_health":
         workflow = "system_health"
         rationale = "The request asks about system health metrics or reliability diagnostics."
@@ -460,6 +474,8 @@ def build_agent_plan(
         "concept_query",
         "legacy_name_query",
         "agent_identity",
+        "agent_capability",
+        "roadmap_capability",
     }:
         tools = []
     steps = [
@@ -488,6 +504,8 @@ def build_agent_plan(
         "comparison_rule",
         "legacy_name_query",
         "agent_identity",
+        "agent_capability",
+        "roadmap_capability",
     }:
         steps.append("compose_response")
     else:

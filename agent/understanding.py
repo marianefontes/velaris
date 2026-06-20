@@ -918,6 +918,8 @@ def _goal(intent: UserIntent) -> str:
         "legacy_name_query": "explain_legacy_name_migration",
         "system_health": "explain_system_health",
         "agent_identity": "explain_agent_identity",
+        "agent_capability": "explain_agent_capabilities",
+        "roadmap_capability": "explain_roadmap_capabilities",
         "governance_analysis": "analyze_governance_state",
         "simulation": "simulate_design_change",
         "multi_agent_reasoning": "deliberate_across_perspectives",

@@ -22,6 +22,24 @@ class IntelligenceIntentTests(unittest.TestCase):
         understanding = analyze_query(query)
         self.assertEqual(understanding.user_intent, "agent_identity")
 
+    def test_roadmap_capability_intent(self) -> None:
+        query = "você aceita imagens?"
+        self.assertEqual(
+            resolve_intelligence_intent(query, normalize_text(query)),
+            "roadmap_capability",
+        )
+        understanding = analyze_query(query)
+        self.assertEqual(understanding.user_intent, "roadmap_capability")
+
+    def test_agent_capability_intent(self) -> None:
+        query = "quais são suas limitações?"
+        self.assertEqual(
+            resolve_intelligence_intent(query, normalize_text(query)),
+            "agent_capability",
+        )
+        understanding = analyze_query(query)
+        self.assertEqual(understanding.user_intent, "agent_capability")
+
     def test_governance_analysis_intent(self) -> None:
         query = "quais alertas de governança existem?"
         self.assertEqual(

@@ -63,11 +63,16 @@ class EntityValidationGateTests(unittest.TestCase):
                 self.assertGreaterEqual(result.confidence, 0.75)
 
     def test_clarification_response_copy(self) -> None:
-        response = entity_clarification_response(english=False)
+        response = entity_clarification_response(
+            english=False,
+            workflow="migration_advisor",
+        )
         for marker in CLARIFICATION_MARKERS:
             self.assertIn(marker, response)
         self.assertIn("Legacy Modal", response)
         self.assertIn("plano de migração", response)
+        self.assertIn("não aceita imagens", response)
+        self.assertNotIn("screenshot", response.lower())
 
     def test_migration_contract_forbids_invention_without_entity(self) -> None:
         understanding = analyze_query(

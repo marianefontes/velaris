@@ -40,6 +40,8 @@ WorkflowName = Literal[
     "migration_advisor",
     "system_health",
     "agent_identity",
+    "agent_capability",
+    "roadmap_capability",
     "governance_analysis",
     "simulation",
     "multi_agent_reasoning",
@@ -72,6 +74,8 @@ OperationalIntent = Literal[
     "legacy_name_query",
     "system_health",
     "agent_identity",
+    "agent_capability",
+    "roadmap_capability",
     "governance_analysis",
     "simulation",
     "multi_agent_reasoning",
@@ -122,6 +126,8 @@ UserIntent = Literal[
     "legacy_name_query",
     "system_health",
     "agent_identity",
+    "agent_capability",
+    "roadmap_capability",
     "governance_analysis",
     "simulation",
     "multi_agent_reasoning",
@@ -150,6 +156,8 @@ AnswerStrategy = Literal[
     "legacy_name_query",
     "system_health",
     "agent_identity",
+    "agent_capability",
+    "roadmap_capability",
     "governance_analysis",
     "simulation",
     "multi_agent_reasoning",
@@ -203,6 +211,7 @@ SelectionRejectionReason = Literal[
     "unresolved_component_id",
     "unsupported_page_type",
     "superseded_by_exact_match",
+    "dont_rule_violation",
 ]
 ResponseValidationStatus = Literal["pass", "fallback", "not_applicable"]
 NavigationTargetType = Literal[
@@ -390,10 +399,27 @@ class EvidenceItem(StrictModel):
 
 class SelectedRule(StrictModel):
     id: str
-    field: Literal["do", "dont", "when_to_use", "when_not_to_use"]
+    field: Literal["do", "dont", "when_to_use", "when_not_to_use", "anti_pattern"]
     text: str
     rule_similarity: float = Field(ge=0.0, le=1.0)
     sources: list[str] = Field(default_factory=list)
+
+
+class ContextRuleViolation(StrictModel):
+    rule_id: str
+    field: Literal["dont", "when_not_to_use", "anti_pattern"]
+    text: str
+    violation_strength: float = Field(ge=0.0, le=1.0)
+    context_profiles: list[str] = Field(default_factory=list)
+
+
+class ContextFitAssessment(StrictModel):
+    fit_score: float = Field(ge=0.0, le=1.0)
+    documented_purpose: str = ""
+    positive_signal: float = Field(default=0.0, ge=0.0, le=1.0)
+    negative_signal: float = Field(default=0.0, ge=0.0, le=1.0)
+    violations: list[ContextRuleViolation] = Field(default_factory=list)
+    combined_ranking_score: float = Field(default=0.0, ge=0.0, le=1.0)
 
 
 class PerspectiveCoverage(StrictModel):
@@ -420,6 +446,8 @@ class ComponentEvidence(StrictModel):
     selected_dont_rules: list[SelectedRule]
     selected_when_to_use: list[SelectedRule]
     selected_when_not_to_use: list[SelectedRule]
+    selected_anti_pattern_rules: list[SelectedRule] = Field(default_factory=list)
+    context_fit: ContextFitAssessment | None = None
     perspective_coverage: PerspectiveCoverage
 
 
@@ -454,6 +482,52 @@ class ComponentSelection(StrictModel):
     selection_reason: str
     selection_policy: str
     status_policy_applied: bool = True
+    documented_purpose: str = ""
+    ranking_policy: str = "combined_context_fit_and_retrieval"
+
+
+class ComparisonSideBrief(StrictModel):
+    name: str
+    catalog_status: Literal["cataloged", "not_cataloged"]
+    purpose: str
+    use_when: list[str] = Field(default_factory=list)
+    avoid_when: list[str] = Field(default_factory=list)
+    risks: list[str] = Field(default_factory=list)
+    supporting_rules: list[str] = Field(default_factory=list)
+
+
+class ComponentComparisonBrief(StrictModel):
+    rule_id: str
+    title: str
+    objective: str
+    recommended_choice: str
+    rationale: str
+    tradeoffs: list[str] = Field(default_factory=list)
+    design_decision_id: str = ""
+    sides: list[ComparisonSideBrief] = Field(default_factory=list)
+    institutional_evidence: list[str] = Field(default_factory=list)
+
+
+class AntiPatternHit(StrictModel):
+    pattern_id: str
+    component_id: str
+    component_name: str
+    violated_rule_id: str
+    violated_field: str
+    rule_text: str
+    principle: str
+    recommended_alternative: str
+    severity: Literal["high", "medium", "low"] = "high"
+
+
+EvidenceConfidenceStatus = Literal["pass", "warn", "fail"]
+
+
+class EvidenceConfidenceItem(StrictModel):
+    key: str
+    label: str
+    status: EvidenceConfidenceStatus
+    detail: str
 
 
 class ResponseValidation(StrictModel):
@@ -713,6 +787,78 @@ class CouncilSynthesis(StrictModel):
 class MultiAgentCouncilAnalysis(StrictModel):
     perspectives: list[CouncilPerspectiveOpinion] = Field(default_factory=list)
     synthesis: CouncilSynthesis = Field(default_factory=CouncilSynthesis)
+
+
+CriterionStatus = Literal["pass", "warn", "fail"]
+PerspectiveStance = Literal["favors", "cautions"]
+
+
+class StakeholderObjection(StrictModel):
+    perspective: str
+    perspective_label: str
+    objection: str
+
+
+class DecisionChallenger(StrictModel):
+    recommendation: str
+    objections: list[StakeholderObjection] = Field(default_factory=list)
+    acceptance_conditions: list[str] = Field(default_factory=list)
+    residual_risks: list[str] = Field(default_factory=list)
+
+
+class PerspectiveContrastLine(StrictModel):
+    perspective: str
+    perspective_label: str
+    stance: PerspectiveStance
+    summary: str
+
+
+class CatalogGapNote(StrictModel):
+    entity_label: str
+    closest_alternative_name: str | None = None
+    closest_alternative_id: str | None = None
+    explanation: str = ""
+
+
+class RelevantAlternative(StrictModel):
+    component_id: str
+    name: str
+    why_alternative: str
+    key_differences: str
+    when_to_choose: str
+
+
+class DecisionReasoningBrief(StrictModel):
+    direct_answer: str
+    justification_paragraphs: list[str] = Field(default_factory=list)
+    institutional_evidence: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    alternatives: list[RelevantAlternative] = Field(default_factory=list)
+    use_when: list[str] = Field(default_factory=list)
+    avoid_when: list[str] = Field(default_factory=list)
+    acceptance_conditions: list[str] = Field(default_factory=list)
+    residual_risks: list[str] = Field(default_factory=list)
+    conclusion: str = ""
+    catalog_gaps: list[CatalogGapNote] = Field(default_factory=list)
+
+
+class PerceptionIntelligence(StrictModel):
+    recommendation: str
+    reasoning: DecisionReasoningBrief
+    active_perspective: str | None = None
+
+
+class MissingEvidenceItem(StrictModel):
+    code: str
+    label: str
+
+
+class EvidenceGapExplanation(StrictModel):
+    reason: str
+    missing_items: list[MissingEvidenceItem] = Field(default_factory=list)
+    needed_inputs: list[str] = Field(default_factory=list)
+    workflow: WorkflowName
+    query: str = ""
 
 
 class PerspectiveDivergenceAnalysis(StrictModel):

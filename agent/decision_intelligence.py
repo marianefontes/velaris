@@ -225,10 +225,21 @@ def build_tradeoff_analysis(
     if component_selection and component_selection.recommended:
         component = component_selection.recommended.component
         recommendation = component.name
-        for rule in component_selection.recommended.selected_when_to_use[:3]:
+        for rule in component_selection.recommended.selected_do_rules[:3]:
             benefits.append(rule.text)
-        for rule in component_selection.recommended.selected_when_not_to_use[:2]:
+        for rule in component_selection.recommended.selected_when_to_use[:3]:
+            if rule.text not in benefits:
+                benefits.append(rule.text)
+        for rule in component_selection.recommended.selected_dont_rules[:2]:
             costs.append(rule.text)
+        for rule in component_selection.recommended.selected_when_not_to_use[:2]:
+            if rule.text not in costs:
+                costs.append(rule.text)
+        for rule in component_selection.recommended.selected_anti_pattern_rules[:2]:
+            risks.append(rule.text)
+        if component_selection.recommended.context_fit:
+            for violation in component_selection.recommended.context_fit.violations[:2]:
+                risks.append(violation.text)
         for candidate in component_selection.alternative_components[:3]:
             alternatives.append(candidate.name)
 

@@ -8,6 +8,13 @@ from typing import Any, Iterable
 
 from component_metadata import ComponentMetadata, LocalizedRule, localized_text
 
+from .component_fit import (
+    combined_ranking_score,
+    score_context_fit,
+    selected_anti_pattern_rules,
+    should_hard_reject,
+    violation_summary,
+)
 from .entity_resolution import exact_match_supersedes_semantic
 from .models import (
     ComponentCandidate,
@@ -27,7 +34,8 @@ RuleScorer = Callable[[str, list[str]], list[float]]
 ALTERNATIVE_THRESHOLD = 0.03
 ALTERNATIVE_LIMIT = 3
 SELECTION_POLICY = (
-    "highest_weighted_score_among_active_candidates_with_partial_or_strong_evidence"
+    "combined_context_fit_and_retrieval_among_active_candidates_"
+    "with_partial_or_strong_evidence"
 )
 _VALID_COMPONENT_STATUSES = {"draft", "experimental", "stable", "deprecated", "legacy"}
 
@@ -335,7 +343,7 @@ def component_evidence_from_item(
     if component is None:
         return None
     present, missing, empty = _field_presence(component)
-    return ComponentEvidence(
+    built = ComponentEvidence(
         component=component,
         excerpt=item.excerpt,
         similarity=item.similarity,
@@ -374,8 +382,26 @@ def component_evidence_from_item(
             rules=component.when_not_to_use,
             scorer=rule_scorer,
         ),
+        selected_anti_pattern_rules=selected_anti_pattern_rules(
+            query,
+            component,
+        ),
         perspective_coverage=_coverage(component, profile, present),
     )
+    return _apply_context_fit(built, query=query)
+
+
+def _apply_context_fit(
+    evidence: ComponentEvidence,
+    *,
+    query: str,
+) -> ComponentEvidence:
+    assessment = score_context_fit(query, evidence.component)
+    assessment.combined_ranking_score = combined_ranking_score(
+        retrieval_score=evidence.weighted_score,
+        fit_score=assessment.fit_score,
+    )
+    return evidence.model_copy(update={"context_fit": assessment})
 
 
 def _catalog_evidence_for_named_components(
@@ -469,9 +495,13 @@ def _catalog_evidence_for_named_components(
                 rules=component.when_not_to_use,
                 scorer=rule_scorer,
             ),
+            selected_anti_pattern_rules=selected_anti_pattern_rules(
+                query,
+                component,
+            ),
             perspective_coverage=coverage,
         )
-        evidences.append(evidence)
+        evidences.append(_apply_context_fit(evidence, query=query))
 
     return evidences
 
@@ -538,11 +568,21 @@ def build_component_selection(
             rule_scorer=rule_scorer,
         )
         for evidence in catalog_first:
-            evidence.similarity = 1.0
-            evidence.weighted_score = 1.0
-            evidence.evidence_source = "canonical_catalog"
-            evidence.evidence_tier = "strong"
-            evidences.append(evidence)
+            updated = evidence.model_copy(update={
+                "similarity": 1.0,
+                "weighted_score": 1.0,
+                "evidence_source": "canonical_catalog",
+                "evidence_tier": "strong",
+            })
+            if updated.context_fit is not None:
+                assessment = updated.context_fit.model_copy(update={
+                    "combined_ranking_score": combined_ranking_score(
+                        retrieval_score=1.0,
+                        fit_score=updated.context_fit.fit_score,
+                    ),
+                })
+                updated = updated.model_copy(update={"context_fit": assessment})
+            evidences.append(updated)
 
     for item in component_items:
         evidence = component_evidence_from_item(
@@ -557,12 +597,28 @@ def build_component_selection(
         evidences.append(evidence)
 
     evidences.sort(
-        key=lambda evidence: (evidence.weighted_score, evidence.similarity),
+        key=lambda evidence: (
+            evidence.context_fit.combined_ranking_score
+            if evidence.context_fit is not None
+            else evidence.weighted_score,
+            evidence.weighted_score,
+            evidence.similarity,
+        ),
         reverse=True,
     )
     eligible: list[ComponentEvidence] = []
     for evidence in evidences:
         candidate = _candidate(evidence)
+        assessment = evidence.context_fit
+        if (
+            assessment is not None
+            and should_hard_reject(assessment, workflow=workflow)
+        ):
+            rejected.append(RejectedComponent(
+                **candidate.model_dump(),
+                reason="dont_rule_violation",
+            ))
+            continue
         if (
             primary_exact
             and exact_match_supersedes_semantic(
@@ -617,6 +673,11 @@ def build_component_selection(
         eligible.sort(
             key=lambda evidence: (
                 0 if evidence.component.component_id == primary_exact.component_id else 1,
+                -(
+                    evidence.context_fit.combined_ranking_score
+                    if evidence.context_fit is not None
+                    else evidence.weighted_score
+                ),
                 -evidence.weighted_score,
                 -evidence.similarity,
             ),
@@ -625,10 +686,19 @@ def build_component_selection(
     recommended = eligible[0] if eligible else None
     alternatives: list[ComponentCandidate] = []
     if recommended:
+        recommended_rank = (
+            recommended.context_fit.combined_ranking_score
+            if recommended.context_fit is not None
+            else recommended.weighted_score
+        )
         alternatives = [
             _candidate(evidence)
             for evidence in eligible[1:]
-            if recommended.weighted_score - evidence.weighted_score
+            if recommended_rank - (
+                evidence.context_fit.combined_ranking_score
+                if evidence.context_fit is not None
+                else evidence.weighted_score
+            )
             <= ALTERNATIVE_THRESHOLD + 1e-9
         ][:ALTERNATIVE_LIMIT]
 
@@ -644,15 +714,32 @@ def build_component_selection(
             f"via alias '{primary_exact.matched_alias}'."
         )
     elif recommended:
+        fit = recommended.context_fit
+        fit_score = fit.fit_score if fit is not None else 0.0
         reason = (
-            f"{recommended.component.name} has the highest weighted_score "
-            "among active component candidates with partial or strong evidence."
+            f"{recommended.component.name} ranked highest after combining "
+            f"context fit ({fit_score:.2f}) with retrieval evidence."
         )
+        if fit and fit.documented_purpose:
+            reason += f" Documented purpose: {fit.documented_purpose[:180]}."
     elif evidences:
-        reason = (
-            "No active component candidate met the selection policy. "
-            f"The highest ranked component was {evidences[0].component.name}."
+        top = evidences[0]
+        violation = (
+            top.context_fit.violations[0]
+            if top.context_fit and top.context_fit.violations
+            else None
         )
+        if violation:
+            reason = (
+                "No active component candidate met the selection policy. "
+                f"{top.component.name} was rejected because "
+                f"{violation_summary(top.context_fit.violations)}"
+            )
+        else:
+            reason = (
+                "No active component candidate met the selection policy. "
+                f"The highest ranked component was {top.component.name}."
+            )
     else:
         reason = "No canonical component candidate was resolved from retrieval."
 
@@ -674,4 +761,10 @@ def build_component_selection(
         selection_reason=reason,
         selection_policy=SELECTION_POLICY,
         status_policy_applied=True,
+        documented_purpose=(
+            recommended.context_fit.documented_purpose
+            if recommended and recommended.context_fit
+            else ""
+        ),
+        ranking_policy="combined_context_fit_and_retrieval",
     )

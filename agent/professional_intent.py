@@ -247,6 +247,8 @@ def classify_professional_category(
     if user_intent in {
         "system_health",
         "agent_identity",
+        "agent_capability",
+        "roadmap_capability",
         "governance_analysis",
         "simulation",
         "multi_agent_reasoning",

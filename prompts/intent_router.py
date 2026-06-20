@@ -250,6 +250,8 @@ def classify_intent(query: str) -> str:
         "general_design_system": "general",
         "system_health": "system_health",
         "agent_identity": "general",
+        "agent_capability": "general",
+        "roadmap_capability": "general",
         "governance_analysis": "governance_analysis",
         "simulation": "simulation",
         "multi_agent_reasoning": "multi_agent_reasoning",

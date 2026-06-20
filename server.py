@@ -75,7 +75,7 @@ from prompts.prompt_builder import (
     build_system_prompt,
 )
 from rag.bootstrap import bootstrap_collection, corpus_available
-from rag.chroma_config import chroma_db_path, chroma_runtime_paths
+from rag.chroma_config import chroma_db_path, chroma_db_path_source, chroma_runtime_paths
 from rag.embedding_provider import (
     create_embedding_provider,
     dense_vectors,
@@ -117,7 +117,7 @@ RAG_DIR = Path(__file__).parent / "rag"
 DB_PATH = chroma_db_path()
 COLLECTION_NAME = "aetheris_design_system"
 MAX_HISTORY_MESSAGES = 16
-GROQ_MAX_REQUEST_BYTES = int(os.environ.get("GROQ_MAX_REQUEST_BYTES", "120000"))
+GROQ_MAX_REQUEST_BYTES = int(os.environ.get("GROQ_MAX_REQUEST_BYTES", "36000"))
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 RESEARCH_ADMIN_KEY = os.environ.get("RESEARCH_ADMIN_KEY", "")
 LABORATORY_AUTOMATION_ENABLED = os.environ.get(
@@ -221,15 +221,164 @@ def _query_with_surface_context(query: str, surface_context: dict | None) -> str
     return f"{query}\n\nContexto de superfície: {entity_type}={entity_name}"
 
 
+def _groq_payload_size(messages: list[dict]) -> int:
+    return len(
+        json.dumps({"messages": messages}, ensure_ascii=False).encode("utf-8")
+    )
+
+
+def _estimate_token_count(text: str) -> int:
+    if not text:
+        return 0
+    return max(1, math.ceil(len(text) / 4))
+
+
+def _collapse_messages_for_workflow_resume(
+    messages: list[dict],
+    pending_resolution,
+) -> list[dict]:
+    if pending_resolution is None:
+        return messages
+    resolved = str(pending_resolution.resolved_query or "").strip()
+    if not resolved:
+        return messages
+    return [{"role": "user", "content": resolved}]
+
+
+def _compact_agent_context(agent_context: str, *, workflow: str | None) -> str:
+    if not agent_context or not agent_context.startswith("# Governed Agent Context"):
+        return agent_context
+    try:
+        payload = json.loads(agent_context.split("\n\n", 1)[1])
+    except (IndexError, json.JSONDecodeError):
+        return agent_context
+
+    for key in ("session_memory", "project_memory", "tool_results"):
+        payload.pop(key, None)
+
+    understanding = payload.get("query_understanding")
+    if isinstance(understanding, dict):
+        payload["query_understanding"] = {
+            "user_intent": understanding.get("user_intent"),
+            "professional_category": understanding.get("professional_category"),
+            "language": understanding.get("language"),
+            "entities": understanding.get("entities"),
+            "answer_strategy": understanding.get("answer_strategy"),
+        }
+
+    pending = payload.get("pending_intent_resolution")
+    if isinstance(pending, dict):
+        payload["pending_intent_resolution"] = {
+            "action": pending.get("action"),
+            "missing_field": pending.get("missing_field"),
+            "resolution_value": pending.get("resolution_value"),
+            "resolved_query": pending.get("resolved_query"),
+            "workflow": pending.get("workflow"),
+            "retrieval_intent": pending.get("retrieval_intent"),
+        }
+
+    if workflow == "migration_advisor":
+        allowed = {
+            "request_id",
+            "workflow",
+            "planner_rationale",
+            "query_understanding",
+            "preferred_detail_level",
+            "evidence_tier",
+            "limitations",
+            "migration_advisor_contract",
+            "entity_validation",
+            "pending_intent_resolution",
+            "composer_boundary",
+        }
+        payload = {key: value for key, value in payload.items() if key in allowed}
+
+    return (
+        "# Governed Agent Context\n\n"
+        + json.dumps(payload, ensure_ascii=False, indent=2)
+    )
+
+
+def _trim_system_prompt_sections(content: str, *, max_chars: int) -> str:
+    if len(content) <= max_chars:
+        return content
+    marker = "\n\n---\n\n"
+    sections = content.split(marker)
+    removable_prefixes = (
+        "# Perspective Response Contract",
+        "# Professional Perspective",
+        "# Response Rules",
+        "# Strategic Reasoning Response",
+        "# Multi-Agent Council Response",
+    )
+    trimmed = list(sections)
+    while len(marker.join(trimmed)) > max_chars and trimmed:
+        removed = False
+        for index in range(len(trimmed) - 1, 0, -1):
+            section = trimmed[index]
+            if section.startswith(removable_prefixes):
+                trimmed.pop(index)
+                removed = True
+                break
+        if not removed:
+            break
+    result = marker.join(trimmed)
+    if len(result) > max_chars:
+        result = result[:max_chars] + "\n\n[contexto truncado para caber no limite da API Groq]"
+    return result
+
+
+def _log_groq_prompt_diagnostics(
+    *,
+    groq_messages: list[dict],
+    chunks: list[dict],
+    pending_resolution,
+    workflow: str | None,
+) -> None:
+    system = next(
+        (message.get("content", "") for message in groq_messages if message.get("role") == "system"),
+        "",
+    )
+    history = [message for message in groq_messages if message.get("role") != "system"]
+    payload_bytes = _groq_payload_size(groq_messages)
+    _conversation_state_log(
+        "[prompt-size]",
+        {
+            "bytes": payload_bytes,
+            "system_bytes": len(str(system).encode("utf-8")),
+            "history_bytes": sum(len(str(message.get("content", "")).encode("utf-8")) for message in history),
+            "history_messages": len(history),
+            "workflow": workflow,
+            "has_pending_resolution": pending_resolution is not None,
+        },
+    )
+    _conversation_state_log(
+        "[token-estimate]",
+        {
+            "total": _estimate_token_count(json.dumps(groq_messages, ensure_ascii=False)),
+            "system": _estimate_token_count(str(system)),
+            "history": _estimate_token_count(
+                json.dumps(history, ensure_ascii=False),
+            ),
+        },
+    )
+    _conversation_state_log(
+        "[retrieved-chunks]",
+        {
+            "count": len(chunks),
+            "top_similarity": chunks[0]["similarity"] if chunks else 0.0,
+            "workflow": workflow,
+        },
+    )
+
+
 def _fit_groq_messages(
     messages: list[dict],
     *,
     max_bytes: int = GROQ_MAX_REQUEST_BYTES,
 ) -> list[dict]:
     def payload_size(msgs: list[dict]) -> int:
-        return len(
-            json.dumps({"messages": msgs}, ensure_ascii=False).encode("utf-8")
-        )
+        return _groq_payload_size(msgs)
 
     fitted = [dict(message) for message in messages]
     while payload_size(fitted) > max_bytes and len(fitted) > 2:
@@ -244,13 +393,21 @@ def _fit_groq_messages(
 
     system = dict(fitted[0])
     content = str(system.get("content", ""))
-    budget = max(8_000, max_bytes // 2)
+    budget = max(6_000, max_bytes - 4_000)
     if len(content) > budget:
-        system["content"] = (
-            content[:budget]
-            + "\n\n[contexto truncado para caber no limite da API Groq]"
-        )
+        system["content"] = _trim_system_prompt_sections(content, max_chars=budget)
         fitted[0] = system
+
+    if payload_size(fitted) > max_bytes:
+        system = dict(fitted[0])
+        content = str(system.get("content", ""))
+        hard_budget = max(4_000, max_bytes // 2)
+        if len(content) > hard_budget:
+            system["content"] = (
+                content[:hard_budget]
+                + "\n\n[contexto truncado para caber no limite da API Groq]"
+            )
+            fitted[0] = system
     return fitted
 
 
@@ -789,6 +946,7 @@ async def lifespan(app: FastAPI):
         else:
             print("🗄️  Carregando ChromaDB...")
             print(f"   DB_PATH={DB_PATH}")
+            print(f"   chroma_db_path_source={chroma_db_path_source()}")
             print(
                 "   CHROMA_DB_PATH="
                 f"{os.environ.get('CHROMA_DB_PATH') or '<unset; using default>'}"
@@ -1947,6 +2105,15 @@ async def chat(payload: AgentChatRequest) -> StreamingResponse:
         chunks = _agent_chunks(agent_context)
         _log_memory("post-retrieval")
 
+        composition_messages = _collapse_messages_for_workflow_resume(
+            messages,
+            pending_resolution,
+        )
+        structured_context = _compact_agent_context(
+            runtime.structured_context(agent_context),
+            workflow=agent_context.plan.workflow,
+        )
+
         top_similarity = chunks[0]["similarity"] if chunks else 0.0
         if (
             top_similarity < DOMAIN_GATE_THRESHOLD
@@ -1971,15 +2138,21 @@ async def chat(payload: AgentChatRequest) -> StreamingResponse:
 
         groq_messages = _fit_groq_messages(
             _build_groq_messages(
-                messages,
+                composition_messages,
                 query,
                 route,
                 cognition,
                 chunks,
                 calibration_override=calibration_override,
-                agent_context=runtime.structured_context(agent_context),
+                agent_context=structured_context,
                 surface_context=payload.surface_context,
             )
+        )
+        _log_groq_prompt_diagnostics(
+            groq_messages=groq_messages,
+            chunks=chunks,
+            pending_resolution=pending_resolution,
+            workflow=agent_context.plan.workflow,
         )
         generated_text: list[str] = []
         buffer_until_validation = (

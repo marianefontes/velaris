@@ -29,6 +29,13 @@ from .entity_validation_gate import (
     validate_entity_for_capability,
 )
 from .knowledge_taxonomy import classify_knowledge_state, knowledge_state_payload
+from .anti_pattern_detection import detect_anti_patterns_from_selection
+from .component_comparison import (
+    build_modal_drawer_comparison,
+    format_component_comparison_response,
+    is_modal_drawer_comparison_query,
+)
+from .evidence_confidence import build_evidence_confidence
 from .migration_advisor import build_migration_advisor_contract
 from .page_recommendation import (
     build_page_recommendation_contract,
@@ -52,6 +59,7 @@ from .models import (
     ResponseValidation,
     QueryUnderstanding,
     MultiAgentCouncilAnalysis,
+    PerceptionIntelligence,
     StrategicReasoningAnalysis,
     SystemImpactAnalysis,
     ToolExecutionSummary,
@@ -91,6 +99,15 @@ from .decision_intelligence import (
     build_tradeoff_analysis,
     is_significant_change,
     resolve_decision_memory,
+)
+from .decision_perception import (
+    append_perception_if_needed,
+    build_evidence_gap_explanation,
+    build_perception_intelligence,
+    format_decision_reasoning_brief,
+    format_evidence_gap_response,
+    is_specific_perspective,
+    should_deliver_institutional_reasoning_only,
 )
 from .decision_validator import (
     deterministic_decision_response,
@@ -141,6 +158,8 @@ STEP_LABELS: dict[str, str] = {
     "evidence_scored": "Evidence scored",
     "tool_results_built": "Tool results built",
     "component_selection_completed": "Component selection completed",
+    "perception_intelligence_built": "Perception intelligence built",
+    "institutional_reasoning_delivered": "Institutional reasoning delivered",
     "llm_composition_started": "LLM composition started",
     "response_validated": "Response validated",
     "fallback_applied": "Deterministic fallback applied",
@@ -236,8 +255,10 @@ class AgentExecutionContext:
     system_impact: SystemImpactAnalysis | None = None
     strategic_reasoning: StrategicReasoningAnalysis | None = None
     multi_agent_council: MultiAgentCouncilAnalysis | None = None
+    perception_intelligence: PerceptionIntelligence | None = None
     pending_resolution: PendingIntentResolution | None = None
     entity_validation: EntityValidationResult | None = None
+    command_mode: str | None = None
 
     def decision_intelligence_active(self) -> bool:
         return (
@@ -270,6 +291,8 @@ class AgentExecutionContext:
             "concept_query",
             "legacy_name_query",
             "agent_identity",
+            "agent_capability",
+            "roadmap_capability",
             "out_of_scope",
         }
 
@@ -552,6 +575,7 @@ class AgentRuntime:
             plan=plan,
             recorder=recorder,
             pending_resolution=pending_resolution,
+            command_mode=command_mode,
         )
         self.store.create_run(
             request_id=request_id,
@@ -584,6 +608,8 @@ class AgentRuntime:
             "comparison_rule",
             "legacy_name_query",
             "agent_identity",
+            "agent_capability",
+            "roadmap_capability",
             "out_of_scope",
         }
         _debug(
@@ -759,6 +785,44 @@ class AgentRuntime:
                 agent_identity_response(english=self._is_english(query))
             )
             _debug("answered deterministically: agent_identity")
+            self._finalize(context, status="completed")
+            return context
+
+        if plan.understanding.user_intent == "roadmap_capability":
+            from agent.capability_responses import roadmap_capability_response
+
+            recorder.add(
+                "policy_checked",
+                details="Deterministic roadmap_capability response approved.",
+            )
+            recorder.add("response_completed")
+            context.should_compose = False
+            context.deterministic_response = dedupe_response(
+                roadmap_capability_response(
+                    query,
+                    english=self._is_english(query),
+                )
+            )
+            _debug("answered deterministically: roadmap_capability")
+            self._finalize(context, status="completed")
+            return context
+
+        if plan.understanding.user_intent == "agent_capability":
+            from agent.capability_responses import agent_capability_response
+
+            recorder.add(
+                "policy_checked",
+                details="Deterministic agent_capability response approved.",
+            )
+            recorder.add("response_completed")
+            context.should_compose = False
+            context.deterministic_response = dedupe_response(
+                agent_capability_response(
+                    query,
+                    english=self._is_english(query),
+                )
+            )
+            _debug("answered deterministically: agent_capability")
             self._finalize(context, status="completed")
             return context
 
@@ -951,11 +1015,13 @@ class AgentRuntime:
                 context.deterministic_response = self._greeting_response(
                     query,
                     understanding=understanding,
+                    rotation_seed=f"{session_id}:{request_id}",
                 )
             elif intent == "small_talk":
                 context.deterministic_response = self._small_talk_response(
                     query,
                     understanding=understanding,
+                    rotation_seed=f"{session_id}:{request_id}",
                 )
             else:
                 context.deterministic_response = self._capabilities_response(query)
@@ -1062,7 +1128,11 @@ class AgentRuntime:
                 status="failed",
                 details=", ".join(execution.failed_tools),
             )
-        if plan.workflow in {"component_decision", "decision_analysis"}:
+        if plan.workflow in {
+            "component_decision",
+            "decision_analysis",
+            "compare_options",
+        }:
             context.component_selection = build_component_selection(
                 execution.evidence,
                 query=query,
@@ -1166,14 +1236,19 @@ class AgentRuntime:
             f"failed_tools={execution.failed_tools}"
         )
 
-        if context.decision_intelligence_active():
-            context.decision_memory = resolve_decision_memory(
-                self.store,
-                project_id=context.project_id,
-                session_id=context.session_id,
-                query=context.query,
-                entities=plan.understanding.entities,
-            )
+        needs_tradeoff = (
+            context.decision_intelligence_active()
+            or plan.workflow in {"component_decision", "compare_options"}
+        )
+        if needs_tradeoff:
+            if context.decision_intelligence_active():
+                context.decision_memory = resolve_decision_memory(
+                    self.store,
+                    project_id=context.project_id,
+                    session_id=context.session_id,
+                    query=context.query,
+                    entities=plan.understanding.entities,
+                )
             context.tradeoff_analysis = build_tradeoff_analysis(
                 query=context.query,
                 execution=execution,
@@ -1184,24 +1259,79 @@ class AgentRuntime:
                 execution=execution,
                 entities=plan.understanding.entities,
             )
-            context.multi_agent_council = build_multi_agent_council(
-                query=context.query,
-                tradeoff=context.tradeoff_analysis or TradeoffAnalysis(),
-                impact=context.system_impact or SystemImpactAnalysis(),
-                english=self._is_english(context.query),
-            )
-            if context.architect_review_active():
-                context.strategic_reasoning = build_strategic_reasoning(
+            if context.decision_intelligence_active():
+                context.multi_agent_council = build_multi_agent_council(
                     query=context.query,
                     tradeoff=context.tradeoff_analysis or TradeoffAnalysis(),
                     impact=context.system_impact or SystemImpactAnalysis(),
-                    memory=context.decision_memory,
-                    entities=plan.understanding.entities,
-                    execution=execution,
-                    store=self.store,
-                    project_id=context.project_id,
                     english=self._is_english(context.query),
                 )
+                if context.architect_review_active():
+                    context.strategic_reasoning = build_strategic_reasoning(
+                        query=context.query,
+                        tradeoff=context.tradeoff_analysis or TradeoffAnalysis(),
+                        impact=context.system_impact or SystemImpactAnalysis(),
+                        memory=context.decision_memory,
+                        entities=plan.understanding.entities,
+                        execution=execution,
+                        store=self.store,
+                        project_id=context.project_id,
+                        english=self._is_english(context.query),
+                    )
+            context.perception_intelligence = build_perception_intelligence(
+                query=context.query,
+                workflow=plan.workflow,
+                understanding=plan.understanding,
+                component_selection=context.component_selection,
+                execution=execution,
+                tradeoff=context.tradeoff_analysis,
+                impact=context.system_impact,
+                profile=context.profile,
+                english=self._is_english(context.query),
+            )
+            if context.perception_intelligence is not None:
+                context.recorder.add(
+                    "perception_intelligence_built",
+                    details=context.perception_intelligence.recommendation,
+                )
+                modal_drawer_comparison = build_modal_drawer_comparison(
+                    context.query,
+                    english=self._is_english(context.query),
+                )
+                if (
+                    modal_drawer_comparison is not None
+                    and plan.workflow == "compare_options"
+                ):
+                    context.should_compose = False
+                    context.deterministic_response = (
+                        format_component_comparison_response(
+                            modal_drawer_comparison,
+                            english=self._is_english(context.query),
+                        )
+                    )
+                    context.recorder.add(
+                        "institutional_reasoning_delivered",
+                        details=modal_drawer_comparison.rule_id,
+                    )
+                    self._finalize(context, status="completed")
+                    return context
+                if should_deliver_institutional_reasoning_only(
+                    workflow=plan.workflow,
+                    understanding=plan.understanding,
+                    query=context.query,
+                    perception=context.perception_intelligence,
+                ):
+                    context.should_compose = False
+                    context.deterministic_response = format_decision_reasoning_brief(
+                        context.perception_intelligence,
+                        english=self._is_english(context.query),
+                    )
+                    context.recorder.add(
+                        "institutional_reasoning_delivered",
+                        details=plan.workflow,
+                    )
+                    self._finalize(context, status="completed")
+                    return context
 
         if plan.workflow == "component_decision" and context.component_selection:
             if context.component_selection.recommended is None:
@@ -1257,7 +1387,7 @@ class AgentRuntime:
             else:
                 context.limitations.append("No official evidence was retrieved.")
                 context.deterministic_response = (
-                    self._insufficient_evidence_response(query)
+                    self._insufficient_evidence_response(context)
                 )
                 _debug("blocked: insufficient evidence for non-component workflow")
                 self._finalize(context, status="limited")
@@ -1460,18 +1590,51 @@ class AgentRuntime:
                         "Componente recomendado",
                         "Motivo",
                         "Limites",
-                        "Campos ausentes",
-                        "Evidência",
                     ],
-                    "alternatives_section_allowed": bool(
-                        context.component_selection
-                        and context.component_selection.alternative_components
-                    ),
-                    "evidence_similarity_label": (
-                        "similaridade da evidência, never answer confidence"
+                    "forbidden": [
+                        "confidence percentages",
+                        "recommendation score",
+                        "similarity percentages",
+                        "multi-perspective opinions when a specific profile is active",
+                    ],
+                    "perception_appendix": (
+                        "Institutional decision reasoning (Recomendação, Justificativa, "
+                        "Limitações, Alternativas relevantes, Condições de aceite, "
+                        "Riscos residuais) is appended after composition when applicable. "
+                        "Do not duplicate those sections or invent metrics."
                     ),
                 }
                 if context.plan.workflow == "component_decision"
+                else None
+            ),
+            "decision_reasoning_contract": (
+                {
+                    "required_sections": [
+                        "Recomendação",
+                        "Justificativa",
+                        "Limitações",
+                        "Alternativas relevantes",
+                        "Condições de aceite",
+                        "Riscos residuais",
+                    ],
+                    "forbidden": [
+                        "confidence percentages",
+                        "recommendation score",
+                        "similarity percentages",
+                    ],
+                    "single_perspective_rule": (
+                        "When a specific profile is active, respond only from that "
+                        "lens. Do not quote other perspectives."
+                        if is_specific_perspective(context.profile)
+                        else None
+                    ),
+                }
+                if context.perception_intelligence is not None
+                else None
+            ),
+            "perception_intelligence": (
+                context.perception_intelligence.model_dump(mode="json")
+                if context.perception_intelligence is not None
                 else None
             ),
             "migration_advisor_contract": (
@@ -1520,6 +1683,69 @@ class AgentRuntime:
                     ),
                 }
                 if context.pending_resolution is not None
+                else None
+            ),
+            "component_comparison_contract": (
+                comparison.model_dump(mode="json")
+                if (
+                    comparison := build_modal_drawer_comparison(
+                        context.query,
+                        english=self._is_english(context.query),
+                    )
+                )
+                is not None
+                and (
+                    context.plan.workflow in {"compare_options", "component_decision"}
+                    or is_modal_drawer_comparison_query(context.query)
+                )
+                else None
+            ),
+            "evidence_confidence": (
+                [
+                    item.model_dump(mode="json")
+                    for item in build_evidence_confidence(
+                        context.component_selection,
+                        english=self._is_english(context.query),
+                    )
+                ]
+                if context.component_selection
+                and context.component_selection.recommended
+                and context.plan.workflow
+                in {"component_decision", "compare_options", "comparison_rule"}
+                else None
+            ),
+            "anti_pattern_hits": (
+                lambda hits: [
+                    hit.model_dump(mode="json") for hit in hits
+                ]
+                if hits
+                else None
+            )(
+                detect_anti_patterns_from_selection(
+                    context.query,
+                    context.component_selection,
+                )
+                if (
+                    context.command_mode in {"enforce", "contract-check"}
+                    or context.plan.workflow == "component_decision"
+                )
+                else []
+            ),
+            "enforce_audit_contract": (
+                {
+                    "command_mode": context.command_mode,
+                    "required_sections": [
+                        "Violações detectadas",
+                        "Regra violada",
+                        "Princípio",
+                        "Alternativa recomendada",
+                    ],
+                    "instruction": (
+                        "Use anti_pattern_hits and component_selection dont rules. "
+                        "Do not invent violations or promote undocumented components."
+                    ),
+                }
+                if context.command_mode in {"enforce", "contract-check"}
                 else None
             ),
             "composer_boundary": (
@@ -1707,6 +1933,15 @@ class AgentRuntime:
                 status="completed",
                 details="evidence_integrity",
             )
+
+        sealed = append_perception_if_needed(
+            sealed,
+            context.perception_intelligence,
+            english=english,
+            workflow=context.plan.workflow,
+            understanding=context.plan.understanding,
+            query=context.query,
+        )
 
         return sanitize_assistant_content(dedupe_response(sealed))
 
@@ -2011,18 +2246,19 @@ class AgentRuntime:
             "componente, token ou pattern documentado."
         )
 
-    def _insufficient_evidence_response(self, query: str) -> str:
-        if self._is_english(query):
-            return (
-                "The official corpus did not provide enough evidence to answer "
-                "this request without speculation. Naming a specific component, "
-                "token or pattern helps me ground the answer."
-            )
-        return (
-            "O corpus oficial não forneceu evidência suficiente para responder "
-            "a este pedido sem especulação. Citar um componente, token ou "
-            "pattern específico me ajuda a fundamentar a resposta."
+    def _insufficient_evidence_response(
+        self,
+        context: AgentExecutionContext,
+    ) -> str:
+        english = self._is_english(context.query)
+        explanation = build_evidence_gap_explanation(
+            query=context.query,
+            understanding=context.plan.understanding,
+            execution=context.execution,
+            workflow=context.plan.workflow,
+            english=english,
         )
+        return format_evidence_gap_response(explanation, english=english)
 
     def _navigation_fallback_response(self, query: str) -> str:
         if self._is_english(query):
@@ -2222,9 +2458,12 @@ class AgentRuntime:
         query: str,
         *,
         understanding: QueryUnderstanding,
+        rotation_seed: str,
     ) -> str:
         return greeting_response(
             english=self._social_response_english(query, understanding),
+            language=understanding.language,
+            rotation_seed=rotation_seed,
         )
 
     def _small_talk_response(
@@ -2232,40 +2471,16 @@ class AgentRuntime:
         query: str,
         *,
         understanding: QueryUnderstanding,
+        rotation_seed: str,
     ) -> str:
         return small_talk_response(
             query,
             english=self._social_response_english(query, understanding),
+            language=understanding.language,
+            rotation_seed=rotation_seed,
         )
 
     def _capabilities_response(self, query: str) -> str:
-        if self._is_english(query):
-            return (
-                "I am Abraxos, the Velaris design-system oracle. I can help "
-                "you with:\n\n"
-                "- Components: when to use, when not to use, intents, states and usage examples\n"
-                "- Patterns: screen structure, flows and composition\n"
-                "- Tokens: color, typography, spacing and semantic roles\n"
-                "- Guidelines and accessibility: WCAG, keyboard, ARIA and focus\n"
-                "- Design decisions: documented rationale and trade-offs\n"
-                "- Interface audits: review an existing usage against the documented rules\n"
-                "- Comparisons: decision criteria between two alternatives\n"
-                "- Documentation for developers, designers, QA, product designers, "
-                "tech writers and design system managers\n\n"
-                "Ask, for example: \"When should I use Button?\", \"Which token "
-                "for brand emphasis?\" or \"Modal or Toast for confirmation?\""
-            )
-        return (
-            "Sou o Abraxos, o oráculo do design system Velaris. Posso ajudar com:\n\n"
-            "- Componentes: quando usar, quando não usar, intents, estados e exemplos de uso\n"
-            "- Patterns: estrutura de telas, fluxos e composição\n"
-            "- Tokens: cor, tipografia, espaçamento e papéis semânticos\n"
-            "- Guidelines e acessibilidade: WCAG, teclado, ARIA e foco\n"
-            "- Decisões de design: racional documentado e trade-offs\n"
-            "- Auditoria de interface: revisar um uso existente contra as regras documentadas\n"
-            "- Comparação entre alternativas: critérios de decisão entre duas opções\n"
-            "- Documentação para developers, designers, QA, product designers, "
-            "tech writers e design system managers\n\n"
-            "Pergunte, por exemplo: \"Quando usar Button?\", \"Qual token para "
-            "destaque da marca?\" ou \"Modal ou Toast para confirmação?\""
-        )
+        from agent.capability_responses import current_capabilities_response
+
+        return current_capabilities_response(english=self._is_english(query))

@@ -14,6 +14,7 @@ from fastapi.testclient import TestClient
 
 import server
 from agent.registry import ToolRegistry
+from agent.social_variations import GREETING_VARIATIONS
 from agent.store import AgentStore
 from agent.tools import (
     build_compare_design_options_tool,
@@ -170,11 +171,7 @@ class AgentSSEContractTests(unittest.TestCase):
             events[0]["audit_metadata"]["evidence_tier"],
             "not_required",
         )
-        self.assertEqual(
-            events[1]["delta"],
-            "Olá. Posso ajudar com componentes, tokens, padrões, perspectivas, "
-            "acessibilidade, auditorias e decisões do Velaris.",
-        )
+        self.assertIn(events[1]["delta"], GREETING_VARIATIONS["pt-BR"])
         final = events[-1]["audit_metadata"]
         self.assertEqual(final["execution_status"], "completed")
         self.assertEqual(final["user_intent"], "greeting")

@@ -18,7 +18,6 @@ QUERY = (
     "como excluir um item importante?"
 )
 
-
 def component_chunk(
     component_id: str,
     *,
@@ -73,22 +72,23 @@ class ComponentIntelligenceTests(unittest.TestCase):
             ]),
             query=QUERY,
             profile="dev",
+            workflow="component_decision",
         )
 
     def test_selects_highest_eligible_component_and_near_alternative(self) -> None:
         selection = self.selection()
         self.assertEqual(
             selection.recommended.component.component_id,
-            "modal-dialog",
+            "button",
         )
         self.assertEqual(
-            [item.component_id for item in selection.alternative_components],
-            ["alert"],
+            {item.component_id for item in selection.alternative_components},
+            {"modal-dialog", "alert"},
         )
         self.assertEqual(selection.alternative_threshold, 0.03)
         self.assertEqual(selection.alternative_limit, 3)
         self.assertNotIn(
-            "modal-dialog",
+            "button",
             [item.component_id for item in selection.alternative_components],
         )
 
@@ -103,7 +103,6 @@ class ComponentIntelligenceTests(unittest.TestCase):
             all(rule.sources for rule in recommended.selected_when_to_use)
         )
         self.assertIn("intent", recommended.missing_fields)
-        self.assertIn("anti_patterns", recommended.missing_fields)
         self.assertEqual(recommended.empty_fields, [])
 
     def test_developer_and_accessibility_receive_structured_accessibility_fields(self) -> None:
@@ -210,7 +209,7 @@ class ComponentIntelligenceTests(unittest.TestCase):
         self.assertEqual(validation.violation_type, "promoted_alternative")
         self.assertEqual(validation.promoted_component_detected, "Alert")
         fallback = deterministic_component_response(selection)
-        self.assertIn("Modal/Dialog", fallback)
+        self.assertIn("Button", fallback)
         self.assertIn("Alert", fallback)
         self.assertNotIn("Retrieval evidence tier", fallback)
         self.assertNotIn("Documentação", fallback)
@@ -218,12 +217,12 @@ class ComponentIntelligenceTests(unittest.TestCase):
     def test_valid_response_passes_without_fallback(self) -> None:
         selection = self.selection()
         response = (
-            "Componente recomendado: Modal/Dialog\n\n"
-            "Motivo\nA confirmação é bloqueante.\n\n"
-            "Limites\nNão use para conteúdo longo.\n\n"
+            "Componente recomendado: Button\n\n"
+            "Motivo\nA ação destrutiva exige um controle de ação explícito.\n\n"
+            "Limites\nNão use disabled sem explicar por que a ação está indisponível.\n\n"
             "Campos ausentes\nintent, variants.\n\n"
             "Evidência\nEvidence tier: partial.\n\n"
-            "Alternativas\nAlert."
+            "Alternativas\nModal/Dialog, Alert."
         )
         validation = validate_component_response(response, selection)
         self.assertEqual(validation.status, "pass")
@@ -232,12 +231,12 @@ class ComponentIntelligenceTests(unittest.TestCase):
     def test_invented_confidence_percentage_triggers_fallback(self) -> None:
         selection = self.selection()
         response = (
-            "Componente recomendado: Modal/Dialog\n\n"
-            "Motivo\nA confirmação é bloqueante.\n\n"
-            "Limites\nNão use para conteúdo longo.\n\n"
+            "Componente recomendado: Button\n\n"
+            "Motivo\nA ação destrutiva exige um controle de ação explícito.\n\n"
+            "Limites\nNão use disabled sem explicar por que a ação está indisponível.\n\n"
             "Campos ausentes\nintent, variants.\n\n"
             "Evidência\nConfiança: 92%.\n\n"
-            "Alternativas\nAlert."
+            "Alternativas\nModal/Dialog, Alert."
         )
         validation = validate_component_response(response, selection)
         self.assertEqual(validation.status, "fallback")

@@ -356,32 +356,47 @@ def deprecated_entity_lookup_response(
     return partial_entity_lookup_response(component, english=english)
 
 
-def greeting_response(*, english: bool = False) -> str:
-    if english:
-        return (
-            "Hi. I can help with components, tokens, patterns, perspectives, "
-            "accessibility, audits, and Velaris decisions."
-        )
-    return (
-        "Olá. Posso ajudar com componentes, tokens, padrões, perspectivas, "
-        "acessibilidade, auditorias e decisões do Velaris."
+def greeting_response(
+    *,
+    english: bool = False,
+    language: str = "pt-BR",
+    rotation_seed: str = "greeting",
+) -> str:
+    from agent.social_variations import (
+        GREETING_VARIATIONS,
+        pick_variation,
+        resolve_locale_key,
     )
 
+    locale = resolve_locale_key(english=english, language=language, query="")
+    pool = GREETING_VARIATIONS[locale]
+    return pick_variation(pool, seed=f"{rotation_seed}:greeting")
 
-def small_talk_response(query: str, *, english: bool = False) -> str:
+
+def small_talk_response(
+    query: str,
+    *,
+    english: bool = False,
+    language: str = "pt-BR",
+    rotation_seed: str = "small_talk",
+) -> str:
+    from agent.social_variations import (
+        HELP_VARIATIONS,
+        ONLINE_VARIATIONS,
+        WELLBEING_VARIATIONS,
+        pick_variation,
+        resolve_locale_key,
+    )
+
     normalized = normalize_query(query)
+    locale = resolve_locale_key(english=english, language=language, query=query)
     if any(
         marker in normalized
         for marker in ("estas online", "are you online", "voce esta online", "você está online")
     ):
-        if english:
-            return (
-                "I'm online. I can help with components, tokens, patterns, "
-                "and Velaris decisions."
-            )
-        return (
-            "Estou online. Posso ajudar com componentes, tokens, padrões "
-            "e decisões do Velaris."
+        return pick_variation(
+            ONLINE_VARIATIONS[locale],
+            seed=f"{rotation_seed}:online",
         )
     if any(
         marker in normalized
@@ -399,20 +414,14 @@ def small_talk_response(query: str, *, english: bool = False) -> str:
             "pode me ajudar",
         )
     ):
-        if english:
-            return (
-                "Of course. Tell me if you want to find a component, token, "
-                "pattern, perspective, or documented decision in Velaris."
-            )
-        return (
-            "Claro. Diz-me se queres encontrar um componente, token, padrão, "
-            "perspectiva ou decisão do Velaris."
+        return pick_variation(
+            HELP_VARIATIONS[locale],
+            seed=f"{rotation_seed}:help",
         )
-    if english:
-        return (
-            "I'm doing well. Tell me what you want to investigate in Velaris."
-        )
-    return "Tudo bem. Diz-me o que queres investigar no Velaris."
+    return pick_variation(
+        WELLBEING_VARIATIONS[locale],
+        seed=f"{rotation_seed}:wellbeing",
+    )
 
 
 def navigation_response(

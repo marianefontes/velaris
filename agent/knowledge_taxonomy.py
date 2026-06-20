@@ -96,6 +96,8 @@ def classify_knowledge_state(
         "general_design_system",
         "help_request",
         "concept_query",
+        "agent_capability",
+        "roadmap_capability",
     }:
         return "canonical"
 

@@ -46,6 +46,8 @@ NON_RAG_INTENTS: frozenset[UserIntent] = frozenset({
     "direct_entity_guidance",
     "concept_query",
     "legacy_name_query",
+    "agent_capability",
+    "roadmap_capability",
     "out_of_scope",
 })
 

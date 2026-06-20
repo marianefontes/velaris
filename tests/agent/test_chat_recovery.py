@@ -16,6 +16,7 @@ from pathlib import Path
 from agent.registry import ToolRegistry
 from agent.runtime import AgentRuntime
 from agent.store import AgentStore
+from agent.social_variations import GREETING_VARIATIONS
 from agent.understanding import analyze_query
 from agent.planner import build_agent_plan
 from tests.agent.test_runtime import build_registry
@@ -85,7 +86,7 @@ class HelpRequestTests(RuntimeHarness):
         self.assertFalse(context.should_compose)
         self.assertIsNotNone(context.deterministic_response)
         response = context.deterministic_response
-        for capability in ("omponente", "okens", "atterns", "cessibilidade"):
+        for capability in ("componentes", "okens", "adrões", "cessibilidade"):
             self.assertIn(capability, response)
         self.assertNotIn(GENERIC_FAILURE_PT, response)
         run = self.store.get_run(context.request_id)
@@ -182,11 +183,7 @@ class GreetingTests(RuntimeHarness):
         self.assertEqual(context.plan.workflow, "greeting")
         self.assertFalse(context.should_compose)
         self.assertIsNone(context.execution)
-        self.assertEqual(
-            context.deterministic_response,
-            "Olá. Posso ajudar com componentes, tokens, padrões, perspectivas, "
-            "acessibilidade, auditorias e decisões do Velaris.",
-        )
+        self.assertIn(context.deterministic_response, GREETING_VARIATIONS["pt-BR"])
         audit = context.audit_metadata(execution_status="completed")
         self.assertEqual(audit.evidence_tier, "not_required")
         self.assertEqual(audit.tools_used, [])
@@ -269,7 +266,10 @@ class CatalogFallbackTests(RuntimeHarness):
         self.assertEqual(understanding.user_intent, "component_comparison")
         context = self.prepare(query, routed_intent="comparison_query")
         self.assertEqual(context.plan.workflow, "compare_options")
-        self.assertTrue(context.should_compose)
+        self.assertFalse(context.should_compose)
+        response = context.deterministic_response or ""
+        self.assertIn("Side Drawer", response)
+        self.assertIn("Modal/Dialog", response)
 
 
 class TechnicalFailureTests(RuntimeHarness):
@@ -328,7 +328,10 @@ class MandatoryRoutingTests(RuntimeHarness):
         self.assertEqual(understanding.user_intent, "component_comparison")
         context = self.prepare(query, routed_intent="comparison_query")
         self.assertEqual(context.plan.workflow, "compare_options")
-        self.assertTrue(context.should_compose)
+        self.assertFalse(context.should_compose)
+        response = context.deterministic_response or ""
+        self.assertIn("Side Drawer", response)
+        self.assertIn("Modal/Dialog", response)
 
     def test_capital_of_france_is_out_of_scope(self) -> None:
         understanding = analyze_query("qual a capital da França?")

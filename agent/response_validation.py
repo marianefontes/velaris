@@ -413,6 +413,15 @@ def deterministic_component_response(
         localized_text(component.intent.label, "en" if english else "pt")
         if component.intent else None
     )
+    purpose = (
+        selection.documented_purpose
+        or (
+            recommended.context_fit.documented_purpose
+            if recommended.context_fit
+            else ""
+        )
+        or localized_text(component.about, "en" if english else "pt")
+    )
     reasons = [
         rule.text
         for rule in [
@@ -434,6 +443,8 @@ def deterministic_component_response(
     ]
     if english:
         reason_parts = [f"Status: {component.status}."]
+        if purpose:
+            reason_parts.append(f"Documented purpose: {purpose}")
         if intent_text:
             reason_parts.append(f"Documented intent: {intent_text}.")
         reason_parts.extend(reasons)
@@ -449,6 +460,8 @@ def deterministic_component_response(
         return dedupe_response("\n\n".join(sections))
 
     reason_parts = [f"Status: {component.status}."]
+    if purpose:
+        reason_parts.append(f"Propósito documentado: {purpose}")
     if intent_text:
         reason_parts.append(f"Intent documentado: {intent_text}.")
     reason_parts.extend(reasons)

@@ -116,6 +116,18 @@ _COMMAND_SIMULATE = re.compile(
     re.I,
 )
 
+_ROADMAP_CAPABILITY_RE = re.compile(
+    r"(?:"
+    r"aceita(?:r)?\s+(?:imagem|imagens|screenshot|screenshots|arquivo|arquivos)"
+    r"|(?:analisa|analisar|interpreta|interpretar)\s+"
+    r"(?:imagem|imagens|screenshot|screenshots|tela|telas|interface|interfaces)"
+    r"|(?:le|ler|read)\s+(?:figma|arquivo(?:s)?\s+do\s+figma)"
+    r"|(?:integra(?:cao|cão)|integration)\s+(?:com\s+)?figma"
+    r"|(?:upload|enviar)\s+(?:de\s+)?(?:imagem|imagens|screenshot)"
+    r")",
+    re.I,
+)
+
 
 def _contains_any(value: str, terms: tuple[str, ...]) -> bool:
     return any(term in value for term in terms)
@@ -123,6 +135,17 @@ def _contains_any(value: str, terms: tuple[str, ...]) -> bool:
 
 def resolve_intelligence_intent(query: str, normalized: str) -> str | None:
     """Return intelligence-layer intent id or None."""
+    from agent.capability_responses import (
+        is_agent_capability_query,
+        is_roadmap_capability_query,
+    )
+
+    if _ROADMAP_CAPABILITY_RE.search(normalized) or is_roadmap_capability_query(
+        normalized
+    ):
+        return "roadmap_capability"
+    if is_agent_capability_query(normalized):
+        return "agent_capability"
     if _COMMAND_HEALTH.search(query) or _contains_any(normalized, _SYSTEM_HEALTH_TERMS):
         return "system_health"
     if _COMMAND_GOVERNANCE.search(query) or _contains_any(normalized, _GOVERNANCE_ANALYSIS_TERMS):

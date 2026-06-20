@@ -103,6 +103,17 @@ def build_claims_from_selection(
                     confidence="strong",
                 ))
 
+    for index, rule in enumerate(recommended.selected_do_rules[:3]):
+        claims.append(Claim(
+            id=f"do.{index}",
+            claim=rule.text,
+            evidence_source=rule.sources[0] if rule.sources else "do",
+            evidence_strength=rule.rule_similarity,
+            confidence=_tier_to_confidence(
+                "strong" if rule.rule_similarity >= 0.75 else "partial"
+            ),
+        ))
+
     for index, rule in enumerate(recommended.selected_when_to_use[:3]):
         claims.append(Claim(
             id=f"when_to_use.{index}",
