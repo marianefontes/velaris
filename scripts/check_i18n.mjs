@@ -35,8 +35,8 @@ function sourceFiles() {
   }
 }
 
-function loadTranslations() {
-  const source = fs.readFileSync(translationFile, "utf8");
+function loadLocaleModule(file) {
+  const source = fs.readFileSync(file, "utf8");
   const output = ts.transpileModule(source, {
     compilerOptions: {
       module: ts.ModuleKind.CommonJS,
@@ -45,7 +45,16 @@ function loadTranslations() {
   }).outputText;
   const exports = {};
   new Function("exports", output)(exports);
-  return exports.translations;
+  return exports.default;
+}
+
+function loadTranslations() {
+  const localesDir = path.join(root, "src/i18n/locales");
+  return {
+    "pt-BR": loadLocaleModule(path.join(localesDir, "pt-BR.ts")),
+    "pt-PT": loadLocaleModule(path.join(localesDir, "pt-PT.ts")),
+    "en-US": loadLocaleModule(path.join(localesDir, "en-US.ts")),
+  };
 }
 
 function flatten(value, prefix = "", output = new Map()) {

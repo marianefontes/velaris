@@ -15,6 +15,7 @@ import {
   type Locale,
   type TranslationKey,
 } from "./translations";
+import { getCachedLocaleTable, loadLocaleTable, preloadLocale, primeLocaleTable } from "./localeLoaders";
 
 const STORAGE_KEY = "aetheris.locale";
 const reportedMissingKeys = new Set<string>();
@@ -25,9 +26,12 @@ interface I18nContextValue {
   locale: Locale;
   setLocale: (locale: Locale) => void;
   t: (key: TranslationKey, params?: TranslationParams) => string;
+  localeReady: boolean;
 }
 
 const I18nContext = createContext<I18nContextValue | null>(null);
+
+primeLocaleTable("pt-BR", translations["pt-BR"]);
 
 function readKey(source: unknown, path: string): unknown {
   return path.split(".").reduce<unknown>((current, segment) => {
@@ -62,27 +66,46 @@ export function translate(
   key: TranslationKey,
   params?: TranslationParams,
 ): string {
-  const localized = readKey(translations[locale], key);
+  const localized = readKey(getCachedLocaleTable(locale) ?? translations["pt-BR"], key);
   if (typeof localized === "string") return interpolate(localized, params);
 
-  const fallback = readKey(translations[defaultLocale], key);
+  const fallback = readKey(translations["pt-BR"], key);
   reportMissingKey(locale, key);
   return typeof fallback === "string" ? interpolate(fallback, params) : key;
 }
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocale] = useState<Locale>(() => {
+  const [locale, setLocaleState] = useState<Locale>(() => {
     const saved = typeof window === "undefined"
       ? null
       : window.localStorage.getItem(STORAGE_KEY) as Locale | null;
 
     return saved && locales.includes(saved) ? saved : defaultLocale;
   });
+  const [localeReady, setLocaleReady] = useState(locale === defaultLocale);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLocaleReady(locale === defaultLocale);
+
+    void loadLocaleTable(locale).then(() => {
+      if (!cancelled) setLocaleReady(true);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [locale]);
 
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, locale);
     document.documentElement.lang = locale;
   }, [locale]);
+
+  const setLocale = useCallback((nextLocale: Locale) => {
+    preloadLocale(nextLocale);
+    setLocaleState(nextLocale);
+  }, []);
 
   const t = useCallback(
     (key: TranslationKey, params?: TranslationParams) => translate(locale, key, params),
@@ -94,8 +117,9 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       locale,
       setLocale,
       t,
+      localeReady,
     }),
-    [locale, t],
+    [locale, setLocale, t, localeReady],
   );
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
