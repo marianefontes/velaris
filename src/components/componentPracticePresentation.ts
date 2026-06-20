@@ -1,7 +1,8 @@
 import type { Locale } from "../i18n/translations";
 import type { ComponentId } from "./componentWorkbench";
 import {
-  COMPONENT_METADATA_BY_ID,
+  getComponentMetadataById,
+  getComponentMetadataList,
   localizedText,
   type LocalizedRule,
 } from "./componentMetadata";
@@ -237,7 +238,7 @@ export function getComponentPractices(
   componentId: ComponentId,
   locale: Locale,
 ): { dos: ComponentPracticeItem[]; donts: ComponentPracticeItem[] } {
-  const component = COMPONENT_METADATA_BY_ID.get(componentId);
+  const component = getComponentMetadataById(componentId);
   const titles = PRACTICE_TITLES[componentId];
   if (!component || !titles) return { dos: [], donts: [] };
   return {
@@ -247,7 +248,8 @@ export function getComponentPractices(
 }
 
 export function validateComponentPracticePresentation(): void {
-  COMPONENT_METADATA_BY_ID.forEach((component, componentId) => {
+  getComponentMetadataList().forEach((component) => {
+    const componentId = component.component_id;
     const titles = PRACTICE_TITLES[componentId];
     if (!titles) throw new Error(`Missing practice presentation for ${componentId}`);
     if (component.do?.length !== 5 || component.dont?.length !== 5) {
@@ -261,5 +263,3 @@ export function validateComponentPracticePresentation(): void {
     }
   });
 }
-
-validateComponentPracticePresentation();

@@ -33,8 +33,9 @@ import {
 } from "./componentAccessibilityPresentation";
 import type { ComponentId } from "./componentWorkbench";
 import {
-  COMPONENT_METADATA,
-  COMPONENT_METADATA_BY_ID,
+  ensureComponentCatalog,
+  getComponentMetadataById,
+  getComponentMetadataList,
   localizedRuleTexts,
   localizedText,
 } from "./componentMetadata";
@@ -147,8 +148,9 @@ function statusLabel(status: string): string {
   return `${status.charAt(0).toUpperCase()}${status.slice(1)}`;
 }
 
-export function getComponentCatalog(locale: Locale): ComponentDoc[] {
-  return COMPONENT_METADATA.map((component) => {
+export async function getComponentCatalog(locale: Locale): Promise<ComponentDoc[]> {
+  await ensureComponentCatalog();
+  return getComponentMetadataList().map((component) => {
     const shortDescription = localizedText(component.description, locale);
     const logic = localizedText(component.logic, locale);
     const structure = localizedText(component.structure, locale);
@@ -207,7 +209,7 @@ export function getComponentUsageGuidance(
   componentId: ComponentId,
   locale: Locale,
 ): ComponentUsageGuidance {
-  const component = COMPONENT_METADATA_BY_ID.get(componentId);
+  const component = getComponentMetadataById(componentId);
   if (!component) return { do: [], dont: [] };
   return {
     do: localizedRuleTexts(component.do, locale) ?? [],
@@ -220,7 +222,7 @@ export function getIntentExplanation(
   intentValue: string,
   locale: Locale,
 ): IntentExplanation {
-  const component = COMPONENT_METADATA_BY_ID.get(componentId);
+  const component = getComponentMetadataById(componentId);
   const normalized = intentValue.trim().toLowerCase();
   const intent = component?.intents?.find((candidate) => (
     candidate.id.toLowerCase() === normalized

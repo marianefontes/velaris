@@ -28,10 +28,7 @@ import {
   generateComponentSnippet,
   parseComponentSnippet,
 } from "./componentWorkbench";
-import {
-  getComponentCatalog,
-  getIntentExplanation,
-} from "./componentPresentation";
+import { getComponentCatalog, getIntentExplanation } from "./componentPresentation";
 import type { ComponentDoc, SectionId } from "./componentPresentation";
 import {
   getComponentPractices,
@@ -386,10 +383,7 @@ export function ComponentsPage() {
   const [searchParams] = useSearchParams();
   const ui = getUi(locale);
   const sections = getSections(locale);
-  const catalog = useMemo(
-    () => getComponentCatalog(locale),
-    [locale],
-  );
+  const [catalog, setCatalog] = useState<ComponentDoc[] | null>(null);
   const [selectedId, setSelectedId] = useState<ComponentId>("button");
   const [copied, setCopied] = useState(false);
   const [playgroundConfigs, setPlaygroundConfigs] = useState<Partial<Record<ComponentId, ComponentPlaygroundConfig>>>({});
@@ -397,13 +391,24 @@ export function ComponentsPage() {
   const [snippetErrors, setSnippetErrors] = useState<Partial<Record<ComponentId, SnippetError>>>({});
 
   useEffect(() => {
+    let cancelled = false;
+    void getComponentCatalog(locale).then((items) => {
+      if (!cancelled) setCatalog(items);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [locale]);
+
+  useEffect(() => {
     setSnippetDrafts({});
     setSnippetErrors({});
   }, [locale]);
 
-  const selected = catalog.find((item) => item.id === selectedId) ?? catalog[0]!;
+  const selected = catalog?.find((item) => item.id === selectedId) ?? catalog?.[0] ?? null;
 
   useEffect(() => {
+    if (!catalog) return;
     const componentParam = searchParams.get("component");
     if (!componentParam) return;
     const match = catalog.find((item) => item.id === componentParam);
@@ -423,15 +428,35 @@ export function ComponentsPage() {
     });
     return () => window.cancelAnimationFrame(frame);
   }, [searchParams, selectedId]);
+
   const activeConfig = useMemo(
-    () => playgroundConfigs[selected.id]
-      ?? createInitialPlaygroundConfig(selected.id, selected.states, selected.intents),
+    () => {
+      if (!selected) {
+        return createInitialPlaygroundConfig("button", [], []);
+      }
+      return playgroundConfigs[selected.id]
+        ?? createInitialPlaygroundConfig(selected.id, selected.states, selected.intents);
+    },
     [playgroundConfigs, selected],
   );
   const activeSnippet = useMemo(
-    () => snippetDrafts[selected.id] ?? generateComponentSnippet(selected.id, activeConfig, locale),
-    [snippetDrafts, selected.id, activeConfig, locale],
+    () => {
+      if (!selected) return "";
+      return snippetDrafts[selected.id] ?? generateComponentSnippet(selected.id, activeConfig, locale);
+    },
+    [snippetDrafts, selected, activeConfig, locale],
   );
+
+  if (!catalog || !selected) {
+    return (
+      <PageShell>
+        <div className="flex min-h-[50vh] items-center justify-center">
+          <PreviewFallback label={getUi(locale).previewLoading} />
+        </div>
+      </PageShell>
+    );
+  }
+
   const activeSnippetError = snippetErrors[selected.id];
   const activeSection = sections.find((section) => section.id === selected.section) ?? sections[0]!;
   const SelectedIcon = selected.icon;

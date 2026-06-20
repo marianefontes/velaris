@@ -1,4 +1,3 @@
-import rawCatalog from "../../data/component-metadata.json";
 import { localizeContent } from "../i18n/localizedContent";
 import type { Locale } from "../i18n/translations";
 import type { ComponentId } from "./componentWorkbench";
@@ -332,11 +331,36 @@ export function validateComponentCatalog(value: unknown): ComponentCatalog {
   return value as unknown as ComponentCatalog;
 }
 
-export const COMPONENT_METADATA_CATALOG = validateComponentCatalog(rawCatalog);
-export const COMPONENT_METADATA = COMPONENT_METADATA_CATALOG.components;
-export const COMPONENT_METADATA_BY_ID = new Map(
-  COMPONENT_METADATA.map((component) => [component.component_id, component]),
-);
+let cachedCatalog: ComponentCatalog | null = null;
+let cachedById: Map<ComponentId, ComponentMetadata> | null = null;
+let catalogPromise: Promise<ComponentCatalog> | null = null;
+
+export async function ensureComponentCatalog(): Promise<ComponentCatalog> {
+  if (cachedCatalog) return cachedCatalog;
+  if (!catalogPromise) {
+    catalogPromise = import("../../data/component-metadata.json").then((mod) => {
+      const raw = (mod as { default: unknown }).default ?? mod;
+      const catalog = validateComponentCatalog(raw);
+      cachedCatalog = catalog;
+      cachedById = new Map(
+        catalog.components.map((component) => [component.component_id, component]),
+      );
+      return catalog;
+    });
+  }
+  return catalogPromise;
+}
+
+export function getComponentMetadataList(): ComponentMetadata[] {
+  if (!cachedCatalog) {
+    throw new Error("Component metadata not loaded. Call ensureComponentCatalog() first.");
+  }
+  return cachedCatalog.components;
+}
+
+export function getComponentMetadataById(componentId: ComponentId): ComponentMetadata | undefined {
+  return cachedById?.get(componentId);
+}
 
 export function localizedText(value: LocalizedText | null, locale: Locale): string {
   if (!value) return "";

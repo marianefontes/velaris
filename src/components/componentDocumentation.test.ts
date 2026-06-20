@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
-import { COMPONENT_METADATA } from "./componentMetadata";
-import { getComponentPractices } from "./componentPracticePresentation";
+import { beforeAll, describe, expect, it } from "vitest";
+import { ensureComponentCatalog, getComponentMetadataList } from "./componentMetadata";
+import { getComponentPractices, validateComponentPracticePresentation } from "./componentPracticePresentation";
 import { getComponentCatalog } from "./componentPresentation";
 import {
   createInitialPlaygroundConfig,
@@ -8,12 +8,18 @@ import {
 } from "./componentWorkbench";
 
 describe("component documentation contract", () => {
-  it("keeps every component complete and equally structured", () => {
-    const catalog = getComponentCatalog("pt-BR");
+  beforeAll(async () => {
+    await ensureComponentCatalog();
+    validateComponentPracticePresentation();
+  });
+
+  it("keeps every component complete and equally structured", async () => {
+    const catalog = await getComponentCatalog("pt-BR");
+    const metadataList = getComponentMetadataList();
 
     expect(catalog).toHaveLength(25);
     catalog.forEach((component) => {
-      const metadata = COMPONENT_METADATA.find((item) => item.component_id === component.id);
+      const metadata = metadataList.find((item) => item.component_id === component.id);
       const practices = getComponentPractices(component.id, "pt-BR");
 
       expect(metadata?.do).toHaveLength(5);
@@ -49,8 +55,8 @@ describe("component documentation contract", () => {
     });
   });
 
-  it("generates a specific snippet for every component", () => {
-    const catalog = getComponentCatalog("pt-BR");
+  it("generates a specific snippet for every component", async () => {
+    const catalog = await getComponentCatalog("pt-BR");
     const snippets = catalog.map((component) => {
       const config = createInitialPlaygroundConfig(
         component.id,
@@ -64,8 +70,8 @@ describe("component documentation contract", () => {
     expect(new Set(snippets).size).toBe(catalog.length);
   });
 
-  it("does not give Button an exclusive documentation contract", () => {
-    const catalog = getComponentCatalog("pt-BR");
+  it("does not give Button an exclusive documentation contract", async () => {
+    const catalog = await getComponentCatalog("pt-BR");
     const completeComponents = catalog.filter((component) => {
       const practices = getComponentPractices(component.id, "pt-BR");
       return (
