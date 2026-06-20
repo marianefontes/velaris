@@ -15,14 +15,14 @@ const SILHOUETTE_COOLDOWN_MS = 8000;
 function moodForPath(pathname: string): PresenceMood {
   if (pathname.startsWith("/components")) return "constellation";
   if (pathname.startsWith("/foundations")) return "structured";
-  if (
-    pathname.startsWith("/reasoning") ||
-    pathname.startsWith("/oracle") ||
-    pathname.startsWith("/evaluation")
-  ) {
+  if (pathname.startsWith("/reasoning") || pathname.startsWith("/evaluation")) {
     return "nodes";
   }
   return "ambient";
+}
+
+function isOraclePath(pathname: string) {
+  return pathname === "/oracle" || pathname.startsWith("/oracle/");
 }
 
 export function BeatricePresence() {
@@ -32,15 +32,16 @@ export function BeatricePresence() {
   const engineRef = useRef<StardustEngine | null>(null);
   const [silhouetteTick, setSilhouetteTick] = useState(0);
   const lastSilhouetteRef = useRef(0);
+  const staticMode = reduced || isOraclePath(pathname);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const engine = new StardustEngine(canvas, { mood: moodForPath(window.location.pathname) });
+    const engine = new StardustEngine(canvas, { mood: moodForPath(pathname) });
     engineRef.current = engine;
 
-    if (reduced) {
+    if (staticMode) {
       engine.renderStatic();
       return () => {
         engineRef.current = null;
@@ -75,16 +76,12 @@ export function BeatricePresence() {
       engineRef.current = null;
       engine.destroy();
     };
-  }, [reduced]);
-
-  useEffect(() => {
-    engineRef.current?.setMood(moodForPath(pathname));
-  }, [pathname]);
+  }, [pathname, reduced, staticMode]);
 
   return (
     <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
       <canvas ref={canvasRef} className="h-full w-full" />
-      {silhouetteTick > 0 ? <SerpentSilhouette key={silhouetteTick} /> : null}
+      {silhouetteTick > 0 && !staticMode ? <SerpentSilhouette key={silhouetteTick} /> : null}
     </div>
   );
 }

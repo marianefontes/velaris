@@ -6,6 +6,7 @@ import { useAbraxosAssistant } from "../../hooks/useAbraxosAssistant";
 import type { NavigationAction } from "../../types/beatrice";
 import { writeFloatingHandoff } from "../../storage/floatingHandoff";
 import { AbraxosMark } from "./AbraxosMark";
+import { AbraxosOnboardingPanel } from "./AbraxosOnboardingPanel";
 import { ChatNavigationActions } from "../chat/ChatNavigationActions";
 
 function contextLabel(context: ReturnType<typeof useAbraxosAssistant>["surfaceContext"]) {
@@ -90,14 +91,17 @@ export function AbraxosMiniChat({
   const messagesRef = useRef<HTMLDivElement>(null);
   const {
     closeAbraxos,
+    dismissOnboarding,
     history,
     input,
     isLoading,
     isOpen,
     isVisible,
     messages,
+    onboardingVariant,
     retryLastPrompt,
     setInput,
+    showAbraxosGuide,
     submitPrompt,
     surfaceContext,
   } = useAbraxosAssistant();
@@ -202,6 +206,16 @@ export function AbraxosMiniChat({
         aria-live="polite"
         aria-relevant="additions"
       >
+        {onboardingVariant ? (
+          <AbraxosOnboardingPanel
+            variant={onboardingVariant}
+            onDismiss={dismissOnboarding}
+            onExampleSelect={(prompt) => {
+              setInput(prompt);
+              void submitPrompt(prompt);
+            }}
+          />
+        ) : null}
         {messages.map((message) => (
           <MiniChatMessage
             key={message.id}
@@ -218,6 +232,13 @@ export function AbraxosMiniChat({
       </div>
 
       <footer className="border-t border-white/[0.08] p-3">
+        <button
+          type="button"
+          onClick={showAbraxosGuide}
+          className="focus-ring mb-2 text-[11px] font-medium text-slate-500 transition-colors hover:text-primary"
+        >
+          {t("assistant.howToUse")}
+        </button>
         <form
           className="flex items-end gap-2 rounded-2xl border border-white/[0.08] bg-black/20 px-3 py-2"
           onSubmit={(event) => {

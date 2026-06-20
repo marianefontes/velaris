@@ -7,6 +7,7 @@ import { AbraxosAssistantProvider } from "../../providers/AbraxosAssistantProvid
 import { AbraxosAssistantShell } from "./AbraxosAssistantShell";
 import { AskAbraxosButton } from "./AskAbraxosButton";
 import { buildWelcomeMessage } from "../../domain/assistant/welcomeMessage";
+import { resetAbraxosOnboardingSeen } from "../../domain/assistant/onboardingStorage";
 
 vi.mock("../../hooks/useChatStream", () => ({
   useChatStream: () => vi.fn().mockResolvedValue(undefined),
@@ -46,6 +47,7 @@ function renderAssistant(initialEntry = "/components") {
 describe("Abraxos floating assistant", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetAbraxosOnboardingSeen();
   });
 
   it("renders the floating button on primary pages", () => {
@@ -58,12 +60,22 @@ describe("Abraxos floating assistant", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Abrir Abraxos" }));
     expect(screen.getByRole("dialog", { name: /Abraxos/i })).toBeTruthy();
+    expect(screen.getByText("Bem-vindo ao Abraxos.")).toBeTruthy();
     expect(screen.getByPlaceholderText("Pergunte algo sobre esta seção...")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Fechar painel do Abraxos" }));
     await waitFor(() => {
       expect(screen.queryByRole("dialog", { name: /Abraxos/i })).toBeNull();
     });
+  });
+
+  it("shows the how-to guide on demand", () => {
+    renderAssistant("/components");
+    fireEvent.click(screen.getByRole("button", { name: "Abrir Abraxos" }));
+    fireEvent.click(screen.getByRole("button", { name: "Começar conversa" }));
+    fireEvent.click(screen.getByRole("button", { name: "Como usar o Abraxos" }));
+    expect(screen.getByText("O que o agente faz")).toBeTruthy();
+    expect(screen.getByText("João Fontes — Designer")).toBeTruthy();
   });
 
   it("does not auto-focus the input when the mini chat opens", () => {
@@ -110,6 +122,10 @@ describe("Abraxos floating assistant", () => {
 });
 
 describe("openAbraxos context", () => {
+  beforeEach(() => {
+    resetAbraxosOnboardingSeen();
+  });
+
   it("opens with component-specific welcome copy", async () => {
     render(
       <MemoryRouter initialEntries={["/components"]}>

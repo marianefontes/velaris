@@ -233,7 +233,7 @@ export function OracleHomePage() {
   const copy = COPY[locale];
 
   return (
-    <div className="relative min-h-[calc(100dvh-80px)] overflow-x-clip px-4 py-8 md:px-8 md:py-12">
+    <div className="relative min-h-0 overflow-x-clip px-4 py-8 md:px-8 md:py-12">
       <MeshGradientBg />
       <div className="relative z-[1] mx-auto flex w-full max-w-[1400px] flex-col gap-12 lg:gap-14">
 
