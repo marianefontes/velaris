@@ -1,0 +1,285 @@
+{
+  "total_components": 25,
+  "fully_covered": 25,
+  "with_gaps": 0,
+  "covered": [
+    {
+      "component_id": "button",
+      "name": "Button",
+      "alias_count": 21,
+      "failed_probes": []
+    },
+    {
+      "component_id": "toggle-switch",
+      "name": "Toggle/Switch",
+      "alias_count": 8,
+      "failed_probes": []
+    },
+    {
+      "component_id": "checkbox",
+      "name": "Checkbox",
+      "alias_count": 11,
+      "failed_probes": []
+    },
+    {
+      "component_id": "radio-button",
+      "name": "Radio Button",
+      "alias_count": 8,
+      "failed_probes": []
+    },
+    {
+      "component_id": "selectable-chip",
+      "name": "Selectable Chip / Badge",
+      "alias_count": 5,
+      "failed_probes": []
+    },
+    {
+      "component_id": "text-input",
+      "name": "Input / Text Input",
+      "alias_count": 9,
+      "failed_probes": []
+    },
+    {
+      "component_id": "text-area",
+      "name": "Text Area",
+      "alias_count": 7,
+      "failed_probes": []
+    },
+    {
+      "component_id": "select-dropdown",
+      "name": "Select/Dropdown",
+      "alias_count": 11,
+      "failed_probes": []
+    },
+    {
+      "component_id": "date-picker",
+      "name": "Date Picker",
+      "alias_count": 11,
+      "failed_probes": []
+    },
+    {
+      "component_id": "form-field",
+      "name": "Form Field",
+      "alias_count": 8,
+      "failed_probes": []
+    },
+    {
+      "component_id": "link",
+      "name": "Link",
+      "alias_count": 7,
+      "failed_probes": []
+    },
+    {
+      "component_id": "tabs",
+      "name": "Tabs",
+      "alias_count": 7,
+      "failed_probes": []
+    },
+    {
+      "component_id": "card",
+      "name": "Card",
+      "alias_count": 10,
+      "failed_probes": []
+    },
+    {
+      "component_id": "modal-dialog",
+      "name": "Modal/Dialog",
+      "alias_count": 17,
+      "failed_probes": []
+    },
+    {
+      "component_id": "data-table",
+      "name": "Table/Data Table",
+      "alias_count": 10,
+      "failed_probes": []
+    },
+    {
+      "component_id": "alert",
+      "name": "Alert",
+      "alias_count": 7,
+      "failed_probes": []
+    },
+    {
+      "component_id": "toast",
+      "name": "Toast/Notification",
+      "alias_count": 9,
+      "failed_probes": []
+    },
+    {
+      "component_id": "skeleton-loader",
+      "name": "Skeleton Loader",
+      "alias_count": 3,
+      "failed_probes": []
+    },
+    {
+      "component_id": "explanation-tooltip",
+      "name": "Explanation Bubble / Tooltip",
+      "alias_count": 7,
+      "failed_probes": []
+    },
+    {
+      "component_id": "confidence-badge",
+      "name": "Confidence Badge",
+      "alias_count": 6,
+      "failed_probes": []
+    },
+    {
+      "component_id": "command-palette",
+      "name": "Command Palette / Barra de Comandos",
+      "alias_count": 2,
+      "failed_probes": []
+    },
+    {
+      "component_id": "source-attribution",
+      "name": "Source Attribution",
+      "alias_count": 3,
+      "failed_probes": []
+    },
+    {
+      "component_id": "audit-panel",
+      "name": "Audit Panel",
+      "alias_count": 2,
+      "failed_probes": []
+    },
+    {
+      "component_id": "typography",
+      "name": "Typography",
+      "alias_count": 4,
+      "failed_probes": []
+    },
+    {
+      "component_id": "icon",
+      "name": "Icon",
+      "alias_count": 11,
+      "failed_probes": []
+    }
+  ],
+  "gaps": [],
+  "alias_entries": [
+    {
+      "component_id": "button",
+      "name": "Button",
+      "alias_count": 21
+    },
+    {
+      "component_id": "toggle-switch",
+      "name": "Toggle/Switch",
+      "alias_count": 8
+    },
+    {
+      "component_id": "checkbox",
+      "name": "Checkbox",
+      "alias_count": 11
+    },
+    {
+      "component_id": "radio-button",
+      "name": "Radio Button",
+      "alias_count": 8
+    },
+    {
+      "component_id": "selectable-chip",
+      "name": "Selectable Chip / Badge",
+      "alias_count": 5
+    },
+    {
+      "component_id": "text-input",
+      "name": "Input / Text Input",
+      "alias_count": 9
+    },
+    {
+      "component_id": "text-area",
+      "name": "Text Area",
+      "alias_count": 7
+    },
+    {
+      "component_id": "select-dropdown",
+      "name": "Select/Dropdown",
+      "alias_count": 11
+    },
+    {
+      "component_id": "date-picker",
+      "name": "Date Picker",
+      "alias_count": 11
+    },
+    {
+      "component_id": "form-field",
+      "name": "Form Field",
+      "alias_count": 8
+    },
+    {
+      "component_id": "link",
+      "name": "Link",
+      "alias_count": 7
+    },
+    {
+      "component_id": "tabs",
+      "name": "Tabs",
+      "alias_count": 7
+    },
+    {
+      "component_id": "card",
+      "name": "Card",
+      "alias_count": 10
+    },
+    {
+      "component_id": "modal-dialog",
+      "name": "Modal/Dialog",
+      "alias_count": 17
+    },
+    {
+      "component_id": "data-table",
+      "name": "Table/Data Table",
+      "alias_count": 10
+    },
+    {
+      "component_id": "alert",
+      "name": "Alert",
+      "alias_count": 7
+    },
+    {
+      "component_id": "toast",
+      "name": "Toast/Notification",
+      "alias_count": 9
+    },
+    {
+      "component_id": "skeleton-loader",
+      "name": "Skeleton Loader",
+      "alias_count": 3
+    },
+    {
+      "component_id": "explanation-tooltip",
+      "name": "Explanation Bubble / Tooltip",
+      "alias_count": 7
+    },
+    {
+      "component_id": "confidence-badge",
+      "name": "Confidence Badge",
+      "alias_count": 6
+    },
+    {
+      "component_id": "command-palette",
+      "name": "Command Palette / Barra de Comandos",
+      "alias_count": 2
+    },
+    {
+      "component_id": "source-attribution",
+      "name": "Source Attribution",
+      "alias_count": 3
+    },
+    {
+      "component_id": "audit-panel",
+      "name": "Audit Panel",
+      "alias_count": 2
+    },
+    {
+      "component_id": "typography",
+      "name": "Typography",
+      "alias_count": 4
+    },
+    {
+      "component_id": "icon",
+      "name": "Icon",
+      "alias_count": 11
+    }
+  ]
+}
