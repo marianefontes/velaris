@@ -32,6 +32,8 @@ export function AppShell({ children }: AppShellProps) {
   );
   const shellExemptRoute =
     location.pathname.startsWith("/study/") || location.pathname === "/research";
+  const isOracleRoute =
+    location.pathname === "/oracle" || location.pathname.startsWith("/oracle/");
   const trackingExemptRoute = shellExemptRoute || location.pathname === "/laboratory";
 
   // Global search mirrors its query into ?q=; strip it so a page_view is not
@@ -51,7 +53,7 @@ export function AppShell({ children }: AppShellProps) {
   }, [trackingExemptRoute, location.pathname, trackedSearch]);
 
   return (
-    <div className="min-h-screen bg-background text-on-surface">
+    <div className={`bg-background text-on-surface ${isOracleRoute ? "h-dvh overflow-hidden" : "min-h-screen"}`}>
       {/* Abraxos ambient presence: starfield + route-specific transition experiment. */}
       {!shellExemptRoute ? (
         <>
@@ -59,7 +61,7 @@ export function AppShell({ children }: AppShellProps) {
           <AbraxosRouteTransition />
         </>
       ) : null}
-      <div className="relative z-[1] flex min-h-screen flex-col">
+      <div className={`relative z-[1] flex h-full min-h-0 flex-col ${isOracleRoute ? "" : "min-h-screen"}`}>
         <a href="#main-content" className="skip-link">
           {t("shell.skipToContent")}
         </a>
@@ -77,10 +79,10 @@ export function AppShell({ children }: AppShellProps) {
             {children}
           </div>
         ) : (
-          <main id="main-content" tabIndex={-1} className="min-w-0 flex-1 outline-none">
+          <main id="main-content" tabIndex={-1} className="flex min-h-0 min-w-0 flex-1 flex-col outline-none">
             <div
               key={location.pathname}
-              className={pageEnterClass}
+              className={`${pageEnterClass}${isOracleRoute ? " flex min-h-0 flex-1 flex-col overflow-hidden" : ""}`}
               data-abraxos-transition-route={transitionEntry ? "destination-presence" : "none"}
               data-abraxos-anchor={transitionEntry?.path ?? "none"}
             >

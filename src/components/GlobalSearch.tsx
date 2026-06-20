@@ -237,7 +237,7 @@ export function GlobalSearch() {
                   </li>
                 ))}
               </ul>
-              <div className="mt-1 flex items-center gap-3 border-t border-white/[0.06] px-2.5 pt-2 text-[10px] text-slate-600">
+              <div className="mt-1 hidden flex-wrap items-center gap-3 border-t border-white/[0.06] px-2.5 pt-2 text-[10px] text-slate-600 sm:flex">
                 <span className="flex items-center gap-1">
                   <kbd className="rounded border border-white/10 bg-white/5 px-1">↑</kbd>
                   <kbd className="rounded border border-white/10 bg-white/5 px-1">↓</kbd>

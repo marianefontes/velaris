@@ -19,6 +19,8 @@ export const INTERNAL_PROFILE_IDS = [
 export const LEGACY_PROFILE_ALIASES = {
   pm: "design_system_manager",
   writer: "tech_writer",
+  // Partial migrations may still store the reframed lens id in localStorage.
+  ux_specialist: "product_designer",
 } as const;
 
 const PROFILE_ID_SET = new Set<string>(INTERNAL_PROFILE_IDS);

@@ -11,5 +11,5 @@ export function getPersonaStrategy(profileId: ProfileId): PersonaStrategy {
 }
 
 export function getPersonaOptions(): PersonaStrategy[] {
-  return PROFESSIONAL_PROFILE_IDS.map((profileId) => PERSONA_STRATEGIES[profileId]);
+  return PROFESSIONAL_PROFILE_IDS.map((profileId) => getPersonaStrategy(profileId));
 }
