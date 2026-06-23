@@ -10,6 +10,7 @@ import type {
   LaboratoryRecommendation,
   LaboratoryResults,
   LaboratoryRun,
+  LaboratoryRunComparison,
   LaboratorySnapshot,
 } from "../types/laboratory";
 
@@ -54,6 +55,7 @@ export async function createLaboratoryRun(payload: {
   version_label: string;
   profiles: string[];
   repetitions: number;
+  retrieval_mode_override?: "dense" | "hybrid" | null;
 }): Promise<LaboratoryRun> {
   const run = await laboratoryFetch<LaboratoryRun>("/laboratory/runs", {
     method: "POST",
@@ -62,6 +64,45 @@ export async function createLaboratoryRun(payload: {
   });
   invalidateLaboratory();
   return run;
+}
+
+export async function createPairedRetrievalRuns(payload: {
+  case_set_id: string;
+  version_label: string;
+  profiles: string[];
+  repetitions: number;
+}): Promise<{ comparison_group_id: string; runs: LaboratoryRun[] }> {
+  const result = await laboratoryFetch<{ comparison_group_id: string; runs: LaboratoryRun[] }>(
+    "/laboratory/runs/paired-retrieval",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    },
+  );
+  invalidateLaboratory();
+  return result;
+}
+
+export async function compareLaboratoryRuns(
+  baselineRunId: string,
+  candidateRunId: string,
+): Promise<LaboratoryRunComparison> {
+  const params = new URLSearchParams({
+    baseline: baselineRunId,
+    candidate: candidateRunId,
+  });
+  return laboratoryFetch(`/laboratory/runs/compare?${params.toString()}`);
+}
+
+export async function fetchLaboratoryComparisonGroup(
+  comparisonGroupId: string,
+): Promise<{
+  comparison_group_id: string;
+  runs: LaboratoryRun[];
+  comparison: LaboratoryRunComparison | null;
+}> {
+  return laboratoryFetch(`/laboratory/comparison-groups/${comparisonGroupId}`);
 }
 
 export async function cancelLaboratoryRun(runId: string): Promise<void> {

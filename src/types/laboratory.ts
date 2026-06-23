@@ -64,6 +64,56 @@ export interface LaboratoryRunItem {
   review: LaboratoryReview | null;
 }
 
+export interface LaboratoryRetrievalSnapshot {
+  captured_at: string;
+  retrieval_mode: "dense" | "hybrid";
+  retrieval_mode_override: string | null;
+  env_retrieval_mode: "dense" | "hybrid";
+  rrf_k: number;
+  corpus_version: string;
+  corpus_chunk_count: number;
+  indexed_chunk_count: number;
+  sparse_cache_available: boolean;
+  sparse_cache_corpus_version: string | null;
+  sparse_retrieval_supported: boolean;
+  hybrid_effective: boolean;
+  hybrid_fallback_reason: string | null;
+}
+
+export interface LaboratoryMetricComparisonRow {
+  baseline: number | null;
+  candidate: number | null;
+  delta: number | null;
+  baseline_samples?: number;
+  candidate_samples?: number;
+}
+
+export interface LaboratoryRunComparison {
+  baseline_run_id: string;
+  candidate_run_id: string;
+  comparison_group_id: string | null;
+  compatible: boolean;
+  baseline: {
+    id: string;
+    version_label: string;
+    status: LaboratoryRunStatus;
+    aggregate: LaboratoryRun["aggregate"];
+    retrieval_snapshot: LaboratoryRetrievalSnapshot;
+    dataset_version: string;
+    dataset_fingerprint: string;
+  };
+  candidate: {
+    id: string;
+    version_label: string;
+    status: LaboratoryRunStatus;
+    aggregate: LaboratoryRun["aggregate"];
+    retrieval_snapshot: LaboratoryRetrievalSnapshot;
+    dataset_version: string;
+    dataset_fingerprint: string;
+  };
+  metrics: Record<string, LaboratoryMetricComparisonRow>;
+}
+
 export interface LaboratoryAggregateMetric {
   value: number;
   samples: number;
@@ -105,6 +155,8 @@ export interface LaboratoryRun {
   calibration_proposal_id: string | null;
   calibration_snapshot: Record<string, { technicality: number; risk_sensitivity: number }>;
   control_run_id: string | null;
+  comparison_group_id: string | null;
+  retrieval_snapshot: LaboratoryRetrievalSnapshot;
   prompt_tokens: number;
   completion_tokens: number;
   progress: number;

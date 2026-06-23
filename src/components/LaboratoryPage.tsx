@@ -27,7 +27,9 @@ import { useI18n } from "../i18n/I18nProvider";
 import {
   cancelLaboratoryRun,
   createLaboratoryRun,
+  createPairedRetrievalRuns,
   fetchLaboratoryCaseSets,
+  fetchLaboratoryComparisonGroup,
   fetchLaboratoryRun,
   fetchLaboratorySnapshot,
   decideLaboratoryRecommendation,
@@ -51,7 +53,9 @@ import type {
   LaboratoryMetric,
   LaboratoryRecommendation,
   LaboratoryRun,
+  LaboratoryRunComparison,
   LaboratoryRunItem,
+  LaboratoryRetrievalSnapshot,
   LaboratorySnapshot,
 } from "../types/laboratory";
 import { PageShell } from "./ui/VisualPrimitives";
@@ -287,6 +291,18 @@ export function LaboratoryPage() {
                 await loadWorkspace(run.id);
               } catch (requestError) {
                 setError(requestError instanceof Error ? requestError.message : "Não foi possível iniciar a execução.");
+              } finally {
+                setLoading(false);
+              }
+            }}
+            onCreatePaired={async (payload) => {
+              setLoading(true);
+              setError("");
+              try {
+                const result = await createPairedRetrievalRuns(payload);
+                await loadWorkspace(result.runs[0]?.id);
+              } catch (requestError) {
+                setError(requestError instanceof Error ? requestError.message : "Não foi possível iniciar a comparação.");
               } finally {
                 setLoading(false);
               }
@@ -806,22 +822,44 @@ function RunComposer({
   caseSets,
   busy,
   onCreate,
+  onCreatePaired,
 }: {
   caseSets: LaboratoryCaseSet[];
   busy: boolean;
-  onCreate: (payload: { case_set_id: string; version_label: string; profiles: string[]; repetitions: number }) => void;
+  onCreate: (payload: {
+    case_set_id: string;
+    version_label: string;
+    profiles: string[];
+    repetitions: number;
+    retrieval_mode_override?: "dense" | "hybrid" | null;
+  }) => void;
+  onCreatePaired: (payload: {
+    case_set_id: string;
+    version_label: string;
+    profiles: string[];
+    repetitions: number;
+  }) => void;
 }) {
   const [caseSetId, setCaseSetId] = useState(caseSets[0]?.id ?? "beatrice-core-v1");
   const [versionLabel, setVersionLabel] = useState(() => `candidate-${new Date().toISOString().slice(0, 10)}`);
   const [profiles, setProfiles] = useState(PROFILES.map((profile) => profile.id));
+  const [retrievalMode, setRetrievalMode] = useState<"env" | "dense" | "hybrid">("env");
   const activeCaseSet = caseSets.find((caseSet) => caseSet.id === caseSetId);
   const requestCount = (activeCaseSet?.case_count ?? 0) * profiles.length;
+  const pairedRequestCount = requestCount * 2;
 
   useEffect(() => {
     if (caseSets[0] && !caseSets.some((caseSet) => caseSet.id === caseSetId)) {
       setCaseSetId(caseSets[0].id);
     }
   }, [caseSets, caseSetId]);
+
+  const sharedPayload = {
+    case_set_id: caseSetId,
+    version_label: versionLabel.trim(),
+    profiles,
+    repetitions: 1 as const,
+  };
 
   return (
     <section data-abraxos-focus="lab-run" className="rounded-2xl border border-white/[0.09] bg-white/[0.025] p-5">
@@ -840,6 +878,17 @@ function RunComposer({
             {caseSets.map((caseSet) => (
               <option key={caseSet.id} value={caseSet.id}>{caseSet.id} · {caseSet.case_count} casos</option>
             ))}
+          </select>
+        </FieldLabel>
+        <FieldLabel label="Modo de retrieval">
+          <select
+            value={retrievalMode}
+            onChange={(event) => setRetrievalMode(event.target.value as "env" | "dense" | "hybrid")}
+            className="laboratory-input"
+          >
+            <option value="env">Padrão do servidor (env)</option>
+            <option value="dense">Dense (baseline)</option>
+            <option value="hybrid">Hybrid (dense + sparse RRF)</option>
           </select>
         </FieldLabel>
         <div>
@@ -878,16 +927,26 @@ function RunComposer({
           type="button"
           disabled={busy || !versionLabel.trim() || profiles.length === 0 || requestCount === 0}
           onClick={() => onCreate({
-            case_set_id: caseSetId,
-            version_label: versionLabel.trim(),
-            profiles,
-            repetitions: 1,
+            ...sharedPayload,
+            retrieval_mode_override: retrievalMode === "env" ? null : retrievalMode,
           })}
           className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-3 text-[10px] font-bold uppercase tracking-[0.17em] text-on-primary transition hover:bg-primary-dim disabled:opacity-35"
         >
           {busy ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Play className="h-3.5 w-3.5" />}
           Executar benchmark
         </button>
+        <button
+          type="button"
+          disabled={busy || !versionLabel.trim() || profiles.length === 0 || pairedRequestCount === 0}
+          onClick={() => onCreatePaired(sharedPayload)}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/[0.12] bg-white/[0.03] px-4 py-3 text-[10px] font-bold uppercase tracking-[0.17em] text-slate-200 transition hover:bg-white/[0.06] disabled:opacity-35"
+        >
+          {busy ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <SlidersHorizontal className="h-3.5 w-3.5" />}
+          Comparar dense vs hybrid
+        </button>
+        <p className="text-[10px] leading-relaxed text-slate-600">
+          A comparação pareada cria duas execuções ({pairedRequestCount} requisições) com o mesmo conjunto de casos e congela o modo de retrieval por run.
+        </p>
       </div>
     </section>
   );
@@ -932,7 +991,10 @@ function RunHistory({
                 <p className="truncate text-xs font-semibold text-slate-200">{run.version_label}</p>
                 {run.is_baseline ? <span className="rounded-full border border-technical-accent/20 bg-technical-accent/10 px-2 py-0.5 text-[8px] font-bold uppercase tracking-widest text-technical-accent">baseline</span> : null}
               </div>
-              <p className="mt-1.5 font-mono text-[9px] text-slate-600">{formatDate(run.created_at)} · {run.completed_items}/{run.total_items}</p>
+              <p className="mt-1.5 font-mono text-[9px] text-slate-600">
+                {formatDate(run.created_at)} · {run.completed_items}/{run.total_items}
+                {run.retrieval_snapshot?.retrieval_mode ? ` · ${run.retrieval_snapshot.retrieval_mode}` : ""}
+              </p>
             </div>
             <ChevronRight className="mt-1 h-3.5 w-3.5 text-slate-700" />
           </button>
@@ -954,6 +1016,7 @@ function RunWorkspace({
   onReview: (itemId: string, review: { reviewer: string; scores: Record<string, number>; notes: string }) => Promise<void>;
 }) {
   const [selectedItemId, setSelectedItemId] = useState<string | null>(run.items?.[0]?.id ?? null);
+  const [comparison, setComparison] = useState<LaboratoryRunComparison | null>(null);
   const selectedItem = run.items?.find((item) => item.id === selectedItemId) ?? run.items?.[0] ?? null;
 
   useEffect(() => {
@@ -961,6 +1024,24 @@ function RunWorkspace({
       setSelectedItemId(run.items?.[0]?.id ?? null);
     }
   }, [run.id, run.items?.length, selectedItemId]);
+
+  useEffect(() => {
+    if (!run.comparison_group_id) {
+      setComparison(null);
+      return;
+    }
+    let cancelled = false;
+    void fetchLaboratoryComparisonGroup(run.comparison_group_id)
+      .then((group) => {
+        if (!cancelled) setComparison(group.comparison);
+      })
+      .catch(() => {
+        if (!cancelled) setComparison(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [run.comparison_group_id, run.status, run.completed_at]);
 
   const metrics = run.aggregate.metrics ?? {};
   return (
@@ -971,11 +1052,17 @@ function RunWorkspace({
             <div className="flex flex-wrap items-center gap-2">
               <RunStatusChip status={run.status} />
               {run.is_baseline ? <span className="rounded-full border border-technical-accent/20 bg-technical-accent/10 px-2.5 py-1 text-[9px] font-bold uppercase tracking-widest text-technical-accent">baseline ativa</span> : null}
+              {run.retrieval_snapshot?.retrieval_mode ? (
+                <span className="rounded-full border border-white/[0.1] bg-white/[0.04] px-2.5 py-1 font-mono text-[9px] uppercase tracking-widest text-slate-400">
+                  retrieval:{run.retrieval_snapshot.retrieval_mode}
+                </span>
+              ) : null}
             </div>
             <h2 className="mt-4 text-2xl font-semibold tracking-tight text-white">{run.version_label}</h2>
             <p className="mt-2 font-mono text-[10px] leading-5 text-slate-600">
               model={run.model} · prompt={run.prompt_fingerprint} · dataset={run.dataset_fingerprint}
             </p>
+            <RetrievalSnapshotPanel snapshot={run.retrieval_snapshot} />
           </div>
           <div className="flex flex-wrap gap-2">
             {["queued", "running"].includes(run.status) ? (
@@ -1003,6 +1090,8 @@ function RunWorkspace({
           {run.failed_items > 0 ? <p className="mt-3 text-xs text-rose-300">{run.failed_items} item(ns) falharam e permanecem inspecionáveis.</p> : null}
         </div>
       </section>
+
+      {comparison ? <RetrievalComparisonBoard comparison={comparison} /> : null}
 
       <MetricBoard metrics={metrics} calibration={run.aggregate.confidence_calibration} />
 
@@ -1037,6 +1126,92 @@ function RunWorkspace({
         </section>
       ) : null}
     </div>
+  );
+}
+
+function RetrievalSnapshotPanel({ snapshot }: { snapshot?: LaboratoryRetrievalSnapshot | Record<string, never> }) {
+  if (!snapshot?.retrieval_mode) return null;
+  return (
+    <div className="mt-4 grid gap-2 rounded-xl border border-white/[0.07] bg-white/[0.02] p-3 sm:grid-cols-2">
+      <SnapshotStat label="Corpus" value={`${snapshot.corpus_chunk_count} chunks · ${snapshot.corpus_version}`} />
+      <SnapshotStat label="Indexado" value={`${snapshot.indexed_chunk_count} embeddings`} />
+      <SnapshotStat label="Modo efetivo" value={snapshot.retrieval_mode} />
+      <SnapshotStat label="RRF k" value={String(snapshot.rrf_k ?? ":")} />
+      <SnapshotStat
+        label="Hybrid ativo"
+        value={snapshot.hybrid_effective ? "sim" : (snapshot.hybrid_fallback_reason ?? "não")}
+      />
+      <SnapshotStat label="Capturado" value={formatDate(snapshot.captured_at)} />
+    </div>
+  );
+}
+
+function SnapshotStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-slate-600">{label}</p>
+      <p className="mt-1 font-mono text-[10px] text-slate-300">{value}</p>
+    </div>
+  );
+}
+
+function RetrievalComparisonBoard({ comparison }: { comparison: LaboratoryRunComparison }) {
+  const rows = [
+    "retrieval_precision",
+    "source_coverage",
+    "evidence_confidence",
+    "observed_correctness",
+    "intent_match",
+  ].filter((name) => comparison.metrics[name]);
+
+  return (
+    <section className="overflow-hidden rounded-2xl border border-white/[0.09] bg-white/[0.02] p-5">
+      <SectionLabel icon={<SlidersHorizontal />} label="Comparação dense vs hybrid" />
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div className="rounded-xl border border-white/[0.07] bg-[#121215] p-4">
+          <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-slate-600">Baseline (dense)</p>
+          <p className="mt-2 text-sm font-semibold text-white">{comparison.baseline.version_label}</p>
+          <p className="mt-1 font-mono text-[10px] text-slate-500">{comparison.baseline.status}</p>
+        </div>
+        <div className="rounded-xl border border-white/[0.07] bg-[#121215] p-4">
+          <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-slate-600">Candidato (hybrid)</p>
+          <p className="mt-2 text-sm font-semibold text-white">{comparison.candidate.version_label}</p>
+          <p className="mt-1 font-mono text-[10px] text-slate-500">{comparison.candidate.status}</p>
+        </div>
+      </div>
+      {rows.length ? (
+        <div className="mt-4 overflow-hidden rounded-xl border border-white/[0.08]">
+          <div className="grid grid-cols-[1.2fr_repeat(3,minmax(0,1fr))] gap-px bg-white/[0.08] text-[9px] font-bold uppercase tracking-[0.14em] text-slate-600">
+            <div className="bg-[#121215] px-3 py-2">Métrica</div>
+            <div className="bg-[#121215] px-3 py-2">Dense</div>
+            <div className="bg-[#121215] px-3 py-2">Hybrid</div>
+            <div className="bg-[#121215] px-3 py-2">Δ</div>
+          </div>
+          {rows.map((name) => {
+            const row = comparison.metrics[name];
+            const delta = row.delta;
+            const deltaLabel = delta === null || delta === undefined
+              ? "—"
+              : `${delta >= 0 ? "+" : ""}${Math.round(delta * 100)}pp`;
+            return (
+              <div
+                key={name}
+                className="grid grid-cols-[1.2fr_repeat(3,minmax(0,1fr))] gap-px border-t border-white/[0.06] bg-white/[0.06] text-[11px]"
+              >
+                <div className="bg-[#121215] px-3 py-2.5 text-slate-400">{METRIC_LABELS[name] ?? name}</div>
+                <div className="bg-[#121215] px-3 py-2.5 font-mono text-slate-200">{formatMetric(row.baseline)}</div>
+                <div className="bg-[#121215] px-3 py-2.5 font-mono text-slate-200">{formatMetric(row.candidate)}</div>
+                <div className={`bg-[#121215] px-3 py-2.5 font-mono ${delta && delta > 0 ? "text-emerald-300" : delta && delta < 0 ? "text-rose-300" : "text-slate-500"}`}>
+                  {deltaLabel}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <p className="mt-4 text-xs text-slate-600">Aguardando conclusão das duas execuções para calcular deltas.</p>
+      )}
+    </section>
   );
 }
 

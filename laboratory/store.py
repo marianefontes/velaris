@@ -16,6 +16,17 @@ from .cases import CaseSet
 
 DEFAULT_DB_PATH = Path(__file__).resolve().parent.parent / "data" / "aetheris-laboratory.sqlite3"
 
+RETRIEVAL_COMPARISON_METRICS = (
+    "retrieval_precision",
+    "source_coverage",
+    "evidence_confidence",
+    "observed_correctness",
+    "required_fact_coverage",
+    "intent_match",
+    "perspective_signal",
+    "repeat_stability",
+)
+
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
@@ -313,6 +324,18 @@ class LaboratoryStore:
                 "retry_count",
                 "INTEGER NOT NULL DEFAULT 0",
             )
+            self._ensure_column(
+                connection,
+                "laboratory_runs",
+                "retrieval_snapshot_json",
+                "TEXT NOT NULL DEFAULT '{}'",
+            )
+            self._ensure_column(
+                connection,
+                "laboratory_runs",
+                "comparison_group_id",
+                "TEXT",
+            )
             self._ensure_column(connection, "laboratory_run_items", "retry_after", "TEXT")
             self._ensure_column(connection, "laboratory_item_sources", "evidence_tier", "TEXT")
             now = _now()
@@ -411,6 +434,8 @@ class LaboratoryStore:
         calibration_proposal_id: str | None = None,
         calibration_snapshot: dict[str, dict[str, float]] | None = None,
         control_run_id: str | None = None,
+        retrieval_snapshot: dict[str, Any] | None = None,
+        comparison_group_id: str | None = None,
     ) -> dict[str, Any]:
         canonical_profiles = _canonical_profiles(profiles)
         invalid_profiles = [
@@ -437,8 +462,9 @@ class LaboratoryStore:
                     version_label, profiles_json, repetitions, status,
                     total_items, model, prompt_fingerprint, created_at, origin,
                     schedule_date, schedule_slot, calibration_version_id,
-                    calibration_proposal_id, calibration_snapshot_json, control_run_id
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, 'queued', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    calibration_proposal_id, calibration_snapshot_json, control_run_id,
+                    retrieval_snapshot_json, comparison_group_id
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, 'queued', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     run_id,
@@ -459,6 +485,8 @@ class LaboratoryStore:
                     calibration_proposal_id,
                     _json(calibration_snapshot or {}),
                     control_run_id,
+                    _json(retrieval_snapshot or {}),
+                    comparison_group_id,
                 ),
             )
             for case in case_set.cases:
@@ -503,7 +531,8 @@ class LaboratoryStore:
             row = connection.execute(
                 """
                 SELECT item.*, run.calibration_snapshot_json,
-                       run.calibration_version_id, run.calibration_proposal_id
+                       run.calibration_version_id, run.calibration_proposal_id,
+                       run.retrieval_snapshot_json
                 FROM laboratory_run_items item
                 JOIN laboratory_runs run ON run.id = item.run_id
                 WHERE item.run_id = ? AND item.status = 'queued'
@@ -527,6 +556,10 @@ class LaboratoryStore:
             )
             item["calibration_snapshot"] = _canonical_profile_mapping(
                 item["calibration_snapshot"]
+            )
+            item["retrieval_snapshot"] = _decode(
+                item.pop("retrieval_snapshot_json", "{}"),
+                {},
             )
             item["profile"] = _canonical_profile(item["profile"])
             item["status"] = "running"
@@ -986,6 +1019,10 @@ class LaboratoryStore:
                 run.pop("calibration_snapshot_json", "{}"),
                 {},
             )
+        )
+        run["retrieval_snapshot"] = _decode(
+            run.pop("retrieval_snapshot_json", "{}"),
+            {},
         )
         run["is_baseline"] = bool(run["is_baseline"])
         progress_count = int(run["completed_items"]) + int(run["failed_items"])
@@ -1853,6 +1890,81 @@ class LaboratoryStore:
             "notifications": self.list_notifications(limit=10),
             "latest_perspective_metrics": (
                 self.metrics_by_perspective(latest["id"]) if latest else {}
+            ),
+        }
+
+    def list_runs_by_comparison_group(self, comparison_group_id: str) -> list[dict[str, Any]]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT * FROM laboratory_runs
+                WHERE comparison_group_id = ?
+                ORDER BY created_at, version_label
+                """,
+                (comparison_group_id,),
+            ).fetchall()
+        return [self._serialize_run(dict(row)) for row in rows]
+
+    def compare_runs(
+        self,
+        baseline_run_id: str,
+        candidate_run_id: str,
+    ) -> dict[str, Any]:
+        baseline = self.get_run(baseline_run_id, include_items=False)
+        candidate = self.get_run(candidate_run_id, include_items=False)
+        if not baseline:
+            raise ValueError(f"Baseline run not found: {baseline_run_id}")
+        if not candidate:
+            raise ValueError(f"Candidate run not found: {candidate_run_id}")
+
+        baseline_metrics = (baseline.get("aggregate") or {}).get("metrics") or {}
+        candidate_metrics = (candidate.get("aggregate") or {}).get("metrics") or {}
+        metric_rows: dict[str, dict[str, Any]] = {}
+        for name in RETRIEVAL_COMPARISON_METRICS:
+            baseline_value = baseline_metrics.get(name, {}).get("value")
+            candidate_value = candidate_metrics.get(name, {}).get("value")
+            if baseline_value is None and candidate_value is None:
+                continue
+            delta = None
+            if baseline_value is not None and candidate_value is not None:
+                delta = round(float(candidate_value) - float(baseline_value), 4)
+            metric_rows[name] = {
+                "baseline": baseline_value,
+                "candidate": candidate_value,
+                "delta": delta,
+                "baseline_samples": baseline_metrics.get(name, {}).get("samples"),
+                "candidate_samples": candidate_metrics.get(name, {}).get("samples"),
+            }
+
+        return {
+            "baseline_run_id": baseline_run_id,
+            "candidate_run_id": candidate_run_id,
+            "comparison_group_id": (
+                baseline.get("comparison_group_id")
+                or candidate.get("comparison_group_id")
+            ),
+            "baseline": {
+                "id": baseline["id"],
+                "version_label": baseline["version_label"],
+                "status": baseline["status"],
+                "aggregate": baseline.get("aggregate") or {},
+                "retrieval_snapshot": baseline.get("retrieval_snapshot") or {},
+                "dataset_version": baseline.get("dataset_version"),
+                "dataset_fingerprint": baseline.get("dataset_fingerprint"),
+            },
+            "candidate": {
+                "id": candidate["id"],
+                "version_label": candidate["version_label"],
+                "status": candidate["status"],
+                "aggregate": candidate.get("aggregate") or {},
+                "retrieval_snapshot": candidate.get("retrieval_snapshot") or {},
+                "dataset_version": candidate.get("dataset_version"),
+                "dataset_fingerprint": candidate.get("dataset_fingerprint"),
+            },
+            "metrics": metric_rows,
+            "compatible": (
+                baseline.get("case_set_id") == candidate.get("case_set_id")
+                and baseline.get("dataset_fingerprint") == candidate.get("dataset_fingerprint")
             ),
         }
 

@@ -16,8 +16,20 @@ def retrieval_mode() -> str:
     return value
 
 
+def resolve_retrieval_mode(override: str | None = None) -> str:
+    if override:
+        normalized = str(override).strip().lower()
+        if normalized in SUPPORTED_RETRIEVAL_MODES:
+            return normalized
+    return retrieval_mode()
+
+
 def hybrid_retrieval_enabled() -> bool:
     return retrieval_mode() == RETRIEVAL_MODE_HYBRID
+
+
+def hybrid_retrieval_active(override: str | None = None) -> bool:
+    return resolve_retrieval_mode(override) == RETRIEVAL_MODE_HYBRID
 
 
 def rrf_k() -> int:

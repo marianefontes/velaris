@@ -20,6 +20,7 @@ import secrets
 import sqlite3
 import sys
 import traceback
+import uuid
 from contextlib import asynccontextmanager
 from dataclasses import replace
 from datetime import datetime, timezone
@@ -63,6 +64,7 @@ from cognition.overrides.manual_override_parser import parse_manual_override
 from laboratory.automation import LaboratoryAutomation
 from laboratory.calibration import merge_profile_calibration
 from laboratory.cases import list_case_sets, load_case_set
+from laboratory.retrieval_snapshot import capture_retrieval_snapshot
 from laboratory.runner import LaboratoryRunner, RateLimitError
 from laboratory.store import laboratory_store
 from prompts.intent_router import route_query
@@ -95,7 +97,11 @@ from rag.context_builder import (
 )
 from rag.evidence_metrics import build_evidence_metrics_block, compute_evidence_metrics
 from rag.retrieval import retrieve_catalog_chunks, retrieve_chunks
-from rag.retrieval_config import retrieval_mode
+from rag.retrieval_config import (
+    SUPPORTED_RETRIEVAL_MODES,
+    resolve_retrieval_mode,
+    retrieval_mode,
+)
 from research.study_store import CONSENT_VERSION, study_store
 
 # ||| Environment
@@ -471,7 +477,13 @@ def _domain_gate_response(language: str) -> str:
     return _DOMAIN_GATE_MESSAGES.get(language, _DOMAIN_GATE_MESSAGES["en"])
 
 
-def _build_chunks(query: str, route, cognition: CognitiveOrchestrationResult) -> list[dict]:
+def _build_chunks(
+    query: str,
+    route,
+    cognition: CognitiveOrchestrationResult,
+    *,
+    retrieval_mode_override: str | None = None,
+) -> list[dict]:
     if route.catalog_mode:
         catalog_chunks = retrieve_catalog_chunks(
             collection=_collection,
@@ -489,6 +501,7 @@ def _build_chunks(query: str, route, cognition: CognitiveOrchestrationResult) ->
         intent=route.retrieval_intent,
         top_k=cognition.retrieval_top_k,
         profile=route.persona_profile,
+        retrieval_mode_override=retrieval_mode_override,
     )
 
 
@@ -787,6 +800,10 @@ async def _generate_laboratory_answer(item: dict) -> dict:
 
     query = str(item["question"])
     profile = str(item["profile"])
+    retrieval_snapshot = item.get("retrieval_snapshot") or {}
+    retrieval_mode_override = retrieval_snapshot.get("retrieval_mode_override")
+    if retrieval_mode_override is None and retrieval_snapshot.get("retrieval_mode"):
+        retrieval_mode_override = retrieval_snapshot.get("retrieval_mode")
     messages = [{"role": "user", "content": query}]
     route = route_query(query, profile=profile)
     cognition = build_cognitive_orchestration(
@@ -794,7 +811,12 @@ async def _generate_laboratory_answer(item: dict) -> dict:
         route=route,
         messages=messages,
     )
-    chunks = _build_chunks(query, route, cognition)
+    chunks = _build_chunks(
+        query,
+        route,
+        cognition,
+        retrieval_mode_override=retrieval_mode_override,
+    )
     calibration = merge_profile_calibration(
         profile,
         item.get("calibration_snapshot"),
@@ -1345,6 +1367,33 @@ class CreateLaboratoryRunPayload(BaseModel):
     version_label: str = Field(min_length=2, max_length=80)
     profiles: list[str] = Field(min_length=1, max_length=8)
     repetitions: Literal[1] = 1
+    retrieval_mode_override: str | None = Field(default=None, max_length=16)
+
+    @field_validator("profiles", mode="before")
+    @classmethod
+    def canonical_profiles(cls, value):
+        if not isinstance(value, list):
+            return value
+        return [normalize_profile_id(profile, default="") for profile in value]
+
+    @field_validator("retrieval_mode_override", mode="before")
+    @classmethod
+    def canonical_retrieval_mode(cls, value):
+        if value is None or value == "":
+            return None
+        normalized = str(value).strip().lower()
+        if normalized not in SUPPORTED_RETRIEVAL_MODES:
+            raise ValueError(
+                f"retrieval_mode_override must be one of: {', '.join(sorted(SUPPORTED_RETRIEVAL_MODES))}"
+            )
+        return normalized
+
+
+class CreateLaboratoryPairedRetrievalPayload(BaseModel):
+    case_set_id: str = Field(min_length=2, max_length=100)
+    version_label: str = Field(min_length=2, max_length=72)
+    profiles: list[str] = Field(min_length=1, max_length=8)
+    repetitions: Literal[1] = 1
 
     @field_validator("profiles", mode="before")
     @classmethod
@@ -1441,6 +1490,34 @@ def _study_access_token(authorization: str | None) -> str:
     return authorization.removeprefix("Bearer ").strip()
 
 
+def _laboratory_retrieval_snapshot(retrieval_mode_override: str | None = None) -> dict:
+    return capture_retrieval_snapshot(
+        collection=_collection,
+        embedder=_embedder,
+        retrieval_mode_override=retrieval_mode_override,
+    )
+
+
+def _prepare_laboratory_case_set(case_set_id: str, profiles: list[str], repetitions: int):
+    try:
+        case_set = load_case_set(case_set_id)
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    request_count = len(case_set.cases) * len(profiles) * repetitions
+    if request_count > MAX_LABORATORY_REQUESTS:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Laboratory run exceeds the {MAX_LABORATORY_REQUESTS}-request limit",
+        )
+    return case_set
+
+
+def _schedule_laboratory_run(run_id: str) -> None:
+    if _laboratory_runner is None:
+        raise HTTPException(status_code=503, detail="Laboratory runner is unavailable")
+    _laboratory_runner.schedule(run_id)
+
+
 @app.post("/api/laboratory/auth/verify")
 def verify_laboratory_auth(x_research_key: str | None = Header(default=None)):
     _require_research_admin(x_research_key)
@@ -1467,15 +1544,13 @@ async def create_laboratory_run(
             detail=f"Unsupported laboratory profiles: {', '.join(invalid_profiles)}",
         )
     try:
-        case_set = load_case_set(payload.case_set_id)
-    except ValueError as error:
-        raise HTTPException(status_code=422, detail=str(error)) from error
-    request_count = len(case_set.cases) * len(profiles) * payload.repetitions
-    if request_count > MAX_LABORATORY_REQUESTS:
-        raise HTTPException(
-            status_code=422,
-            detail=f"Laboratory run exceeds the {MAX_LABORATORY_REQUESTS}-request limit",
+        case_set = _prepare_laboratory_case_set(
+            payload.case_set_id,
+            profiles,
+            payload.repetitions,
         )
+    except HTTPException:
+        raise
     active_calibration = laboratory_store.active_calibration()
     run = laboratory_store.create_run(
         case_set=case_set,
@@ -1486,12 +1561,114 @@ async def create_laboratory_run(
         prompt_fingerprint=_prompt_fingerprint(),
         calibration_version_id=active_calibration["id"],
         calibration_snapshot=active_calibration["calibration"],
+        retrieval_snapshot=_laboratory_retrieval_snapshot(payload.retrieval_mode_override),
     )
-    if _laboratory_runner is None:
-        raise HTTPException(status_code=503, detail="Laboratory runner is unavailable")
-    _laboratory_runner.schedule(run["id"])
+    _schedule_laboratory_run(run["id"])
     await asyncio.sleep(0)
     return laboratory_store.get_run(run["id"], include_items=False)
+
+
+@app.post("/api/laboratory/runs/paired-retrieval")
+async def create_paired_retrieval_runs(
+    payload: CreateLaboratoryPairedRetrievalPayload,
+    x_research_key: str | None = Header(default=None),
+):
+    _require_research_admin(x_research_key)
+    profiles = list(dict.fromkeys(payload.profiles))
+    invalid_profiles = sorted(set(profiles) - ALLOWED_LABORATORY_PROFILES)
+    if invalid_profiles:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Unsupported laboratory profiles: {', '.join(invalid_profiles)}",
+        )
+    case_set = _prepare_laboratory_case_set(
+        payload.case_set_id,
+        profiles,
+        payload.repetitions,
+    )
+    active_calibration = laboratory_store.active_calibration()
+    comparison_group_id = str(uuid.uuid4())
+    base_label = payload.version_label.strip()
+    shared = {
+        "case_set": case_set,
+        "profiles": profiles,
+        "repetitions": payload.repetitions,
+        "model": LABORATORY_MODEL,
+        "prompt_fingerprint": _prompt_fingerprint(),
+        "calibration_version_id": active_calibration["id"],
+        "calibration_snapshot": active_calibration["calibration"],
+        "comparison_group_id": comparison_group_id,
+    }
+    dense_run = laboratory_store.create_run(
+        **shared,
+        version_label=f"{base_label}-dense",
+        retrieval_snapshot=_laboratory_retrieval_snapshot("dense"),
+    )
+    hybrid_run = laboratory_store.create_run(
+        **shared,
+        version_label=f"{base_label}-hybrid",
+        retrieval_snapshot=_laboratory_retrieval_snapshot("hybrid"),
+        control_run_id=dense_run["id"],
+    )
+    _schedule_laboratory_run(dense_run["id"])
+    _schedule_laboratory_run(hybrid_run["id"])
+    await asyncio.sleep(0)
+    return {
+        "comparison_group_id": comparison_group_id,
+        "runs": [
+            laboratory_store.get_run(dense_run["id"], include_items=False),
+            laboratory_store.get_run(hybrid_run["id"], include_items=False),
+        ],
+    }
+
+
+@app.get("/api/laboratory/runs/compare")
+def compare_laboratory_runs(
+    baseline: str,
+    candidate: str,
+    x_research_key: str | None = Header(default=None),
+):
+    _require_research_admin(x_research_key)
+    try:
+        return laboratory_store.compare_runs(baseline, candidate)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@app.get("/api/laboratory/comparison-groups/{comparison_group_id}")
+def get_laboratory_comparison_group(
+    comparison_group_id: str,
+    x_research_key: str | None = Header(default=None),
+):
+    _require_research_admin(x_research_key)
+    runs = laboratory_store.list_runs_by_comparison_group(comparison_group_id)
+    if not runs:
+        raise HTTPException(status_code=404, detail="Comparison group not found")
+    comparison = None
+    if len(runs) >= 2:
+        baseline = next(
+            (
+                run
+                for run in runs
+                if (run.get("retrieval_snapshot") or {}).get("retrieval_mode") == "dense"
+            ),
+            runs[0],
+        )
+        candidate = next(
+            (
+                run
+                for run in runs
+                if (run.get("retrieval_snapshot") or {}).get("retrieval_mode") == "hybrid"
+            ),
+            runs[-1],
+        )
+        if baseline["id"] != candidate["id"]:
+            comparison = laboratory_store.compare_runs(baseline["id"], candidate["id"])
+    return {
+        "comparison_group_id": comparison_group_id,
+        "runs": runs,
+        "comparison": comparison,
+    }
 
 
 @app.get("/api/laboratory/runs")

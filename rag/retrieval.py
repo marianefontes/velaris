@@ -32,7 +32,13 @@ import os
 from typing import Any
 
 from rag.embedding_provider import dense_vectors
-from rag.retrieval_config import hybrid_retrieval_enabled, retrieval_mode, rrf_k
+from rag.retrieval_config import (
+    hybrid_retrieval_active,
+    hybrid_retrieval_enabled,
+    resolve_retrieval_mode,
+    retrieval_mode,
+    rrf_k,
+)
 from rag.sparse_index import (
     load_sparse_cache,
     rank_sparse_chunks,
@@ -395,6 +401,7 @@ def retrieve_chunks(
     intent: str,
     top_k: int = 3,
     profile: str = "general",
+    retrieval_mode_override: str | None = None,
 ) -> list[dict[str, Any]]:
     if not rag_ready or collection is None or _collection_count(collection) == 0:
         _debug(
@@ -405,7 +412,7 @@ def retrieve_chunks(
         return []
 
     page_types = INTENT_FILTER.get(intent, [])
-    mode = retrieval_mode()
+    mode = resolve_retrieval_mode(retrieval_mode_override)
     _debug(
         f"query={query[:120]!r} intent={intent} top_k={top_k} "
         f"profile={profile} retrieval_mode={mode} "
@@ -414,7 +421,7 @@ def retrieve_chunks(
 
     try:
         if (
-            hybrid_retrieval_enabled()
+            hybrid_retrieval_active(retrieval_mode_override)
             and sparse_retrieval_available(embedder)
             and load_sparse_cache() is not None
         ):
@@ -426,12 +433,12 @@ def retrieve_chunks(
                 top_k=top_k,
                 profile=profile,
             )
-        if hybrid_retrieval_enabled() and not sparse_retrieval_available(embedder):
+        if hybrid_retrieval_active(retrieval_mode_override) and not sparse_retrieval_available(embedder):
             print(
                 "[beatrice:retrieval] hybrid mode requested but sparse retrieval is "
                 "unavailable in API embedding mode; falling back to dense retrieval"
             )
-        elif hybrid_retrieval_enabled() and load_sparse_cache() is None:
+        elif hybrid_retrieval_active(retrieval_mode_override) and load_sparse_cache() is None:
             print(
                 "[beatrice:retrieval] hybrid mode requested but sparse lexical cache "
                 "is missing; falling back to dense retrieval"
