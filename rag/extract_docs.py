@@ -30,10 +30,8 @@ if str(BASE_DIR) not in sys.path:
 
 from component_metadata import (  # noqa: E402
     component_catalog,
-    component_document_text,
-    localized_rules,
-    localized_text,
 )
+from rag.component_chunking import build_component_section_chunks  # noqa: E402
 from rag.intelligence_extractors import (  # noqa: E402
     enrich_oracle_command_chunks,
     extract_cognition,
@@ -175,8 +173,84 @@ def build_chunk(source_file: str, page_type: str, title: str, fields: dict) -> d
 # EXTRATORES POR ARQUIVO
 # ═══════════════════════════════════════════════════════════════════════════════
 
+def _component_rich_metadata(component, catalog) -> dict:
+    return {
+        "about": component.about.model_dump(mode="json"),
+        "about_features": [
+            feature.model_dump(mode="json")
+            for feature in component.about_features
+        ],
+        "common_uses": [
+            use.model_dump(mode="json")
+            for use in component.common_uses
+        ],
+        "intent": (
+            component.intent.model_dump(mode="json")
+            if component.intent else None
+        ),
+        "intents": [
+            intent.model_dump(mode="json")
+            for intent in component.intents or []
+        ] if component.intents is not None else None,
+        "variants": [
+            variant.model_dump(mode="json")
+            for variant in component.variants or []
+        ] if component.variants is not None else None,
+        "states": [
+            state.model_dump(mode="json")
+            for state in component.states or []
+        ] if component.states is not None else None,
+        "do": [
+            rule.model_dump(mode="json")
+            for rule in component.do or []
+        ] if component.do is not None else None,
+        "dont": [
+            rule.model_dump(mode="json")
+            for rule in component.dont or []
+        ] if component.dont is not None else None,
+        "accessibility_metadata": (
+            component.accessibility.model_dump(mode="json")
+            if component.accessibility else None
+        ),
+        "edge_cases": (
+            [rule.model_dump(mode="json") for rule in component.edge_cases]
+            if component.edge_cases is not None else None
+        ),
+        "content_guidelines": (
+            [
+                rule.model_dump(mode="json")
+                for rule in component.content_guidelines
+            ]
+            if component.content_guidelines is not None else None
+        ),
+        "governance_notes": (
+            [
+                rule.model_dump(mode="json")
+                for rule in component.governance_notes
+            ]
+            if component.governance_notes is not None else None
+        ),
+        "related_components": component.related_components,
+        "examples": (
+            [
+                example.model_dump(mode="json")
+                for example in component.examples
+            ]
+            if component.examples is not None else None
+        ),
+        "anti_patterns": (
+            [
+                rule.model_dump(mode="json")
+                for rule in component.anti_patterns
+            ]
+            if component.anti_patterns is not None else None
+        ),
+        "provenance": component.provenance,
+    }
+
+
 def extract_components(chunks: list):
-    """data/component-metadata.json → canonical component chunks."""
+    """data/component-metadata.json → semantic section chunks per component."""
     catalog = component_catalog()
     for component in catalog.components:
         page_type = (
@@ -188,109 +262,16 @@ def extract_components(chunks: list):
             }
             else "component"
         )
-        fields = {
-            "status": component.status,
-            "description": localized_text(component.description),
-            "logic": localized_text(component.logic),
-            "structure": localized_text(component.structure),
-            "when_to_use": " ".join(localized_rules(component.when_to_use) or []),
-            "when_not_to_use": " ".join(
-                localized_rules(component.when_not_to_use) or []
-            ),
-            "trade_offs": localized_text(component.trade_offs),
-            "accessibility": localized_text(
-                component.accessibility.summary
-                if component.accessibility else None
-            ),
-            "rag_relation": localized_text(component.rag_relation),
-            "aetheris_insight": localized_text(component.aetheris_insight),
-            "context_of_use": f"Section: {component.section}",
-        }
-        chunk = build_chunk(
-            "data/component-metadata.json",
-            page_type,
-            component.name,
-            fields,
+        section_chunks = build_component_section_chunks(
+            component,
+            page_type=page_type,
+            schema_version=catalog.schema_version,
+            product_name=PRODUCT_NAME,
         )
-        chunk.update({
-            "component_id": component.component_id,
-            "section": component.section,
-            "schema_version": catalog.schema_version,
-            "about": component.about.model_dump(mode="json"),
-            "about_features": [
-                feature.model_dump(mode="json")
-                for feature in component.about_features
-            ],
-            "common_uses": [
-                use.model_dump(mode="json")
-                for use in component.common_uses
-            ],
-            "intent": (
-                component.intent.model_dump(mode="json")
-                if component.intent else None
-            ),
-            "intents": [
-                intent.model_dump(mode="json")
-                for intent in component.intents or []
-            ] if component.intents is not None else None,
-            "variants": [
-                variant.model_dump(mode="json")
-                for variant in component.variants or []
-            ] if component.variants is not None else None,
-            "states": [
-                state.model_dump(mode="json")
-                for state in component.states or []
-            ] if component.states is not None else None,
-            "do": [
-                rule.model_dump(mode="json")
-                for rule in component.do or []
-            ] if component.do is not None else None,
-            "dont": [
-                rule.model_dump(mode="json")
-                for rule in component.dont or []
-            ] if component.dont is not None else None,
-            "accessibility_metadata": (
-                component.accessibility.model_dump(mode="json")
-                if component.accessibility else None
-            ),
-            "edge_cases": (
-                [rule.model_dump(mode="json") for rule in component.edge_cases]
-                if component.edge_cases is not None else None
-            ),
-            "content_guidelines": (
-                [
-                    rule.model_dump(mode="json")
-                    for rule in component.content_guidelines
-                ]
-                if component.content_guidelines is not None else None
-            ),
-            "governance_notes": (
-                [
-                    rule.model_dump(mode="json")
-                    for rule in component.governance_notes
-                ]
-                if component.governance_notes is not None else None
-            ),
-            "related_components": component.related_components,
-            "examples": (
-                [
-                    example.model_dump(mode="json")
-                    for example in component.examples
-                ]
-                if component.examples is not None else None
-            ),
-            "anti_patterns": (
-                [
-                    rule.model_dump(mode="json")
-                    for rule in component.anti_patterns
-                ]
-                if component.anti_patterns is not None else None
-            ),
-            "provenance": component.provenance,
-            "text": component_document_text(component),
-        })
-        chunk["char_count"] = len(chunk["text"])
-        chunks.append(chunk)
+        for chunk in section_chunks:
+            if chunk.get("chunk_section", "").startswith("overview"):
+                chunk.update(_component_rich_metadata(component, catalog))
+            chunks.append(chunk)
 
 
 def extract_patterns(chunks: list):
@@ -678,6 +659,39 @@ def extract_dev_integration(chunks: list):
 # MAIN
 # ═══════════════════════════════════════════════════════════════════════════════
 
+SUPPLEMENTAL_CHUNK_KINDS = {
+    "institutional_knowledge",
+    "perspective_matrix",
+    "comparative_chunk",
+    "knowledge_relationship",
+    "migration_knowledge",
+}
+
+
+def preserve_supplemental_chunks(chunks: list[dict]) -> list[dict]:
+    """Keep institutional-knowledge supplement chunks across extractor reruns."""
+    json_path = OUTPUT_DIR / "aetheris-docs-dump.json"
+    if not json_path.exists():
+        return chunks
+
+    previous = json.loads(json_path.read_text(encoding="utf-8"))
+    seen = {chunk["id"] for chunk in chunks}
+    preserved = []
+    for chunk in previous.get("chunks", []):
+        chunk_id = chunk.get("id")
+        if not chunk_id or chunk_id in seen:
+            continue
+        if (
+            chunk.get("kind") in SUPPLEMENTAL_CHUNK_KINDS
+            or chunk.get("source") == "rag/institutional-knowledge.md"
+        ):
+            preserved.append(chunk)
+            seen.add(chunk_id)
+    if preserved:
+        print(f"Preservando {len(preserved)} chunk(s) suplementar(es) de institutional knowledge…")
+    return [*chunks, *preserved]
+
+
 def main():
     chunks: list[dict] = []
 
@@ -732,6 +746,7 @@ def main():
             seen.add(c["id"])
             unique_chunks.append(c)
     chunks = unique_chunks
+    chunks = preserve_supplemental_chunks(chunks)
 
     # estatísticas por tipo
     from collections import Counter
@@ -739,14 +754,22 @@ def main():
 
     # ── JSON output ───────────────────────────────────────────────────────────
     sources = sorted(set(c["source"] for c in chunks))
+    previous_meta = {}
+    json_path = OUTPUT_DIR / "aetheris-docs-dump.json"
+    if json_path.exists():
+        previous_meta = json.loads(json_path.read_text(encoding="utf-8")).get("meta", {})
     dump = {
         "meta": {
             "total_chunks": len(chunks),
             "sources": sources,
             "embedding_model": "BAAI/bge-m3",
-            "extractor_version": "3.0.0-intelligence-layer",
+            "extractor_version": "3.1.0-component-section-chunking",
             "product_name": PRODUCT_NAME,
             "note": "Extracted from React/TypeScript source — TSX is the source of truth",
+            "institutional_knowledge_supplement": previous_meta.get(
+                "institutional_knowledge_supplement",
+                {},
+            ),
         },
         "chunks": chunks,
     }
@@ -761,7 +784,7 @@ def main():
         "# Aetheris Design System — Corpus Dump (TSX Source)",
         "",
         f"> **Total chunks:** {len(chunks)}",
-        f"> **Extractor:** v3.0.0-intelligence-layer (React/TypeScript source)",
+        f"> **Extractor:** v3.1.0-component-section-chunking (React/TypeScript source)",
         f"> **Embedding model:** BAAI/bge-m3",
         "",
         "---",

@@ -125,6 +125,7 @@ def chunk_metadata(chunk: dict[str, Any]) -> dict[str, Any]:
         "status": chunk["status"],
         "section": chunk.get("section", ""),
         "kind": chunk.get("kind", ""),
+        "chunk_section": chunk.get("chunk_section", ""),
         "command": chunk.get("command", ""),
         "capability": chunk.get("capability", ""),
         "route": chunk.get("route", ""),
