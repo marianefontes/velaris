@@ -247,4 +247,61 @@ def sync_corpus_index(
             "ChromaDB count mismatch after sync: "
             f"db={result.collection_total_after} expected={result.valid_total}"
         )
+
+    _maybe_rebuild_sparse_cache(embedder, valid, meta, result, encode_batch)
     return result
+
+
+def _maybe_rebuild_sparse_cache(
+    embedder: Any,
+    valid: list[dict[str, Any]],
+    meta: dict[str, Any],
+    result: IndexSyncResult,
+    encode_batch: int,
+) -> None:
+    try:
+        from rag.sparse_index import (
+            cache_matches_corpus,
+            load_sparse_cache,
+            rebuild_sparse_cache_if_supported,
+            sparse_retrieval_available,
+        )
+    except ImportError:
+        from sparse_index import (
+            cache_matches_corpus,
+            load_sparse_cache,
+            rebuild_sparse_cache_if_supported,
+            sparse_retrieval_available,
+        )
+
+    if not sparse_retrieval_available(embedder):
+        return
+
+    corpus_version = (
+        meta.get("version")
+        or meta.get("extractor_version")
+        or "unknown"
+    )
+    cache = load_sparse_cache()
+    needs_rebuild = (
+        result.indexed > 0
+        or bool(result.orphans_removed)
+        or cache is None
+        or cache.corpus_version != corpus_version
+        or not cache_matches_corpus(cache, valid)
+    )
+    if not needs_rebuild:
+        return
+
+    try:
+        rebuild_sparse_cache_if_supported(
+            embedder,
+            valid,
+            corpus_version=corpus_version,
+            batch_size=encode_batch,
+        )
+    except Exception as error:
+        print(
+            "[index-sync] sparse lexical cache rebuild failed "
+            f"({type(error).__name__}): {error}"
+        )

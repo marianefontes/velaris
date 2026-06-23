@@ -95,6 +95,7 @@ from rag.context_builder import (
 )
 from rag.evidence_metrics import build_evidence_metrics_block, compute_evidence_metrics
 from rag.retrieval import retrieve_catalog_chunks, retrieve_chunks
+from rag.retrieval_config import retrieval_mode
 from research.study_store import CONSENT_VERSION, study_store
 
 # ||| Environment
@@ -1158,6 +1159,7 @@ def _health_payload() -> dict:
         "rag_active": _rag_ready and count > 0,
         "embedder": embedder_label(_embedder) if _rag_ready else "none",
         "embedding_mode": _embedding_mode,
+        "retrieval_mode": retrieval_mode(),
         "embedding_provider": os.environ.get("HF_INFERENCE_PROVIDER", "hf-inference")
         if _embedding_mode == "api"
         else "local",

@@ -41,6 +41,19 @@ def dense_vectors(result: dict[str, Any]) -> list[list[float]]:
     return list(dense)
 
 
+def lexical_weights(result: dict[str, Any]) -> list[dict[str, float]]:
+    weights = result.get("lexical_weights", [])
+    if not weights:
+        return []
+    serialized: list[dict[str, float]] = []
+    for item in weights:
+        if hasattr(item, "items"):
+            serialized.append({str(token): float(value) for token, value in item.items()})
+        else:
+            serialized.append({str(token): float(value) for token, value in dict(item).items()})
+    return serialized
+
+
 def default_hf_api_url(model: str) -> str:
     return (
         f"https://router.huggingface.co/hf-inference/models/"

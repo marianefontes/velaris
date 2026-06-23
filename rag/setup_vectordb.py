@@ -4,10 +4,9 @@ setup_vectordb.py
 Lê aetheris-docs-dump.json, gera embeddings com o provider configurado
 e popula uma coleção ChromaDB persistente.
 
-MODO DE RETRIEVAL: Dense (cosine similarity) — única opção ativa na v1.
-O BAAI/bge-m3 suporta também Sparse (BM25 neural) e ColBERT (multi-vector),
-mas esta implementação usa apenas dense. Hybrid retrieval (dense + sparse)
-é um upgrade direto sem trocar de modelo — ver embedding-model-justification.md.
+MODO DE RETRIEVAL: Dense por padrão (`AETHERIS_RETRIEVAL_MODE=dense`).
+Hybrid (`AETHERIS_RETRIEVAL_MODE=hybrid`) funde denso + esparso BGE-M3 via RRF
+quando o cache lexical local existir. API embedding mode permanece dense-only.
 
 Uso:
   pip install chromadb huggingface_hub
@@ -45,6 +44,7 @@ from rag.index_sync import (
     sync_corpus_index,
     validate_chunks,
 )
+from rag.sparse_index import ensure_sparse_cache
 
 DB_PATH = chroma_db_path()
 COLLECTION = "aetheris_design_system"
@@ -127,7 +127,6 @@ print(
 needs_work = bool(missing_ids) or (bool(orphan_ids) and not args.no_prune_orphans)
 if not needs_work:
     print("\n✓ Índice já está em sync com o dump.")
-    sys.exit(0)
 
 print(f"\n── Carregando provider de embeddings ({embedding_mode()}) ─")
 if embedding_mode() == "api":
@@ -138,26 +137,35 @@ t0 = time.time()
 model = create_embedding_provider()
 print(f"✓ Provider pronto em {time.time() - t0:.1f}s ({embedder_label(model)})")
 
-print(f"\n── Sincronizando corpus (batch={args.batch}) ──────")
-t_embed = time.time()
-try:
-    result = sync_corpus_index(
-        collection,
-        model,
-        prune_orphans=not args.no_prune_orphans,
-        encode_batch=args.batch,
-    )
-except RuntimeError as error:
-    print(f"\n[ERRO] Falha na sincronização do corpus: {error}")
-    sys.exit(1)
+if needs_work:
+    print(f"\n── Sincronizando corpus (batch={args.batch}) ──────")
+    t_embed = time.time()
+    try:
+        result = sync_corpus_index(
+            collection,
+            model,
+            prune_orphans=not args.no_prune_orphans,
+            encode_batch=args.batch,
+        )
+    except RuntimeError as error:
+        print(f"\n[ERRO] Falha na sincronização do corpus: {error}")
+        sys.exit(1)
 
-log_sync_result(result, prefix="[setup]")
-elapsed = time.time() - t_embed
-if result.indexed:
-    print(
-        f"✓ {result.indexed} embeddings gerados em {elapsed:.1f}s "
-        f"({elapsed / result.indexed * 1000:.0f} ms/chunk)"
-    )
+    log_sync_result(result, prefix="[setup]")
+    elapsed = time.time() - t_embed
+    if result.indexed:
+        print(
+            f"✓ {result.indexed} embeddings gerados em {elapsed:.1f}s "
+            f"({elapsed / result.indexed * 1000:.0f} ms/chunk)"
+        )
+
+print("\n── Sparse lexical cache (BGE-M3 hybrid retrieval) ─")
+ensure_sparse_cache(
+    model,
+    valid,
+    corpus_version=corpus_version,
+    batch_size=args.batch,
+)
 
 print("\n── Teste de sanidade (query de validação) ───────")
 SANITY_QUERY = "which component should I use to show AI prediction confidence?"
