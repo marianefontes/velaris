@@ -74,7 +74,11 @@ from prompts.prompt_builder import (
     build_surface_context_block,
     build_system_prompt,
 )
-from rag.bootstrap import bootstrap_collection, corpus_available
+from rag.bootstrap import (
+    bootstrap_collection,
+    collection_needs_corpus_sync,
+    corpus_available,
+)
 from rag.chroma_config import chroma_db_path, chroma_db_path_source, chroma_runtime_paths
 from rag.embedding_provider import (
     create_embedding_provider,
@@ -984,18 +988,25 @@ async def lifespan(app: FastAPI):
                 print(f"✅ Embedding provider pronto ({embedder_label(_embedder)})")
                 _log_memory("embedder-ready")
 
-                if _collection.count() == 0 and corpus_available():
+                if corpus_available() and collection_needs_corpus_sync(_collection):
+                    if _collection.count() == 0:
+                        bootstrap_reason = (
+                            "Coleção vazia: reconstruindo índice a partir "
+                            "do corpus versionado..."
+                        )
+                    else:
+                        bootstrap_reason = (
+                            "Corpus desatualizado: sincronizando chunks "
+                            "faltantes e removendo órfãos..."
+                        )
                     if _embedding_mode == "api":
                         print(
-                            "📚 Bootstrap do corpus via API em background "
-                            "(o servidor abre enquanto indexa)..."
+                            f"📚 {bootstrap_reason} "
+                            "(via API em background; o servidor abre enquanto indexa)"
                         )
                         asyncio.create_task(_bootstrap_corpus_background())
                     else:
-                        print(
-                            "📚 Coleção vazia: reconstruindo índice a partir "
-                            "do corpus versionado..."
-                        )
+                        print(f"📚 {bootstrap_reason}")
                         _bootstrap_running = True
                         _bootstrap_status = {
                             **_bootstrap_status,
@@ -1037,7 +1048,7 @@ async def lifespan(app: FastAPI):
                             print(stack_trace)
                         finally:
                             _bootstrap_running = False
-                elif _collection.count() == 0:
+                elif _collection.count() == 0 and not corpus_available():
                     _bootstrap_status = {**_bootstrap_status, "state": "no_corpus"}
             except ImportError:
                 _embedder = None

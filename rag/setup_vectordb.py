@@ -15,33 +15,41 @@ Uso:
   python3 rag/setup_vectordb.py
 
 Flags opcionais:
-  --reset     Apaga a coleção existente antes de reindexar
-  --batch N   Tamanho do batch de encoding (default: 8)
+  --reset             Apaga a coleção existente antes de reindexar
+  --batch N           Tamanho do batch de encoding (default: 8)
+  --no-prune-orphans  Mantém ids no Chroma que não existem mais no dump
 """
 
 import argparse
-import json
 import sys
 import time
 from pathlib import Path
 
-from chroma_config import chroma_db_path, chroma_db_path_source
-from embedding_provider import (
+RAG_DIR = Path(__file__).parent
+ROOT_DIR = RAG_DIR.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
+from rag.chroma_config import chroma_db_path, chroma_db_path_source
+from rag.embedding_provider import (
     create_embedding_provider,
     dense_vectors,
     embedder_label,
     embedding_mode,
 )
+from rag.index_sync import (
+    DUMP_PATH,
+    corpus_out_of_sync,
+    load_corpus_chunks,
+    log_sync_result,
+    sync_corpus_index,
+    validate_chunks,
+)
 
-# ─── Caminhos ────────────────────────────────────────────────────────────────
-RAG_DIR    = Path(__file__).parent
-DUMP_PATH  = RAG_DIR / "aetheris-docs-dump.json"
-DB_PATH    = chroma_db_path()
+DB_PATH = chroma_db_path()
 COLLECTION = "aetheris_design_system"
-PRODUCT_NAME = "Aetheris"
 
 
-# ─── Dependências opcionais ───────────────────────────────────────────────────
 def require(pkg: str, install: str):
     try:
         return __import__(pkg)
@@ -51,35 +59,42 @@ def require(pkg: str, install: str):
         sys.exit(1)
 
 
-# ─── Argparse ─────────────────────────────────────────────────────────────────
 parser = argparse.ArgumentParser(description="Setup ChromaDB para Aetheris RAG")
-parser.add_argument("--reset",  action="store_true", help="Apaga e recria a coleção")
-parser.add_argument("--batch",  type=int, default=8, help="Batch size para encoding")
+parser.add_argument("--reset", action="store_true", help="Apaga e recria a coleção")
+parser.add_argument("--batch", type=int, default=8, help="Batch size para encoding")
+parser.add_argument(
+    "--no-prune-orphans",
+    action="store_true",
+    help="Não remove ids órfãos do Chroma (presentes no índice, ausentes no dump)",
+)
 args = parser.parse_args()
 
 
-# ─── Carrega dump ─────────────────────────────────────────────────────────────
 print("\n── Aetheris Vector DB Setup ────────────────────")
 if not DUMP_PATH.exists():
     print(f"[ERRO] {DUMP_PATH} não encontrado.")
     print("  Execute primeiro: python3 rag/extract_docs.py")
     sys.exit(1)
 
-data   = json.loads(DUMP_PATH.read_text(encoding="utf-8"))
-chunks = data["chunks"]
-meta   = data.get("meta", {})
+chunks, meta = load_corpus_chunks()
 corpus_version = (
     meta.get("version")
     or meta.get("extractor_version")
     or "unknown"
 )
+valid, rejected = validate_chunks(chunks)
 print(f"✓ Dump carregado: {len(chunks)} chunks de {DUMP_PATH.name}")
+print(f"  Válidos: {len(valid)} | Rejeitados na validação: {len(rejected)}")
+if rejected:
+    for item in rejected:
+        print(
+            f"  [rejeitado] {item.chunk_id} | reason={item.reason} "
+            f"| title={item.title or '-'} | source={item.source or '-'}"
+        )
 
-
-# ─── Inicializa ChromaDB ──────────────────────────────────────────────────────
 chromadb = require("chromadb", "chromadb")
 DB_PATH.mkdir(parents=True, exist_ok=True)
-client   = chromadb.PersistentClient(path=str(DB_PATH))
+client = chromadb.PersistentClient(path=str(DB_PATH))
 
 if args.reset:
     try:
@@ -91,27 +106,29 @@ if args.reset:
 collection = client.get_or_create_collection(
     name=COLLECTION,
     metadata={
-        "hnsw:space":   "cosine",   # distância cosseno para embeddings BGE
-        "description":  "Aetheris Design System — componentes, padrões, tokens, guidelines",
-        "model":        "BAAI/bge-m3",
-        "version":      corpus_version,
-    }
+        "hnsw:space": "cosine",
+        "description": "Aetheris Design System — componentes, padrões, tokens, guidelines",
+        "model": "BAAI/bge-m3",
+        "version": corpus_version,
+    },
 )
 print(f"✓ Coleção ChromaDB: '{COLLECTION}' ({DB_PATH})")
 print(f"  Fonte do caminho: {chroma_db_path_source()}")
 
-
-# ─── Verifica itens já indexados (evita re-embedding desnecessário) ───────────
 existing_ids = set(collection.get(include=[])["ids"])
-to_index     = [c for c in chunks if c["id"] not in existing_ids]
-print(f"  Já indexados: {len(existing_ids)} | A indexar: {len(to_index)}")
+valid_ids = {chunk["id"] for chunk in valid}
+missing_ids = valid_ids - existing_ids
+orphan_ids = existing_ids - valid_ids
+print(
+    f"  Já indexados: {len(existing_ids)} | Faltando: {len(missing_ids)} "
+    f"| Órfãos: {len(orphan_ids)}"
+)
 
-if not to_index:
-    print("\n✓ Todos os chunks já estão indexados. Use --reset para reindexar.")
+needs_work = bool(missing_ids) or (bool(orphan_ids) and not args.no_prune_orphans)
+if not needs_work:
+    print("\n✓ Índice já está em sync com o dump.")
     sys.exit(0)
 
-
-# ─── Carrega provider de embeddings ───────────────────────────────────────────
 print(f"\n── Carregando provider de embeddings ({embedding_mode()}) ─")
 if embedding_mode() == "api":
     print("  Usando Hugging Face Inference Providers; PyTorch local não é carregado.")
@@ -121,75 +138,29 @@ t0 = time.time()
 model = create_embedding_provider()
 print(f"✓ Provider pronto em {time.time() - t0:.1f}s ({embedder_label(model)})")
 
-
-# ─── Encoding em batches ──────────────────────────────────────────────────────
-print(f"\n── Gerando embeddings (batch={args.batch}) ──────")
-
-texts     = [c["text"] for c in to_index]
-ids       = [c["id"]   for c in to_index]
-metadatas = [
-    {
-        "source":         c["source"],
-        "page_type":      c["page_type"],
-        "title":          c["title"],
-        "component_id":   c.get("component_id", ""),
-        "status":         c["status"],
-        "section":        c.get("section", ""),
-        "kind":           c.get("kind", ""),
-        "command":        c.get("command", ""),
-        "capability":     c.get("capability", ""),
-        "route":          c.get("route", ""),
-        "tags":           c.get("tags", ""),
-        "schema_version": c.get("schema_version", ""),
-        "char_count":     c["char_count"],
-    }
-    for c in to_index
-]
-
-all_embeddings = []
-total_batches  = (len(texts) + args.batch - 1) // args.batch
-
+print(f"\n── Sincronizando corpus (batch={args.batch}) ──────")
 t_embed = time.time()
-for i in range(0, len(texts), args.batch):
-    batch     = texts[i : i + args.batch]
-    b_num     = i // args.batch + 1
-    result    = model.encode(
-        batch,
-        batch_size=args.batch,
-        max_length=512,
-        return_dense=True,
-        return_sparse=False,
-        return_colbert_vecs=False,
+try:
+    result = sync_corpus_index(
+        collection,
+        model,
+        prune_orphans=not args.no_prune_orphans,
+        encode_batch=args.batch,
     )
-    vecs = dense_vectors(result)
-    all_embeddings.extend(vecs)
-    print(f"  Batch {b_num:>3}/{total_batches} — {len(batch)} chunks encodados")
+except RuntimeError as error:
+    print(f"\n[ERRO] Falha na sincronização do corpus: {error}")
+    sys.exit(1)
 
+log_sync_result(result, prefix="[setup]")
 elapsed = time.time() - t_embed
-print(f"✓ {len(all_embeddings)} embeddings gerados em {elapsed:.1f}s "
-      f"({elapsed/len(all_embeddings)*1000:.0f} ms/chunk)")
-
-
-# ─── Upsert no ChromaDB ───────────────────────────────────────────────────────
-print("\n── Inserindo no ChromaDB ────────────────────────")
-
-UPSERT_BATCH = 50   # ChromaDB recomenda batches de até 100
-for i in range(0, len(ids), UPSERT_BATCH):
-    collection.upsert(
-        ids        = ids[i : i + UPSERT_BATCH],
-        embeddings = all_embeddings[i : i + UPSERT_BATCH],
-        documents  = texts[i : i + UPSERT_BATCH],
-        metadatas  = metadatas[i : i + UPSERT_BATCH],
+if result.indexed:
+    print(
+        f"✓ {result.indexed} embeddings gerados em {elapsed:.1f}s "
+        f"({elapsed / result.indexed * 1000:.0f} ms/chunk)"
     )
 
-total_in_db = collection.count()
-print(f"✓ Upsert concluído. Total na coleção: {total_in_db} documentos")
-
-
-# ─── Teste de sanidade ────────────────────────────────────────────────────────
 print("\n── Teste de sanidade (query de validação) ───────")
 SANITY_QUERY = "which component should I use to show AI prediction confidence?"
-
 q_embed = model.encode(
     [SANITY_QUERY],
     batch_size=1,
@@ -198,24 +169,31 @@ q_embed = model.encode(
     return_sparse=False,
     return_colbert_vecs=False,
 )
-
 results = collection.query(
     query_embeddings=dense_vectors(q_embed),
     n_results=3,
     include=["documents", "metadatas", "distances"],
 )
-
 print(f"  Query: \"{SANITY_QUERY}\"")
 print("  Top-3 resultados:")
-for j, (doc, meta, dist) in enumerate(zip(
+for j, (doc, meta_row, dist) in enumerate(zip(
     results["documents"][0],
     results["metadatas"][0],
     results["distances"][0],
 ), 1):
-    score = round(1 - dist, 4)   # cosine similarity
-    print(f"  [{j}] score={score:.4f} | {meta['title']} ({meta['source']})")
+    score = round(1 - dist, 4)
+    print(f"  [{j}] score={score:.4f} | {meta_row['title']} ({meta_row['source']})")
     print(f"       {doc[:120]}…")
 
 print("\n✓ Setup completo. Banco de vetores em:", DB_PATH)
+print(f"   Total na coleção: {collection.count()} documentos")
 print("   Para consultas: python3 rag/query_test.py \"sua query aqui\"")
 print("────────────────────────────────────────────────\n")
+
+if corpus_out_of_sync(collection):
+    print(
+        f"[ERRO] Coleção ({collection.count()}) ainda difere do corpus válido "
+        f"({len(valid)}). Verifique rejeitados e órfãos acima.",
+        file=sys.stderr,
+    )
+    sys.exit(1)
