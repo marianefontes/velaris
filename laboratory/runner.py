@@ -66,9 +66,10 @@ class LaboratoryRunner:
     async def process(self, run_id: str) -> None:
         async with self._lock:
             run = self.store.get_run(run_id, include_items=False)
-            if not run or run["status"] != "queued":
+            if not run or run["status"] not in {"queued", "running"}:
                 return
-            self.store.start_run(run_id)
+            if run["status"] == "queued":
+                self.store.start_run(run_id)
             case_set = load_case_set(run["case_set_id"])
             case_by_id = {case.id: case for case in case_set.cases}
             pace_provider_requests = True

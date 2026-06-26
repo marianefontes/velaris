@@ -249,7 +249,7 @@ def sync_corpus_index(
             f"db={result.collection_total_after} expected={result.valid_total}"
         )
 
-    _maybe_rebuild_sparse_cache(embedder, valid, meta, result, encode_batch)
+    _maybe_rebuild_sparse_cache(embedder, valid, _meta, result, encode_batch)
     return result
 
 

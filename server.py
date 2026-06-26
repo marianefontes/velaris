@@ -1703,6 +1703,20 @@ def cancel_laboratory_run(
     return {"cancel_requested": True}
 
 
+@app.post("/api/laboratory/runs/{run_id}/resume")
+async def resume_laboratory_run(
+    run_id: str,
+    x_research_key: str | None = Header(default=None),
+):
+    _require_research_admin(x_research_key)
+    run = laboratory_store.resume_run(run_id)
+    if not run:
+        raise HTTPException(status_code=409, detail="Only interrupted runs can be resumed")
+    _schedule_laboratory_run(run_id)
+    await asyncio.sleep(0)
+    return run
+
+
 @app.post("/api/laboratory/runs/{run_id}/baseline")
 def set_laboratory_baseline(
     run_id: str,

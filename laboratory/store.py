@@ -418,6 +418,48 @@ class LaboratoryStore:
                 self._bump_revision(connection)
             return cursor.rowcount
 
+    def resume_run(self, run_id: str) -> dict[str, Any] | None:
+        """Re-queue an interrupted run, preserving completed items."""
+        with self._connect() as connection:
+            run = connection.execute(
+                "SELECT * FROM laboratory_runs WHERE id = ?",
+                (run_id,),
+            ).fetchone()
+            if not run or run["status"] != "interrupted":
+                return None
+            connection.execute(
+                """
+                UPDATE laboratory_run_items
+                SET status = 'queued', error = NULL, error_category = NULL,
+                    retry_after = NULL, started_at = NULL, completed_at = NULL
+                WHERE run_id = ? AND status IN ('interrupted', 'waiting_rate_limit', 'running')
+                """,
+                (run_id,),
+            )
+            counts = connection.execute(
+                """
+                SELECT
+                    SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed,
+                    SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) AS failed
+                FROM laboratory_run_items
+                WHERE run_id = ?
+                """,
+                (run_id,),
+            ).fetchone()
+            completed = int(counts["completed"] or 0)
+            failed = int(counts["failed"] or 0)
+            connection.execute(
+                """
+                UPDATE laboratory_runs
+                SET status = 'queued', completed_items = ?, failed_items = ?,
+                    completed_at = NULL, cancel_requested_at = NULL
+                WHERE id = ? AND status = 'interrupted'
+                """,
+                (completed, failed, run_id),
+            )
+            self._bump_revision(connection)
+        return self.get_run(run_id, include_items=False)
+
     def create_run(
         self,
         *,
